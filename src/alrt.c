@@ -32,6 +32,7 @@ Authors : Jean-Francois Dufayard & Stephane Guindon.
 */
 
 #include "alrt.h"
+#include "io.h"
 
 /*********************************************************/
 
@@ -63,7 +64,7 @@ int Check_NNI_Five_Branches(t_tree *tree)
 	  printf("\n\n");
 
       //Interface output
-      if((tree->mod->s_opt->print) && (!tree->io->quiet)) PhyML_Printf("\n\n. Checking for NNIs, optimizing five branches...\n");
+      if((tree->mod->s_opt->print) && (!tree->mod->quiet)) PhyML_Printf("\n\n. Checking for NNIs, optimizing five branches...\n");
 
       better_found  =  0;
       result        = -1;
@@ -158,9 +159,9 @@ int Check_NNI_Five_Branches(t_tree *tree)
 	      Warn_And_Exit("\n");
 	    }
 
-	  if((tree->mod->s_opt->print) && (!tree->io->quiet)) Print_Lk(tree,"[Topology           ]");
-	  if(tree->io->logtree > 0) {
-        if(!tree->io->quiet) {
+	  if((tree->mod->s_opt->print) && (!tree->mod->quiet)) Print_Lk(tree,"[Topology           ]");
+	  if(tree->mod->logtree > 0) {
+        if(!tree->mod->quiet) {
             PhyML_Printf("Tree out\n");
         }
         treefile = GetTreeFile(tree->io);
@@ -170,8 +171,8 @@ int Check_NNI_Five_Branches(t_tree *tree)
        return 1;
 	}
     }
-    if(tree->io->logtree > 0) {
-        if(!tree->io->quiet) {
+    if(tree->mod->logtree > 0) {
+        if(!tree->mod->quiet) {
             PhyML_Printf("Tree out\n");
         }
         treefile = GetTreeFile(tree->io);
@@ -692,9 +693,9 @@ int NNI_Neigh_BL(t_edge *b_fcus, t_tree *tree)
 
   lk_temp = Lk_At_Given_Edge(b_fcus,tree);
   
-  if(tree->io->datatype==CODON) //!< Added by Marcelo.This was a sanity check ... we can include it again after the likelihood calculation is revised.
+  if(tree->mod->datatype==CODON) //!< Added by Marcelo.This was a sanity check ... we can include it again after the likelihood calculation is revised.
   {
-//     if((lk_temp > lk_init + tree->io->mod->s_opt->min_diff_lk_codonModels) || (lk_temp < lk_init - tree->io->mod->s_opt->min_diff_lk_codonModels))
+//     if((lk_temp > lk_init + tree->mod->mod->s_opt->min_diff_lk_codonModels) || (lk_temp < lk_init - tree->mod->mod->s_opt->min_diff_lk_codonModels))
 //     {
 //       PhyML_Printf("\n. lk_temp = %f lk_init = %f\n",lk_temp,lk_init);
 //       PhyML_Printf("\n. Err in file %s at line %d\n\n",__FILE__,__LINE__);
@@ -877,7 +878,7 @@ void Make_Target_Swap(t_tree *tree, t_edge *b_fcus, int swaptodo)
 
       Update_P_Lk(tree,b_fcus,b_fcus->rght);
 
-      if(tree->io->datatype==CODON) //!Added by Marcelo
+      if(tree->mod->datatype==CODON) //!Added by Marcelo
       {
 	if(lk_temp < lktodo + 0.1*lktodo)
 	  {

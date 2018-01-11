@@ -366,6 +366,7 @@ void Free_Model_Complete(model *mod)
     {
     int modeli; //Added by Ken 22/8
     for(modeli=0;modeli<mod->nparts;modeli++){
+    	printf("about to do this\n");
       free(mod->U_part[modeli]);
       free(mod->V_part[modeli]);
       free(mod->ipiv_part[modeli]);
@@ -377,6 +378,8 @@ void Free_Model_Complete(model *mod)
       free(mod->Apowers_part[modeli]);
       free(mod->A0_part[modeli]);
       free(mod->qmat_buff_part[modeli]);
+  	printf("about to do this\n");
+
     }
     }
     
@@ -478,7 +481,7 @@ void Free_Input(option *io)
   if(io->lon) free(io->lon);
   if(io->lat) free(io->lat);
   if(io->z_scores) free(io->z_scores);//!< Added by Marcelo.
-  free(io->structTs_and_Tv);          //!< Added by Marcelo.
+  //free(io->structTs_and_Tv);          //!< Added by Marcelo.
   free(io);
 }
 

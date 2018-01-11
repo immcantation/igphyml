@@ -37,6 +37,7 @@ the GNU public licence. See http://www.opensource.org for details.
 #include "eigen.h"
 #include "pars.h" 
 #include "alrt.h"
+#include "io.h"
 
 
 #ifdef PHYML
@@ -49,14 +50,13 @@ int main(int argc, char **argv){
   int n_otu,/*!< number of taxa.*/ num_data_set; /*!< for multiple data sets.*/ 
   int num_tree,tree_line_number,num_rand_tree; 
   matrix *mat;
-  model *mod; //!< Pointer that will hold the model applied.
   time_t t_beg,	/*!< Start Time.*/ t_end; /*!< Stop Time.*/ 
   phydbl best_lnL,most_likely_size,tree_size;
   int r_seed;
   char *most_likely_tree=NULL;
 
   tree             = NULL;
-  mod              = NULL;
+  //mod              = NULL;
   best_lnL         = UNLIKELY;
   most_likely_size = -1.0;
   tree_size        = -1.0;
@@ -76,7 +76,7 @@ int main(int argc, char **argv){
 	  exit(EXIT_FAILURE);
   }
 
-  if(io->in_tree == 2) Test_Multiple_Data_Set_Format(io);
+  if(io->in_tree == 2) Test_Multiple_Data_Set_Format(io,io->mod);
   else io->n_trees = 1;
   
   mat = NULL;
@@ -91,23 +91,29 @@ int main(int argc, char **argv){
     io->n_trees     = MIN(io->n_trees,io->n_data_sets);
   }
 
+  Make_Model_Complete(io->mod);
+
   For(num_data_set,io->n_data_sets){
     n_otu = 0;
     best_lnL = UNLIKELY;
+    printf("copying model\n");
+    model *mod = Copy_Partial_Model(io->mod); //!< Pointer that will hold the model applied.
+    printf("copied model\n");
 
-    Get_Seq(io);
+    Get_Seq(io,mod);
     //if(io->convert_NT_to_AA) Conv_NT_seq_to_AA_seq(io); unused ken 5/1
 
-    if(io->threshold_exp) {if(num_data_set<io->dataset-1) {Free_Seq(io->data,io->n_otu);continue;}}//!< Added by Marcelo. Run arbitrary data set.
+    if(io->threshold_exp) {if(num_data_set<io->dataset-1) {Free_Seq(mod->data,mod->n_otu);continue;}}//!< Added by Marcelo. Run arbitrary data set.
 
-    Make_Model_Complete(io->mod);
+    Make_Model_Complete(mod);
 
-    Set_Model_Name(io->mod);
+    Set_Model_Name(mod);
 
-    Print_Settings(io);
+    Print_Settings(io,mod);
+	  printf("printed settings\n");
 
-    mod = io->mod;
-    if(io->data){
+    //mod = io->mod;
+    if(mod->data){
       if(io->n_data_sets > 1) PhyML_Printf("\n. Data set [#%d]\n",num_data_set+1);
       //Added by Ken 18/8
       //Don't compress data if doing a model with multiple partitions
@@ -116,24 +122,35 @@ int main(int argc, char **argv){
       }else{
     	  io->colalias = 0;//for now, don't compress sequences at all
       }
-      cdata = Compact_Data(io->data,io);
-
-      Free_Seq(io->data,cdata->n_otu); 
+      printf("compacting data\n");
+      cdata = Compact_Data(mod->data,io,mod);
+      printf("compacted data\n");
+      Free_Seq(mod->data,cdata->n_otu);
 	
-      if(cdata) Check_Ambiguities(cdata,io->datatype,io->mod->state_len);
+      if(cdata) Check_Ambiguities(cdata,mod->datatype,mod->state_len);
       else{
     	  PhyML_Printf("\n. Err in file %s at line %d\n",__FILE__,__LINE__);
 	  	  Warn_And_Exit("");
       }
+      io->n_trees=1;
+
+      printf("printed ambigs\n");
+      printf("%d\n",io->n_trees);
+      printf("%d\n",io->mod->s_opt->random_input_tree);
+      printf("%d\n",io->mod->s_opt->n_rand_starts);
       for(num_tree=(io->n_trees == 1)?(0):(num_data_set);num_tree < io->n_trees;num_tree++){
+
     	  if(!io->mod->s_opt->random_input_tree) io->mod->s_opt->n_rand_starts = 1;
-	  
+
+    	 printf("random starts: %d\n",io->mod->s_opt->n_rand_starts);
 	For(num_rand_tree,io->mod->s_opt->n_rand_starts){
 	  if((io->mod->s_opt->random_input_tree) && (io->mod->s_opt->topo_search != NNI_MOVE))
 	  if(!io->quiet) PhyML_Printf("\n. [Random start %3d/%3d]\n",num_rand_tree+1,io->mod->s_opt->n_rand_starts);
 
 	  io->init_run=1; //! Added by Marcelo.
+	  printf("initing model\n");
 	  Init_Model(cdata,mod,io);
+	  printf("initing model\n");
 
 	  io->init_run=0;
 
@@ -141,7 +158,9 @@ int main(int argc, char **argv){
 	    case 0 : case 1 : { tree = Dist_And_BioNJ(cdata,mod,io); break; }
 	    case 2 :          { tree = Read_User_Tree(cdata,mod,io); break; }
 	  }
-
+	  printf("read tree\n");
+	 /* int bri=0;
+	  For(bri,2*tree->n_otu-3) printf("in main: %lf\n",tree->t_edges[bri]->l);*/
 	  if(!tree) continue;
 	    
 	  #if defined OMP || defined BLAS_OMP
@@ -156,7 +175,7 @@ int main(int argc, char **argv){
 	   
 	  #endif
 
-	  io->tree          = tree;  
+	  io->tree          = tree;  //will need to change this
 	  tree->mod         = mod;
 	  tree->io          = io;
 	  tree->data        = cdata;
@@ -166,23 +185,24 @@ int main(int argc, char **argv){
 	  //added by Ken
 	  //Find location of root node if HLP17
 	  if(mod->whichrealmodel == HLP17){
-	  	  io->mod->startnode = -1;
+		  printf("rootname %s\n",mod->rootname);
+	  	  mod->startnode = -1;
 	      int nodepos;
 	      for(nodepos=0;nodepos<((tree->n_otu-1)*2);nodepos++){
-	      	if(strcmp(io->tree->noeud[nodepos]->name,io->mod->rootname)==0){
-	      		io->mod->startnode=nodepos;
+	      	if(strcmp(io->tree->noeud[nodepos]->name,mod->rootname)==0){
+	      		mod->startnode=nodepos;
 	      		//update ancestors of tree, now that root node is found
 	      		Update_Ancestors_Edge(io->tree->noeud[nodepos],io->tree->noeud[nodepos]->v[0],io->tree->noeud[nodepos]->b[0],tree);
-	      		PhyML_Printf("\n. Start node found: %d %s\n",nodepos,io->mod->rootname);
+	      		PhyML_Printf("\n. Start node found: %d %s\n",nodepos,mod->rootname);
 	      	}
 	      }
 
-	     if(io->mod->startnode==-1){
+	     if(mod->startnode==-1){
 	    	 PhyML_Printf("\n\nRoot sequence ID not found in data file!\n");
 	    	 exit(EXIT_FAILURE);
 	     }
 	  }
-
+	  printf("setting up partition model\n");
 	  //Set up default partition model if necessary
 	  if(tree->mod->partfilespec==0){
 	     tree->mod->partIndex = (int *)mCalloc(tree->n_pattern,sizeof(int));
@@ -190,25 +210,27 @@ int main(int argc, char **argv){
 	     for(indexi=0;indexi<tree->n_pattern;indexi++){
 	      	 mod->partIndex[indexi]=0;
 	     }
-	     io->mod->nparts=1;
-	     io->mod->nomega_part=io->mod->nparts;
-    	 io->mod->partNames = (char**)mCalloc(io->mod->nparts,sizeof(char*));
-    	 io->mod->partNames[0]=(char*)mCalloc(T_MAX_OPTION,sizeof(char));
-    	 strcpy(io->mod->partNames[0],"SINGLE");
+	     mod->nparts=1;
+	     mod->nomega_part=mod->nparts;
+    	 mod->partNames = (char**)mCalloc(mod->nparts,sizeof(char*));
+    	 mod->partNames[0]=(char*)mCalloc(T_MAX_OPTION,sizeof(char));
+    	 strcpy(mod->partNames[0],"SINGLE");
 	  }
 
 	  if(mod->s_opt->random_input_tree) Random_Tree(tree);
 	    
 	  if((!num_data_set) && (!num_tree) && (!num_rand_tree)) Check_Memory_Amount(tree);
-
+	  //For(bri,2*tree->n_otu-3) printf("in main2: %lf\n",tree->t_edges[bri]->l);
+	  printf("prepping tree for lhood\n");
 	  Prepare_Tree_For_Lk(tree);
+	  printf("prepping tree for lhood\n");
 
 	  //stretch initial tree branches
-	  int n_edges=2*tree->n_otu-3;
+	 /* int n_edges=2*tree->n_otu-3;
 	  int br=0;
 	  For(br,n_edges){
 		  tree->t_edges[br]->l=tree->t_edges[br]->l*tree->mod->stretch;
-	  }
+	  }*/
 
 	  if(tree->mod->ambigprint && tree->mod->whichrealmodel == HLP17){
 		  FILE *ambigfile = fopen(tree->mod->ambigfile, "w");
@@ -229,8 +251,7 @@ int main(int argc, char **argv){
 	 
 	  if(io->testInitTree){ //!< Added by Marcelo.
 	    //!< Do nothing!	    
-	  }
-	  else if(io->lkExperiment){ //!< Added by Marcelo.
+	  }else if(io->lkExperiment){ //!< Added by Marcelo.
 	    lkExperiment(tree,num_tree);
 	  }
 	  else if(tree->mod->s_opt->opt_topo){
@@ -244,9 +265,11 @@ int main(int argc, char **argv){
 	    if(tree->mod->s_opt->opt_subst_param || tree->mod->s_opt->opt_bl){
 	    	Round_Optimize(tree,tree->data,ROUND_MAX*2); //! *2 Added by Marcelo to match codeml values.
 	    }else{
+	    	printf("doing lhood\n");
 	    	Lk(tree);
 	    }
 	  }
+	  printf("Finished lhood\n");
 	  
 
 	  tree->both_sides = 1;
@@ -284,11 +307,12 @@ int main(int argc, char **argv){
 	  time(&t_end);
 	    
 	  #endif
-	    
+	    printf("printing output\n");
 	  Print_Fp_Out(io->fp_out_stats,t_beg,t_end,tree,
 	   io,num_data_set+1,
 	   (tree->mod->s_opt->n_rand_starts > 1)?
-	   (num_rand_tree):(num_tree));
+	   (num_rand_tree):(num_tree),mod);//was io->mod
+	  printf("printed to output\n");
 			 
 	  if(tree->io->print_site_lnl) Print_Site_Lk(tree,io->fp_out_lk);
 			 
@@ -347,11 +371,11 @@ int main(int argc, char **argv){
   
   if(most_likely_tree) free(most_likely_tree);
   
-  if(mod->s_opt->n_rand_starts > 1) PhyML_Printf("\n. Best log likelihood: %.2f\n",best_lnL);
+  if(io->mod->s_opt->n_rand_starts > 1) PhyML_Printf("\n. Best log likelihood: %.2f\n",best_lnL);
   
-  Free_Optimiz(mod->s_opt);
-  if(mod->whichmodel==GTR) Free_Custom_Model(mod); //!< Added by Marcelo.
-  Free_Model_Basic(mod);
+  Free_Optimiz(io->mod->s_opt);
+  if(io->mod->whichmodel==GTR) Free_Custom_Model(io->mod); //!< Added by Marcelo.
+  Free_Model_Basic(io->mod);
   
   fflush(NULL);
   
@@ -361,7 +385,7 @@ int main(int argc, char **argv){
   if(io->fp_out_tree)    fclose(io->fp_out_tree);
   if(io->fp_out_trees)   fclose(io->fp_out_trees);
   if(io->fp_out_stats)   fclose(io->fp_out_stats);
-  if(io->print_trace){
+  if(io->mod->print_trace){
 	  fclose(io->fp_out_tree_trace);
 	  fclose(io->fp_out_stats_trace);
   }
@@ -380,7 +404,7 @@ int main(int argc, char **argv){
     
   #endif
     
-  Print_Time_Info(t_beg,t_end);
+  //Print_Time_Info(t_beg,t_end);
     
   return 0;
 }

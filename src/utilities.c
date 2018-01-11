@@ -24,709 +24,13 @@
  */
 
 #include "utilities.h"
+#include "io.h"
 
 int cf3x4Ind[9]={0,1,2,4,5,6,8,9,10}; //!< Very useful for CF3X4 ... see below.
 
 /*********************************************************/
 
-FILE* GetTreeFile(option *io) {
-    FILE *treefile = NULL;
-    char *filename;
-    char *filenr;
-    if(io->logtree == 0) {
-        Warn_And_Exit("(in GetTreeFile), should not happen");
-    } else if(io->logtree == 1) {
-        treefile = openOutputFile(io->out_boot_tree_file, "_igphyml_logtree", ".txt", io);
-    } else if(io->logtree == 2) {
-        filename = mCalloc(30, sizeof(char));
-        strcat(filename, "_igphyml_logtree");
-        filenr = mCalloc(8, sizeof(char));
-        sprintf(filenr, "_%d", io->treecounter);
-        strcat(filename, filenr);
-        treefile = openOutputFile(io->out_boot_tree_file, filename, ".txt", io);
-        io->treecounter++;
-        free(filename);
-        free(filenr);
-    }
-    return(treefile);
-}
 
-t_tree *Read_Tree(char *s_tree)
-{
-  char **subs;
-  int i,n_ext,n_int,n_otu;
-  t_tree *tree;
-  int degree;
-  t_node *root_node;
-  
-  n_int = n_ext = 0;
-  
-  n_otu=0;
-  For(i,(int)strlen(s_tree)) if(s_tree[i] == ',') n_otu++;
-  n_otu+=1;
-  
-  tree = (t_tree *)Make_Tree(n_otu);
-  Init_Tree(tree,tree->n_otu);
-  Make_All_Tree_Nodes(tree);
-  Make_All_Tree_Edges(tree);
-  Make_Tree_Path(tree);
-  
-  subs = Sub_Trees(s_tree,&degree);
-  Clean_Multifurcation(subs,degree,3);
-  if(degree == 2) 
-  {
-    /*       Unroot_Tree(subs); */
-    /*       degree = 3; */
-    /*       root_node = tree->noeud[n_otu]; */
-    root_node      = tree->noeud[2*n_otu-2];
-    root_node->num = 2*n_otu-2;
-    tree->n_root   = root_node;
-    n_int         -= 1;
-  }
-  else
-  {
-    root_node      = tree->noeud[n_otu];
-    root_node->num = n_otu;
-    tree->n_root   = NULL;
-  }
-  
-  root_node->tax = 0;
-  
-  tree->has_branch_lengths = 0;
-  tree->num_curr_branch_available = 0;
-  For(i,degree) R_rtree(s_tree,subs[i],root_node,tree,&n_int,&n_ext);
-  
-  if(tree->n_root)
-  {
-    tree->e_root = tree->t_edges[tree->num_curr_branch_available];
-    
-    tree->n_root->v[0]->v[0] = tree->n_root->v[1];
-    tree->n_root->v[1]->v[0] = tree->n_root->v[0];
-    
-    Connect_One_Edge_To_Two_Nodes(tree->n_root->v[0],
-                                  tree->n_root->v[1],
-                                  tree->e_root,
-                                  tree);      
-    tree->e_root->l = tree->n_root->l[0] + tree->n_root->l[1];
-    tree->n_root_pos = tree->n_root->l[0] / tree->e_root->l;
-  }
-  
-  For(i,NODE_DEG_MAX) free(subs[i]);
-  free(subs);
-  return tree;
-}
-
-/*********************************************************/
-
-
-/*********************************************************/
-/* 'a' in t_node a stands for ancestor. 'd' stands for descendant */ 
-void R_rtree(char *s_tree_a, char *s_tree_d, t_node *a, t_tree *tree, int *n_int, int *n_ext)
-{
-  int i;
-  t_node *d;
-  int n_otu = tree->n_otu;
-  
-  if(strstr(s_tree_a," ")) 
-  {
-    PhyML_Printf("\n. [%s]",s_tree_a);
-    Warn_And_Exit("\n. Err: the tree must not contain a ' ' character\n");
-  }
-  
-  if(s_tree_d[0] == '(')
-  {
-    char **subs;
-    int degree;
-    
-    (*n_int)+=1;
-    d      = tree->noeud[n_otu+*n_int];
-    d->num = n_otu+*n_int;
-    d->tax = 0;
-    
-    Read_Branch_Label(s_tree_d,s_tree_a,tree->t_edges[tree->num_curr_branch_available]);
-    Read_Branch_Length(s_tree_d,s_tree_a,tree);
-    
-    For(i,3)
-    {
-      if(!a->v[i])
-	    {
-	      a->v[i]=d;
-	      d->l[0]=tree->t_edges[tree->num_curr_branch_available]->l;
-	      a->l[i]=tree->t_edges[tree->num_curr_branch_available]->l;
-	      break;
-	    }
-    }
-    d->v[0]=a;
-    
-    if(a != tree->n_root)
-    {
-      Connect_One_Edge_To_Two_Nodes(a,d,tree->t_edges[tree->num_curr_branch_available],tree);
-      tree->num_curr_branch_available++;
-    }
-    
-    subs=Sub_Trees(s_tree_d,&degree);
-    Clean_Multifurcation(subs,degree,2);
-    R_rtree(s_tree_d,subs[0],d,tree,n_int,n_ext);
-    R_rtree(s_tree_d,subs[1],d,tree,n_int,n_ext);
-    For(i,NODE_DEG_MAX) free(subs[i]);
-    free(subs);
-  }
-  
-  else
-  {
-    int i;
-    
-    d      = tree->noeud[*n_ext];
-    d->tax = 1;
-    
-    Read_Node_Name(d,s_tree_d,tree);
-    Read_Branch_Label(s_tree_d,s_tree_a,tree->t_edges[tree->num_curr_branch_available]); 
-    Read_Branch_Length(s_tree_d,s_tree_a,tree);
-    
-    For(i,3)
-    {
-      if(!a->v[i])
-      {
-        a->v[i]=d;
-        d->l[0]=tree->t_edges[tree->num_curr_branch_available]->l;
-        a->l[i]=tree->t_edges[tree->num_curr_branch_available]->l;
-        break;
-      }
-    }
-    d->v[0]=a;
-    
-    if(a != tree->n_root)
-    {
-      Connect_One_Edge_To_Two_Nodes(a,d,tree->t_edges[tree->num_curr_branch_available],tree);
-      tree->num_curr_branch_available++;
-    }
-    
-    d->num=*n_ext;
-    (*n_ext)+=1;
-  }
-}
-
-/*********************************************************/
-
-void Read_Branch_Label(char *s_d, char *s_a, t_edge *b)
-{
-  char *sub_tp;
-  char *p;
-  int i,pos;
-  
-  sub_tp = (char *)mCalloc(3+(int)strlen(s_d)+1,sizeof(char));
-  
-  sub_tp[0] = '(';
-  sub_tp[1] = '\0';
-  strcat(sub_tp,s_d);
-  strcat(sub_tp,"#");
-  p = strstr(s_a,sub_tp);
-  if(!p)
-  {
-    sub_tp[0] = ',';
-    sub_tp[1] = '\0';
-    strcat(sub_tp,s_d);
-    strcat(sub_tp,"#");
-    p = strstr(s_a,sub_tp);
-  }
-  
-  i = 0;
-  b->n_labels = 0;
-  if(p)
-  {
-    if(!(b->n_labels%BLOCK_LABELS)) Make_New_Edge_Label(b);
-    b->n_labels++;
-    
-    pos = 0;
-    do 
-    {
-      b->labels[b->n_labels-1][pos] = p[i+strlen(s_d)+1];
-      i++;
-      pos++;
-      if(p[i+strlen(s_d)+1] == '#') 
-	    { 
-	      b->labels[b->n_labels-1][pos] = '\0';
-	      b->n_labels++;
-	      if(!(b->n_labels%BLOCK_LABELS)) Make_New_Edge_Label(b);
-	      i++;
-	      pos=0;
-	    }
-    }
-    while((p[i+strlen(s_d)+1] != ':') && 
-          (p[i+strlen(s_d)+1] != ',') && 
-          (p[i+strlen(s_d)+1] != '('));
-    
-    b->labels[b->n_labels-1][pos] = '\0';
-  }
-  
-  if(p)
-  {
-    if(b->n_labels == 1)
-      PhyML_Printf("\n. Found label '%s' on t_edge %3d.",b->labels[0],b->num);
-    else
-    {
-      PhyML_Printf("\n. Found labels ");
-      For(i,b->n_labels) PhyML_Printf("'%s' ",b->labels[i]);
-      PhyML_Printf("on t_edge %3d.",b->num);
-    }
-  }
-  
-  free(sub_tp);
-}
-
-/*********************************************************/
-
-void Read_Branch_Length(char *s_d, char *s_a, t_tree *tree)
-{
-  char *sub_tp;
-  char *p;
-  t_edge *b;
-  int i;
-  
-  b = tree->t_edges[tree->num_curr_branch_available];
-  
-  /*   sub_tp = (char *)mCalloc(T_MAX_LINE,sizeof(char)); */
-  sub_tp = (char *)mCalloc(4+(int)strlen(s_d)+1,sizeof(char));
-  
-  For(i,b->n_labels)
-  {
-    strcat(s_d,"#");
-    strcat(s_d,b->labels[i]);
-  }
-  
-  sub_tp[0] = '(';
-  sub_tp[1] = '\0';
-  strcat(sub_tp,s_d);
-  strcat(sub_tp,":");
-  p = strstr(s_a,sub_tp);
-  if(!p)
-  {
-    sub_tp[0] = ',';
-    sub_tp[1] = '\0';
-    strcat(sub_tp,s_d);
-    strcat(sub_tp,":");
-    p = strstr(s_a,sub_tp);
-  }
-  
-  if(p)
-  {
-    b->l = atof((char *)p+(int)strlen(sub_tp));
-    tree->has_branch_lengths = 1;
-  }      
-  free(sub_tp);
-}
-
-/*********************************************************/
-
-void Read_Node_Name(t_node *d, char *s_tree_d, t_tree *tree)
-{
-  int i;
-  
-  if(!tree->t_edges[tree->num_curr_branch_available]->n_labels)
-  {
-    /*if(!d->name) d->name = (char *)mCalloc(strlen(s_tree_d)+1,sizeof(char ));*///!< Commented by Marcelo.
-    strcpy(d->name,s_tree_d);
-  }
-  else
-  {
-    i = 0;
-    do
-    {
-      /*if(!d->name) d->name = (char *)realloc(d->name,(i+1)*sizeof(char ));*///!< Commented by Marcelo.
-      d->name[i] = s_tree_d[i];
-      i++;
-    }
-    while(s_tree_d[i] != '#');
-    d->name[i] = '\0';
-  }
-  strcpy(d->ori_name , d->name);//!< Changed by Marcelo.
-  
-}
-/*********************************************************/
-/*********************************************************/
-
-void Clean_Multifurcation(char **subtrees, int current_deg, int end_deg)
-{
-  
-  if(current_deg <= end_deg) return;
-  else
-  {
-    char *s_tmp;
-    int i;
-    
-    /*       s_tmp = (char *)mCalloc(T_MAX_LINE,sizeof(char)); */
-    s_tmp = (char *)mCalloc(6+
-                            (int)strlen(subtrees[0])+1+
-                            (int)strlen(subtrees[1])+1,
-                            sizeof(char));
-    
-    strcat(s_tmp,"(\0");
-    strcat(s_tmp,subtrees[0]);
-    strcat(s_tmp,",\0");
-    strcat(s_tmp,subtrees[1]);
-    strcat(s_tmp,")\0");
-    free(subtrees[0]);
-    subtrees[0] = s_tmp;
-    
-    for(i=1;i<current_deg-1;i++) strcpy(subtrees[i],subtrees[i+1]);
-    
-    Clean_Multifurcation(subtrees,current_deg-1,end_deg);
-  }
-}
-
-/*********************************************************/
-
-char **Sub_Trees(char *tree, int *degree)
-{
-  char **subs;
-  int posbeg,posend;
-  int i;
-  
-  if(tree[0] != '(') {*degree = 1; return NULL;}
-  
-  subs=(char **)mCalloc(NODE_DEG_MAX,sizeof(char *));
-  
-  For(i,NODE_DEG_MAX) subs[i]=(char *)mCalloc((int)strlen(tree)+1,sizeof(char));
-  
-  
-  posbeg=posend=1;
-  (*degree)=0;
-  do
-  {
-    posbeg = posend;
-    if(tree[posend] != '(')
-    {
-      while((tree[posend] != ',' ) &&
-            (tree[posend] != ':' ) &&
-            (tree[posend] != '#' ) &&
-            (tree[posend] != ')' )) 
-	    {
-	      posend++ ;
-	    }
-      posend -= 1;
-    }
-    else posend=Next_Par(tree,posend);
-    
-    while((tree[posend+1] != ',') &&
-          (tree[posend+1] != ':') &&
-          (tree[posend+1] != '#') &&
-          (tree[posend+1] != ')')) {posend++;}
-    
-    
-    strncpy(subs[(*degree)],tree+posbeg,posend-posbeg+1);
-    /*       strcat(subs[(*degree)],"\0"); */
-    subs[(*degree)][posend-posbeg+1]='\0'; /* Thanks to Jean-Baka Domelevo-Entfellner */
-    
-    posend += 1;
-    while((tree[posend] != ',') &&
-          (tree[posend] != ')')) {posend++;}
-    posend+=1;
-    
-    
-    (*degree)++;
-    if((*degree) == NODE_DEG_MAX)
-    {
-      For(i,(*degree))
-	    PhyML_Printf("\n. Subtree %d : %s\n",i+1,subs[i]);
-      
-      PhyML_Printf("\n. The degree of a t_node cannot be greater than %d\n",NODE_DEG_MAX);
-      Warn_And_Exit("\n");
-    }
-  }
-  while(tree[posend-1] != ')');
-  
-  return subs;
-}
-
-
-/*********************************************************/
-int Next_Par(char *s, int pos)
-{
-  int curr;
-  
-  curr=pos+1;
-  
-  while(*(s+curr) != ')')
-  {
-    if(*(s+curr) == '(') curr=Next_Par(s,curr);
-    curr++;
-  }
-  
-  return curr;
-}
-
-/*********************************************************/
-
-void Print_Tree(FILE *fp, t_tree *tree)
-{
-  char *s_tree;
-  int i;
-  
-  s_tree = (char *)Write_Tree(tree);
-  
-  if(OUTPUT_TREE_FORMAT == 0) PhyML_Fprintf(fp,"%s\n",s_tree);
-  else if(OUTPUT_TREE_FORMAT == 1)
-  {
-    PhyML_Fprintf(fp,"#NEXUS\n");
-    PhyML_Fprintf(fp,"BEGIN TREES;\n");
-    PhyML_Fprintf(fp,"\tTRANSLATE\n");
-    For(i,tree->n_otu) PhyML_Fprintf(fp,"\t%3d\t%s,\n",i+1,tree->noeud[i]->name);
-    PhyML_Fprintf(fp,"\tUTREE PAUP_1=\n");
-    PhyML_Fprintf(fp,"%s\n",s_tree);
-    PhyML_Fprintf(fp,"ENDBLOCK;");
-  }
-  free(s_tree);
-}
-
-/*********************************************************/
-
-char *Write_Tree(t_tree *tree)
-{
-  char *s;
-  int i,available;
-  int pos;
-  
-  s=(char *)mCalloc((int)T_MAX_NAME,sizeof(char));
-  available = (int)T_MAX_NAME-1;
-  
-  
-  s[0]='(';
-  pos = 1;
-  
-#ifdef PHYML 
-  tree->n_root = NULL;
-  tree->e_root = NULL;
-#endif
-  
-  if(tree->mod->whichrealmodel == HLP17){ //added by Ken 16/2/2017 to output as a tree ith rooted branch length of zero
-	  t_node* r = Make_Node_Light(-1);
-	  tree->noeud[tree->mod->startnode]->v[1] = r;
-	  t_edge* blank = (t_edge *)mCalloc(1,sizeof(t_edge));
-	  blank->l=0.00001;
-	  blank->left=tree->noeud[tree->mod->startnode];
-	  blank->rght=r;
-	  tree->noeud[tree->mod->startnode]->b[1] = blank;
-	  r->b[0] = blank;
-	  r->tax=1;
-	  tree->n_root=r;
-	  tree->e_root=blank;
-	  tree->n_root_pos=tree->mod->startnode;
-	  r->name = (char*)mCalloc(T_MAX_OPTION,sizeof(char*));
-	  strcpy(r->name,tree->noeud[tree->mod->startnode]->name);
-	  R_wtree(tree->noeud[tree->mod->startnode],tree->noeud[tree->mod->startnode]->v[0],&available,&s,&pos,tree);
-	  R_wtree(tree->noeud[tree->mod->startnode],tree->noeud[tree->mod->startnode]->v[1],&available,&s,&pos,tree);
-
-	  free(r);
-	  free(r->name);
-	  free(blank);
-	  tree->noeud[tree->mod->startnode]->b[1]=NULL;
-	  tree->noeud[tree->mod->startnode]->v[1]=NULL;
-	  tree->n_root=NULL;
-	  tree->e_root=NULL;
-  }else{
-	  if(!tree->n_root){
-	  i = 0;
-    	while((!tree->noeud[tree->n_otu+i]->v[0]) ||
-    		(!tree->noeud[tree->n_otu+i]->v[1]) ||
-			(!tree->noeud[tree->n_otu+i]->v[2])) i++;
-
-    	R_wtree(tree->noeud[tree->n_otu+i],tree->noeud[tree->n_otu+i]->v[0],&available,&s,&pos,tree);
-    	R_wtree(tree->noeud[tree->n_otu+i],tree->noeud[tree->n_otu+i]->v[1],&available,&s,&pos,tree);
-    	R_wtree(tree->noeud[tree->n_otu+i],tree->noeud[tree->n_otu+i]->v[2],&available,&s,&pos,tree);
-  	  }else{
-  		R_wtree(tree->n_root,tree->n_root->v[0],&available,&s,&pos,tree);
-    	R_wtree(tree->n_root,tree->n_root->v[1],&available,&s,&pos,tree);
-  	  }
-  }
-  
-  s[pos-1]=')';
-  s[pos]=';';
-  s[pos+1]='\0';
-  
-  return s;
-}
-
-/*********************************************************/
-//modified by ken
-void R_wtree(t_node *pere, t_node *fils, int *available, char **s_tree, int *pos, t_tree *tree)
-{
-  int i,p,ori_len;
-  
-  p = -1;
-  if(fils->tax)
-  {
-    /*       printf("\n- Writing on %p",*s_tree); */
-    ori_len = *pos;
-    
-    if(OUTPUT_TREE_FORMAT == 0){
-      if(tree->io->long_tax_names){
-	      strcat(*s_tree,tree->io->long_tax_names[fils->num]);
-	      (*pos) += (int)strlen(tree->io->long_tax_names[fils->num]);
-	    }else{
-	      strcat(*s_tree,fils->name);
-	      (*pos) += (int)strlen(fils->name);
-	    }		  
-    }
-    else{
-      (*pos) += sprintf(*s_tree+*pos,"%d",fils->num+1);
-    }
-    if((fils->b) && (fils->b[0]) && (fils->b[0]->l > -1.)){
-      if(tree->print_labels){
-	      if(fils->b[0]->n_labels < 10)
-          For(i,fils->b[0]->n_labels){
-          (*pos) += sprintf(*s_tree+*pos,"#%s",fils->b[0]->labels[i]);
-	      }else{
-	    	  (*pos) += sprintf(*s_tree+*pos,"#%d_labels",fils->b[0]->n_labels);
-	      }
-	    }
-      
-      strcat(*s_tree,":");
-      (*pos)++;
-      
-#ifndef MC
-      if(!tree->n_root){
-	      (*pos) += sprintf(*s_tree+*pos,"%.10f",fils->b[0]->l);
-	    }else{
-	      if(pere == tree->n_root){
-	    	  phydbl root_pos = (fils == tree->n_root->v[0])?(tree->n_root_pos):(1.-tree->n_root_pos);
-	    	  (*pos) += sprintf(*s_tree+*pos,"%.10f",tree->e_root->l * root_pos);
-	      }else{
-          (*pos) += sprintf(*s_tree+*pos,"%.10f",fils->b[0]->l);
-	      }
-	    }		
-#else
-      if(!tree->n_root){
-	      (*pos) += sprintf(*s_tree+*pos,"%.10f",fils->b[0]->l);
-	    }else{
-	      (*pos) += sprintf(*s_tree+*pos,"%.10f",tree->rates->cur_l[fils->num]);
-	    }
-#endif
-    }
-    strcat(*s_tree,",");
-    (*pos)++;
-    
-    (*available) = (*available) - (*pos - ori_len);
-    
-    if(*available < 0)
-    {
-      PhyML_Printf("\n. Err in file %s at line %d\n",__FILE__,__LINE__);
-      Warn_And_Exit("");
-    }
-    
-    if(*available < (int)T_MAX_NAME/2)
-    {
-      (*s_tree) = (char *)mRealloc(*s_tree,*pos+(int)T_MAX_NAME,sizeof(char));
-      (*available) = (int)T_MAX_NAME;
-    }
-    /*       printf(" %s [%d,%d]",*s_tree,(int)strlen(*s_tree),*available); */
-  }
-  else
-  {
-    
-    (*s_tree)[(*pos)]='(';
-    (*s_tree)[(*pos)+1]='\0';
-    (*pos)++;
-    (*available)--;
-    
-    if(tree->n_root)
-    {
-      For(i,3)
-	    {
-	      if((fils->v[i] != pere) && (fils->b[i] != tree->e_root))
-          R_wtree(fils,fils->v[i],available,s_tree,pos,tree);
-	      else p=i;
-	    }
-    }
-    else
-    {
-      For(i,3)
-	    {
-	      if(fils->v[i] != pere)
-          R_wtree(fils,fils->v[i],available,s_tree,pos,tree);
-	      else p=i;
-	    }
-    }
-    
-    ori_len = *pos;
-    
-    /*       printf("\n+ Writing on %p",*s_tree); */
-    (*s_tree)[(*pos)-1] = ')';
-    (*s_tree)[(*pos)]   = '\0';
-    
-    if((fils->b) && (fils->b[0]->l > -1.))
-    {
-      if(tree->print_boot_val)
-	    {
-	      (*pos) += sprintf(*s_tree+*pos,"%d",fils->b[p]->bip_score);
-	    }
-      else if(tree->print_alrt_val)
-	    {
-	      (*pos) += sprintf(*s_tree+*pos,"%.10f",fils->b[p]->ratio_test);
-	    }
-      if(tree->print_labels)
-	    {
-	      if(fils->b[p]->n_labels < 10)
-          For(i,fils->b[p]->n_labels) 
-        {
-          (*pos) += sprintf(*s_tree+*pos,"#%s",fils->b[p]->labels[i]);
-        }
-	      else
-        {
-          (*pos) += sprintf(*s_tree+*pos,"#%d_labels",fils->b[p]->n_labels);
-        }
-	    }
-      
-      strcat(*s_tree,":");
-      (*pos)++;
-      
-#ifndef MC
-      if(!tree->n_root)
-	    {
-	      (*pos) += sprintf(*s_tree+*pos,"%.10f",fils->b[p]->l);
-	    }
-      else
-	    {
-	      if(pere == tree->n_root)
-        {
-          phydbl root_pos = (fils == tree->n_root->v[0])?(tree->n_root_pos):(1.-tree->n_root_pos);
-          (*pos) += sprintf(*s_tree+*pos,"%.10f",tree->e_root->l * root_pos);
-        }
-	      else
-        {
-          (*pos) += sprintf(*s_tree+*pos,"%.10f",fils->b[p]->l);
-        }
-	    }
-#else
-      if(!tree->n_root)
-	    {
-	      (*pos) += sprintf(*s_tree+*pos,"%.10f",fils->b[p]->l);
-	    }
-      else
-	    {
-	      (*pos) += sprintf(*s_tree+*pos,"%.10f",tree->rates->cur_l[fils->num]);
-	    }
-#endif
-    }
-    strcat(*s_tree,",");
-    (*pos)++;
-    (*available) = (*available) - (*pos - ori_len);
-    
-    if(*available < 0)
-    {
-      PhyML_Printf("\n. Err in file %s at line %d\n",__FILE__,__LINE__);
-      Warn_And_Exit("");
-    }
-    
-    if(*available < (int)T_MAX_NAME/2)
-    {
-      (*s_tree) = (char *)mRealloc(*s_tree,*pos+(int)T_MAX_NAME,sizeof(char));
-      (*available) = (int)T_MAX_NAME;
-    }
-    /*       printf(" %s [%d,%d]",*s_tree,(int)strlen(*s_tree),*available); */
-  }
-}
-
-/*********************************************************/
 
 void Init_Tree(t_tree *tree, int n_otu)
 {
@@ -1091,364 +395,6 @@ void Detect_Align_File_Format(option *io)
 }
 
 /*********************************************************/
-/*********************************************************/
-
-align **Get_Seq(option *io)
-{
-  io->data = NULL;
-  
-  Detect_Align_File_Format(io);
-  
-  switch(io->data_file_format)
-  {
-    case PHYLIP: 
-    {
-      io->data = Get_Seq_Phylip(io);
-      break;
-    }
-    case NEXUS:
-    {
-        Warn_And_Exit("\n. Err: NEXUS cannot be used. Please switch to Phylip format.\n");
-//      io->nex_com_list = Make_Nexus_Com();
-//      Init_Nexus_Format(io->nex_com_list);
-//      Get_Nexus_Data(io->fp_in_align,io);
-//      Free_Nexus(io);
-//      break;
-    }
-    default:
-    {
-      PhyML_Printf("\n. Err in file %s at line %d\n",__FILE__,__LINE__);
-      Warn_And_Exit("");
-      break;
-    }
-  }
-  if(io->n_otu < 3) {
-      Warn_And_Exit("\n. Err: we need at least 3 sequences to analyze.\n");
-  }
-  
-  if(!io->data)
-  {
-    PhyML_Printf("\n. Err in file %s at line %d\n",__FILE__,__LINE__);
-    Warn_And_Exit("");
-  }
-  else 
-  {  
-    int i,j;
-    char **buff;
-    int *remove;
-    int n_unkn,n_removed,pos;
-    
-    buff = (char **)mCalloc(io->n_otu,sizeof(char *));
-    For(i,io->n_otu) buff[i] = (char *)mCalloc(io->data[0]->len,sizeof(char));
-    remove = (int *)mCalloc(io->data[0]->len,sizeof(int));
-    
-    n_removed = 0;
-    
-    For(i,io->data[0]->len)
-    {
-      For(j,io->n_otu)
-      {
-        if((io->data[j]->state[i] == '?') || (io->data[j]->state[i] == '-')) io->data[j]->state[i] = 'X';
-        if((io->datatype == NT) && (io->data[j]->state[i] == 'N')) io->data[j]->state[i] = 'X';
-        if(io->data[j]->state[i] == 'U') io->data[j]->state[i] = 'T';
-      }
-      
-      n_unkn = 0;
-      For(j,io->n_otu) if(io->data[j]->state[i] == 'X') n_unkn++;
-      
-      if(n_unkn == io->n_otu)
-      {
-        remove[i] = 1;
-        n_removed++;
-      }
-      
-      For(j,io->n_otu) buff[j][i] = io->data[j]->state[i];
-    }
-    
-    pos = 0;
-    For(i,io->data[0]->len)
-    {
-      /* 	  if(!remove[i]) */
-      /* 	    { */
-      For(j,io->n_otu) io->data[j]->state[pos] = buff[j][i];
-      pos++;
-      /* 	    } */
-    }
-    
-    For(i,io->n_otu) io->data[i]->len = pos;
-    For(i,io->n_otu) free(buff[i]);
-    free(buff);
-    free(remove);
-  }
-  
-  
-  return io->data;
-}
-
-/* /\*********************************************************\/ */
-/*********************************************************/
-/*********************************************************/
-
-align **Get_Seq_Phylip(option *io)
-{
-  Read_Ntax_Len_Phylip(io->fp_in_align,&io->n_otu,&io->init_len);
-  
-  if(io->interleaved) io->data = Read_Seq_Interleaved(io);
-  else                io->data = Read_Seq_Sequential(io);
-  
-  return io->data;
-}
-
-/*********************************************************/
-void Read_Ntax_Len_Phylip(FILE *fp ,int *n_otu, int *n_tax)
-{
-  char *line;
-  int readok;
-  
-  line = (char *)mCalloc(T_MAX_LINE,sizeof(char));  
-  
-  readok = 0;
-  do
-  {
-    if(fscanf(fp,"%s",line) == EOF)
-    {
-      free(line); 
-      PhyML_Printf("\n. Err in file %s at line %d\n",__FILE__,__LINE__);
-      Warn_And_Exit("");
-    }
-    else
-    {
-      if(strcmp(line,"\n") && strcmp(line,"\r") && strcmp(line,"\t"))
-	    {
-	      sscanf(line,"%d",n_otu);
-	      if(*n_otu <= 0) Warn_And_Exit("\n. The number of taxa cannot be negative.\n");
-        
-	      if(!fscanf(fp,"%s",line)) Exit("\n");
-	      sscanf(line,"%d",n_tax);
-	      if(*n_tax <= 0) Warn_And_Exit("\n. The sequence length cannot be negative.\n");
-	      else readok = 1;
-	    }
-    }
-  }while(!readok);
-  
-  free(line);
-}
-
-/*********************************************************/
-
-align **Read_Seq_Sequential(option *io)
-{
-  int i;
-  char *line;
-  align **data;
-  /*   char c; */
-  char *format;
-  
-  
-  format = (char *)mCalloc(T_MAX_NAME,sizeof(char));
-  line   = (char *)mCalloc(T_MAX_LINE,sizeof(char));
-  data   = (align **)mCalloc(io->n_otu,sizeof(align *));
-  
-  /*   while((c=fgetc(in))!='\n'); */
-  /*  while(((c=fgetc(io->fp_in_align))!='\n') && (c != ' ') && (c != '\r') && (c != '\t')); */
-  
-  For(i,io->n_otu)
-  {
-    data[i]        = (align *)mCalloc(1,sizeof(align));
-    data[i]->name  = (char *)mCalloc(T_MAX_NAME,sizeof(char));
-    data[i]->state = (char *)mCalloc(io->init_len*io->mod->state_len+1,sizeof(char));
-    
-    data[i]->is_ambigu = NULL;
-    data[i]->len = 0;
-    
-    sprintf(format, "%%%ds", T_MAX_NAME);
-    if(!fscanf(io->fp_in_align,format,data[i]->name)) Exit("\n");
-    
-    while(data[i]->len < io->init_len * io->mod->state_len) Read_One_Line_Seq(&data,i,io->fp_in_align);
-    
-    if(data[i]->len != io->init_len * io->mod->state_len)
-    {
-      PhyML_Printf("\n. Err: Problem with species %s's sequence (check the format).\n",data[i]->name);
-      PhyML_Printf("\n. Observed sequence length: %d, expected length: %d\n",data[i]->len, io->init_len * io->mod->state_len);
-      Warn_And_Exit("");
-    }
-  }
-  
-  For(i,io->n_otu) data[i]->state[data[i]->len] = '\0';
-  
-  free(format);
-  free(line);
-  
-  return data;
-}
-
-/*********************************************************/
-
-align **Read_Seq_Interleaved(option *io)
-{
-  int i,end,num_block;
-  char *line;
-  align **data;//!< array of align pointers.
-  /*   char c; */
-  char *format;
-  
-  line   = (char *)mCalloc(T_MAX_LINE,sizeof(char));
-  format = (char *)mCalloc(T_MAX_NAME, sizeof(char));
-  data   = (align **)mCalloc(io->n_otu,sizeof(align *));
-  
-  /*   while(((c=fgetc(io->fp_in_align))!='\n') && (c != ' ') && (c != '\r') && (c != '\t')); */
-  
-  end = 0;
-  For(i,io->n_otu)
-  {
-    data[i]        = (align *)mCalloc(1,sizeof(align));
-    data[i]->name  = (char *)mCalloc(T_MAX_NAME,sizeof(char));
-    data[i]->state = (char *)mCalloc(io->init_len*io->mod->state_len+1,sizeof(char));
-    
-    data[i]->len       = 0;
-    data[i]->is_ambigu = NULL;
-    
-    sprintf(format, "%%%ds", T_MAX_NAME);
-    /*       sprintf(format, "%%%ds", 10); */
-    
-    if(!fscanf(io->fp_in_align,format,data[i]->name)) Exit("\n");
-    
-    if(!Read_One_Line_Seq(&data,i,io->fp_in_align))
-    {
-      end = 1;
-      if((i != io->n_otu) && (i != io->n_otu-1))
-	    {
-	      PhyML_Printf("\n. Err: Problem with species %s's sequence.\n",data[i]->name);
-	      PhyML_Printf("\n. Observed sequence length: %d, expected length: %d\n",data[i]->len, io->init_len * io->mod->state_len);
-	      Warn_And_Exit("");
-	    }
-      break;
-    }
-  }
-  
-  if(data[0]->len == io->init_len * io->mod->state_len) end = 1;
-  
-  /*   if(end) printf("\n. finished yet '%c'\n",fgetc(io->fp_in_align)); */
-  if(!end)
-  {
-    
-    end = 0;
-    
-    num_block = 1;
-    do
-    {
-      num_block++;
-      
-      /* interblock */
-      if(!fgets(line,T_MAX_LINE,io->fp_in_align)) break;
-      
-      if(line[0] != 13 && line[0] != 10)
-	    {
-	      PhyML_Printf("\n. One or more missing sequences in block %d.\n",num_block-1);
-	      Warn_And_Exit("");
-	    }
-      
-      For(i,io->n_otu) if(data[i]->len != io->init_len * io->mod->state_len) break;
-      
-      if(i == io->n_otu) break;
-      
-      For(i,io->n_otu)
-	    {
-	      if(data[i]->len > io->init_len * io->mod->state_len)
-        {
-          PhyML_Printf("\n. Observed length=%d expected length=%d.\n",data[i]->len,io->init_len * io->mod->state_len);
-          PhyML_Printf("\n. Err: Problem with species %s's sequence.\n",data[i]->name);
-          Warn_And_Exit("");
-        }
-	      else if(!Read_One_Line_Seq(&data,i,io->fp_in_align))
-        {
-          end = 1;
-          if((i != io->n_otu) && (i != io->n_otu-1))
-          {
-            PhyML_Printf("\n. Err: Problem with species %s's sequence.\n",data[i]->name);
-            PhyML_Printf("\n. Observed sequence length: %d, expected length: %d.\n",data[i]->len, io->init_len * io->mod->state_len);
-            Warn_And_Exit("");
-          }
-          break;
-        }
-	    }
-    }while(!end);
-  }
-  
-  For(i,io->n_otu) data[i]->state[data[i]->len] = '\0';
-  
-  For(i,io->n_otu)
-  {
-    if(data[i]->len != io->init_len * io->mod->state_len)
-    {
-      PhyML_Printf("\n. Check sequence '%s' length...\n",data[i]->name);
-      Warn_And_Exit("");
-    }
-  }
-  
-  free(format);
-  free(line);
-  
-  return data;
-}
-
-/*********************************************************/
-int Read_One_Line_Seq(align ***data, int num_otu, FILE *in)
-{
-  char c = ' ';
-  int nchar = 0;
-  
-  while(1)
-  {
-    //       if((c == EOF) || (c == '\n') || (c == '\r')) break;
-    
-    if((c == 13) || (c == 10)) 
-    {
-      // 	  PhyML_Printf("[%d %d]\n",c,nchar); fflush(NULL);
-      if(!nchar)
-	    {
-	      c=(char)fgetc(in);
-	      continue;
-	    }
-      else 
-	    { 
-        // 	      PhyML_Printf("break\n");
-	      break; 
-	    }
-    }
-    else if(c == EOF)
-    {
-      // 	  PhyML_Printf("EOL\n");
-      break;
-    }
-    else if((c == ' ') || (c == '\t') || (c == 32)) 
-    {
-      // 	  PhyML_Printf("[%d]",c);
-      c=(char)fgetc(in); 
-      continue;
-    }
-    
-    nchar++;
-    Uppercase(&c);
-    
-    if(c == '.')
-    {
-      c = (*data)[0]->state[(*data)[num_otu]->len];
-      if(!num_otu)
-        Warn_And_Exit("\n. Err: Symbol \".\" should not appear in the first sequence\n");
-    }
-    (*data)[num_otu]->state[(*data)[num_otu]->len]=c;
-    (*data)[num_otu]->len++;
-    //       PhyML_Printf("%c",c);
-    c = (char)fgetc(in);
-    if(c == ';') break;
-  }
-  
-  if(c == EOF) return 0;
-  else return 1;  
-}
-
-/*********************************************************/
 
 void Uppercase(char *ch)
 {
@@ -1458,7 +404,7 @@ void Uppercase(char *ch)
 
 /*********************************************************/
 
-calign *Compact_Data(align **data, option *io)
+calign *Compact_Data(align **data, option *io, model *mod)
 {
   calign *cdata_tmp,*cdata;
   int i,j,k,site;
@@ -1470,7 +416,7 @@ calign *Compact_Data(align **data, option *io)
   int compress;
   int n_ambigu,is_ambigu;
   
-  n_otu      = io->n_otu;
+  n_otu      = mod->n_otu;
   n_patt     = 0;
   which_patt = 0;
   
@@ -1481,24 +427,24 @@ calign *Compact_Data(align **data, option *io)
     strcpy(sp_names[i],data[i]->name);
   }
   
-  if(io->datatype==CODON) Nucleotides2Codons(data, io);//!< Added by Marcelo. Translates nucleotides into codons.
+  if(mod->datatype==CODON) Nucleotides2Codons(data, io, mod);//!< Added by Marcelo. Translates nucleotides into codons.
   else{
-    if(io->datatype==AA && io->convert_NT_to_AA){
+    if(mod->datatype==AA && io->convert_NT_to_AA){
 	//nothing yet
     	printf("\n\nCan't use nucleotides or AAs\n\n"); //Ken 4/1/2017
     	exit(EXIT_FAILURE);
       }
   }
   
-  cdata_tmp = Make_Cseq(n_otu,data[0]->len,io->mod->state_len,data[0]->len,sp_names, io);
+  cdata_tmp = Make_Cseq(n_otu,data[0]->len,mod->state_len,data[0]->len,sp_names, io); //was io-> mod Ken 9/1/2018
   proot     = (pnode *)Create_Pnode(T_MAX_ALPHABET);
   
   For(i,n_otu) free(sp_names[i]);
   free(sp_names);
   
-  if(data[0]->len%io->mod->state_len)
+  if(data[0]->len%mod->state_len)//was io-> mod
   {
-    PhyML_Printf("\n. Sequence length is not a multiple of %d\n",io->mod->state_len);
+    PhyML_Printf("\n. Sequence length is not a multiple of %d\n",mod->state_len); //was io-> mod
     Warn_And_Exit("");
   }
   
@@ -1506,14 +452,14 @@ calign *Compact_Data(align **data, option *io)
   n_ambigu = 0;
   is_ambigu = 0;
   
-  if(!io->quiet && !compress) { PhyML_Printf("\n. WARNING: sequences are not compressed !\n");}
+  if(!mod->quiet && !compress) { PhyML_Printf("\n. WARNING: sequences are not compressed !\n");}
   
-  Fors(site,data[0]->len,io->mod->state_len)
+  Fors(site,data[0]->len,mod->state_len) //was io-> mod
   {
     if(io->rm_ambigu) //remove columns with ambiguous data if requested
     {
       is_ambigu = 0;
-      For(j,n_otu) if(Is_Ambigu(data[j]->state+site,io->datatype,io->mod->state_len)) break;
+      For(j,n_otu) if(Is_Ambigu(data[j]->state+site,io->datatype,mod->state_len)) break; //was io-> mod
       if(j != n_otu)
       {
         is_ambigu = 1;
@@ -1526,7 +472,7 @@ calign *Compact_Data(align **data, option *io)
       if(compress)
       {
         which_patt = -1;
-        Traverse_Prefix_Tree(site,-1,&which_patt,&n_patt,data,io,proot);
+        Traverse_Prefix_Tree(site,-1,&which_patt,&n_patt,data,io,proot,mod);
         if(which_patt == n_patt-1) /* New pattern found */
         {
           n_patt--;
@@ -1546,7 +492,7 @@ calign *Compact_Data(align **data, option *io)
       {
         For(j,n_otu)
         { 
-          Copy_One_State(data[j]->state+site, cdata_tmp->c_seq[j]->state+n_patt*io->mod->state_len, io->mod->state_len);
+          Copy_One_State(data[j]->state+site, cdata_tmp->c_seq[j]->state+n_patt*mod->state_len, mod->state_len); //was io->mod
           if(io->datatype==CODON) CopyExtraFieldsCodon(data[j], site, cdata_tmp->c_seq[j],  n_patt);//!< Added by Marcelo.The name explains everything.
         }
         
@@ -1556,13 +502,13 @@ calign *Compact_Data(align **data, option *io)
           {
             if (io->datatype==CODON)
             {
-              if(!(Are_Compatible(cdata_tmp->c_seq[i]->state+n_patt*io->mod->state_len,
-                                  cdata_tmp->c_seq[j]->state+n_patt*io->mod->state_len,
-                                  io->mod->state_len,
+              if(!(Are_Compatible(cdata_tmp->c_seq[i]->state+n_patt*mod->state_len, //was io-> mod Ken 9/1/2018
+                                  cdata_tmp->c_seq[j]->state+n_patt*mod->state_len,
+                                  mod->state_len, //was io-> mod Ken 9/1/2018
                                   io->datatype,cdata_tmp->c_seq[i]->alternativeCodons[n_patt],cdata_tmp->c_seq[j]->alternativeCodons[n_patt]))) break;
-            }else if(!(Are_Compatible(cdata_tmp->c_seq[i]->state+n_patt*io->mod->state_len,
-                                      cdata_tmp->c_seq[j]->state+n_patt*io->mod->state_len,
-                                      io->mod->state_len,
+            }else if(!(Are_Compatible(cdata_tmp->c_seq[i]->state+n_patt*mod->state_len, //was io-> mod Ken 9/1/2018
+                                      cdata_tmp->c_seq[j]->state+n_patt*mod->state_len, //was io-> mod Ken 9/1/2018
+                                      mod->state_len,  //was io-> mod Ken 9/1/2018
                                       io->datatype,0,0))) break;
           }
           if(j != n_otu) break;
@@ -1574,7 +520,7 @@ calign *Compact_Data(align **data, option *io)
           else 
             For(j,n_otu)
           {
-            cdata_tmp->invar[n_patt] = Assign_State(cdata_tmp->c_seq[j]->state+n_patt*io->mod->state_len, io->datatype, io->mod->state_len);
+            cdata_tmp->invar[n_patt] = Assign_State(cdata_tmp->c_seq[j]->state+n_patt*mod->state_len, io->datatype, mod->state_len); //was io-> mod Ken 9/1/2018
             if(cdata_tmp->invar[n_patt] > -1.) break; /*!< It is not actually (at least one state in the column is ambiguous).*/
           }
         }
@@ -1606,7 +552,7 @@ calign *Compact_Data(align **data, option *io)
   /*     { */
   /*       For(j,cdata_tmp->crunch_len) */
   /* 	{ */
-  /* 	  printf("%c",cdata_tmp->c_seq[i]->state[j*io->mod->state_len+1]); */
+  /* 	  printf("%c",cdata_tmp->c_seq[i]->state[j*mod->state_len+1]); */  //was io-> mod Ken 9/1/2018
   /* 	} */
   /*       printf("\n"); */
   /*     } */
@@ -1624,19 +570,19 @@ calign *Compact_Data(align **data, option *io)
   
   n_sites = 0;
   For(i,cdata_tmp->crunch_len) n_sites += cdata_tmp->wght[i];
-  if(n_sites != data[0]->len / io->mod->state_len)
+  if(n_sites != data[0]->len / mod->state_len)  //was io-> mod Ken 9/1/2018
   {
     PhyML_Printf("\n. Err in file %s at line %d\n",__FILE__,__LINE__);
     Warn_And_Exit("");
   }
   else if(io->datatype == CODON)                                                                           //!< Added by Marcelo.
   {
-    if(!(io->mod->s_opt->user_state_freq)) {
-      switch(io->mod->freq_model) {
+    if(!(mod->s_opt->user_state_freq)) {  //was io-> mod Ken 9/1/2018
+      switch(mod->freq_model) {
         case F1XSENSECODONS:                                                                                 //!< Added by Marcelo.	
         case F1X4:
         case F3X4: 
-        case CF3X4: Get_Base_Freqs_CODONS_FaXb(cdata_tmp, data, io->mod->freq_model, io->mod);                //!< Added by Marcelo.
+        case CF3X4: Get_Base_Freqs_CODONS_FaXb(cdata_tmp, data, mod->freq_model, mod);                //!< Added by Marcelo. was io-> mod Ken 9/1/2018
           break;
         case FMODEL:
           break;
@@ -1651,14 +597,14 @@ calign *Compact_Data(align **data, option *io)
   }
   else {/* Uniform state frequency distribution.*/}
   
-  cdata = Copy_Cseq(cdata_tmp,io);                                                                       
+  cdata = Copy_Cseq(cdata_tmp,io,mod);
   
   Free_Cseq(cdata_tmp);                                                                                   
   Free_Prefix_Tree(proot,T_MAX_ALPHABET);
   return cdata;
 }
 /*********************************************************/
-calign *Compact_Cdata(calign *data, option *io)
+calign *Compact_Cdata(calign *data, option *io, model* mod)
 {
   calign *cdata;
   int i,j,k,site;
@@ -1671,7 +617,7 @@ calign *Compact_Cdata(calign *data, option *io)
   cdata->n_otu  = n_otu;
   cdata->c_seq  = (align **)mCalloc(n_otu,sizeof(align *));
   cdata->wght   = (int *)mCalloc(data->crunch_len,sizeof(int));
-  cdata->b_frq  = (phydbl *)mCalloc(io->mod->ns,sizeof(phydbl));
+  cdata->b_frq  = (phydbl *)mCalloc(mod->ns,sizeof(phydbl));  //was io-> mod Ken 9/1/2018
   cdata->ambigu = (short int *)mCalloc(data->crunch_len,sizeof(short int));
   cdata->invar  = (short int *)mCalloc(data->crunch_len,sizeof(short int));
   
@@ -1708,9 +654,9 @@ calign *Compact_Cdata(calign *data, option *io)
           }
           else
           {
-            if(strncmp(cdata->c_seq[j]->state+k*io->mod->state_len,
-                       data->c_seq[j]->state+site*io->mod->state_len,
-                       io->mod->state_len))
+            if(strncmp(cdata->c_seq[j]->state+k*mod->state_len,  //was io-> mod Ken 9/1/2018
+                       data->c_seq[j]->state+site*mod->state_len,
+                       mod->state_len))
               break;
           }
         }
@@ -1729,9 +675,9 @@ calign *Compact_Cdata(calign *data, option *io)
 	    {
 	      For(j,n_otu)
 	      { 
-          Copy_One_State(data->c_seq[j]->state+site*io->mod->state_len,
-                         cdata->c_seq[j]->state+n_patt*io->mod->state_len,
-                         io->mod->state_len);
+          Copy_One_State(data->c_seq[j]->state+site*mod->state_len,  //was io-> mod Ken 9/1/2018
+                         cdata->c_seq[j]->state+n_patt*mod->state_len,
+                         mod->state_len);
           if(io->datatype==CODON) CopyExtraFieldsCodon(data->c_seq[j], site, cdata->c_seq[j],  n_patt);//!< Added by Marcelo.The name explains everything.
 	      }
 	      For(i,n_otu)
@@ -1740,14 +686,14 @@ calign *Compact_Cdata(calign *data, option *io)
           {
             if(io->datatype==CODON)
             {
-              if(!(Are_Compatible(cdata->c_seq[i]->state+n_patt*io->mod->state_len,
-                                  cdata->c_seq[j]->state+n_patt*io->mod->state_len,
-                                  io->mod->state_len,
+              if(!(Are_Compatible(cdata->c_seq[i]->state+n_patt*mod->state_len,  //was io-> mod Ken 9/1/2018
+                                  cdata->c_seq[j]->state+n_patt*mod->state_len,
+                                  mod->state_len,
                                   io->datatype,cdata->c_seq[i]->alternativeCodons[n_patt], cdata->c_seq[j]->alternativeCodons[n_patt]))) break;
             }
-            else if(!(Are_Compatible(cdata->c_seq[i]->state+n_patt*io->mod->state_len,
-                                     cdata->c_seq[j]->state+n_patt*io->mod->state_len,
-                                     io->mod->state_len,
+            else if(!(Are_Compatible(cdata->c_seq[i]->state+n_patt*mod->state_len,  //was io-> mod Ken 9/1/2018
+                                     cdata->c_seq[j]->state+n_patt*mod->state_len,
+                                     mod->state_len,
                                      io->datatype,0, 0))) break;
           }
           if(j != n_otu) break;
@@ -1759,9 +705,9 @@ calign *Compact_Cdata(calign *data, option *io)
           else 
             For(j,n_otu)
           {
-            cdata->invar[n_patt] = Assign_State(cdata->c_seq[j]->state+n_patt*io->mod->state_len,
+            cdata->invar[n_patt] = Assign_State(cdata->c_seq[j]->state+n_patt*mod->state_len,  //was io-> mod Ken 9/1/2018
                                                 io->datatype,
-                                                io->mod->state_len);
+                                                mod->state_len);
             if(cdata->invar[n_patt] > -1.) break;
           }
 	      }
@@ -1785,15 +731,14 @@ calign *Compact_Cdata(calign *data, option *io)
 }
 
 /*********************************************************/
-/*********************************************************/
 
-void Traverse_Prefix_Tree(int site, int seqnum, int *patt_num, int *n_patt, align **data, option *io, pnode *n)
+void Traverse_Prefix_Tree(int site, int seqnum, int *patt_num, int *n_patt, align **data, option *io, pnode *n,model* mod)
 {
   int ret_val;
   
   ret_val = -1;
   
-  if(seqnum == io->n_otu-1)
+  if(seqnum == mod->n_otu-1)
   {
     n->weight++;
     if(n->weight == 1)
@@ -1809,10 +754,10 @@ void Traverse_Prefix_Tree(int site, int seqnum, int *patt_num, int *n_patt, alig
     int next_state;
     
     next_state = -1;
-    next_state = Assign_State_With_Ambiguity(data[seqnum+1]->state+site, io->datatype, io->mod->state_len);
+    next_state = Assign_State_With_Ambiguity(data[seqnum+1]->state+site, io->datatype, mod->state_len);  //was io-> mod Ken 9/1/2018
     
     if(!n->next[next_state]) n->next[next_state] = Create_Pnode(T_MAX_ALPHABET);
-    Traverse_Prefix_Tree(site,seqnum+1,patt_num,n_patt,data,io,n->next[next_state]);
+    Traverse_Prefix_Tree(site,seqnum+1,patt_num,n_patt,data,io,n->next[next_state],mod);
   }
 }
 
@@ -1830,11 +775,7 @@ pnode *Create_Pnode(int size)
   n->num = -1;
   return n;
 }
-/*********************************************************/
 
-
-
-/*********************************************************/
 /*********************************************************/
 
 t_tree *Read_Tree_File_Phylip(FILE *fp_input_tree)
@@ -2072,12 +1013,12 @@ void Print_Site_Lk(t_tree *tree, FILE *fp)
     token *rootTkn = Emit_Root_Token();
     token *currTkn = rootTkn;
     
-    if(!tree->io->print_site_lnl) {
+    if(!tree->mod->print_site_lnl) {
         PhyML_Printf("\n. Err in file %s at line %d\n",__FILE__,__LINE__);
         Warn_And_Exit("");
     }
     
-    if(!tree->io->print_trace) {
+    if(!tree->mod->print_trace) {
         currTkn = Emit_Out_Token(currTkn, "Header", "Header", COMMENTTKN, TFSTRING, "%s", "Note : P(D|M) is the probability of site D given the model M (i.e., the site likelihood)");
         if(tree->mod->n_catg > 1 || tree->mod->invar) {
             currTkn = Emit_Out_Token(currTkn, "Header", "Header", COMMENTTKN, TFSTRING, "%s", "P(D|M,rr[x]) is the probability of site D given the model M and the relative rate");
@@ -2153,7 +1094,7 @@ void Print_Site_Lk(t_tree *tree, FILE *fp)
     }
     currTkn = Emit_Out_Token(currTkn, "Sites", "Sites", SETENDTKN, TFSTRING, "%s", "");
     
-    Output_Tokens(rootTkn, tree->io->out_stats_format, fp);
+    Output_Tokens(rootTkn, tree->mod->out_stats_format, fp);
 }
 
 
@@ -2661,10 +1602,10 @@ void NNI(t_tree *tree, t_edge *b_fcus, int do_swap)
 
   lk0_init = Update_Lk_At_Given_Edge(b_fcus,tree);
   
-  if(tree->io->datatype==CODON) //!< Added by Marcelo.This was a sanity check ... we can include it again after the likelihood calculation is revised.
+  if(tree->mod->datatype==CODON) //!< Added by Marcelo.This was a sanity check ... we can include it again after the likelihood calculation is revised.
   {
     //     if(lk0_init < lk_init)
-    //     if(FABS(lk0_init - lk_init) > tree->io->mod->s_opt->min_diff_lk_codonModels)
+    //     if(FABS(lk0_init - lk_init) > tree->mod-> mod->s_opt->min_diff_lk_codonModels)
     //     { 
     //       PhyML_Printf("\n. lk_init = %.20f; lk_curr = %.20f diff = %.20f l = %G\n",
     //       lk_init,
@@ -2728,7 +1669,7 @@ void NNI(t_tree *tree, t_edge *b_fcus, int do_swap)
     }*/
     
   }
-  if(tree->io->datatype==CODON) //!< Changed by Marcelo.//!< Added by Marcelo.This was a sanity check ... we can include it again after the likelihood calculation is revised.
+  if(tree->mod->datatype==CODON) //!< Changed by Marcelo.//!< Added by Marcelo.This was a sanity check ... we can include it again after the likelihood calculation is revised.
   {
     //     if(lk0 < lk_init)
     //     if(lk0 < lk_init - tree->mod->s_opt->min_diff_lk_codonModels)
@@ -2985,16 +1926,15 @@ calign *Make_Cseq(int n_otu, int crunch_len, int state_len, int init_len, char *
     if(io->datatype==CODON)//!< Added by Marcelo.//!< 
     {
       cdata->c_seq[j]->alternativeCodons=(char **)mCalloc(crunch_len,sizeof(char *));
-      //For(i,crunch_len) cdata->c_seq[j]->alternativeCodons[i]=(char *)mCalloc(io->mod->ns+1,sizeof(char));  
+      //For(i,crunch_len) cdata->c_seq[j]->alternativeCodons[i]=(char *)mCalloc(io- >mod->ns+1,sizeof(char));
     }
   }
   return cdata;
 }
 
 /*********************************************************/
-/*********************************************************/
 
-calign *Copy_Cseq(calign *ori, option *io)
+calign *Copy_Cseq(calign *ori, option *io, model* mod)
 {
   calign *new;
   int i,j,k,n_otu,c_len;
@@ -3010,7 +1950,7 @@ calign *Copy_Cseq(calign *ori, option *io)
     strcpy(sp_names[i],ori->c_seq[i]->name);
   }
   
-  new = Make_Cseq(n_otu,c_len+1,io->mod->state_len,ori->init_len,sp_names, io);
+  new = Make_Cseq(n_otu,c_len+1,mod->state_len,ori->init_len,sp_names, io);  //was io-> mod Ken 9/1/2018
   
   new->obs_pinvar = ori->obs_pinvar;
   
@@ -3020,7 +1960,7 @@ calign *Copy_Cseq(calign *ori, option *io)
   {
     For(i,ori->n_otu) 
     {
-      For(k,io->mod->state_len) new->c_seq[i]->state[j*io->mod->state_len+k] = ori->c_seq[i]->state[j*io->mod->state_len+k];
+      For(k,mod->state_len) new->c_seq[i]->state[j*mod->state_len+k] = ori->c_seq[i]->state[j*mod->state_len+k]; //was io-> mod Ken 9/1/2018
       new->c_seq[i]->is_ambigu[j] = ori->c_seq[i]->is_ambigu[j];
     }
     
@@ -3045,9 +1985,9 @@ calign *Copy_Cseq(calign *ori, option *io)
     }
   }
   
-  For(i,ori->n_otu) new->c_seq[i]->state[c_len*io->mod->state_len] = '\0'; //!< Why this?
+  For(i,ori->n_otu) new->c_seq[i]->state[c_len*mod->state_len] = '\0'; //!< Why this?  //was io-> mod Ken 9/1/2018
   
-  For(i,io->mod->ns) new->b_frq[i] = ori->b_frq[i];
+  For(i,mod->ns) new->b_frq[i] = ori->b_frq[i];  //was io-> mod Ken 9/1/2018
   
   new->init_len           = ori->init_len;
   new->clean_len          = ori->clean_len;
@@ -3077,987 +2017,6 @@ optimiz *Make_Optimiz()
 /*********************************************************/
 
 
-int Filexists(char *filename)
-{
-  FILE *fp;
-  fp =fopen(filename,"r");
-  if (fp) {
-    fclose(fp);
-    return 1;
-  } else
-    return 0;
-}
-
-/*********************************************************/
-
-FILE *Openfile(char *filename, int mode)
-{
-  /* mode = 0 -> read */
-  /* mode = 1 -> write */
-  /* mode = 2 -> append */
-  
-  FILE *fp;
-  char *s;
-  int open_test=0;
-  
-  /*   s = (char *)mCalloc(T_MAX_FILE,sizeof(char)); */
-  
-  /*   strcpy(s,filename); */
-  
-  s = filename;
-  
-  fp = NULL;
-  
-  switch(mode)
-  {
-    case 0 :
-    {
-      while(!(fp = (FILE *)fopen(s,"r")) && ++open_test<10)
-      {
-        PhyML_Printf("\n. Can't open file '%s', enter a new name : ",s);
-        Getstring_Stdin(s);
-      }
-      break;
-    }
-    case 1 :
-    {
-      fp = (FILE *)fopen(s,"w");
-      break;
-    }
-    case 2 :
-    {
-      fp = (FILE *)fopen(s,"a");
-      break;
-    }
-      
-    default : break;
-      
-  }
-  
-  /*   free(s); */
-  
-  return fp;
-}
-
-/*********************************************************/
-
-void Print_Fp_Out(FILE *fp_out, time_t t_beg, time_t t_end, t_tree *tree, option *io, int n_data_set, int num_tree) {
-    char *s,*r,*t;
-    s=(char *)mCalloc(T_MAX_NAME,sizeof(char));//!< Added by Marcelo.
-    r=(char *)mCalloc(T_MAX_NAME,sizeof(char));//!< Added by Marcelo.
-    t=(char *)mCalloc(T_MAX_NAME,sizeof(char));//!< Added by Marcelo.
-    div_t hour,min;
-    int i,j,c;
-    char *nucs[] = {"A", "C", "G", "T"};
-    token *rootTkn = Emit_Root_Token();
-    token *currTkn = rootTkn;
-    
-    /*   int i; */
-    
-    /*   For(i,2*tree->n_otu-3) fprintf(fp_out,"\n. * Edge %3d: %f",i,tree->t_edges[i]->l); */
-    
-    if((!n_data_set) || (!num_tree)) {
-        currTkn = Print_Banner_Small(currTkn);
-    }
-    
-    currTkn = Emit_Out_Token(currTkn, "Sequence filename", "inputfile", SCALARTKN, TFSTRING, "%s", Basename(io->in_align_file));
-    currTkn = Emit_Out_Token(currTkn, "Data set", "dataset", SCALARTKN, TFNUMERIC, "%g", (double) n_data_set);
-    
-    if(io->mod->s_opt->random_input_tree) {
-        currTkn = Emit_Out_Token(currTkn, "Random init tree #", "RandInitTree", SCALARTKN, TFNUMERIC, "%g", (double)num_tree+1);
-    } else if(io->n_trees > 1) {
-        currTkn = Emit_Out_Token(currTkn, "Starting tree number", "StartTree", SCALARTKN, TFNUMERIC, "%g", (double)num_tree+1);
-    }
-    
-    if(io->mod->s_opt->opt_topo) {
-        if(io->mod->s_opt->topo_search == NNI_MOVE) {
-            currTkn = Emit_Out_Token(currTkn, "Tree topology search", "Topologysearch", SCALARTKN, TFSTRING, "%s", "NNIs");
-        } else if(io->mod->s_opt->topo_search == SPR_MOVE) {
-            currTkn = Emit_Out_Token(currTkn, "Tree topology search", "Topologysearch", SCALARTKN, TFSTRING, "%s", "SSRs");
-        } else if(io->mod->s_opt->topo_search == BEST_OF_NNI_AND_SPR) {
-            currTkn = Emit_Out_Token(currTkn, "Tree topology search", "Topologysearch", SCALARTKN, TFSTRING, "NNIs and SSRs");
-        }
-    } else {
-        currTkn = Emit_Out_Token(currTkn, "Tree topology search", "Topologysearch", SCALARTKN, TFSTRING, "%s", "fixed");
-    }
-    
-    
-    /* was after Sequence file ; moved here FLT */
-    
-    if(io->in_tree == 2) {
-        strcat(strcat(strcat(s,"user tree ("),io->in_tree_file),")");
-    } else {
-        if(!io->mod->s_opt->random_input_tree) {
-            if(io->in_tree == 0)
-                strcat(s,"BioNJ");
-            if(io->in_tree == 1)
-                strcat(s,"parsimony");
-        } else {
-            strcat(s,"random tree");
-        }
-    }
-    
-    if(io->datatype==CODON) {//!< Added by Marcelo
-        switch(io->init_DistanceTreeCD) {
-            case KOSI07: strcat(s," + GYECMK07\0");break;
-            case SCHN05: strcat(s," + GYECMS05\0");break;
-            case NUCLEO: strcat(s," + JC69\0");break;
-            case ECMUSR: strcat(s," + ECMUSR\0");break;
-            default: break;
-        }
-    }
-    currTkn = Emit_Out_Token(currTkn, "Initial tree", "InitTree", SCALARTKN, TFSTRING, "%s", s);
-    
-    if(tree->io->datatype == NT) {
-        currTkn = Emit_Out_Token(currTkn, "Model name", "name", SCALARTKN, TFSTRING, "%s %s", io->mod->modelname, t);
-        if(io->mod->whichmodel == CUSTOM) {
-            currTkn = Emit_Out_Token(currTkn, "Custom model name", "custname", SCALARTKN, TFSTRING, "%s", io->mod->custom_mod_string, t);
-        }
-    } else if(tree->io->datatype == AA) {
-        currTkn = Emit_Out_Token(currTkn, "Model name", "name", SCALARTKN, TFSTRING, "%s %s", io->mod->modelname, t);
-    } else if(tree->io->datatype == CODON) {
-        switch(io->mod->freq_model) {
-            case F1XSENSECODONS:
-                strcpy(t,"F1x");
-                sprintf(r,"%d",io->mod->ns);
-                strcat(t,r);
-                break;
-            case F1X4: strcpy(t,"F1x4");
-                break;
-            case F3X4: strcpy(t,"F3x4");
-                break;
-            case CF3X4: strcpy(t,"CF3x4");
-                break;
-            default:
-                break;
-        }
-        
-        currTkn = Emit_Out_Token(currTkn, "Model name", "name", SCALARTKN, TFSTRING, "%s %s", io->mod->modelname, t);
-        if(io->modeltypeOpt == HLP17){
-          currTkn = Emit_Out_Token(currTkn, "Hotspots", "motifs", SCALARTKN, TFSTRING, "%s", io->mod->motifstring); 
-          currTkn = Emit_Out_Token(currTkn, "h optimization", "motifs", SCALARTKN, TFSTRING, "%s", io->mod->hotnessstring);
-          currTkn = Emit_Out_Token(currTkn, "Partition file", "motifs", SCALARTKN, TFSTRING, "%s", io->mod->partfile);
-        }
-
-
-        
-        switch(io->mod->genetic_code)
-        {
-            case   STANDARD: strcpy(s,"Standard\0");break;
-            case       TVMC: strcpy(s,"Vertebrate Mitochondrial\0"); break;
-            case       TYMC: strcpy(s,"Yeast Mitochondrial\0"); break;
-            case THMPCMCMSC: strcpy(s,"Mold, Protozoan, and Coelenterate Mitochondrial Code and the Mycoplasma/Spiroplasma\0"); break;
-            case      THIMC: strcpy(s,"Invertebrate Mitochondrial\0"); break;
-            case    THCDHNC: strcpy(s,"Ciliate, Dasycladacean and Hexamita Nuclear\0"); break;
-            case     THEFMC: strcpy(s,"Echinoderm and Flatworm Mitochondrial\0"); break;
-            case      THENC: strcpy(s,"Euplotid Nuclear\0"); break;
-            case    THBAPPC: strcpy(s,"Bacterial, Archaeal and Plant Plastid\0"); break;
-            case     THAYNC: strcpy(s,"Alternative Yeast Nuclear\0"); break;
-            case      THAMC: strcpy(s,"Ascidian Mitochondrial\0"); break;
-            case     THAFMC: strcpy(s,"Alternative Flatworm Mitochondrial\0"); break;
-            case       BLNC: strcpy(s,"Blepharisma Nuclear\0"); break;
-            case       CHMC: strcpy(s,"Chlorophycean Mitochondrial\0"); break;
-            case       TRMC: strcpy(s,"Trematode Mitochondrial\0"); break;
-            case      SCOMC: strcpy(s,"Scenedesmus obliquus mitochondrial\0"); break;
-            case       THMC: strcpy(s,"Thraustochytrium Mitochondrial\0"); break;
-            default : Warn_And_Exit("Genetic code not implemented."); break;
-        }
-        currTkn = Emit_Out_Token(currTkn, "Genetic code", "GenCode", SCALARTKN,TFSTRING,  "%s", s );
-    } else {
-        currTkn = Emit_Out_Token(currTkn, "Substitution model", "SubstModel", SCALARTKN, TFSTRING, "%s", io->mod->modelname );
-    }
-    
-
-    currTkn = Emit_Out_Token(currTkn, "Number of taxa", "Taxa", SCALARTKN, TFNUMERIC, "%g", (double)tree->n_otu);
-    
-    if(io->ratio_test == 1) {
-        currTkn = Emit_Out_Token(currTkn, "Branch support", "BranchSupport", SCALARTKN, TFSTRING, "%s", "aLRT statistics");
-    } else if(io->ratio_test == 2) {
-        currTkn = Emit_Out_Token(currTkn, "Branch support", "BranchSupport", SCALARTKN, TFSTRING, "%s", "aLRT (Chi2-based parametric)");
-    } else if(io->ratio_test == 3) {
-        currTkn = Emit_Out_Token(currTkn, "Branch support", "BranchSupport", SCALARTKN, TFSTRING, "%s", "aLRT (Minimum of SH-like and Chi2-based)");
-    } else if(io->ratio_test == 4) {
-        currTkn = Emit_Out_Token(currTkn, "Branch support", "BranchSupport", SCALARTKN, TFSTRING, "%s", "SH-like");
-    } else if(io->ratio_test == 5) {
-        currTkn = Emit_Out_Token(currTkn, "Branch support", "BranchSupport", SCALARTKN, TFSTRING, "%s", "aBayes");
-    }
-    
-    currTkn = Emit_Out_Token(currTkn, "Log-likelihood", "logL", SCALARTKN, TFNUMERIC, "%.6f", tree->c_lnL);/*was last ; moved here FLT*/
-    
-    if(tree->io->datatype==AA) {
-        if(tree->io->convert_NT_to_AA) {
-            currTkn = Emit_Out_Token(currTkn, "Codon Log-likelihood (no gaps)", "CodonLogLNoGaps", SCALARTKN, TFNUMERIC, "%.6f", tree->c_lnL+tree->logLk_correction);
-            currTkn = Emit_Out_Token(currTkn, "Codon Log-likelihood (with gaps)", "CodonLogLGaps", SCALARTKN, TFNUMERIC, "%.6f", tree->c_lnL+tree->logLk_correction_gaps+tree->logLk_correction);
-            currTkn = Emit_Out_Token(currTkn, "Codon Log-lk. (approx, no gaps)", "CodonLogLApproxNoGaps", SCALARTKN, TFNUMERIC, "%.6f", tree->c_lnL+tree->logLk_correction_approx);
-            currTkn = Emit_Out_Token(currTkn, "Codon Log-lk. (approx, with gaps)", "CodonLogLApproxGaps", SCALARTKN, TFNUMERIC, "%.6f", tree->c_lnL+tree->logLk_correction_gaps_approx+tree->logLk_correction_approx);
-        } else {
-            currTkn = Emit_Out_Token(currTkn, "Codon Log-lk. (approx, no gaps)", "CodonLogLApproxNoGaps", SCALARTKN, TFNUMERIC, "%.6f", tree->c_lnL+tree->logLk_correction_approx);
-            currTkn = Emit_Out_Token(currTkn, "Codon Log-lk. (approx, with gaps)", "CodonLogLApproxGaps", SCALARTKN, TFNUMERIC, "%.6f", tree->c_lnL+tree->logLk_correction_gaps_approx+tree->logLk_correction_approx);
-        }
-    } else if(tree->io->datatype==NT) {
-        currTkn = Emit_Out_Token(currTkn, "Codon Log-lk. (equivalent)", "CodonLogLEquiv", SCALARTKN, TFNUMERIC, "%.6f", tree->c_lnL);
-    }
-    Unconstraint_Lk(tree);
-    
-    currTkn = Emit_Out_Token(currTkn, "Unconstrained Log-likelihood", "Unconstrained lnL", SCALARTKN, TFNUMERIC, "%.6f", tree->unconstraint_lk);
-    
-    currTkn = Emit_Out_Token(currTkn, "Parsimony", "Parsimony", SCALARTKN, TFNUMERIC, "%g", (double)tree->c_pars);
-    
-    currTkn = Emit_Out_Token(currTkn, "Tree size", "Tree size", SCALARTKN, TFNUMERIC, "%.5f", tree->size);
-    
-    if(tree->mod->io->datatype==CODON && tree->mod->whichrealmodel==PCM) {
-        currTkn = Emit_Out_Token(currTkn, "Principal components", "PCs", TBLSTARTTKN, TFNUMERIC, "%g", (double)tree->mod->npcs);
-        for(i = 0; i < tree->mod->npcs; i++ ) {
-            char * buf;
-            int temp2 = asprintf(&buf, "PC%i", i); //changed by Ken 12/1/2017
-            currTkn = Emit_Out_Token(currTkn, buf, buf, SCALARTKN, TFNUMERIC, "%10f", tree->mod->pcsC[i]);
-        }
-        currTkn = Emit_Out_Token(currTkn, "Principal components", "PCs", TBLENDTKN, TFSTRING, "%s", "");
-    }
-    
-    if(tree->mod->io->datatype==CODON) {
-        if((tree->mod->n_w_catg == 1)&&(tree->mod->n_catg > 1)) {
-            currTkn = Emit_Out_Token(currTkn, "Discrete gamma model", "DiscGammaMod", SETSTARTTKN, TFSTRING, "%s", "Yes");
-            currTkn = Emit_Out_Token(currTkn, "Number of categories", "NrCat", SCALARTKN, TFNUMERIC, "%g", (double)tree->mod->n_catg );
-            currTkn = Emit_Out_Token(currTkn, "Gamma shape parameter", "Alpha", SCALARTKN, TFNUMERIC, "%.3f", tree->mod->alpha );
-            currTkn = Emit_Out_Token(currTkn, "Discrete gamma model", "DiscGammaMod", SETENDTKN, TFSTRING, "%s", "Yes");
-        } else if((tree->mod->n_w_catg > 1) && (tree->mod->omegaSiteVar==DGAMMAK)) {
-            currTkn = Emit_Out_Token(currTkn, "Discrete gamma model", "DiscGammaMod", SETSTARTTKN, TFSTRING, "%s", "Yes");
-            currTkn = Emit_Out_Token(currTkn, "Number of categories", "NrCat", SCALARTKN, TFNUMERIC, "%g", (double)tree->mod->n_w_catg );
-            currTkn = Emit_Out_Token(currTkn, "Gamma shape (alpha)", "Alpha", SCALARTKN, TFNUMERIC, "%.3f", tree->mod->alpha );
-            currTkn = Emit_Out_Token(currTkn, "Gamma shape (beta)", "Beta", SCALARTKN, TFNUMERIC, "%.3f", tree->mod->beta );
-            currTkn = Emit_Out_Token(currTkn, "Discrete gamma model", "DiscGammaMod", SETENDTKN, TFSTRING, "%s", "Yes");
-        }
-    } else {
-        if(tree->mod->n_catg>1) {
-            currTkn = Emit_Out_Token(currTkn, "Discrete gamma model", "DiscGammaMod", SETSTARTTKN, TFSTRING, "%s", "Yes");
-            currTkn = Emit_Out_Token(currTkn, "Number of categories", "NrCat", SCALARTKN, TFNUMERIC, "%g", (double)tree->mod->n_catg );
-            currTkn = Emit_Out_Token(currTkn, "Gamma shape parameter", "Alpha", SCALARTKN, TFNUMERIC, "%.3f", (double)tree->mod->alpha );
-            currTkn = Emit_Out_Token(currTkn, "Discrete gamma model", "DiscGammaMod", SETENDTKN, TFSTRING, "%s", "Yes");
-        }
-    }
-    
-    currTkn = Emit_Out_Token(currTkn, "Proportion of invariant", "Pinvar", SCALARTKN, TFNUMERIC, "%.3f", tree->mod->pinvar );
-    
-    /* was before Discrete gamma model ; moved here FLT */
-    if((tree->mod->whichmodel == K80) || (tree->mod->whichmodel == HKY85) || (tree->mod->whichmodel == F84)) {
-        currTkn = Emit_Out_Token(currTkn, "Transition/transversion ratio", "Kappa", SCALARTKN, TFNUMERIC, "%.6f", tree->mod->kappa);
-    } else if(tree->mod->whichmodel == TN93) {
-        currTkn = Emit_Out_Token(currTkn, "Transition/transversion ratio for purines", "KappaPurines", SCALARTKN, TFNUMERIC, "%.5f",
-                                 tree->mod->kappa*2.*tree->mod->lambda/(1.+tree->mod->lambda) );
-        currTkn = Emit_Out_Token(currTkn, "Transition/transversion ratio for pyrimidines", "KappaPyrimidines", SCALARTKN, TFNUMERIC, "%.5f",
-                                 tree->mod->kappa*2./(1.+tree->mod->lambda) );
-    } else if(tree->io->datatype == CODON) {
-        if((tree->mod->whichmodel != GYECMK07) && tree->mod->whichmodel != GYECMK07F  && tree->mod->whichmodel != GYECMK07WK  && tree->mod->whichmodel != GYECMK07WKF  && tree->mod->whichmodel != GYECMS05  && tree->mod->whichmodel != GYECMS05F  && tree->mod->whichmodel != GYECMS05WK  && tree->mod->whichmodel != GYECMS05WKF &&
-           tree->mod->whichmodel != MGECMK07  && tree->mod->whichmodel != MGECMK07F  && tree->mod->whichmodel != MGECMK07WK  && tree->mod->whichmodel != MGECMK07WKF  && tree->mod->whichmodel != MGECMS05  && tree->mod->whichmodel != MGECMS05F  && tree->mod->whichmodel != MGECMS05WK  && tree->mod->whichmodel != MGECMS05WKF &&
-           tree->mod->whichmodel != YAPECMK07 && tree->mod->whichmodel != YAPECMK07F && tree->mod->whichmodel != YAPECMK07WK && tree->mod->whichmodel != YAPECMK07WKF && tree->mod->whichmodel != YAPECMS05 && tree->mod->whichmodel != YAPECMS05F && tree->mod->whichmodel != YAPECMS05WK && tree->mod->whichmodel != YAPECMS05WKF  &&
-           tree->mod->whichmodel != GYECMUSR && tree->mod->whichmodel != GYECMUSRF  && tree->mod->whichmodel != GYECMUSRWK  && tree->mod->whichmodel != MGECMUSRWK  &&tree->mod->whichmodel != GYECMUSRWKF  && tree->mod->whichmodel != MGECMUSRF  && tree->mod->whichmodel != MGECMUSRWKF && tree->mod->whichmodel != YAPECMUSR && tree->mod->whichmodel != YAPECMUSRF && tree->mod->whichmodel != YAPECMUSRWK && tree->mod->whichmodel != YAPECMUSRWKF && !tree->mod->pcaModel)
-        {
-            currTkn = Emit_Out_Token(currTkn, "Transition/transversion ratio", "Kappa", SCALARTKN, TFNUMERIC, "%.9f", tree->mod->kappa);
-            
-            if(tree->mod->n_w_catg == 1) {
-            		int omegai; //Added by Ken 23/8
-            		for(omegai=0;omegai<tree->mod->nomega_part;omegai++){
-            			char *buf = mCalloc(T_MAX_OPTION,sizeof(char));
-            			int temp = asprintf(&buf, "Omega %d %s", omegai, tree->mod->partNames[omegai]);//changed by Ken 12/1/2017
-            			currTkn = Emit_Out_Token(currTkn, buf, buf, SCALARTKN, TFNUMERIC, "%.9f", tree->mod->omega_part[omegai]);
-            		}
-
-            } else {
-                currTkn = Emit_Out_Token(currTkn, "Nonsynonmous/synonymous ratio", "Omega", SETSTARTTKN, TFSTRING, "%s", "");
-                for(i = 0; i < tree->mod->n_w_catg; i++ ) {
-                    currTkn = Emit_Out_Token(currTkn, "Omega / Probability", "OmegaProb", TBLSTARTTKN, TFNUMERIC, "%i", 2);
-                    
-                    char *buf;
-                    int temp = asprintf(&buf, "o%i", i);//changed by Ken 12/1/2017
-                    currTkn = Emit_Out_Token(currTkn, buf, buf, SCALARTKN, TFNUMERIC, "%.6f", tree->mod->omegas[i]);
-                    
-                    char *buf2;
-                    int temp2 = asprintf(&buf2, "p%i", i);//changed by Ken 12/1/2017
-                    currTkn = Emit_Out_Token(currTkn, buf2, buf2, SCALARTKN, TFNUMERIC, "%.6f", tree->mod->prob_omegas[i]);
-                    
-                    currTkn = Emit_Out_Token(currTkn, "Omega / Probability", "OmegaProb", TBLENDTKN, TFNUMERIC, "%i", 2);
-                }
-                currTkn = Emit_Out_Token(currTkn, "Nonsynonmous/synonymous ratio", "Omega", SETENDTKN, TFSTRING, "%s", "");
-            }
-
-            //Prints out hotspot model information and h values
-            //Modified by Ken 22/7/2016
-            if(io->modeltypeOpt==HLP17){
-              int partsite=0;
-              printf("\n");
-              for(partsite=0;partsite<io->tree->n_pattern;partsite++){
-                printf("%d ",tree->mod->partIndex[partsite]);
-              }
-              printf("\n");
-
-
-            	  currTkn = Emit_Out_Token(currTkn, "Hotspot model\t\th_index\toptimized?\th_value", "motifs", SETSTARTTKN, TFSTRING, "%s", "" );
-            	  int mot;
-            	  for(mot=0;mot<io->mod->nmotifs;mot++){
-                       currTkn = Emit_Out_Token(currTkn, "", "", TBLSTARTTKN, TFNUMERIC, "%i", 0);
-                       char *info = malloc(100);
-                       char motifh[10];
-                       sprintf(motifh,"%d",io->mod->motif_hotness[mot]);
-                       char motife[10];
-                       sprintf(motife,"%d",io->mod->hoptindex[io->mod->motif_hotness[mot]]);
-                       strcpy(info, "Motif:\t");
-                       strcat(info, io->mod->motifs[mot]);
-                       strcat(info, "\t\t");
-                       strcat(info, motifh);
-                       strcat(info, "\t\t");
-                       strcat(info, motife);
-                       strcat(info, "\t\t");
-                       currTkn = Emit_Out_Token(currTkn, info, "h", SCALARTKN, TFNUMERICNEQ, "%.5f", io->mod->hotness[io->mod->motif_hotness[mot]]);
-                      currTkn = Emit_Out_Token(currTkn, "", "", TBLENDTKN, TFNUMERIC, "%i", 4 );
-            	  }
-            	currTkn = Emit_Out_Token(currTkn, "Motif model", "motifs", SETENDTKN, TFSTRING, "%s", "" );
-
-            }
-        }
-
-        else if(!tree->mod->pcaModel)
-        {
-            switch( io->kappaECM ) {
-                case kap1: currTkn = Emit_Out_Token(currTkn, "Emp. Transition/transverion ratio", "EmpKappa", SCALARTKN, TFSTRING, "%s", "Embedded in the Q matrix." );
-                    break;
-                case kap2: {
-                    currTkn = Emit_Out_Token(currTkn, "Emp. Transition/transverion ratio", "EmpKappa", TBLSTARTTKN, TFNUMERIC, "%i", 1 );
-                    currTkn = Emit_Out_Token(currTkn, "nts", "nts", SCALARTKN, TFNUMERIC, "%.4f", io->mod->pkappa[0]);
-                    currTkn = Emit_Out_Token(currTkn, "Emp. Transition/transverion ratio", "EmpKappa", TBLENDTKN, TFNUMERIC, "%i", 1 );
-                    break;
-                }
-                case kap3: {
-                    currTkn = Emit_Out_Token(currTkn, "Emp. Transition/transverion ratio", "EmpKappa", TBLSTARTTKN, TFNUMERIC, "%i", 1 );
-                    currTkn = Emit_Out_Token(currTkn, "ntv", "ntv", SCALARTKN, TFNUMERIC, "%.4f", io->mod->pkappa[0]);
-                    currTkn = Emit_Out_Token(currTkn, "Emp. Transition/transverion ratio", "EmpKappa", TBLENDTKN, TFNUMERIC, "%i", 1 );
-                    break;
-                }
-                case kap4: {
-                    currTkn = Emit_Out_Token(currTkn, "Emp. Transition/transverion ratio", "EmpKappa", TBLSTARTTKN, TFNUMERIC, "%i", 2 );
-                    currTkn = Emit_Out_Token(currTkn, "nts", "nts", SCALARTKN, TFNUMERIC, "%.4f", io->mod->pkappa[0]);
-                    currTkn = Emit_Out_Token(currTkn, "ntv", "ntv", SCALARTKN, TFNUMERIC, "%.4f", io->mod->pkappa[1]);
-                    currTkn = Emit_Out_Token(currTkn, "Emp. Transition/transverion ratio", "EmpKappa", TBLENDTKN, TFNUMERIC, "%i", 2 );
-                    break;
-                }
-                case kap5: {
-                    currTkn = Emit_Out_Token(currTkn, "Emp. Transition/transverion ratio", "EmpKappa", TBLSTARTTKN, TFSTRING, "%s", 3 );
-                    for(c = 0; c < 9; c++) {
-                        char *buf;
-                        int temp = asprintf(&buf, "Case%i", c);//changed by Ken 12/1/2017
-                        currTkn = Emit_Out_Token(currTkn, buf, buf, SCALARTKN, TFNUMERIC, "%.4f", io->mod->pkappa[c]);
-                    }
-                    currTkn = Emit_Out_Token(currTkn, "Emp. Transition/transverion ratio", "EmpKappa", TBLENDTKN, TFNUMERIC, "%i", 3 );
-                    break;
-                }
-                case kap6: currTkn = Emit_Out_Token(currTkn, "Emp. Transition/transverion ratio", "EmpKappa", SCALARTKN, TFNUMERIC, "%.4f", tree->mod->pkappa[0] );
-                    break;
-                default:break;
-            }
-            
-            //      if((tree->mod->s_opt->opt_omega==NO && tree->mod->s_opt->opt_prob_omega==NO ) || tree->mod->whichmodel==YAPECMUSR|| tree->mod->whichmodel==YAPECMUSRF|| tree->mod->whichmodel==MGECMUSRF ||tree->mod->whichmodel==GYECMUSRF || tree->mod->whichmodel==GYECMUSR|| tree->mod->whichmodel==MGECMUSR || tree->mod->whichmodel==GYECMK07 || tree->mod->whichmodel==GYECMK07F || tree->mod->whichmodel==GYECMS05 || tree->mod->whichmodel==GYECMK07F || tree->mod->whichmodel==MGECMK07 || tree->mod->whichmodel==MGECMK07F || tree->mod->whichmodel==MGECMS05 || tree->mod->whichmodel==MGECMK07F || tree->mod->whichmodel==YAPECMK07 || tree->mod->whichmodel==YAPECMK07F || tree->mod->whichmodel==YAPECMS05 || tree->mod->whichmodel==YAPECMK07F)
-            if( (tree->mod->s_opt->opt_omega == NO) &&
-               (tree->mod->s_opt->opt_prob_omega == NO) &&
-               (tree->mod->omega_part[0] == 1.0 ) ) { //modified by Ken 18/8
-                currTkn = Emit_Out_Token(currTkn, "Emp. nonsyn./syn.", "EmpOmega", SCALARTKN, TFSTRING, "%s", "Embedded in the Q matrix");
-            }
-            else
-            {
-                if(tree->mod->n_w_catg == 1)
-                {
-                	if(tree->mod->nparts > 1){printf("options not compatible with partitioned model error 3\n");exit(EXIT_FAILURE);}
-                    currTkn = Emit_Out_Token(currTkn, "Emp. corrected nonsyn./syn. ratio", "EmpCorrOmega", SCALARTKN, TFNUMERIC, "%.6f", Omega_ECMtoMmechModels(tree->mod->pi, tree->mod->qmat_part[0], tree->mod->qmat_buff_part[0], tree->mod->ns, tree->mod->n_w_catg));
-                    if( (tree->mod->omegaSiteVar != NOOMEGA) & (tree->mod->s_opt->opt_omega == NO) ) {
-                        currTkn = Emit_Out_Token(currTkn, "User defined nonsyn./syn. ratio", "UserdefOmega", SCALARTKN, TFNUMERIC, "%.6f", tree->mod->omega_part[0] ); //modified by Ken 17/8
-                    }
-                }
-                else
-                {
-                	if(tree->mod->nparts > 1){printf("options not compatible with partitioned model error 4\n");exit(EXIT_FAILURE);}
-                    currTkn = Emit_Out_Token(currTkn, "Estimated dn/ds rate ratio (w) values", "EstimatedOmega", TBLSTARTTKN, TFNUMERIC, "%i", 2);
-                    
-                    for(i = 0; i < tree->mod->n_w_catg; i++ ) {
-                        char *buf;
-                        int temp2 = asprintf(&buf, "o%i", i);//changed by Ken 12/1/2017
-                        currTkn = Emit_Out_Token(currTkn, buf, buf, SCALARTKN, TFNUMERIC, "%.10f",
-                                                 Omega_ECMtoMmechModels( tree->mod->pi, tree->mod->qmat +
-                                                                        i*tree->mod->ns * tree->mod->ns,
-                                                                        tree->mod->qmat_buff_part[0] +
-                                                                        i*tree->mod->ns*tree->mod->ns,
-                                                                        tree->mod->ns, tree->mod->n_w_catg )
-                                                 );
-                        
-                        char *buf2;
-                        int temp = asprintf(&buf2, "p%i", i);//changed by Ken 12/1/2017
-                        currTkn = Emit_Out_Token(currTkn, buf2, buf2, SCALARTKN, TFNUMERIC, "%.10f", tree->mod->prob_omegas[i]);
-                    }
-                    currTkn = Emit_Out_Token(currTkn, "Estimated dn/ds rate ratio (w) values", "EstimatedOmega", TBLENDTKN, TFNUMERIC, "%i", 2);
-                }
-            }
-        }
-    }
-    if(tree->io->datatype == NT)
-    {
-        currTkn = Emit_Out_Token(currTkn, "Nucleotides frequencies", "NucFreqs", TBLSTARTTKN, TFNUMERIC, "%i", 4);
-        currTkn = Emit_Out_Token(currTkn, "f(A)", "f(A)", SCALARTKN, TFNUMERIC, "%8.5f", tree->mod->pi[0] );
-        currTkn = Emit_Out_Token(currTkn, "f(C)", "f(C)", SCALARTKN, TFNUMERIC, "%8.5f", tree->mod->pi[1] );
-        currTkn = Emit_Out_Token(currTkn, "f(G)", "f(G)", SCALARTKN, TFNUMERIC, "%8.5f", tree->mod->pi[2] );
-        currTkn = Emit_Out_Token(currTkn, "f(T)", "f(T)", SCALARTKN, TFNUMERIC, "%8.5f", tree->mod->pi[3] );
-        currTkn = Emit_Out_Token(currTkn, "Nucleotides frequencies", "NucFreqs", TBLENDTKN, TFNUMERIC, "%i", 4);
-    }else if(tree->io->datatype == CODON)
-    {
-        char s1[4];
-        phydbl val1;
-        
-        switch( io->mod->freq_model ) {
-            case F1XSENSECODONS:
-                break;
-            case F1X4:
-                currTkn = Emit_Out_Token(currTkn, "Nucleotides frequencies", "NucFreqs", TBLSTARTTKN, TFNUMERIC, "%i", 4);
-                currTkn = Emit_Out_Token(currTkn, "f(T)", "f(T)", SCALARTKN, TFNUMERIC, "%8.5f", tree->mod->base_freq[0] );
-                currTkn = Emit_Out_Token(currTkn, "f(C)", "f(C)", SCALARTKN, TFNUMERIC, "%8.5f", tree->mod->base_freq[1] );
-                currTkn = Emit_Out_Token(currTkn, "f(A)", "f(A)", SCALARTKN, TFNUMERIC, "%8.5f", tree->mod->base_freq[2] );
-                currTkn = Emit_Out_Token(currTkn, "f(G)", "f(G)", SCALARTKN, TFNUMERIC, "%8.5f", tree->mod->base_freq[3] );
-                currTkn = Emit_Out_Token(currTkn, "Nucleotides frequencies", "NucFreqs", TBLENDTKN, TFNUMERIC, "%i", 4);
-                break;
-            case F3X4:
-            case CF3X4:
-                currTkn = Emit_Out_Token(currTkn, "Nucleotides frequencies", "NucFreqs", SETSTARTTKN, TFSTRING, "%s", "");
-                currTkn = Emit_Out_Token(currTkn, "Position 1", "Pos1", TBLSTARTTKN, TFNUMERIC, "%i", 4);
-                currTkn = Emit_Out_Token(currTkn, "f(T1)", "f(T1)", SCALARTKN, TFNUMERIC, "%8.5f", tree->mod->base_freq[0] );
-                currTkn = Emit_Out_Token(currTkn, "f(C1)", "f(C1)", SCALARTKN, TFNUMERIC, "%8.5f", tree->mod->base_freq[1] );
-                currTkn = Emit_Out_Token(currTkn, "f(A1)", "f(A1)", SCALARTKN, TFNUMERIC, "%8.5f", tree->mod->base_freq[2] );
-                currTkn = Emit_Out_Token(currTkn, "f(G1)", "f(G1)", SCALARTKN, TFNUMERIC, "%8.5f", tree->mod->base_freq[3] );
-                currTkn = Emit_Out_Token(currTkn, "Position 1", "Pos1", TBLENDTKN, TFNUMERIC, "%i", 4);
-                currTkn = Emit_Out_Token(currTkn, "Position 2", "Pos2", TBLSTARTTKN, TFNUMERIC, "%i", 4);
-                currTkn = Emit_Out_Token(currTkn, "f(T2)", "f(T2)", SCALARTKN, TFNUMERIC, "%8.5f", tree->mod->base_freq[4] );
-                currTkn = Emit_Out_Token(currTkn, "f(C2)", "f(C2)", SCALARTKN, TFNUMERIC, "%8.5f", tree->mod->base_freq[5] );
-                currTkn = Emit_Out_Token(currTkn, "f(A2)", "f(A2)", SCALARTKN, TFNUMERIC, "%8.5f", tree->mod->base_freq[6] );
-                currTkn = Emit_Out_Token(currTkn, "f(G2)", "f(G2)", SCALARTKN, TFNUMERIC, "%8.5f", tree->mod->base_freq[7] );
-                currTkn = Emit_Out_Token(currTkn, "Position 2", "Pos2", TBLENDTKN, TFNUMERIC, "%i", 4);
-                currTkn = Emit_Out_Token(currTkn, "Position 3", "Pos3", TBLSTARTTKN, TFNUMERIC, "%i", 4);
-                currTkn = Emit_Out_Token(currTkn, "f(T3)", "f(T3)", SCALARTKN, TFNUMERIC, "%8.5f", tree->mod->base_freq[8] );
-                currTkn = Emit_Out_Token(currTkn, "f(C3)", "f(C3)", SCALARTKN, TFNUMERIC, "%8.5f", tree->mod->base_freq[9] );
-                currTkn = Emit_Out_Token(currTkn, "f(A3)", "f(A3)", SCALARTKN, TFNUMERIC, "%8.5f", tree->mod->base_freq[10] );
-                currTkn = Emit_Out_Token(currTkn, "f(G3)", "f(G3)", SCALARTKN, TFNUMERIC, "%8.5f", tree->mod->base_freq[11] );
-                currTkn = Emit_Out_Token(currTkn, "Position 3", "Pos3", TBLENDTKN, TFNUMERIC, "%i", 4);
-                currTkn = Emit_Out_Token(currTkn, "Nucleotides frequencies", "NucFreqs", SETENDTKN, TFSTRING, "%s", "");
-                break;
-            default:
-                break;
-        }
-        currTkn = Emit_Out_Token(currTkn, "Codon frequencies", "CodonFreqs", SETSTARTTKN, TFSTRING, "%s", "" );
-        for(i = 0; i < 64; i++) {
-            if(i == 0 || i%4 == 0) currTkn = Emit_Out_Token(currTkn, "", "", TBLSTARTTKN, TFNUMERIC, "%i", 4 );
-            char *buf;
-            Sprint_codon(s1, i);
-            int temp = asprintf(&buf, "f(%s)", s1);//changed by Ken 12/1/2017
-            val1 = (stopCodons[i])?0.0:tree->mod->pi[indexSenseCodons[i]];
-            currTkn = Emit_Out_Token(currTkn, buf, buf, SCALARTKN, TFNUMERIC, "%8.8f", val1);
-            if((i-3)%4 == 0) currTkn = Emit_Out_Token(currTkn, "", "", TBLENDTKN, TFNUMERIC, "%i", 4 );
-        }
-        if(currTkn->type != TBLENDTKN) {
-            currTkn = Emit_Out_Token(currTkn, "", "", TBLENDTKN, TFNUMERIC, "%i", 4 );
-        }
-        currTkn = Emit_Out_Token(currTkn, "Codon frequencies", "CodonFreqs", SETENDTKN, TFSTRING, "%s", "");
-    }
-
-    /*****************************************/
-    if((tree->mod->whichmodel == GTR) ||
-       (tree->mod->whichmodel == CUSTOM))
-    {
-        
-        Update_Qmat_GTR(tree->mod->rr,
-                        tree->mod->rr_val,
-                        tree->mod->rr_num,
-                        tree->mod->pi,
-                        tree->mod->qmat);
-        
-        currTkn = Emit_Out_Token(currTkn, "GTR relative rate parameters", "GTRRelRates", TBLSTARTTKN, TFNUMERIC, "%i", 3 );
-        currTkn = Emit_Out_Token(currTkn, "A <-> C", "AC", SCALARTKN, TFNUMERIC, "%8.5f", tree->mod->rr[0]);
-        currTkn = Emit_Out_Token(currTkn, "A <-> G", "AG", SCALARTKN, TFNUMERIC, "%8.5f", tree->mod->rr[1]);
-        currTkn = Emit_Out_Token(currTkn, "A <-> T", "AT", SCALARTKN, TFNUMERIC, "%8.5f", tree->mod->rr[2]);
-        currTkn = Emit_Out_Token(currTkn, "C <-> G", "CG", SCALARTKN, TFNUMERIC, "%8.5f", tree->mod->rr[3]);
-        currTkn = Emit_Out_Token(currTkn, "C <-> T", "CT", SCALARTKN, TFNUMERIC, "%8.5f", tree->mod->rr[4]);
-        currTkn = Emit_Out_Token(currTkn, "G <-> T", "GT", SCALARTKN, TFNUMERIC, "%8.5f", tree->mod->rr[5]);
-        currTkn = Emit_Out_Token(currTkn, "GTR relative rate parameters", "GTRRelRates", TBLENDTKN, TFNUMERIC, "%i", 3 );
-        
-        currTkn = Emit_Out_Token(currTkn, "Instantaneous rate matrix", "InstRateMatrix", SETSTARTTKN, TFSTRING, "%s", "" );
-        currTkn = Emit_Out_Token(currTkn, "[A-C-G-T]", "A-C-G-T", COMMENTTKN, TFSTRING, "%s", "" );
-        
-        for(i = 0; i < 4; i++) {
-            currTkn = Emit_Out_Token(currTkn, nucs[i], nucs[i], TBLSTARTTKN, TFNUMERIC, "%i", 4);
-            for(j = 0; j < 4; j++) {
-                currTkn = Emit_Out_Token(currTkn, "", "", SCALARTKN, TFNUMERIC, "%8.5f  ", tree->mod->qmat[i*4+j]);
-            }
-            currTkn = Emit_Out_Token(currTkn, nucs[i], nucs[i], TBLENDTKN, TFNUMERIC, "%i", 4);
-        }
-        currTkn = Emit_Out_Token(currTkn, "Instantaneous rate matrix", "InstRateMatrix", SETENDTKN, TFSTRING, "%s", "" );
-    }
-    /*****************************************/
-    
-    
-    //     if(io->ratio_test == 1)
-    //     {
-    //       PhyML_Fprintf(fp_out,". aLRT statistics to test branches");
-    //     }
-    //     else if(io->ratio_test == 2)
-    //     {
-    //       PhyML_Fprintf(fp_out,". aLRT branch supports (cubic approximation, mixture of Chi2s distribution)");
-    //     }
-    
-    
-    
-    
-    hour = div((int)(t_end-t_beg),3600);
-    min  = div((int)(t_end-t_beg),60  );
-    
-    min.quot -= hour.quot*60;
-    
-    if(tree->io->datatype==CODON)
-    {
-#ifdef BLAS
-        Emit_Out_Token(currTkn, "Code optimization", "CodeOptim", SCALARTKN, TFSTRING, "%s", "BLAS and LAPACK");
-#elif BLAS_OMP
-        Emit_Out_Token(currTkn, "Code optimization", "CodeOptim", SCALARTKN, TFSTRING, "%s", "BLAS, LAPACK and OpenMP");
-#elif OMP
-        Emit_Out_Token(currTkn, "Code optimization", "CodeOptim", SCALARTKN, TFSTRING, "%s", "OpenMP");
-#else
-        Emit_Out_Token(currTkn, "Code optimization", "CodeOptim", SCALARTKN, TFSTRING, "%s", "none");
-#endif
-    }
-    
-    currTkn = Emit_Out_Token(currTkn, "Time used", "TimeUsed", SCALARTKN, TFSTRING, "%dh%dm%ds", hour.quot,min.quot,(int)(t_end-t_beg)%60);
-    currTkn = Emit_Out_Token(currTkn, "Seconds", "TimeUsedSec", SCALARTKN, TFNUMERIC, "%g", (double)(t_end-t_beg));
-    
-    if(io->fp_out_compare){
-        char m[100];
-        char n[100];
-        char z[100];
-        
-        if(io->datatype==CODON)
-        {
-#ifdef BLAS
-            strcpy(n,"BLAS\0");
-#elif BLAS_OMP
-            strcpy(n,"BLAS+OMP\0");
-#elif OMP
-            strcpy(n,"OMP\0");
-#else
-            strcpy(n,"Null\0");
-#endif
-            
-            switch(tree->mod->s_opt->topo_search)
-            {
-                case SPR_MOVE: strcpy(m,"SPR\0");break;
-                case NNI_MOVE: strcpy(m,"NNI\0");break;
-                case BEST_OF_NNI_AND_SPR: strcpy(m,"BEST\0");break;
-                default: break;
-            }
-            
-            if(tree->io->heuristicExpm) strcpy(z,"TAYLOR\0");
-            else if(tree->io->expm==SSPADE) strcpy(z,"PADE\0");
-            else strcpy(z,"EIGEN\0");
-            
-            fprintf(io->fp_out_compare,"%d;",tree->n_otu); //!< Number of Taxa
-            fprintf(io->fp_out_compare,"%d;",tree->data->init_len); //!< Sequence length
-            fprintf(io->fp_out_compare,"%s;",io->mod->modelname); //!< Codon Model
-            fprintf(io->fp_out_compare,"%s;",t); //!< Frequency model
-            switch(io->eq_freq_handling)
-            {
-                case EMPIRICAL: fprintf(io->fp_out_compare,"empirical;");break;
-                case OPTIMIZE:fprintf(io->fp_out_compare,"optimize;");break;
-                case MODEL:fprintf(io->fp_out_compare,"model;");break;
-                case USER:fprintf(io->fp_out_compare,"user;");break;
-            }
-            //if(io->mod->s_opt->opt_state_freq) fprintf(io->fp_out_compare,"optimized;"); //!< Opt frequencies?
-            //else fprintf(io->fp_out_compare,"empiric;"); //!< Opt frequencies?
-            
-            fprintf(io->fp_out_compare,"%s;",m); //!< SEARCH method
-            fprintf(io->fp_out_compare,"%s;",n); //!< OPT method
-            fprintf(io->fp_out_compare,"%s;",z); //!< EXPM method
-            fprintf(io->fp_out_compare,"%.6f;",tree->c_lnL); //!< Tree Likelihood
-            fprintf(io->fp_out_compare,"%.6f;",tree->c_lnL); //!< comparable Tree Likelihood
-            fprintf(io->fp_out_compare,"%.6f;",tree->size); //!< Tree length
-            
-            if(io->mod->n_w_catg>1) fprintf(io->fp_out_compare,"1;"); //!< Substitution rate categories
-            else if (io->mod->n_w_catg==1) fprintf(io->fp_out_compare,"%d;",io->mod->n_catg); //!< Substitution rate categories
-            
-            if(io->mod->n_catg>1 && io->mod->n_w_catg==1) fprintf(io->fp_out_compare,"%.3f;",io->mod->alpha); //!< Substitution rate categories Gamma param.
-            else fprintf(io->fp_out_compare,";"); //!< Substitution rate categories Gamma param.
-            
-            if(
-               tree->mod->whichmodel!=GYECMK07  && tree->mod->whichmodel!=GYECMK07WK  && tree->mod->whichmodel!=GYECMK07F  && tree->mod->whichmodel!=GYECMK07WKF  && tree->mod->whichmodel!=GYECMS05  && tree->mod->whichmodel!=GYECMS05WK  && tree->mod->whichmodel!=GYECMS05F  && tree->mod->whichmodel!=GYECMS05WKF &&
-               tree->mod->whichmodel!=MGECMK07  && tree->mod->whichmodel!=MGECMK07WK  && tree->mod->whichmodel!=MGECMK07F  && tree->mod->whichmodel!=MGECMK07WKF  && tree->mod->whichmodel!=MGECMS05  && tree->mod->whichmodel!=MGECMS05WK  && tree->mod->whichmodel!=MGECMS05F  && tree->mod->whichmodel!=MGECMS05WKF &&
-               tree->mod->whichmodel!=YAPECMK07 && tree->mod->whichmodel!=YAPECMK07WK && tree->mod->whichmodel!=YAPECMK07F && tree->mod->whichmodel!=YAPECMK07WKF && tree->mod->whichmodel!=YAPECMS05 && tree->mod->whichmodel!=YAPECMS05WK && tree->mod->whichmodel!=YAPECMS05F && tree->mod->whichmodel!=YAPECMS05WKF &&
-               tree->mod->whichmodel != GYECMUSR && tree->mod->whichmodel != GYECMUSRF  && tree->mod->whichmodel != GYECMUSRWK  && tree->mod->whichmodel != GYECMUSRWKF  && tree->mod->whichmodel != MGECMUSRF  && tree->mod->whichmodel != MGECMUSRWKF && tree->mod->whichmodel != MGECMUSR && tree->mod->whichmodel != MGECMUSRWK  && tree->mod->whichmodel != YAPECMUSR && tree->mod->whichmodel != YAPECMUSRF && tree->mod->whichmodel != YAPECMUSRWK && tree->mod->whichmodel != YAPECMUSRWKF
-               )
-            {
-                fprintf(io->fp_out_compare,"%.4f;",tree->mod->kappa); //!< Kappa
-            }
-            else
-            {
-                if(tree->mod->whichmodel==YAPECMUSRF ||tree->mod->whichmodel==YAPECMUSR ||tree->mod->whichmodel==MGECMUSR ||tree->mod->whichmodel==MGECMUSRF ||tree->mod->whichmodel==GYECMUSRF ||tree->mod->whichmodel==GYECMUSR ||tree->mod->whichmodel==GYECMK07 || tree->mod->whichmodel==GYECMK07F || tree->mod->whichmodel==GYECMS05 || tree->mod->whichmodel==GYECMS05F || tree->mod->whichmodel==MGECMK07 || tree->mod->whichmodel==MGECMK07F || tree->mod->whichmodel==MGECMS05 || tree->mod->whichmodel==MGECMS05F || tree->mod->whichmodel==YAPECMK07 || tree->mod->whichmodel==YAPECMK07F || tree->mod->whichmodel==YAPECMS05 || tree->mod->whichmodel==YAPECMS05F )
-                {
-                    fprintf(io->fp_out_compare,"1;"); //!< Kappa
-                }
-                else
-                {
-                    switch(tree->io->kappaECM) //!< Kappa ECM Kosiol 2007.
-                    {
-                        case kap1: fprintf(io->fp_out_compare,"1;"); break;
-                        case kap2: fprintf(io->fp_out_compare,"%.4f;",tree->mod->pkappa[0]); break;
-                        case kap3: fprintf(io->fp_out_compare,"%.4f;",tree->mod->pkappa[0]); break;
-                        case kap4: fprintf(io->fp_out_compare,"%.4f %.4f;",tree->mod->pkappa[0],tree->mod->pkappa[1]); break;
-                        case kap5: For(i,9) fprintf(io->fp_out_compare,"%.4f ",tree->mod->pkappa[i]);  fprintf(io->fp_out_compare,";");  break;
-                        case kap6: fprintf(io->fp_out_compare,"%.4f;",tree->mod->pkappa[0]); break;
-                        default:break;
-                    }
-                }
-            }
-            
-            switch(tree->mod->omegaSiteVar)
-            {
-                case DM0: fprintf(io->fp_out_compare,"M0;");break;
-                case DMODELK: fprintf(io->fp_out_compare,"M3;");break;
-                case DGAMMAK: fprintf(io->fp_out_compare,"M5;");break;
-                default: break;
-            }
-            
-            if(tree->mod->n_w_catg==1)
-            {
-                if(
-                   tree->mod->whichmodel!=GYECMK07  && tree->mod->whichmodel!=GYECMK07F  && tree->mod->whichmodel!=GYECMS05  && tree->mod->whichmodel!=GYECMS05F &&
-                   tree->mod->whichmodel!=MGECMK07  && tree->mod->whichmodel!=MGECMK07F  && tree->mod->whichmodel!=MGECMS05  && tree->mod->whichmodel!=MGECMS05F &&
-                   tree->mod->whichmodel!=YAPECMK07 && tree->mod->whichmodel!=YAPECMK07F && tree->mod->whichmodel!=YAPECMS05 && tree->mod->whichmodel!=YAPECMS05F &&
-                   tree->mod->whichmodel!=YAPECMUSRF &&tree->mod->whichmodel!=YAPECMUSR && tree->mod->whichmodel!=MGECMUSR &&tree->mod->whichmodel!=MGECMUSRF &&tree->mod->whichmodel!=GYECMUSRF &&tree->mod->whichmodel!=GYECMUSR)
-                {
-                    fprintf(io->fp_out_compare,"%.6f;",tree->mod->omega_part[0]); //!< # omega
-                    fprintf(io->fp_out_compare,"1;;"); //!< # prob omega and and empty space corresponding to alpha and beta
-                }
-                else
-                {
-                	if(io->mod->nparts > 1){printf("options not compatible with partitioned model error 1\n");exit(EXIT_FAILURE);}//Ken 22/8
-                    fprintf(io->fp_out_compare,"%.6f;",Omega_ECMtoMmechModels(tree->mod->pi, tree->mod->qmat_part[0], tree->mod->qmat_buff_part[0], tree->mod->ns, tree->mod->n_w_catg)); //!< # omega//modified by Ken 22/8
-                    fprintf(io->fp_out_compare,"1;;"); //!< # prob omega and and empty space corresponding to alpha and beta
-                }
-            }
-            else
-            {
-                if(
-                   tree->mod->whichmodel!=GYECMK07WK  && tree->mod->whichmodel!=GYECMK07WKF  && tree->mod->whichmodel!=GYECMS05WK  && tree->mod->whichmodel!=GYECMS05WKF &&
-                   tree->mod->whichmodel!=MGECMK07WK  && tree->mod->whichmodel!=MGECMK07WKF  && tree->mod->whichmodel!=MGECMS05WK  && tree->mod->whichmodel!=MGECMS05WKF &&
-                   tree->mod->whichmodel!=YAPECMK07WK && tree->mod->whichmodel!=YAPECMK07WKF && tree->mod->whichmodel!=YAPECMS05WK && tree->mod->whichmodel!=YAPECMS05WKF &&
-                   tree->mod->whichmodel!=YAPECMUSRWKF &&tree->mod->whichmodel!=YAPECMUSRWK&&tree->mod->whichmodel!=MGECMUSRWK &&tree->mod->whichmodel!=MGECMUSRWKF &&tree->mod->whichmodel!=GYECMUSRWKF &&tree->mod->whichmodel!=GYECMUSRWK
-                   )
-                {
-                    For(i,tree->mod->n_w_catg) fprintf(io->fp_out_compare,"%.6f ",tree->mod->omegas[i]);
-                    fprintf(io->fp_out_compare,";");
-                }
-                else
-                {
-                	if(tree->mod->nparts > 1){printf("options not compatible with partitioned model error 2\n");exit(EXIT_FAILURE);}
-                    For(i,tree->mod->n_w_catg) fprintf(io->fp_out_compare,"%.6f ",Omega_ECMtoMmechModels(tree->mod->pi, tree->mod->qmat_part[0]+i*tree->mod->ns*tree->mod->ns, tree->mod->qmat_buff_part[0]+i*tree->mod->ns*tree->mod->ns, tree->mod->ns,tree->mod->n_w_catg));
-                    fprintf(io->fp_out_compare,";");
-                }
-                For(i,tree->mod->n_w_catg) fprintf(io->fp_out_compare,"%.6f ",tree->mod->prob_omegas[i]);
-                fprintf(io->fp_out_compare,";");
-                
-                if(tree->mod->omegaSiteVar==DGAMMAK) fprintf(io->fp_out_compare,"%.6f %.6f;",tree->mod->alpha,tree->mod->beta);
-                else fprintf(io->fp_out_compare,";");
-            }
-            
-            fprintf(io->fp_out_compare,"**TIME**;");//!< Time elapsed //,(int)(t_end-t_beg));
-            
-            For(i,tree->mod->ns) fprintf(io->fp_out_compare,"%.6f ",tree->mod->pi[i]); //!< Codon frequencies.
-            fprintf(io->fp_out_compare,";");
-        }
-        else
-        {
-            switch(tree->mod->s_opt->topo_search)
-            {
-                case SPR_MOVE: strcpy(m,"SPR\0");break;
-                case NNI_MOVE: strcpy(m,"NNI\0");break;
-                case BEST_OF_NNI_AND_SPR: strcpy(m,"BEST\0");break;
-                default: break;
-            }
-            
-            fprintf(io->fp_out_compare,"%d;",tree->n_otu); //!< Number of Taxa
-            fprintf(io->fp_out_compare,"%d;",tree->data->init_len); //!< Sequence length
-            fprintf(io->fp_out_compare,"%s;",io->mod->modelname); //!< Codon Model
-            fprintf(io->fp_out_compare,";"); //!< Frequency model
-            
-            switch(io->eq_freq_handling)
-            {
-                case EMPIRICAL: fprintf(io->fp_out_compare,"empirical;");break;
-                case OPTIMIZE:fprintf(io->fp_out_compare,"optimize;");break;
-                case MODEL:fprintf(io->fp_out_compare,"model;");break;
-                case USER:fprintf(io->fp_out_compare,"user;");break;
-            }
-            
-            // 	if(io->datatype==NT)
-            // 	{
-            // 	  if(io->mod->s_opt->opt_state_freq) fprintf(io->fp_out_compare,"optimized;"); //!< Opt frequencies?
-            // 	  else fprintf(io->fp_out_compare,"estimated;"); 
-            // 	}
-            // 	else
-            // 	{
-            // 	  if(io->mod->s_opt->opt_state_freq==NO && io->mod->s_opt->opt_state_freq_AAML==NO) fprintf(io->fp_out_compare,"empiric;"); //!< Opt frequencies?
-            // 	  else if(io->mod->s_opt->opt_state_freq==YES && io->mod->s_opt->opt_state_freq_AAML==NO) fprintf(io->fp_out_compare,"estimated;");
-            // 	  else if(io->mod->s_opt->opt_state_freq==YES && io->mod->s_opt->opt_state_freq_AAML==YES) fprintf(io->fp_out_compare,"optimized;"); 
-            // 	}
-            
-            fprintf(io->fp_out_compare,"%s;",m); //!< SEARCH method
-            fprintf(io->fp_out_compare,";"); //!< OPT method
-            fprintf(io->fp_out_compare,";"); //!< EXPM method
-            fprintf(io->fp_out_compare,"%.6f;",tree->c_lnL); //!< Tree Likelihood
-            if(tree->io->datatype==AA)
-            {
-                if(tree->io->convert_NT_to_AA) fprintf(io->fp_out_compare,"%.6f %.6f %.6f %.6f;",tree->c_lnL+tree->logLk_correction, tree->c_lnL+tree->logLk_correction_gaps+tree->logLk_correction, tree->c_lnL+tree->logLk_correction_approx, tree->c_lnL+tree->logLk_correction_gaps_approx+tree->logLk_correction_approx); //!< comparable Tree Likelihood
-                else fprintf(io->fp_out_compare,"%.6f %.6f;", tree->c_lnL+tree->logLk_correction_approx, tree->c_lnL+tree->logLk_correction_gaps_approx+tree->logLk_correction_approx);;
-            }
-            else fprintf(io->fp_out_compare,"%.6f;",tree->c_lnL); //!< comparable Tree Likelihood
-            fprintf(io->fp_out_compare,"%.6f;",tree->size); //!< Tree length
-            
-            if(io->mod->n_catg>1) fprintf(io->fp_out_compare,"%d;",io->mod->n_catg); //!< Substitution rate categories
-            else fprintf(io->fp_out_compare,"1;"); //!< Substitution rate categories
-            
-            if(io->mod->n_catg>1) fprintf(io->fp_out_compare,"%.3f;",io->mod->alpha); //!< Substitution rate categories Gamma param.
-            else fprintf(io->fp_out_compare,";"); //!< Substitution rate categories Gamma param.
-            
-            fprintf(io->fp_out_compare,";"); //!< Kappa 
-            fprintf(io->fp_out_compare,";"); //!< # Omega Model
-            fprintf(io->fp_out_compare,";"); //!< # Omega 
-            fprintf(io->fp_out_compare,";;"); //!< # Prob omega and and empty space corresponding to alpha and beta
-            
-            fprintf(io->fp_out_compare,"**TIME**;"); //!< Time elapsed,(int)(t_end-t_beg)); //!< Time elapsed
-            
-            For(i,tree->mod->ns) fprintf(io->fp_out_compare,"%.6f ",tree->mod->pi[i]); //!< Codon frequencies.
-            fprintf(io->fp_out_compare,";");
-        }
-    }
-    
-    if(tree->c_lnL > UNLIKELY) {
-	    currTkn = Emit_Out_Token(currTkn, "MLTree", "MLTree", SCALARTKN, TFSTRING, "%s", Write_Tree(tree));
-	    currTkn = Emit_Out_Token(currTkn, "MLTreeSize", "MLTreeSize", SCALARTKN, TFNUMERIC, "%f", Get_Tree_Size(tree));
-    }
-
-    if(io->modeltypeOpt == HLP17){ //Added by Ken 23/8
-    	 char *info = mCalloc(tree->n_pattern*2+1,sizeof(char));
-    	 int indexi;
-    	for(indexi=0;indexi<tree->n_pattern;indexi++){
-    		char tempi[10];
-        	sprintf(tempi, "%d ",io->mod->partIndex[indexi]);
-        	strcat(info,tempi);
-    	}
-        currTkn = Emit_Out_Token(currTkn, "Omega partition indexes", "part", SCALARTKN, TFSTRING, "%s", info);
-    }
-
-    //Modified by Ken
-    currTkn = Emit_Out_Token(currTkn, "Citation", "Citation", COMMENTTKN, TFSTRING,"%s", "");
-    currTkn = Emit_Out_Token(currTkn, "Citation", "Citation", COMMENTTKN, TFSTRING, "%s", "If you use IgPhyML, please cite:");
-    currTkn = Emit_Out_Token(currTkn, "Citation", "Citation", COMMENTTKN, TFSTRING,"%s", "K.B. Hoehn, G Lunter, O.G. Pybus");
-    currTkn = Emit_Out_Token(currTkn, "Citation", "Citation", COMMENTTKN, TFSTRING,"%s", "A phylogenetic codon substitution model for antibody lineages");
-    currTkn = Emit_Out_Token(currTkn, "Citation", "Citation", COMMENTTKN, TFSTRING,"%s", "Under review");
-    currTkn = Emit_Out_Token(currTkn, "Citation", "Citation", COMMENTTKN, TFSTRING,"%s", "");
-    currTkn = Emit_Out_Token(currTkn, "Citation", "Citation", COMMENTTKN, TFSTRING, "%s", "and");
-    currTkn = Emit_Out_Token(currTkn, "Citation", "Citation", COMMENTTKN, TFSTRING,"%s", "");
-    currTkn = Emit_Out_Token(currTkn, "Citation", "Citation", COMMENTTKN, TFSTRING,"%s", "M. Gil, M.S. Zanetti, S. Zoller and M. Anisimova 2013");
-    currTkn = Emit_Out_Token(currTkn, "Citation", "Citation", COMMENTTKN, TFSTRING,"%s", "CodonPhyML: Fast Maximum Likelihood Phylogeny Estimation under Codon Substitution Models");
-    currTkn = Emit_Out_Token(currTkn, "Citation", "Citation", COMMENTTKN, TFSTRING,"%s", "Molecular Biology and Evolution, pages 1270-1280, volume 30, number 6");
-    currTkn = Emit_Out_Token(currTkn, "Citation", "Citation", COMMENTTKN, TFSTRING,"%s", "");
-    currTkn = Emit_Out_Token(currTkn, "Citation", "Citation", COMMENTTKN, TFSTRING,"%s", "If you use aBayes branch supports please cite:");
-    currTkn = Emit_Out_Token(currTkn, "Citation", "Citation", COMMENTTKN, TFSTRING,"%s", "M. Anisimova, M. Gil, J.F. Dufayard, C. Dessimoz and O. Gascuel 2011");
-    currTkn = Emit_Out_Token(currTkn, "Citation", "Citation", COMMENTTKN, TFSTRING,"%s", "Survey of branch support methods demonstrates accuracy, power, and robustness of fast likelihood-based approximation schemes. Syst Biol 60:685-699");
-    
-    Output_Tokens(rootTkn, io->out_stats_format, io->fp_out_stats);
-    
-    free(s);//!< Added by MArcelo.
-    free(r);//!< Added by MArcelo.
-    free(t);//!< Added by MArcelo.
-
-}
-
-/*********************************************************/
-/*FLT wrote this function*/
-void Print_Fp_Out_Lines(FILE *fp_out, time_t t_beg, time_t t_end, t_tree *tree, option *io, int n_data_set)
-{
-  char *s;
-  /*div_t hour,min;*/
-  
-  if (n_data_set==1)
-  {
-    
-    PhyML_Fprintf(fp_out,". Sequence file : [%s]\n\n", Basename(io->in_align_file));
-    
-    if((tree->io->datatype == NT) || (tree->io->datatype == AA))
-	  {
-	    (tree->io->datatype == NT)?
-      (PhyML_Fprintf(fp_out,". Model of nucleotides substitution : %s\n\n",io->mod->modelname)):
-      (PhyML_Fprintf(fp_out,". Model of amino acids substitution : %s\n\n",io->mod->modelname));
-	  }
-    
-    s = (char *)mCalloc(100,sizeof(char));
-    
-    switch(io->in_tree)
-	  {
-      case 0: { strcpy(s,"BioNJ");     break; }
-      case 1: { strcpy(s,"parsimony"); break; }
-      case 2: { strcpy(s,"user tree ("); 
-        strcat(s,io->in_tree_file); 
-        strcat(s,")");         break; }
-	  }
-    
-    PhyML_Fprintf(fp_out,". Initial tree : [%s]\n\n",s);
-    
-    free(s);
-    
-    PhyML_Fprintf(fp_out,"\n");
-    
-    /*headline 1*/
-    PhyML_Fprintf(fp_out, ". Data\t");
-    
-    PhyML_Fprintf(fp_out,"Nb of \t");
-    
-    PhyML_Fprintf(fp_out,"Likelihood\t");
-    
-    PhyML_Fprintf(fp_out, "Discrete   \t");
-    
-    if(tree->mod->n_catg > 1)
-      PhyML_Fprintf(fp_out, "Number of \tGamma shape\t");
-    
-    PhyML_Fprintf(fp_out,"Proportion of\t");
-    
-    if(tree->mod->whichmodel <= 6)
-      PhyML_Fprintf(fp_out,"Transition/ \t");
-    
-    PhyML_Fprintf(fp_out,"Nucleotides frequencies               \t");
-    
-    if((tree->mod->whichmodel == GTR) ||
-       (tree->mod->whichmodel == CUSTOM))
-      PhyML_Fprintf(fp_out,"Instantaneous rate matrix              \t");
-    
-    /*    PhyML_Fprintf(fp_out,"Time\t");*/
-    
-    PhyML_Fprintf(fp_out, "\n");
-    
-    
-    /*headline 2*/
-    PhyML_Fprintf(fp_out, "  set\t");
-    
-    PhyML_Fprintf(fp_out,"taxa\t");
-    
-    PhyML_Fprintf(fp_out,"loglk     \t");
-    
-    PhyML_Fprintf(fp_out, "gamma model\t");
-    
-    if(tree->mod->n_catg > 1)
-      PhyML_Fprintf(fp_out, "categories\tparameter  \t");
-    
-    PhyML_Fprintf(fp_out,"invariant    \t");
-    
-    if(tree->mod->whichmodel <= 6)
-      PhyML_Fprintf(fp_out,"transversion\t");
-    
-    PhyML_Fprintf(fp_out,"f(A)      f(C)      f(G)      f(T)    \t");
-    
-    if((tree->mod->whichmodel == GTR) ||
-       (tree->mod->whichmodel == CUSTOM))
-      PhyML_Fprintf(fp_out,"[A---------C---------G---------T------]\t");
-    
-    /*    PhyML_PhyML_Fprintf(fp_out,"used\t");*/
-    
-    PhyML_Fprintf(fp_out, "\n");
-    
-    
-    /*headline 3*/
-    if(tree->mod->whichmodel == TN93)
-	  {
-	    PhyML_Fprintf(fp_out,"    \t      \t          \t           \t");
-	    if(tree->mod->n_catg > 1) PhyML_Fprintf(fp_out,"         \t         \t");
-	    PhyML_Fprintf(fp_out,"             \t");
-	    PhyML_Fprintf(fp_out,"purines pyrimid.\t");
-	    PhyML_Fprintf(fp_out, "\n");
-    }
-    
-    PhyML_Fprintf(fp_out, "\n");
-  }
-  
-  
-  /*line items*/
-  
-  PhyML_Fprintf(fp_out,"  #%d\t",n_data_set);
-  
-  PhyML_Fprintf(fp_out,"%d   \t",tree->n_otu);
-  
-  PhyML_Fprintf(fp_out,"%.5f\t",tree->c_lnL);
-  
-  PhyML_Fprintf(fp_out,"%s        \t",
-                (tree->mod->n_catg>1)?("Yes"):("No "));
-  if(tree->mod->n_catg > 1)
-  {
-    PhyML_Fprintf(fp_out,"%d        \t",tree->mod->n_catg);
-    PhyML_Fprintf(fp_out,"%.3f    \t",tree->mod->alpha);
-  }
-  
-  /*if(tree->mod->invar)*/
-  PhyML_Fprintf(fp_out,"%.3f    \t",tree->mod->pinvar);
-  
-  if(tree->mod->whichmodel <= 5)
-  {
-    PhyML_Fprintf(fp_out,"%.3f     \t",tree->mod->kappa);
-  }
-  else if(tree->mod->whichmodel == TN93)
-  {
-    PhyML_Fprintf(fp_out,"%.3f   ",
-                  tree->mod->kappa*2.*tree->mod->lambda/(1.+tree->mod->lambda));
-    PhyML_Fprintf(fp_out,"%.3f\t",
-                  tree->mod->kappa*2./(1.+tree->mod->lambda));
-  }
-  
-  
-  if(tree->io->datatype == NT)
-  {
-    PhyML_Fprintf(fp_out,"%8.5f  ",tree->mod->pi[0]);
-    PhyML_Fprintf(fp_out,"%8.5f  ",tree->mod->pi[1]);
-    PhyML_Fprintf(fp_out,"%8.5f  ",tree->mod->pi[2]);
-    PhyML_Fprintf(fp_out,"%8.5f\t",tree->mod->pi[3]);
-  }
-  /*
-   hour = div(t_end-t_beg,3600);
-   min  = div(t_end-t_beg,60  );
-   
-   min.quot -= hour.quot*60;
-   
-   PhyML_Fprintf(fp_out,"%dh%dm%ds\t", hour.quot,min.quot,(int)(t_end-t_beg)%60);
-   if(t_end-t_beg > 60)
-   PhyML_Fprintf(fp_out,". -> %d seconds\t",(int)(t_end-t_beg));
-   */
-  
-  /*****************************************/
-  if((tree->mod->whichmodel == GTR) || (tree->mod->whichmodel == CUSTOM))
-  {
-    int i,j;
-    
-    For(i,4)
-    {
-      if (i!=0) {
-        /*format*/
-        PhyML_Fprintf(fp_out,"      \t     \t          \t           \t");
-        if(tree->mod->n_catg > 1) PhyML_Fprintf(fp_out,"          \t           \t");
-        PhyML_Fprintf(fp_out,"             \t                                      \t");
-      }
-      For(j,4)
-	    PhyML_Fprintf(fp_out,"%8.5f  ",tree->mod->qmat[i*4+j]);
-      if (i<3) PhyML_Fprintf(fp_out,"\n");
-    }
-  }
-  /*****************************************/
-  
-  PhyML_Fprintf(fp_out, "\n\n");
-}
-
-/*********************************************************/
 matrix *JC69_Dist_Codon(calign *data, model *mod)
 {
   int site,i,j,k;
@@ -4076,7 +2035,7 @@ matrix *JC69_Dist_Codon(calign *data, model *mod)
   mat = Make_Mat(data->n_otu);
   Init_Mat(mat,data);
   
-  datatype = mod->io->datatype;
+  datatype = mod->datatype;
   
   For(i,data->n_otu) For(j,data->n_otu) {mat->P[i][j]=0; len[i][j]=0;}
   
@@ -4087,8 +2046,8 @@ matrix *JC69_Dist_Codon(calign *data, model *mod)
     {
       for(k=j+1;k<data->n_otu;k++)
 	    {
-	      if((!Is_Ambigu(data->c_seq[j]->state+site*mod->io->mod->state_len,datatype,mod->io->mod->state_len)) &&
-           (!Is_Ambigu(data->c_seq[k]->state+site*mod->io->mod->state_len,datatype,mod->io->mod->state_len)))
+	      if((!Is_Ambigu(data->c_seq[j]->state+site*mod->state_len,datatype,mod->state_len)) &&  //was io-> mod Ken 9/1/2018
+           (!Is_Ambigu(data->c_seq[k]->state+site*mod->state_len,datatype,mod->state_len)))
         {
           len[j][k]+=data->wght[site];
           len[k][j]=len[j][k];
@@ -4439,7 +2398,7 @@ void Bootstrap(t_tree *tree)
     n_site++;
   }
   
-  boot_data = Copy_Cseq(tree->data,tree->io);
+  boot_data = Copy_Cseq(tree->data,tree->io,tree->mod); //added tree->mod instead of mod Ken 9/1/2018
   
   PhyML_Printf("\n\n. Non parametric bootstrap analysis \n\n");
   PhyML_Printf("  ["); 
@@ -4464,7 +2423,7 @@ void Bootstrap(t_tree *tree)
     if(init_len != tree->data->init_len) Warn_And_Exit("\n. Pb when copying sequences\n");
     
     
-    if(tree->io->random_boot_seq_order) Randomize_Sequence_Order(boot_data);
+    if(tree->mod->random_boot_seq_order) Randomize_Sequence_Order(boot_data);
     
     boot_mod        = Copy_Model(tree->mod);
     boot_mod->s_opt = tree->mod->s_opt; /* WARNING: re-using the same address here instead of creating a copying
@@ -4496,7 +2455,7 @@ void Bootstrap(t_tree *tree)
     boot_tree->mod->s_opt->print  = 0;
     boot_tree->n_pattern          = boot_tree->data->crunch_len;
     boot_tree->io->print_site_lnl = 0;
-    boot_tree->io->print_trace    = 0;
+    boot_tree->mod->print_trace    = 0;
     
     if((boot_tree->mod->s_opt->random_input_tree) && (boot_tree->mod->s_opt->topo_search == SPR_MOVE)) Random_Tree(boot_tree);
     Order_Tree_CSeq(boot_tree,boot_data);
@@ -4553,7 +2512,7 @@ void Bootstrap(t_tree *tree)
       s = Write_Tree(boot_tree);
       PhyML_Fprintf(tree->io->fp_out_boot_tree,"%s\n",s);
       free(s);
-      Print_Fp_Out_Lines(tree->io->fp_out_boot_stats,0,0,boot_tree,tree->io,replicate+1);
+      Print_Fp_Out_Lines(tree->io->fp_out_boot_stats,0,0,boot_tree,tree->io,replicate+1,tree->mod);//added tree->mod instead of mod Ken 9/1/2018
     }
     
     /*       rf = .0; */
@@ -4619,7 +2578,6 @@ void Getstring_Stdin(char *file_name)
 }
 
 /*********************************************************/
-/*********************************************************/
 
 void Copy_One_State(char *from, char *to, int state_size)
 {
@@ -4645,7 +2603,7 @@ model *Make_Model_Basic()
   
   mod->pkappa=(phydbl *)mCalloc(9,sizeof(phydbl));    //!< Added by Marcelo.
   mod->unspkappa=(phydbl *)mCalloc(9,sizeof(phydbl)); //!< Added by Marcelo.
-  
+  mod->tracecount = 0;//added by Ken 10/1/2018
   return mod;
 }
 
@@ -4665,21 +2623,23 @@ void Make_Model_Complete(model *mod)
   mod->Pmat_part = (phydbl **)mCalloc(mod->nparts,sizeof(phydbl*));
   mod->qmat_buff_part = (phydbl **)mCalloc(mod->nparts,sizeof(phydbl*));
 
-	  int i;
-	  for(i=0;i<mod->nparts;i++){
-		  mod->qmat_part[i]=(phydbl *)mCalloc(mod->n_w_catg*mod->ns*mod->ns,sizeof(phydbl));
-		  mod->Pmat_part[i]=(phydbl *)mCalloc(mod->n_catg*mod->ns*mod->ns,sizeof(phydbl));
-		  mod->qmat_buff_part[i] = (phydbl *)mCalloc(mod->n_w_catg*mod->ns*mod->ns,sizeof(phydbl));
-	  }
+  int i;
+  for(i=0;i<mod->nparts;i++){
+	  printf("Making q mats %d size\n",mod->n_w_catg*mod->ns*mod->ns);
+	  mod->qmat_part[i]=(phydbl *)mCalloc(mod->n_w_catg*mod->ns*mod->ns,sizeof(phydbl));
+	  mod->Pmat_part[i]=(phydbl *)mCalloc(mod->n_catg*mod->ns*mod->ns,sizeof(phydbl));
+	  mod->qmat_buff_part[i] = (phydbl *)mCalloc(mod->n_w_catg*mod->ns*mod->ns,sizeof(phydbl));
+  }
+  mod->qmat_part[0][0]=1.0;
+  printf("just tried1");
 
 
-  if(mod->n_rr_branch)
-  {
+  if(mod->n_rr_branch){
     mod->rr_branch                           = (phydbl *)mCalloc(mod->n_rr_branch,sizeof(phydbl));
     mod->p_rr_branch                         = (phydbl *)mCalloc(mod->n_rr_branch,sizeof(phydbl));
   }
   
-  if(mod->io->datatype==CODON) //!< Added by Marcelo. 
+  if(mod->datatype==CODON) //!< Added by Marcelo.
   {
     int i,j;
     mod->prob_omegas_uns                     = (phydbl *)mCalloc(mod->n_w_catg,sizeof(phydbl));   
@@ -4696,7 +2656,7 @@ void Make_Model_Complete(model *mod)
 
     mod->qmatScaled                          = (phydbl *)mCalloc(mod->n_w_catg*mod->ns*mod->ns,sizeof(phydbl));
     
-    if(mod->io->heuristicExpm)
+    if(mod->heuristicExpm)
     {
     mod->A2_part                                  = (phydbl **)mCalloc(mod->nomega_part,sizeof(phydbl*));
      for(modeli=0;modeli<mod->nomega_part;modeli++){
@@ -4705,9 +2665,8 @@ void Make_Model_Complete(model *mod)
       //Fors(i,mod->ns*mod->ns*mod->n_w_catg*15,mod->ns*mod->ns*15) For(j,mod->ns*mod->ns) mod->A2[i+j]=mod->A0[j];
     }
     
-    if(mod->io->expm==SSPADE)
+    if(mod->expm==SSPADE)
     {
-
       mod->ipiv_part                                = (int    **)mCalloc(mod->nomega_part,sizeof(int*));
       mod->U_part                                   = (phydbl **)mCalloc(mod->nomega_part,sizeof(phydbl*));
       mod->V_part                                   = (phydbl **)mCalloc(mod->nomega_part,sizeof(phydbl*));
@@ -4733,6 +2692,8 @@ void Make_Model_Complete(model *mod)
 
     }
   }
+  mod->qmat_part[0][i]=1.0;
+  printf("just tried2");
 }
 
 /*********************************************************/
@@ -4743,6 +2704,64 @@ void Copy_Dist(phydbl **cpy, phydbl **orig, int n)
   For(i,n) For(j,n) cpy[i][j] = orig[i][j];
 }
 
+/*********************************************************/
+void Copy_Optimiz(optimiz *s_opt, optimiz* ori)
+{
+	s_opt->print                   = ori->print;
+	s_opt->last_opt                = ori->last_opt;
+	s_opt->opt_subst_param         = ori->opt_subst_param;
+	s_opt->opt_alpha               = ori->opt_alpha;
+	s_opt->opt_bl                  = ori->opt_bl;
+	s_opt->opt_lambda              = ori->opt_lambda;
+	s_opt->opt_pinvar              = ori->opt_pinvar;
+	s_opt->opt_cov_delta           = ori->opt_cov_delta;
+	s_opt->opt_cov_alpha           = ori->opt_cov_alpha;
+	s_opt->opt_cov_free_rates      = ori->opt_cov_free_rates;
+	s_opt->opt_rr                  = ori->opt_rr;
+	s_opt->init_lk                 = ori->init_lk;
+	s_opt->n_it_max                = ori->n_it_max;
+	s_opt->opt_topo                = ori->opt_topo;
+	s_opt->topo_search             = ori->topo_search;
+	s_opt->random_input_tree       = ori->random_input_tree;
+	s_opt->n_rand_starts           = ori->n_rand_starts;
+	s_opt->brent_it_max            = ori->brent_it_max;
+	s_opt->steph_spr               = ori->steph_spr;
+	s_opt->user_state_freq         = ori->user_state_freq;
+	s_opt->min_diff_lk_local       = ori->min_diff_lk_local;
+	s_opt->min_diff_lk_global      = ori->min_diff_lk_global;
+	s_opt->min_diff_lk_move        = ori->min_diff_lk_move;
+	s_opt->p_moves_to_examine      = ori->p_moves_to_examine;
+	s_opt->fast_nni                = ori->fast_nni;
+	s_opt->greedy                  = ori->greedy;
+	s_opt->general_pars            = ori->general_pars;
+	s_opt->tree_size_mult          = ori->tree_size_mult;
+	s_opt->opt_five_branch         = ori->opt_five_branch;
+	s_opt->pars_thresh             = ori->pars_thresh;
+	s_opt->hybrid_thresh           = ori->hybrid_thresh;
+	s_opt->quickdirty              = ori->quickdirty;
+	s_opt->spr_pars                = ori->spr_pars;
+	s_opt->spr_lnL                 = ori->spr_lnL;
+	s_opt->min_depth_path          = ori->min_depth_path;
+	s_opt->max_depth_path          = ori->max_depth_path;
+	s_opt->deepest_path            = ori->deepest_path;
+	s_opt->max_delta_lnL_spr       = ori->max_delta_lnL_spr;
+	s_opt->wim_n_rgrft             = ori->wim_n_rgrft;
+	s_opt->wim_n_globl             = ori->wim_n_globl;
+	s_opt->wim_max_dist            = ori->wim_max_dist;
+	s_opt->wim_n_optim             = ori->wim_n_optim;
+	s_opt->wim_n_best              = ori->wim_n_best;
+	s_opt->wim_inside_opt          = ori->wim_inside_opt;
+	s_opt->opt_omega               = ori->opt_omega;
+	s_opt->opt_state_freq          = ori->opt_state_freq;
+	s_opt->opt_beta                = ori->opt_beta;
+	s_opt->opt_prob_omega          = ori->opt_prob_omega;
+	s_opt->opt_alphaCD             = ori->opt_alphaCD;
+	s_opt->min_diff_lk_codonModels = ori->min_diff_lk_codonModels;
+	s_opt->opt_method              = ori->opt_method;
+	s_opt->nBrentCycles            = ori->nBrentCycles;
+	s_opt->opt_state_freq_AAML     = ori->opt_state_freq_AAML;
+	s_opt->opt_kappa               = ori->opt_kappa;
+}
 /*********************************************************/
 
 model *Copy_Model(model *ori)
@@ -4757,9 +2776,15 @@ model *Copy_Model(model *ori)
   cpy->io            = ori->io;               //!< Added by Marcelo.
   cpy->s_opt         = ori->s_opt;            //!< Added by Marcelo.
   cpy->n_w_catg      = ori->n_w_catg;         //!< Added by Marcelo.
-  
+
+  //models need different optimization parameters
+ /* cpy->s_opt = Make_Optimiz();
+  Copy_Optimiz(cpy->s_opt,ori->s_opt);
+  cpy->state_len = ori->state_len;*/
+
+  printf("making model complete\n");
   Make_Model_Complete(cpy);
-  
+  printf("made model complete\n");
   
   if(ori->io->datatype==CODON) //!< Added by Marcelo.
   {
@@ -4767,7 +2792,9 @@ model *Copy_Model(model *ori)
     cpy->omegas      = (phydbl *)mCalloc(cpy->n_w_catg,sizeof(phydbl));
   }
   
+  printf("recording model\n");
   Record_Model(ori,cpy);
+  printf("recorded model\n");
   
 #ifdef M4
   if(ori->m4mod) cpy->m4mod = M4_Copy_M4_Model(ori, ori->m4mod);
@@ -4778,6 +2805,7 @@ model *Copy_Model(model *ori)
 
 /*********************************************************/
 
+
 void Record_Model(model *ori, model *cpy)
 {
   int i;
@@ -4785,7 +2813,7 @@ void Record_Model(model *ori, model *cpy)
 	  printf("Record_Model doesn't work with parititions yet\n");
 	  exit(EXIT_FAILURE);
   }
-  
+
   cpy->alpha_old    = ori->alpha_old;
   cpy->kappa_old    = ori->alpha_old;
   cpy->lambda_old   = ori->lambda_old;
@@ -4799,7 +2827,7 @@ void Record_Model(model *ori, model *cpy)
   cpy->invar        = ori->invar;
   cpy->pinvar       = ori->pinvar;
   cpy->n_diff_rr    = ori->n_diff_rr;
-  
+
   if((ori->whichmodel == CUSTOM)||(ori->whichmodel == GTR))
   {
     For(i,ori->ns*(ori->ns-1)/2)
@@ -4810,20 +2838,25 @@ void Record_Model(model *ori, model *cpy)
       cpy->n_rr_per_cat[i]= ori->n_rr_per_cat[i];
     }
   }
-  
+  printf("about to pis\n");
   For(i,cpy->ns)
   {
     cpy->pi[i]          = ori->pi[i];
+    printf("about to pis\n");
     cpy->pi_unscaled[i] = ori->pi_unscaled[i];
+    printf("about to pis\n");
     cpy->user_b_freq[i] = ori->user_b_freq[i];
+    printf("about to pis\n");
   }
-  
+
+  printf("about to do qmats\n");
   For(i,ori->n_w_catg*cpy->ns*cpy->ns)
-  { 
-    cpy->qmat[i]      = ori->qmat[i]; 
+  {
+    cpy->qmat[i]      = ori->qmat[i];
     cpy->qmat_buff_part[0][i] = ori->qmat_buff_part[0][i];
   }
-  
+  printf("did qmats\n");
+
   For(i,ori->n_w_catg)
   {
     cpy->eigen->size = ori->eigen->size;
@@ -4837,21 +2870,21 @@ void Record_Model(model *ori, model *cpy)
     For(i,ori->ns*ori->ns*ori->n_w_catg) cpy->eigen->l_e_vect[i]    = ori->eigen->l_e_vect[i];
     For(i,ori->ns*ori->ns*ori->n_w_catg) cpy->eigen->q[i]           = ori->eigen->q[i];
   }
-  
+
   For(i,cpy->n_catg)
   {
     cpy->gamma_r_proba[i] = ori->gamma_r_proba[i];
     cpy->gamma_rr[i]      = ori->gamma_rr[i];
   }
-  
+
 #ifndef PHYML
   cpy->use_m4mod = ori->use_m4mod;
-#endif 
-  
+#endif
+
   if(ori->io->datatype==CODON) //!< Added by Marcelo.
   {
     int j;
-    cpy->omegaSiteVar = ori->omegaSiteVar; 
+    cpy->omegaSiteVar = ori->omegaSiteVar;
     //cpy->omega        = ori->omega;
 
     int omegai; //added by Ken 17/8/2016
@@ -4860,24 +2893,24 @@ void Record_Model(model *ori, model *cpy)
     }
     cpy->nomega_part = ori->nomega_part;
 
-    cpy->omega_old    = ori->omega_old; 
+    cpy->omega_old    = ori->omega_old;
     cpy->freq_model   = ori->freq_model;
     cpy->genetic_code = ori->genetic_code;
     strcpy(cpy->modelname,ori->modelname);
-    
+
     For(i,cpy->num_base_freq)
-    { 
-      cpy->base_freq[i]     = ori->base_freq[i];  
+    {
+      cpy->base_freq[i]     = ori->base_freq[i];
       cpy->uns_base_freq[i] = ori->uns_base_freq[i];
     }
-    
+
     cpy->nkappa             = ori->nkappa;
     For(i,ori->nkappa)
-    { 
+    {
       cpy->pkappa[i]        = ori->pkappa[i];
-      cpy->unspkappa[i]     = ori->unspkappa[i];   
+      cpy->unspkappa[i]     = ori->unspkappa[i];
     }
-    
+
     For(j,ori->n_w_catg)
     {
       cpy->mr_w[j]              = ori->mr_w[j];
@@ -4887,7 +2920,249 @@ void Record_Model(model *ori, model *cpy)
     }
   }
 }
+
 /*********************************************************/
+
+model *Copy_Partial_Model(model *ori)
+{
+  model *cpy;
+
+  cpy                = Make_Model_Basic();
+  cpy->ns            = ori->ns;
+  cpy->n_catg        = ori->n_catg;
+
+  cpy->num_base_freq = ori->num_base_freq;    //!< Added by Marcelo.
+  cpy->io            = ori->io;               //!< Added by Marcelo.
+  cpy->s_opt         = ori->s_opt;            //!< Added by Marcelo.
+  cpy->n_w_catg      = ori->n_w_catg;         //!< Added by Marcelo.
+
+
+  cpy->primary=0;
+
+  cpy->motifstringopt=0;
+  cpy->hotnessstringopt=0;
+  cpy->partfilespec=0;
+  cpy->rootfound=0;
+  cpy->partfile="NONE";
+  cpy->ambigprint=0;
+  cpy->nomega_part=1;
+  cpy->nparts=1;
+  cpy->ambigprint=0;
+  cpy->startnode=0;
+  cpy->slowSPR=0;
+  cpy->stretch=1.0;
+  cpy->rootname = mCalloc(T_MAX_OPTION,sizeof(char));
+  cpy->hotnessstring = mCalloc(T_MAX_OPTION,sizeof(char));
+  cpy->aamodel = mCalloc(T_MAX_OPTION,sizeof(char));
+  cpy->partfile = mCalloc(T_MAX_FILE,sizeof(char));
+  cpy->motifstring = mCalloc(T_MAX_FILE,sizeof(char));
+  cpy->ambigfile = mCalloc(T_MAX_FILE,sizeof(char));
+
+  cpy->nparts=ori->nparts;
+  cpy->n_otu = ori->n_otu;
+  cpy->init_len = ori->init_len;
+  cpy->state_len = ori->state_len;
+  cpy->whichrealmodel = ori->whichrealmodel;
+  cpy->initqrates = ori->initqrates;
+  printf("initqrates %d\n",cpy->initqrates);
+  //models need different optimization parameters
+  cpy->s_opt = Make_Optimiz();
+  Copy_Optimiz(cpy->s_opt,ori->s_opt);
+  cpy->testcondition = ori->testcondition;
+
+  printf("making model complete\n");
+  printf("%d\n",cpy->n_w_catg);
+  printf("%d\n",cpy->n_catg);
+  Make_Model_Complete(cpy);
+  printf("made model complete\n");
+
+  printf("nparts %d\n",cpy->nparts);
+
+  if(ori->io->datatype==CODON) //!< Added by Marcelo.
+  {
+    cpy->prob_omegas = (phydbl *)mCalloc(cpy->n_w_catg,sizeof(phydbl));
+    cpy->omegas      = (phydbl *)mCalloc(cpy->n_w_catg,sizeof(phydbl));
+  }
+  cpy->qmat_part[0][0]=1.0;
+  printf("just tried3");
+
+  printf("recording model\n");
+  Record_Partial_Model(ori,cpy);
+  printf("recorded model\n");
+
+#ifdef M4
+  if(ori->m4mod) cpy->m4mod = M4_Copy_M4_Model(ori, ori->m4mod);
+#endif
+
+  return cpy;
+}
+
+/*********************************************************/
+
+void Record_Partial_Model(model *ori, model *cpy)
+{
+  int i;
+  if(ori->nparts > 1){
+	  printf("Record_Model doesn't work with parititions yet\n");
+	  exit(EXIT_FAILURE);
+  }
+
+  cpy->alpha_old    = ori->alpha_old;
+  cpy->kappa_old    = ori->alpha_old;
+  cpy->lambda_old   = ori->lambda_old;
+  cpy->pinvar_old   = ori->pinvar_old;
+  cpy->whichmodel   = ori->whichmodel;
+  cpy->update_eigen = ori->update_eigen;
+  cpy->kappa        = ori->kappa;
+  cpy->alpha        = ori->alpha;
+  cpy->lambda       = ori->lambda;
+  cpy->bootstrap    = ori->bootstrap;
+  cpy->invar        = ori->invar;
+  cpy->pinvar       = ori->pinvar;
+  cpy->n_diff_rr    = ori->n_diff_rr;
+
+  cpy->print_trace  = ori->print_trace;
+
+  if((ori->whichmodel == CUSTOM)||(ori->whichmodel == GTR))
+  {
+    For(i,ori->ns*(ori->ns-1)/2)
+    {
+      cpy->rr_num[i]      = ori->rr_num[i];
+      cpy->rr_val[i]      = ori->rr_val[i];
+      cpy->rr[i]          = ori->rr[i]; //!< Corrected by Marcelo.
+      cpy->n_rr_per_cat[i]= ori->n_rr_per_cat[i];
+    }
+  }
+  /* Don't have sequence information yet
+   * printf("about to pis\n");
+  For(i,cpy->ns)
+  {
+    cpy->pi[i]          = ori->pi[i];
+    printf("about to pis\n");
+    cpy->pi_unscaled[i] = ori->pi_unscaled[i];
+    printf("about to pis\n");
+    cpy->user_b_freq[i] = ori->user_b_freq[i];
+    printf("about to pis\n");
+  }*/
+  cpy->qmat_part[0][i]=1.0;
+  printf("just tried");
+
+  printf("about to do qmats\n");
+  For(i,ori->n_w_catg*cpy->ns*cpy->ns){
+	  cpy->qmat_part[0][i]=ori->qmat_part[0][i];
+	  cpy->qmat_buff_part[0][i] = ori->qmat_buff_part[0][i];
+  }
+  printf("did assigning a qmat value\n");
+  cpy->qmat_part[0][1]=1.0;
+  printf("did qmats\n");
+
+  For(i,ori->n_w_catg){
+    cpy->eigen->size = ori->eigen->size;
+    For(i,2*ori->ns*ori->n_w_catg)       cpy->eigen->space[i]       = ori->eigen->space[i];
+    For(i,2*ori->ns*ori->n_w_catg)       cpy->eigen->space_int[i]   = ori->eigen->space_int[i];
+    For(i,ori->ns*ori->n_w_catg)         cpy->eigen->e_val[i]       = ori->eigen->e_val[i];
+    For(i,ori->ns*ori->n_w_catg)         cpy->eigen->e_val_im[i]    = ori->eigen->e_val_im[i];
+    For(i,ori->ns*ori->ns*ori->n_w_catg) cpy->eigen->r_e_vect[i]    = ori->eigen->r_e_vect[i];
+    For(i,ori->ns*ori->ns*ori->n_w_catg) cpy->eigen->r_e_vect[i]    = ori->eigen->r_e_vect[i];
+    For(i,ori->ns*ori->ns*ori->n_w_catg) cpy->eigen->r_e_vect_im[i] = ori->eigen->r_e_vect_im[i];
+    For(i,ori->ns*ori->ns*ori->n_w_catg) cpy->eigen->l_e_vect[i]    = ori->eigen->l_e_vect[i];
+    For(i,ori->ns*ori->ns*ori->n_w_catg) cpy->eigen->q[i]           = ori->eigen->q[i];
+  }
+
+  For(i,cpy->n_catg)
+  {
+    cpy->gamma_r_proba[i] = ori->gamma_r_proba[i];
+    cpy->gamma_rr[i]      = ori->gamma_rr[i];
+  }
+
+#ifndef PHYML
+  cpy->use_m4mod = ori->use_m4mod;
+#endif
+
+  if(ori->io->datatype==CODON) //!< Added by Marcelo.
+  {
+    int j;
+    printf("assigning omegas\n");
+
+    cpy->omegaSiteVar = ori->omegaSiteVar;
+    //cpy->omega        = ori->omega;
+    cpy->omega_part=mCalloc(ori->nomega_part,sizeof(phydbl));
+    cpy->nomega_part = ori->nomega_part;
+    int omegai; //added by Ken 17/8/2016
+    for(omegai=0;omegai<ori->nomega_part;omegai++){
+    	printf("omega: %lf\t%d\t%d\n",ori->omega_part[omegai],omegai,cpy->nomega_part);
+    	cpy->omega_part[omegai]    = ori->omega_part[omegai];
+    }
+    cpy->nomega_part = ori->nomega_part;
+    printf("assigned omegas\n");
+
+    cpy->omega_old    = ori->omega_old;
+    cpy->freq_model   = ori->freq_model;
+    cpy->genetic_code = ori->genetic_code;
+    printf("original model name: %s\n",ori->modelname);
+    cpy->modelname=mCalloc(100,sizeof(char));
+    strcpy(cpy->modelname,ori->modelname);
+    printf("here %s\n",cpy->modelname);
+    /*For(i,cpy->num_base_freq)
+    {
+      cpy->base_freq[i]     = ori->base_freq[i];
+      cpy->uns_base_freq[i] = ori->uns_base_freq[i];
+    }*/
+    printf("here\n");
+
+
+    cpy->nkappa             = ori->nkappa;
+    For(i,ori->nkappa)
+    {
+      cpy->pkappa[i]        = ori->pkappa[i];
+      cpy->unspkappa[i]     = ori->unspkappa[i];
+    }
+    printf("here\n");
+    For(j,ori->n_w_catg)
+    {
+    /*  cpy->mr_w[j]              = ori->mr_w[j];
+      cpy->prob_omegas_uns[j]   = ori->prob_omegas_uns[j];
+      cpy->omegas[i]            = ori->omegas[i];
+      cpy->prob_omegas[i]       = ori->prob_omegas[i];*/
+    }
+
+
+    cpy->expm=ori->io->expm; /*!< 0 Eigenvalue; 1 scaling and squaring Pade. approx. COPIED FROM OPTION*/ //!< Added by Marcelo.
+    cpy->datatype=ori->io->datatype; //copied from option
+    cpy->init_DistanceTreeCD=ori->io->init_DistanceTreeCD; /*!< 0: ML JC69; 1: ML M0; 2: Schneider 2005 CodonPam; 3: Kosiol 2007 Empirical. COPIED FROM OPTION*/ //!<Added by Marcelo.
+    cpy->kappaECM=ori->io->kappaECM; /*!< According to Kosiol 2007.COPIED FROM OPTION*///!<Added by Marcelo.
+    cpy->n_termsTaylor=ori->io->n_termsTaylor; //! Added by Marcelo. COPIED FROM OPTION
+    cpy->heuristicExpm=ori->io->heuristicExpm; /*!< TAYLOR in parameter opt?.COPIED FROM OPTION*/
+    cpy->modeltypeOpt=ori->io->modeltypeOpt; //COPIED FROM OPTION
+    cpy->freqmodelOpt=ori->io->freqmodelOpt; //COPIED FROM OPTION
+    cpy->omegaOpt=ori->io->omegaOpt; //COPIED FROM OPTION
+    cpy->eq_freq_handling=ori->io->eq_freq_handling; //COPIED FROM OPTION
+    cpy->quiet=ori->io->quiet;
+    cpy->optParam = ori->io->optParam;
+    cpy->opt_heuristic_manuel=ori->io->opt_heuristic_manuel;
+    cpy->roundMax_start=ori->io->roundMax_start;
+    cpy->roundMax_end=ori->io->roundMax_end;
+    cpy->logtree=ori->io->logtree;
+    cpy->print_site_lnl = ori->io->print_site_lnl;
+    cpy->out_stats_format = ori->io->out_stats_format;
+    cpy->random_boot_seq_order = ori->io->random_boot_seq_order;
+    cpy->minParam = ori->io->minParam;
+    cpy->maxParam = ori->io->maxParam;
+    cpy->lkExpStepSize = ori->io->lkExpStepSize;
+
+    printf("datatype: %d\n",cpy->datatype);
+    cpy->structTs_and_Tv  = (ts_and_tv *)mCalloc(64*64,sizeof(ts_and_tv));//!< Added by Marcelo. 64 possible codons ... will be initialized together with the model parameters in set model default.
+    if(cpy->datatype==CODON) Make_Ts_and_Tv_Matrix(cpy->io,cpy);
+
+    if(ori->whichrealmodel==HLP17){
+    	  cpy->Bmat = (phydbl *)mCalloc(3721,sizeof(phydbl));
+    	  setUpHLP17(ori->io,cpy);
+    }
+    printf("here\n");
+  }
+}
+/*********************************************************/
+
 //! Allocate memory for pointers to strings that contain the names of input and output files.
 /*!
  *  Input: files of sequence alignement, initial tree file (if any ); Output: tree file, statistic file, bootstrap file, likelihood file, clade list.
@@ -4909,14 +3184,13 @@ option *Make_Input()
  // io->out_trace_file       = (char *)mCalloc(T_MAX_FILE,sizeof(char)); //!< Name of output file containing each phylogeny explored during tree search.
   io->out_trace_tree_file  = (char *)mCalloc(T_MAX_FILE,sizeof(char)); //!< Name of output file containing each phylogeny explored during tree search.  //added by Ken 9/2/2017
   io->out_trace_stats_file = (char *)mCalloc(T_MAX_FILE,sizeof(char)); //!< Name of output file containing each phylogeny explored during tree search. //added by Ken 9/2/2017
-  io->tracecount = 0;
   io->nt_or_cd             = (char *)mCalloc(T_MAX_FILE,sizeof(char)); //!< Nucleotide or codon data?.
   io->run_id_string        = (char *)mCalloc(T_MAX_OPTION,sizeof(char)); //!< Name of run id.
   io->clade_list_file      = (char *)mCalloc(T_MAX_FILE,sizeof(char)); //!< Name of output clade list file.
   io->alphabet             = (char **)mCalloc(T_MAX_ALPHABET,sizeof(char *)); //!< Alphabet of symbols.
   For(i,T_MAX_ALPHABET) io->alphabet[i] = (char *)mCalloc(T_MAX_STATE,sizeof(char ));
   io->treelist             = (t_treelist *)mCalloc(1,sizeof(t_treelist)); //!< Stores each phylogeny explored during tree search.
-  io->structTs_and_Tv      = (ts_and_tv *)mCalloc(64*64,sizeof(ts_and_tv));//!< Added by Marcelo. 64 possible codons ... will be initialized together with the model parameters in set model default.
+  //io->structTs_and_Tv      = (ts_and_tv *)mCalloc(64*64,sizeof(ts_and_tv));//!< Added by Marcelo. 64 possible codons ... will be initialized together with the model parameters in set model default.
   return io;
 }
 
@@ -4926,7 +3200,7 @@ option *Make_Input()
 /*!
  *
  */
-void Set_Defaults_Input(option* io)
+void Set_Defaults_Input(option* io,model * mod)
 {
   io->fp_in_align                = NULL; //!< File pointer.
   io->fp_in_tree                 = NULL; //!< File pointer.
@@ -4949,8 +3223,8 @@ void Set_Defaults_Input(option* io)
   io->in_tree                    = 0;
   io->out_tree_file_open_mode    = 1;
   io->out_stats_file_open_mode   = 1;
-  io->init_len                   = -1;
-  io->n_otu                      = -1;
+  mod->init_len                   = -1;
+  mod->n_otu                      = -1;
   io->n_data_set_asked           = -1;
   io->print_boot_trees           = 1;
   io->n_part                     = 1;
@@ -4961,7 +3235,7 @@ void Set_Defaults_Input(option* io)
   io->r_seed                     = -1000;
   io->collapse_boot              = 0;
   io->random_boot_seq_order      = 1;
-  io->print_trace                = 0;
+  mod->print_trace                = 0;
   io->print_site_lnl             = 0;
   io->m4_model                   = NO;
   io->rm_ambigu                  = 0;
@@ -4980,7 +3254,7 @@ void Set_Defaults_Input(option* io)
   io->heuristicExpm              = NO; //!< Added by Marcelo. 
   io->threshold_exp              = NO; //!< Added by Marcelo. 
   io->testInitTree               = NO; //!< Added by Marcelo. 
-  io->testcondition              = NO; //!< Added by Marcelo.
+  mod->testcondition              = NO; //!< Added by Marcelo.
   io->convert_NT_to_AA           = NO; //!< Added by Marcelo.
   io->convert_AAfreq2CDfreq      = NO; //!< Added by Marcelo.
   io->fp_in_usrECM               = NULL; //!< Added by Marcelo.
@@ -5061,6 +3335,7 @@ void Set_Defaults_Model(model *mod)
   
   mod->initqrates              = NOINITMAT;
   mod->freq_model              = CF3X4;
+
 }
 /*********************************************************/
 
@@ -5424,7 +3699,7 @@ void Match_Tip_Numbers(t_tree *tree1, t_tree *tree2)
 
 /*********************************************************/
 
-void Test_Multiple_Data_Set_Format(option *io)
+void Test_Multiple_Data_Set_Format(option *io, model* mod)
 {
   char *line;
   
@@ -5436,7 +3711,7 @@ void Test_Multiple_Data_Set_Format(option *io)
   
   free(line);
   
-  if((io->mod->bootstrap > 1) && (io->n_trees > 1))
+  if((mod->bootstrap > 1) && (io->n_trees > 1))  //was io-> mod Ken 9/1/2018
     Warn_And_Exit("\n. Bootstrap option is not allowed with multiple input trees !\n");
   
   rewind(io->fp_in_tree);
@@ -7011,302 +5286,6 @@ void Random_Tree(t_tree *tree)
 
 
 
-void Print_Settings(option *io)
-{
-  int answer;
-  char *s,*r;
-  
-  s = (char *)mCalloc(100,sizeof(char));
-  r = (char *)mCalloc(100,sizeof(char));
-  PhyML_Printf("\n\n\n");
-  PhyML_Printf("\n\n"); 
-  PhyML_Printf("                               ..................                               \n");
-  PhyML_Printf("oooooooooooooooooooooooo       CURRENT   SETTINGS       oooooooooooooooooooooooo\n");
-  PhyML_Printf("                               ..................                               \n");
-  
-  PhyML_Printf("\n. Sequence filename:\t\t\t\t %s", Basename(io->in_align_file));
-  
-  PhyML_Printf("\n. Number of taxa:\t\t\t\t %d", io->n_otu); //!< Added by Marcelo.
-  if(io->datatype == CODON ) PhyML_Printf("\n. Sequence length:\t\t\t\t %d", io->init_len/3); //!< Added by Marcelo.
-  else PhyML_Printf("\n. Sequence length:\t\t\t\t %d", io->init_len); //!< Added by Marcelo.
-  
-  if(io->datatype == CODON)  strcpy(s,"Codon"); //!< Added by Marcelo.                                                       
-  else if(io->datatype == NT)       strcpy(s,"DNA");
-  else if(io->datatype == AA)        strcpy(s,"Amino Acids");
-  else strcpy(s,"generic");
-  
-  PhyML_Printf("\n. Data type:\t\t\t\t\t %s",s);
-  if(io->datatype == CODON) 
-  {
-    switch(io->mod->genetic_code)
-    {
-      case   STANDARD: strcpy(s,"Standard\0");break;
-      case       TVMC: strcpy(s,"Vertebrate Mitochondrial\0"); break; 
-      case       TYMC: strcpy(s,"Yeast Mitochondrial\0"); break;
-      case THMPCMCMSC: strcpy(s,"Mold, Protozoan, Coelenterate ...\0"); break; 
-      case      THIMC: strcpy(s,"Invertebrate Mitochondrial\0"); break; 
-      case    THCDHNC: strcpy(s,"Ciliate, Dasycladacean ...\0"); break;
-      case     THEFMC: strcpy(s,"Echinoderm and Flatworm Mit. ...\0"); break;
-      case      THENC: strcpy(s,"Euplotid Nuclear\0"); break;
-      case    THBAPPC: strcpy(s,"Bacterial, Archaeal and Plant ...\0"); break;
-      case     THAYNC: strcpy(s,"Alternative Yeast Nuclear\0"); break;
-      case      THAMC: strcpy(s,"Ascidian Mitochondrial\0"); break;
-      case     THAFMC: strcpy(s,"Alternative Flatworm Mit. ...\0"); break;
-      case       BLNC: strcpy(s,"Blepharisma Nuclear\0"); break;
-      case       CHMC: strcpy(s,"Chlorophycean Mitochondrial\0"); break;
-      case       TRMC: strcpy(s,"Trematode Mitochondrial\0"); break;
-      case      SCOMC: strcpy(s,"Scenedesmus Obliquus Mit. ...\0"); break;
-      case       THMC: strcpy(s,"Thraustochytrium Mitochondrial\0"); break;
-      default : Warn_And_Exit("Genetic code not implemented."); break; 
-        break;
-    }
-    PhyML_Printf("\n. Alphabet size:\t\t\t\t %d",io->mod->ns); 
-    PhyML_Printf("\n. Genetic code:\t\t\t\t\t %s",s);
-    
-  }
-  else 
-    PhyML_Printf("\n. Alphabet size:\t\t\t\t %d",io->mod->ns);
-  
-  PhyML_Printf("\n. Sequence format:\t\t\t\t %s", io->interleaved ? "Interleaved": "Sequential");
-  PhyML_Printf("\n. Number of data sets:\t\t\t\t %d", io->n_data_sets);
-  
-  PhyML_Printf("\n. Number of bootstrapped data sets:\t\t %d", io->mod->bootstrap);
-  
-  if (io->mod->bootstrap > 0)
-    PhyML_Printf("\n. Compute aLRT:\t\t\t\t\t No");
-  else
-  {
-    if(io->ratio_test == 1)
-      PhyML_Printf("\n. Compute aLRT:\t\t\t\t\t Yes (aLRT statistics)");
-    else if(io->ratio_test == 2)
-      PhyML_Printf("\n. Compute aLRT:\t\t\t\t\t Yes (Chi^2-based br. supports)");
-    else if(io->ratio_test == 3)
-      PhyML_Printf("\n. Compute aLRT:\t\t\t\t\t Yes (Min[SH-like, Chi^2-based]");
-    else if(io->ratio_test == 4)
-      PhyML_Printf("\n. Compute aLRT:\t\t\t\t\t Yes (SH-like branch supports)");
-    else if(io->ratio_test == 5)
-      PhyML_Printf("\n. Compute aLRT:\t\t\t\t\t Yes (aBayes branch supports)");
-    
-  }
-  if(io->datatype == CODON)
-  {
-    switch(io->mod->freq_model)
-    {
-      case F1XSENSECODONS: 
-        strcpy(s,"F1x"); 
-        sprintf(r,"%d",io->mod->ns);
-        strcat(s,r);
-        break;
-      case F1X4: strcpy(s,"F1x4");
-        break;
-      case F3X4: strcpy(s,"F3x4");
-        break;
-      case CF3X4: strcpy(s,"CF3x4");
-        break;
-      default: strcpy(s,"\0");break;
-    }
-    if(io->mod->whichmodel==MGECMUSR||io->mod->whichmodel==YAPECMUSR||io->mod->whichmodel==GYECMUSR ||io->mod->whichmodel==GYECMK07 || io->mod->whichmodel==GYECMS05 || io->mod->whichmodel==YAPECMK07 || io->mod->whichmodel==YAPECMS05 || io->mod->whichmodel==MGECMUSRWK||io->mod->whichmodel==YAPECMUSRWK||io->mod->whichmodel==GYECMUSRWK ||io->mod->whichmodel==GYECMK07WK || io->mod->whichmodel==GYECMS05WK || io->mod->whichmodel==YAPECMK07WK || io->mod->whichmodel==YAPECMS05WK || io->eq_freq_handling == MODEL)
-    {
-      strcpy(r,"Model-Defined");
-    }
-    else{
-      if(io->mod->s_opt->opt_state_freq) strcpy(r,"Optimized");
-      else if(io->mod->s_opt->user_state_freq) strcpy(r,"User-Defined");
-      else  strcpy(r,"Empirical");
-    }
-    PhyML_Printf("\n. Model type:\t\t\t\t\t %s", io->mod->modelname);
-    if(io->mod->pcaModel) PhyML_Printf("\n. Number of PCs:\t\t\t\t %d", io->mod->npcs);
-    PhyML_Printf("\n. Equilibrium frequencies model:\t\t %s %s", r,s);
-    
-    if(io->modeltypeOpt == HLP17){
-        PhyML_Printf("\n. Motifs:\t\t\t\t\t %s", io->mod->motifstring);
-        PhyML_Printf("\n. h parameter(s):\t\t\t\t %s", io->mod->hotnessstring);
-        PhyML_Printf("\n. Root ID:\t\t\t\t\t %s", io->mod->rootname);
-    }
-    
-    
-    
-    
-  }else PhyML_Printf("\n. Model name:\t\t\t\t\t %s", io->mod->modelname);
-  
-  
-  if (io->datatype == NT)
-  {
-    if ((io->mod->whichmodel == K80)  ||
-        (io->mod->whichmodel == HKY85)||
-        (io->mod->whichmodel == F84)  ||
-        (io->mod->whichmodel == TN93))
-    {
-      if (io->mod->s_opt->opt_kappa)
-        PhyML_Printf("\n. Ts/tv ratio:\t\t\t\t\t Estimated");
-      else
-        PhyML_Printf("\n. Ts/tv ratio:\t\t\t\t\t %f", io->mod->kappa);
-    }
-  }
-  
-  if (io->mod->s_opt->opt_pinvar)
-    PhyML_Printf("\n. Prop. of invariable sites:\t\t\t Estimated");
-  else
-    PhyML_Printf("\n. Prop. of invariable sites:\t\t\t %.2f", io->mod->pinvar);
-  
-  if(io->mod->n_w_catg==1 && io->mod->n_catg>1) //!< Added By Marcelo. 
-  {
-    PhyML_Printf("\n. Number of subst. rate categs:\t\t\t %d", io->mod->n_catg);
-    if(io->mod->s_opt->opt_alpha) PhyML_Printf("\n. Gamma distribution parameter:\t\t\t Estimated");
-    else PhyML_Printf("\n. Gamma distribution parameter:\t\t\t %f", io->mod->alpha);
-    PhyML_Printf("\n. 'Middle' of each rate class:\t\t\t %s",(io->mod->gamma_median)?("Median"):("Mean"));
-  }
-  else
-  {
-    PhyML_Printf("\n. Number of subst. rate categs:\t\t\t 1");
-  }
-  
-  if(io->datatype==CODON) //!< Added By Marcelo.
-  {
-    if(io->mod->n_w_catg==1) PhyML_Printf("\n. Number of dn/ds rate categs:\t\t\t %d - (M0)", io->mod->n_w_catg);
-    else if(io->mod->omegaSiteVar==DGAMMAK) 
-    {
-      PhyML_Printf("\n. Number of dn/ds rate ratio categories:\t %d - Discrete Gamma model (M5)", io->mod->n_w_catg);
-      if(io->mod->s_opt->opt_alpha) PhyML_Printf("\n. Gamma distribution parameter:\t\t\t Estimated");
-      else PhyML_Printf("\n. Gamma distribution parameter:\t\t\t %f and %f", io->mod->alpha, io->mod->beta);
-      PhyML_Printf("\n. 'Middle' of each rate class:\t\t\t %s",(io->mod->gamma_median)?("Median"):("Mean")); 
-    }
-    else PhyML_Printf("\n. Number of dn/ds rate ratio categories:\t %d - Discrete model (M3)", io->mod->n_w_catg);
-  }
-  
-  if(io->datatype == AA)
-  {
-    char ll[30];
-    if(io->mod->s_opt->user_state_freq) { strcpy(ll,"User-Defined\0"); }
-    else if ((io->mod->s_opt->opt_state_freq==NO)&&(io->mod->s_opt->opt_state_freq_AAML==NO)){ strcpy(ll,"Model-Defined\0"); }
-    else if ((io->mod->s_opt->opt_state_freq==YES)&&(io->mod->s_opt->opt_state_freq_AAML==NO)) { strcpy(ll,"Empirical\0");} //herere
-    else if ((io->mod->s_opt->opt_state_freq==YES)&&(io->mod->s_opt->opt_state_freq_AAML==YES)){ strcpy(ll,"Optimized\0"); }
-    PhyML_Printf("\n. AA equilibrium frequencies:\t\t\t %s", ll);
-  }
-  else if(io->datatype == NT)
-  {
-    if((io->mod->whichmodel != JC69) &&
-       (io->mod->whichmodel != K80)  &&
-       (io->mod->whichmodel != F81))
-    {
-      if(!io->mod->s_opt->user_state_freq)
-	    {
-	      PhyML_Printf("\n. NT equilibrium frequencies:\t\t\t %s", (io->mod->s_opt->opt_state_freq) ? ("Optimized"):("Empirical"));
-	    }
-      else
-	    {
-	      PhyML_Printf("\n. Nucleotide equilibrium frequencies:\t %s","User-defined");
-	    }
-    }
-  }
-  
-  PhyML_Printf("\n. Optimise tree topology:\t\t\t %s", (io->mod->s_opt->opt_topo) ? "Yes": "No");
-  
-  if(io->datatype==CODON)
-  {
-    PhyML_Printf("\n. Heuristic during tree search:\t\t\t %s", (io->opt_heuristic_manuel) ? "Modified": "Original");
-    PhyML_Printf("\n. Parameter optimization strategy:\t\t %s", (io->mod->s_opt->opt_method) ? "Single variate (BRENT)": "Multi-variate (BFGS)");
-  }
-    
-   switch(io->in_tree)
-   {
-	case 0: { strcpy(s,"BioNJ");     break; }
-	case 1: { strcpy(s,"parsimony"); break; }
-	case 2: { strcpy(s,"user tree"); break; }
-	default: break;
-   }
-   
-   if(io->datatype==CODON)//!< Added by Marcelo
-   {
-     
-      if((io->in_tree==2 && io->nobl) || io->in_tree!=2)
-      {
-	
-	switch(io->init_DistanceTreeCD)
-	{
-	  case NUCLEO: strcat(s," + JC69\0");break;
-	  case KOSI07: strcat(s," + GYECMK07\0");break;
-	  case SCHN05: strcat(s," + GYECMS05\0");break;
-	  case ECMUSR: strcat(s," + ECMUSR\0");break;
-	  default: break;
-	}
-      }
-    }
-    
-  if(io->mod->s_opt->opt_topo)
-  {
-    if(io->mod->s_opt->topo_search == NNI_MOVE) PhyML_Printf("\n. Tree topology search:\t\t\t\t NNIs");
-    else if(io->mod->s_opt->topo_search == SPR_MOVE) PhyML_Printf("\n. Tree topology search:\t\t\t\t SPRs");
-    else if(io->mod->s_opt->topo_search == BEST_OF_NNI_AND_SPR) PhyML_Printf("\n. Tree topology search:\t\t\t\t Best of NNIs and SPRs");
-  
-    PhyML_Printf("\n. Starting tree:\t\t\t\t %s",s);
-    
-    PhyML_Printf("\n. Add random input tree:\t\t\t %s", (io->mod->s_opt->random_input_tree) ? "Yes": "No");
-    if(io->mod->s_opt->random_input_tree)
-      PhyML_Printf("\n. Number of random starting trees:\t %d", io->mod->s_opt->n_rand_starts);	
-    
-  }
-  else
-  {
-    if(!io->mod->s_opt->random_input_tree)
-      PhyML_Printf("\n. Evaluated tree:\t\t\t\t %s",s);
-  }
-  
-  PhyML_Printf("\n. Optimise branch lengths:\t\t\t %s", (io->mod->s_opt->opt_bl) ? "Yes": "No");
-  
-  answer = 0;
-  if(io->mod->s_opt->opt_alpha      ||
-     io->mod->s_opt->opt_kappa      ||
-     io->mod->s_opt->opt_lambda     ||
-     io->mod->s_opt->opt_pinvar     ||
-     io->mod->s_opt->opt_rr         ||
-     io->mod->s_opt->opt_omega      || //!< Added by Marcelo.
-     io->mod->s_opt->opt_beta       || //!< Added by Marcelo.
-     io->mod->s_opt->opt_prob_omega || //!< Added by Marcelo.
-     io->mod->s_opt->opt_alphaCD) answer = 1;
-  
-  PhyML_Printf("\n. Optimise subst. model params:\t\t\t %s", (answer) ? "Yes": "No");
-  if(io->expm==SSPADE) 
-  {
-    PhyML_Printf("\n. Likelihood o.f. for subst. mod. param. opt.:\t %s", "Pade approximation\0");
-  }
-  else 
-  {
-    if(answer) PhyML_Printf("\n. Matrix exponential:\t\t\t\t %s", io->heuristicExpm ? "Taylor approximation": "Eigenvalue problem");
-  }
-  PhyML_Printf("\n. Run ID:\t\t\t\t\t %s", (io->append_run_ID) ? (io->run_id_string): ("None"));
-  PhyML_Printf("\n. Random seed:\t\t\t\t\t %d", io->r_seed);
-  
-  if(io->datatype==CODON)
-  {
-#ifdef BLAS_OMP
-    
-    PhyML_Printf("\n. Code optimization:\t\t\t\t BLAS, LAPACK and OpenMP");
-    
-#elif defined BLAS
-    
-    PhyML_Printf("\n. Code optimization:\t\t\t\t BLAS and LAPACK");
-    
-#elif defined OMP 
-    
-    PhyML_Printf("\n. Code optimization:\t\t\t\t OpenMP");
-    
-#else
-    
-    PhyML_Printf("\n. Code optimization:\t\t\t\t None");
-    
-#endif
-  }
-  
-  PhyML_Printf("\n. Version:\t\t\t\t\t %s", VERSION);
-  PhyML_Printf("\n\noooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo\n");
-  PhyML_Printf("\n\n");
-  fflush(NULL);
-  
-  free(s);free(r);
-}
-
-/*********************************************************/
 
 void Fill_Missing_Dist(matrix *mat)
 {
@@ -7457,7 +5436,7 @@ void Check_Memory_Amount(t_tree *tree)
   model *mod;
   
   mod    = tree->mod;
-  n_otu  = tree->io->n_otu;
+  n_otu  = tree->mod->n_otu;
   nbytes = 0;
   
   /* Partial Pars */
@@ -7474,10 +5453,10 @@ void Check_Memory_Amount(t_tree *tree)
   /* Scaling factors */
   nbytes += ((2*n_otu-3) * 2 - tree->n_otu) * tree->data->crunch_len * sizeof(int);
   
-  if(tree->io->datatype==CODON) { //!<Added by Marcelo.
+  if(tree->mod->datatype==CODON) { //!<Added by Marcelo.
     nbytes += n_otu * tree->data->crunch_len * (mod->ns) * sizeof(int); //!< Codon alternatives.  
     nbytes += sizeof(tree->mod->eigen)+4*mod->ns*mod->ns*sizeof(phydbl)*mod->n_w_catg+64*64*
-              sizeof(tree->io->structTs_and_Tv)+mod->ns*mod->ns*sizeof(phydbl)+2*mod->num_base_freq*
+              sizeof(tree->mod->structTs_and_Tv)+mod->ns*mod->ns*sizeof(phydbl)+2*mod->num_base_freq*
               mod->num_base_freq*sizeof(phydbl)+2*mod->n_w_catg*sizeof(phydbl)+mod->n_w_catg*
               mod->ns*mod->ns*sizeof(phydbl);
     nbytes += (sizeof(tree->triplet_struct)+ 3*mod->ns*sizeof(phydbl )+ mod->ns*mod->ns*sizeof(phydbl)+ 
@@ -7487,10 +5466,10 @@ void Check_Memory_Amount(t_tree *tree)
               mod->ns*sizeof(phydbl *)+mod->n_catg*mod->ns*mod->ns*mod->ns*sizeof(phydbl ))+
               2*(sizeof(eigen)+6*mod->ns*sizeof(phydbl)*mod->n_w_catg + 4*mod->ns*mod->ns*
               sizeof(phydbl)*mod->n_w_catg);
-    if(tree->io->expm==SSPADE) { 
+    if(tree->mod->expm==SSPADE) {
         nbytes +=12*mod->ns*mod->ns*sizeof(phydbl)*mod->n_w_catg;
     }
-    if(tree->io->heuristicExpm) { 
+    if(tree->mod->heuristicExpm) {
         nbytes +=15*mod->ns*mod->ns*sizeof(phydbl)*mod->n_w_catg;
     }
   }
@@ -7500,7 +5479,7 @@ void Check_Memory_Amount(t_tree *tree)
     char answer;
     PhyML_Printf("\n. WARNING: this analysis requires at least %.0f MB of memory space.\n",(phydbl)nbytes/(1.E+06));
 #ifndef BATCH
-//     if (! tree->io->quiet) {
+//     if (! tree->mod->quiet) {
 //       PhyML_Printf("\n. Do you really want to proceed? [Y/n] ");
 //       if(scanf("%c", &answer))
 //       {
@@ -7517,11 +5496,11 @@ void Check_Memory_Amount(t_tree *tree)
   }
   else if(((phydbl)nbytes/(1.E+06)) > 100.)
   {
-    if(!tree->io->quiet) PhyML_Printf("\n. WARNING: this analysis will use at least %.0f Mo of memory space...\n",(phydbl)nbytes/(1.E+06));
+    if(!tree->mod->quiet) PhyML_Printf("\n. WARNING: this analysis will use at least %.0f Mo of memory space...\n",(phydbl)nbytes/(1.E+06));
   }
   else if(((phydbl)nbytes/(1.E+06)) > 1.)
   {
-    if(!tree->io->quiet) PhyML_Printf("\n. This analysis requires at least %.0f Mo of memory space.\n",(phydbl)nbytes/(1.E+06));
+    if(!tree->mod->quiet) PhyML_Printf("\n. This analysis requires at least %.0f Mo of memory space.\n",(phydbl)nbytes/(1.E+06));
   }
 }
 
@@ -7617,7 +5596,7 @@ void Warn_And_Exit(char *s)
   PhyML_Fprintf(stdout,"%s",s);
   fflush(NULL);
 #ifndef BATCH
-  //  if (! tree->io->quiet) {
+  //  if (! tree->mod->quiet) {
   char c;
   PhyML_Fprintf(stdout,"\n. Type enter to exit.\n");
   if(!fscanf(stdin,"%c",&c)) Exit("");
@@ -7913,7 +5892,7 @@ t_tree *Dist_And_BioNJ(calign *cdata, model *mod, option *io)
   mod->calculate_init_tree = 1; //!< Added by Marcelo. Used in the calculation of the probability transition matrix.
   if((io->datatype==CODON)&&(io->init_DistanceTreeCD!=NUCLEO)) //!< Added by Marcelo. 
   {
-    mat = ML_CODONDist_Pairwise(cdata,mod->io);
+    mat = ML_CODONDist_Pairwise(cdata,mod->io,mod);
     Fill_Missing_Dist(mat);
   }
   else
@@ -7943,9 +5922,9 @@ void Add_BioNJ_Branch_Lengths(t_tree *tree, calign *cdata, model *mod)
   Order_Tree_CSeq(tree,cdata);
   
   mod->calculate_init_tree = 1; //!< Added by Marcelo. Used in the calculation of the probability transition matrix.
-  if((mod->io->datatype==CODON)&&(mod->io->init_DistanceTreeCD!=NUCLEO)) //!< Added by Marcelo. 
+  if((mod->datatype==CODON)&&(mod->init_DistanceTreeCD!=NUCLEO)) //!< Added by Marcelo.
   {
-    mat = ML_CODONDist_Pairwise(cdata,mod->io);
+    mat = ML_CODONDist_Pairwise(cdata,mod->io, mod);
     Fill_Missing_Dist(mat);
   }
   else
@@ -8172,8 +6151,6 @@ phydbl Get_Tree_Size(t_tree *tree)
 }
 
 /*********************************************************/
-/*********************************************************/
-/*********************************************************/
 /* 'Borrowed' fromn libgen */
 char *Basename(char *path)
 {
@@ -8194,11 +6171,6 @@ char *Basename(char *path)
   return p + 1;
 }
 
-/*********************************************************/
-
-/*********************************************************/
-/*********************************************************/
-/*********************************************************/
 /*********************************************************/
 
 void Copy_Tree_Topology_With_Labels(t_tree *ori, t_tree *cpy)
@@ -8248,7 +6220,7 @@ option *Get_Input(int argc, char **argv)
   mod   = (model *)Make_Model_Basic(); //!< Read the options from interface or command line.
   s_opt = (optimiz *)Make_Optimiz();   //!< Allocate memory for the optimization options.
   
-  Set_Defaults_Input(io);              //!< Initialize options with default inputs.             
+  Set_Defaults_Input(io,mod);              //!< Initialize options with default inputs.
   Set_Defaults_Model(mod); 
   Set_Defaults_Optimiz(s_opt);
   
@@ -8282,7 +6254,7 @@ option *Get_Input(int argc, char **argv)
   }
 #endif
   
-  if(io->datatype==CODON) Make_Ts_and_Tv_Matrix(io); //!< Added by Marcelo. Used mainly in EMCK07 model (Kosiol 2007);     
+  if(io->datatype==CODON) Make_Ts_and_Tv_Matrix(io,io->mod); //!< Added by Marcelo. Used mainly in EMCK07 model (Kosiol 2007); Changed to io-> mod Ken 9/1/2018
   
   return io;
 }
@@ -8291,9 +6263,9 @@ option *Get_Input(int argc, char **argv)
 
 void Set_Model_Name(model *mod)
 {
-  if(mod->io->datatype == NT)
+  if(mod->datatype == NT)
   {
-    switch(mod->io->modeltypeOpt)
+    switch(mod->modeltypeOpt)
     {
       case JC69:
       {
@@ -8344,9 +6316,9 @@ void Set_Model_Name(model *mod)
       }
     }
   }
-  else if(mod->io->datatype == AA)
+  else if(mod->datatype == AA)
   {
-    switch(mod->io->modeltypeOpt)
+    switch(mod->modeltypeOpt)
     {
       case DAYHOFF:
       {
@@ -8433,13 +6405,13 @@ void Set_Model_Name(model *mod)
     }
     if(mod->s_opt->opt_state_freq) strcat(mod->modelname,"+F"); //!Added by Marcelo.
   }
-  else if(mod->io->datatype == GENERIC) {
+  else if(mod->datatype == GENERIC) {
     strcpy(mod->modelname, "JC69");
   }
-  else if(mod->io->datatype == CODON) {                                         //!< Added by Marcelo.
+  else if(mod->datatype == CODON) {                                         //!< Added by Marcelo.
     char * tempName = (char *)mCalloc(T_MAX_NAME,sizeof(char));
     
-    switch( mod->io->modeltypeOpt ) {
+    switch( mod->modeltypeOpt ) {
       case GY:
         strcpy( tempName, "GY" );
         break;
@@ -8459,7 +6431,7 @@ void Set_Model_Name(model *mod)
         break;
     }
     
-    if((mod->io->modeltypeOpt != PCM) &&
+    if((mod->modeltypeOpt != PCM) &&
         (mod->codon_model_nature != PARA)) {
       switch( mod->initqrates ) {
         case KOSI07:
@@ -8478,17 +6450,17 @@ void Set_Model_Name(model *mod)
           break;
       }
     
-      if(mod->io->omegaOpt != NOOMEGA && 
+      if(mod->omegaOpt != NOOMEGA &&
          (mod->codon_model_nature != PARA &&
           mod->codon_model_nature != EMPI)) {
             strcat( tempName, "+W+K" );
       }
     }
     
-    if(mod->io->freqmodelOpt != FUNDEFINED && 
-        mod->io->freqmodelOpt != FMODEL &&
+    if(mod->freqmodelOpt != FUNDEFINED &&
+        mod->freqmodelOpt != FMODEL &&
         mod->codon_model_nature != PARA &&
-        mod->io->eq_freq_handling != MODEL) {
+        mod->eq_freq_handling != MODEL) {
       strcat( tempName, "+F" );
     }
     
@@ -11536,14 +9508,15 @@ void Sprint_codon(char *inout,int codon) //!< Added by Marcelo.
 }
 /*********************************************************/
 
-void Make_Ts_and_Tv_Matrix(option *io)//!< Added by Marcelo. Store the number of transitions transversions and if synonymous or nonsynonymous substitution for the given genetic code.
+void Make_Ts_and_Tv_Matrix(option *io, model* mod)//!< Added by Marcelo. Store the number of transitions transversions and if synonymous or nonsynonymous substitution for the given genetic code.
 {
   int i,j, numSensecodons, k, icodon[3], jcodon[3], nts, ntv, diff, codoni, codonj,sSub, caseK07;
   ts_and_tv *mat;
   
-  mat=io->structTs_and_Tv;
-  
-  numSensecodons=io->mod->ns;
+  printf("tstv1\n");
+  mat=mod->structTs_and_Tv;//was io->
+  printf("tstv %d\n",mat[0].sSub);
+  numSensecodons=mod->ns;  //was io-> mod Ken 9/1/2018
   
   For(i,numSensecodons)
   {
@@ -11673,8 +9646,8 @@ void Freq_to_UnsFreq(phydbl *f, phydbl *uf, int n, int f2U)
 /*********************************************************/
 void lkExperiment(t_tree * tree, int num_tree)
 {
-  phydbl minW=tree->io->minParam, minK=tree->io->minParam, maxK=tree->io->maxParam, stepSize=tree->io->lkExpStepSize, kappa, omega;
-  // phydbl maxW=tree->io->maxParam;
+  phydbl minW=tree->mod->minParam, minK=tree->mod->minParam, maxK=tree->mod->maxParam, stepSize=tree->mod->lkExpStepSize, kappa, omega;
+  // phydbl maxW=tree->mod->maxParam;
   int gridSize=maxK/stepSize, i, j;
   lkexperiment *mat;
   char nTree[10], z[20];
@@ -11688,9 +9661,9 @@ void lkExperiment(t_tree * tree, int num_tree)
   
   sprintf(nTree, "_%d", num_tree);
   
-  if(tree->io->heuristicExpm)
+  if(tree->mod->heuristicExpm)
   {
-    tree->io->expm=TAYLOR;
+    tree->mod->expm=TAYLOR;
     strcpy(z,"WexpTaylor\0");
     strcat(z,nTree);
     outW  = fopen(z, "w");
@@ -11747,9 +9720,9 @@ void lkExperiment(t_tree * tree, int num_tree)
   fprintf(outK,"\n");
   fprintf(outLK,"\n");
   
-  if(tree->io->heuristicExpm)
+  if(tree->mod->heuristicExpm)
   {
-    tree->io->expm=EIGEN;
+    tree->mod->expm=EIGEN;
     Lk(tree);
   }
   

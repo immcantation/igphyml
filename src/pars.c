@@ -145,7 +145,7 @@ void Init_P_Pars_Tips(t_tree *tree)
 	      Warn_And_Exit("\n");	    
 	    }
 
-	  if(tree->io->datatype == NT)
+	  if(tree->mod->datatype == NT)
 	    {
 	      Init_Tips_At_One_Site_Nucleotides_Int(tree->data->c_seq[i]->state[curr_site],
 						    0,
@@ -153,7 +153,7 @@ void Init_P_Pars_Tips(t_tree *tree)
 	      For(j,tree->mod->ns) tree->noeud[i]->b[0]->p_pars_r[curr_site*dim1+j] = MAX_PARS;
 	      For(j,tree->mod->ns) if(state_v[j] > 0.5) tree->noeud[i]->b[0]->p_pars_r[curr_site*dim1+j] =  0;
 	    }
-	  else if(tree->io->datatype == AA)
+	  else if(tree->mod->datatype == AA)
 	    {
 	      Init_Tips_At_One_Site_AA_Int(tree->data->c_seq[i]->state[curr_site],
 					   0,
@@ -161,7 +161,7 @@ void Init_P_Pars_Tips(t_tree *tree)
 	      For(j,tree->mod->ns) tree->noeud[i]->b[0]->p_pars_r[curr_site*dim1+j] = MAX_PARS;
 	      For(j,tree->mod->ns) if(state_v[j] > 0.5) tree->noeud[i]->b[0]->p_pars_r[curr_site*dim1+j] =  0;
 	    }
-	  else if(tree->io->datatype == GENERIC)
+	  else if(tree->mod->datatype == GENERIC)
 	    {
 	      Init_Tips_At_One_Site_Generic_Int(tree->data->c_seq[i]->state+curr_site*tree->mod->state_len,
 						tree->mod->ns,
@@ -171,7 +171,7 @@ void Init_P_Pars_Tips(t_tree *tree)
 	      For(j,tree->mod->ns) tree->noeud[i]->b[0]->p_pars_r[curr_site*dim1+j] = MAX_PARS;
 	      For(j,tree->mod->ns) if(state_v[j] > 0.5) tree->noeud[i]->b[0]->p_pars_r[curr_site*dim1+j] =  0;
 	    }
-	    else if(tree->io->datatype == CODON)                                    //!<Added by Marcelo.
+	    else if(tree->mod->datatype == CODON)                                    //!<Added by Marcelo.
 	    {
 	      Init_Tips_At_One_Site_Codons_Int(tree->data->c_seq[i]->state[curr_site],
 					       0,
@@ -198,7 +198,7 @@ void Init_Ui_Tips(t_tree *tree)
     {
       For(i,tree->n_otu)
 	{
-	  if(tree->io->datatype == NT)
+	  if(tree->mod->datatype == NT)
 	    {
 	      if(tree->noeud[i]->b[0]->rght->tax != 1)
 		{
@@ -212,7 +212,7 @@ void Init_Ui_Tips(t_tree *tree)
 	      tree->noeud[i]->b[0]->ui_r[curr_site] = 0;
 	      For(j,tree->mod->ns) tree->noeud[i]->b[0]->ui_r[curr_site] += (unsigned int)(state_v[j] * POW(2,j));
 	    }
-	  else if(tree->io->datatype == AA)
+	  else if(tree->mod->datatype == AA)
 	    {
 	      Init_Tips_At_One_Site_AA_Int(tree->data->c_seq[i]->state[curr_site],
 					   0,
@@ -220,7 +220,7 @@ void Init_Ui_Tips(t_tree *tree)
 	      tree->noeud[i]->b[0]->ui_r[curr_site] = 0;
 	      For(j,tree->mod->ns) tree->noeud[i]->b[0]->ui_r[curr_site] += (unsigned int)(state_v[j] * POW(2,j));
 	    }
-	  else if(tree->io->datatype == GENERIC)
+	  else if(tree->mod->datatype == GENERIC)
 	    {
 	      Init_Tips_At_One_Site_Generic_Int(tree->data->c_seq[i]->state+curr_site*tree->mod->state_len,
 						tree->mod->ns,
@@ -230,7 +230,7 @@ void Init_Ui_Tips(t_tree *tree)
 	      tree->noeud[i]->b[0]->ui_r[curr_site] = 0;
 	      For(j,tree->mod->ns) tree->noeud[i]->b[0]->ui_r[curr_site] += (unsigned int)(state_v[j] * POW(2,j));
 	    }
-	    else if(tree->io->datatype == CODON)                                    //!<Added by Marcelo.
+	    else if(tree->mod->datatype == CODON)                                    //!<Added by Marcelo.
 	    {
 	      Init_Tips_At_One_Site_Codons_Int(tree->data->c_seq[i]->state[curr_site],
 					       0,
@@ -514,7 +514,7 @@ int Update_Pars_At_Given_Edge(t_edge *b_fcus, t_tree *tree)
 void Get_Step_Mat(t_tree *tree)
 {
   int i,j,k,codoni,codonj,icodon[3],jcodon[3],diff;
-  if(tree->io->datatype== CODON)      //!< Added by Marcelo.
+  if(tree->mod->datatype== CODON)      //!< Added by Marcelo.
   {
     For(i,tree->mod->ns)
     {
@@ -535,7 +535,7 @@ void Get_Step_Mat(t_tree *tree)
       }
     }
   }
-  else if(tree->io->datatype == AA)
+  else if(tree->mod->datatype == AA)
     {
       tree->step_mat[ 0*tree->mod->ns+ 0] =    0 ;
       tree->step_mat[ 0*tree->mod->ns+ 1] =    3 ;

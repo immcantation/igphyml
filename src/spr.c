@@ -31,7 +31,7 @@ the GNU public licence. See http://www.opensource.org for details.
 */
 
 #include "spr.h"
-
+#include "io.h"
 
 
 /*********************************************************/
@@ -664,7 +664,7 @@ int Try_One_Spr_Move_Triple(spr *move, t_tree *tree)
         Get_UPP(tree->noeud[tree->mod->startnode],tree->noeud[tree->mod->startnode]->v[0],tree);//update upper lhoods across tree
       }
 
-      if((tree->mod->s_opt->print) && (!tree->io->quiet)){
+      if((tree->mod->s_opt->print) && (!tree->mod->quiet)){
     	  Print_Lk(tree,"[Topology           ]");
 	  	  PhyML_Printf("[depth=%5d]",move->depth_path); fflush(NULL);
 	  	  Print_Trace(tree);
@@ -716,19 +716,19 @@ void Speed_Spr_Loop(t_tree *tree)
   tree->mod->s_opt->spr_pars       = 0;
   tree->mod->s_opt->quickdirty     = 0;
 
-  if((tree->mod->s_opt->print) && (!tree->io->quiet)) PhyML_Printf("\n. Maximizing likelihood (using SPR moves)...\n");
+  if((tree->mod->s_opt->print) && (!tree->mod->quiet)) PhyML_Printf("\n. Maximizing likelihood (using SPR moves)...\n");
 
   Lk(tree);//!< Added by Marcelo.
   Print_Lk(tree,"[Initial Tree       ]");//!< Added by Marcelo.
-  if(tree->io->print_trace){
+  if(tree->mod->print_trace){
 	  Print_Trace(tree);
   }
 
-  if(tree->io->opt_heuristic_manuel==NO) //!Added by Marcelo
+  if(tree->mod->opt_heuristic_manuel==NO) //!Added by Marcelo
   {
-  Optimiz_All_Free_Param(tree,(tree->io->quiet)?(0):(tree->mod->s_opt->print));
+  Optimiz_All_Free_Param(tree,(tree->mod->quiet)?(0):(tree->mod->s_opt->print));
   tree->best_lnL = tree->c_lnL;
-  if(tree->io->print_trace){
+  if(tree->mod->print_trace){
 	  Print_Trace(tree);
   }
   //added by Ken 8/3/2017
@@ -754,7 +754,7 @@ void Speed_Spr_Loop(t_tree *tree)
 	  if(tree->mod->whichrealmodel==HLP17){
 		  Get_UPP(tree->noeud[startnode], tree->noeud[startnode]->v[0], tree);
 	  }
-	  if(tree->io->print_trace){
+	  if(tree->mod->print_trace){
 		  Print_Trace(tree);
 	  }
 	  Print_Lk(tree,"[Branch lengths     ]");
@@ -768,7 +768,7 @@ void Speed_Spr_Loop(t_tree *tree)
       lk_old = tree->c_lnL;
       Speed_Spr(tree,1);
       if(tree->n_improvements){ //if there were improvements after the loop, optimize parameters
-    	  Optimiz_All_Free_Param(tree,(tree->io->quiet)?(0):(tree->mod->s_opt->print));
+    	  Optimiz_All_Free_Param(tree,(tree->mod->quiet)?(0):(tree->mod->s_opt->print));
       }
       if((!tree->n_improvements) || (FABS(lk_old-tree->c_lnL) < 1.)){
     	  break;//if there are no improvements, break
@@ -783,7 +783,7 @@ void Speed_Spr_Loop(t_tree *tree)
     {
       lk_old = tree->c_lnL;
       Simu(tree,10);
-      Optimiz_All_Free_Param(tree,(tree->io->quiet)?(0):(tree->mod->s_opt->print));
+      Optimiz_All_Free_Param(tree,(tree->mod->quiet)?(0):(tree->mod->s_opt->print));
     }
     while(FABS(lk_old - tree->c_lnL) > tree->mod->s_opt->min_diff_lk_global);
     /*****************************/
@@ -795,12 +795,12 @@ void Speed_Spr_Loop(t_tree *tree)
     }while(1);
     /*****************************/
 
-    /*   if((tree->mod->s_opt->print) && (!tree->io->quiet)) PhyML_Printf("\n"); */
+    /*   if((tree->mod->s_opt->print) && (!tree->mod->quiet)) PhyML_Printf("\n"); */
   }
-  else if(tree->io->opt_heuristic_manuel==YES) //!Added by Marcelo
+  else if(tree->mod->opt_heuristic_manuel==YES) //!Added by Marcelo
   {
 
-    Round_Optimize(tree,tree->data,tree->io->roundMax_start); //! last parameter: max number of rounds
+    Round_Optimize(tree,tree->data,tree->mod->roundMax_start); //! last parameter: max number of rounds
 
     tree->best_lnL = tree->c_lnL;
     /*****************************/
@@ -826,7 +826,7 @@ void Speed_Spr_Loop(t_tree *tree)
     while(FABS(lk_old - tree->c_lnL) > tree->mod->s_opt->min_diff_lk_global);
     /*****************************/
 
-    Round_Optimize(tree,tree->data,tree->io->roundMax_end); //! last parameter: max number of rounds
+    Round_Optimize(tree,tree->data,tree->mod->roundMax_end); //! last parameter: max number of rounds
 
     /*****************************/
     do
@@ -836,7 +836,7 @@ void Speed_Spr_Loop(t_tree *tree)
     /*****************************/
 
 
-    /*   if((tree->mod->s_opt->print) && (!tree->io->quiet)) PhyML_Printf("\n"); */
+    /*   if((tree->mod->s_opt->print) && (!tree->mod->quiet)) PhyML_Printf("\n"); */
 
   }
 
@@ -907,21 +907,21 @@ void Speed_Spr(t_tree *tree, int max_cycles)
     	  Lk(tree);
 
     	  /* Print log-likelihood and parsimony scores */
-    	  if((tree->mod->s_opt->print) && (!tree->io->quiet)) Print_Lk(tree,"[Branch lengths     ]");
+    	  if((tree->mod->s_opt->print) && (!tree->mod->quiet)) Print_Lk(tree,"[Branch lengths     ]");
       }else{
-    	  if((tree->mod->s_opt->print) && (!tree->io->quiet)) Print_Pars(tree);
+    	  if((tree->mod->s_opt->print) && (!tree->mod->quiet)) Print_Pars(tree);
       }
 
       Pars(tree);
-      if(tree->io->print_trace){Print_Trace(tree);}
+      if(tree->mod->print_trace){Print_Trace(tree);}
 
       /* Record the current best log-likelihood and parsimony */
       tree->best_lnL  = tree->c_lnL;
       tree->best_pars = tree->c_pars;
 
       if(!tree->mod->s_opt->spr_pars){
-    	  if(tree->io->datatype==CODON){
-    		  if(tree->c_lnL < old_lnL-tree->io->mod->s_opt->min_diff_lk_codonModels){
+    	  if(tree->mod->datatype==CODON){
+    		  if(tree->c_lnL < old_lnL-tree->mod->s_opt->min_diff_lk_codonModels){ //was io-> mod Ken 9/1/2018
     			  PhyML_Printf("\n. old_lnL = %f c_lnL = %f",old_lnL,tree->c_lnL);
     			  PhyML_Printf("\n. Err in file %s at line %d\n",__FILE__,__LINE__);
     			  Warn_And_Exit("");
@@ -1088,12 +1088,12 @@ void Spr_Pars(t_tree *tree)
 
 void Print_Trace(t_tree *tree){
 
-	PhyML_Fprintf(tree->io->fp_out_tree_trace,"[%d,%f]%s\n",tree->io->tracecount,tree->c_lnL,Write_Tree(tree)); fflush(tree->io->fp_out_tree_trace);
+	PhyML_Fprintf(tree->io->fp_out_tree_trace,"[%d,%f]%s\n",tree->mod->tracecount,tree->c_lnL,Write_Tree(tree)); fflush(tree->io->fp_out_tree_trace);
 	//if((tree->io->print_site_lnl) && (!tree->mod->s_opt->spr_pars)) Print_Site_Lk(tree,tree->io->fp_out_lk);
 	fflush(tree->io->fp_out_lk);
 
 	//print header of stats file
-	if(tree->io->tracecount == 0){
+	if(tree->mod->tracecount == 0){
 		PhyML_Fprintf(tree->io->fp_out_stats_trace,"Index\tTime\tLnL\tKappa");
 		if(tree->mod->whichrealmodel == HLP17){
 			int omegai;
@@ -1102,8 +1102,8 @@ void Print_Trace(t_tree *tree){
 			}
 
 			int mot;
-			for(mot=0;mot<tree->io->mod->nmotifs;mot++){
-				PhyML_Fprintf(tree->io->fp_out_stats_trace,"\t%s:%d;%d",tree->io->mod->motifs[mot],tree->io->mod->motif_hotness[mot],tree->io->mod->hoptindex[tree->io->mod->motif_hotness[mot]]);
+			for(mot=0;mot<tree->mod->nmotifs;mot++){
+				PhyML_Fprintf(tree->io->fp_out_stats_trace,"\t%s:%d;%d",tree->mod->motifs[mot],tree->mod->motif_hotness[mot],tree->mod->hoptindex[tree->mod->motif_hotness[mot]]);
           	}
 
 		}
@@ -1112,7 +1112,7 @@ void Print_Trace(t_tree *tree){
 	}
 
 	//print out stats
-	PhyML_Fprintf(tree->io->fp_out_stats_trace,"\t%d\t%f\t%f",tree->io->tracecount,(omp_get_wtime()-tree->t_beg),tree->c_lnL);
+	PhyML_Fprintf(tree->io->fp_out_stats_trace,"\t%d\t%f\t%f",tree->mod->tracecount,(omp_get_wtime()-tree->t_beg),tree->c_lnL);
 	PhyML_Fprintf(tree->io->fp_out_stats_trace,"\t%f",tree->mod->kappa);
 	if(tree->mod->whichrealmodel ==HLP17){
 		int omegai;
@@ -1121,8 +1121,8 @@ void Print_Trace(t_tree *tree){
 		}
 
 		int mot;
-		for(mot=0;mot<tree->io->mod->nmotifs;mot++){
-			PhyML_Fprintf(tree->io->fp_out_stats_trace,"\t%lf",tree->io->mod->hotness[tree->io->mod->motif_hotness[mot]]);
+		for(mot=0;mot<tree->mod->nmotifs;mot++){
+			PhyML_Fprintf(tree->io->fp_out_stats_trace,"\t%lf",tree->mod->hotness[tree->mod->motif_hotness[mot]]);
          }
 
 	}
@@ -1134,7 +1134,7 @@ void Print_Trace(t_tree *tree){
 	PhyML_Fprintf(tree->io->fp_out_stats_trace,"\n");
 	fflush(tree->io->fp_out_stats_trace);
 
-	tree->io->tracecount++;
+	tree->mod->tracecount++;
 }
 
 

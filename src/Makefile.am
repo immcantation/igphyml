@@ -34,7 +34,8 @@ controller.c controller.h\
 cl.c  cl.h\
 spr.c spr.h\
 stats.c stats.h\
-nucle2codon.c nucle2codon.h
+nucle2codon.c nucle2codon.h\
+io.c io.h
 
 igphyml_LDADD =
 igphyml_LDFLAGS =  

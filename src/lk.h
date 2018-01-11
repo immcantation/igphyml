@@ -89,7 +89,7 @@ void Init_Tips_At_One_Site_Generic_Float(char *state, int ns, int state_len, int
 
 void Init_Tips_At_One_Site_Codons_Float(char state, int pos, phydbl *p_lk, char * alternatives); //!< Added by Marcelo.
 void Init_Tips_At_One_Site_Codons_Int(char state, int pos,short int *p_pars, char * alternatives); //!< Added by Marcelo.
-matrix *ML_CODONDist_Pairwise(calign *data,option *io); //!< Added by Marcelo.
+matrix *ML_CODONDist_Pairwise(calign *data,option *io,model* mod); //!< Added by Marcelo.
 phydbl LK_Codon_Pairwise(calign *data, phydbl *Pij, phydbl *pi, int ns, phydbl len, eigen *eigenStruct, phydbl *uexpt, phydbl *expt); //!< Added by Marcelo.
 phydbl LK_BFGS_from_CODEML(t_tree* tree, phydbl *x, int n); //!< Added by Marcelo.
 #endif

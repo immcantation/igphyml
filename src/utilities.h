@@ -636,6 +636,39 @@ typedef struct __Model {
   struct __Eigen    *eigen;
   struct __M4       *m4mod;
   struct __Option      *io;
+  struct __Align              **data;/*!< pointer to the uncompressed sequences. MOVED FROM OPTION 1/9/2018 */
+  struct __Calign             *cdata;/*!< pointer to the compressed sequences. MOVED FROM OPTION*/
+  int                          n_otu; /*!< number of taxa. MOVED FROM OPTION */
+  int                       init_len; /*!< sequence length. MOVED FROM OPTION*/
+  ts_and_tv          *structTs_and_Tv; /*!< Counts for transitions and transversions in codon models. MOVED FROM OPTION*/ //!<Added by Marcelo.
+  int						primary; //is this an upper or lower model?
+
+  int                           expm; /*!< 0 Eigenvalue; 1 scaling and squaring Pade. approx. COPIED FROM OPTION*/ //!< Added by Marcelo.
+  int                       datatype; //copied from option
+  int             init_DistanceTreeCD; /*!< 0: ML JC69; 1: ML M0; 2: Schneider 2005 CodonPam; 3: Kosiol 2007 Empirical. COPIED FROM OPTION*/ //!<Added by Marcelo.
+  int                        kappaECM; /*!< According to Kosiol 2007.COPIED FROM OPTION*///!<Added by Marcelo.
+  int                   n_termsTaylor; //! Added by Marcelo. COPIED FROM OPTION
+  int                   heuristicExpm; /*!< TAYLOR in parameter opt?.COPIED FROM OPTION*/
+  int                    modeltypeOpt; //COPIED FROM OPTION
+  int                    freqmodelOpt; //COPIED FROM OPTION
+  int                        optParam; //! Added by Marcelo.
+  int                    omegaOpt; //COPIED FROM OPTION
+  int                    eq_freq_handling; //COPIED FROM OPTION
+  int							quiet; //COPIED FROM OPTION
+  int            opt_heuristic_manuel; //!< Added by Marcelo. MOVED FROM OPTION
+  int					 print_trace; //MOVED FROM OPTION
+  int                  roundMax_start; //! Added by Marcelo. COPED FROM OPTION
+  int                  		  logtree; //! Added by Marcelo. COPED FROM OPTION
+  int                    roundMax_end; //! Added by Marcelo. COPIED FROM OPTION
+  int                   testcondition; /*! Test Condition of the matrix. MOVED FROM OPTION*/
+  int						tracecount; //MOVED FROM OPTION
+  int				 print_site_lnl; //COPIED FROM OPTION
+  int				 out_stats_format; //COPIED FROM OPTION
+  int				 random_boot_seq_order; //COPIED FROM OPTION
+  int				 minParam; //COPIED FROM OPTION
+  int				 maxParam; //COPIED FROM OPTION
+  int				 lkExpStepSize; //COPIED FROM OPTION
+
   
   int                   ns; /*!< number of states (4 for DNA, 20 for AA, #senseCodons for Codons).*/                             
   char          *modelname;
@@ -799,8 +832,8 @@ typedef struct __Eigen{
 typedef struct __Option { 
   struct __Model                *mod;/*!< pointer to a substitution model. */
   struct __Arbre               *tree;/*!< pointer to the current tree. */
-  struct __Align              **data;/*!< pointer to the uncompressed sequences. */
-  struct __Calign             *cdata;/*!< pointer to the compressed sequences. */
+ // struct __Align              **data;/*!< pointer to the uncompressed sequences. */
+ // struct __Calign             *cdata;/*!< pointer to the compressed sequences. */
   struct __Super_Arbre           *st;/*!< pointer to supertree. */
   struct __Tnexcom    **nex_com_list;
   struct __List_Arbre      *treelist;/*!< list of trees. */
@@ -839,7 +872,6 @@ typedef struct __Option {
 
   char               *out_trace_stats_file; /*!< name of the file in which the likelihood of the model is written. */
   FILE                 *fp_out_stats_trace;
-  int					tracecount;
 
   char                  *out_lk_file; /*!< name of the file in which the likelihood of the model is written. */
   FILE                    *fp_out_lk;
@@ -855,8 +887,8 @@ typedef struct __Option {
   int        out_tree_file_open_mode; /*!< opening file mode for tree file. */
   int                    n_data_sets; /*!< number of data sets to be analysed. */
   int                        n_trees; /*!< number of trees. */
-  int                       init_len; /*!< sequence length. */
-  int                          n_otu; /*!< number of taxa. */
+  //int                       init_len; /*!< sequence length. */
+  //int                          n_otu; /*!< number of taxa. */
   int               n_data_set_asked; /*!< number of bootstrap replicates. */
   char                     *nt_or_cd; /*!< nucleotide or codon data ?. */ 
   int                      multigene; /*!< if=1 -> analyse several partitions. */
@@ -871,7 +903,6 @@ typedef struct __Option {
   int                         r_seed; /*!< random seed. */
   int                  collapse_boot; /*!< 0 -> branch length on bootstrap trees are not collapsed if too small. */
   int          random_boot_seq_order; /*!< 0 -> sequence order in bootstrapped data set is random. */
-  int                    print_trace;
   int                 print_site_lnl;
   int                       m4_model;
   int                      rm_ambigu; /*!< 0 is the default. 1: columns with ambiguous characters are discarded prior further analysis. */
@@ -889,7 +920,6 @@ typedef struct __Option {
   
   int             init_DistanceTreeCD; /*!< 0: ML JC69; 1: ML M0; 2: Schneider 2005 CodonPam; 3: Kosiol 2007 Empirical.*/ //!<Added by Marcelo.
   int                        kappaECM; /*!< According to Kosiol 2007.*///!<Added by Marcelo.
-  ts_and_tv          *structTs_and_Tv; /*!< Counts for transitions and transversions in codon models.*/ //!<Added by Marcelo.
   FILE                *fp_out_compare; //!< Added by Marcelo. 
   int                            expm; /*!< 0 Eigenvalue; 1 scaling and squaring Pade. approx. */ //!< Added by Marcelo.
   int                    lkExperiment; /*!< plot likelihood for 2 parameters omega and kappa.*/
@@ -900,11 +930,9 @@ typedef struct __Option {
   int                   threshold_exp; /*!< treshold experiment.*/
   int                         dataset; /*!< treshold experiment.*/
   int                    testInitTree; /*!< Test Initial Tree.*/
-  int                   testcondition; /*! Test Condition of the matrix.*/
   int                convert_NT_to_AA; /*! 0 not, 1 yes.*/ 
   phydbl        convert_AAfreq2CDfreq; /*!< 0 approx; 1 solve AX=B.*/ 
   FILE                  *fp_in_usrECM; //!< Added by Marcelo. 
-  int            opt_heuristic_manuel; //!< Added by Marcelo. 
   int                   n_termsTaylor; //! Added by Marcelo.
   int                        init_run; //! Added by Marcelo.
   int                        optParam; //! Added by Marcelo.
@@ -928,6 +956,8 @@ typedef struct __Option {
   int                      confformat; // what format does the configuration file have?
   int                         logtree; // should current trees be logged to disc? 0, 1 -> single tree, 2 -> collect all trees
   int                     treecounter; // if logtree = 2, holds a counter for the filename
+  int            opt_heuristic_manuel; //!< Added by Marcelo. MOVED FROM OPTION
+
  }option;
 
 /*********************************************************/
@@ -1301,17 +1331,9 @@ typedef struct __DarwinToken {
 
 /*********************************************************/
 
-FILE* GetTreeFile(option *io);
 void Plim_Binom(phydbl pH0,int N,phydbl *pinf,phydbl *psup);
-t_tree *Read_Tree(char *s_tree);
 void Make_All_Edges_Light(t_node *a,t_node *d);
 void Make_All_Edges_Lk(t_node *a,t_node *d,t_tree *tree);
-void R_rtree(char *s_tree_a, char *s_tree_d, t_node *a, t_tree *tree, int *n_int, int *n_ext);
-void Clean_Multifurcation(char **subtrees,int current_deg,int end_deg);
-char **Sub_Trees(char *tree,int *degree);
-int Next_Par(char *s,int pos);
-char *Write_Tree(t_tree *tree);
-void R_wtree(t_node *pere,t_node *fils,int *available,char **s_tree, int *pos,t_tree *tree);
 void Init_Tree(t_tree *tree, int n_otu);
 t_edge *Make_Edge_Light(t_node *a, t_node *d, int num);
 void Init_Edge_Light(t_edge *b, int num);
@@ -1319,15 +1341,10 @@ void Make_Edge_Dirs(t_edge *b,t_node *a,t_node *d);
 void Make_Edge_Lk(t_edge *b, t_tree *tree);
 t_node *Make_Node_Light(int num);
 void Make_Node_Lk(t_node *n);
-align **Get_Seq(option *input);
-align **Get_Seq_Phylip(option *input);
-align **Read_Seq_Sequential(option *io);
-align **Read_Seq_Interleaved(option *io);
-int Read_One_Line_Seq(align ***data,int num_otu,FILE *in);
 void Uppercase(char *ch);
 void Lowercase(char *ch);
-calign *Compact_Data(align **data,option *input);
-calign *Compact_Cdata(calign *data, option *io);
+calign *Compact_Data(align **data,option *input,model* mod);
+calign *Compact_Cdata(calign *data, option *io, model* mod);
 void Get_Base_Freqs(calign *data);
 void Get_AA_Freqs(calign *data);
 t_tree *Read_Tree_File(option *io);
@@ -1358,12 +1375,8 @@ void Swap(t_node *a,t_node *b,t_node *c,t_node *d,t_tree *tree);
 void Update_All_Partial_Lk(t_edge *b_fcus,t_tree *tree);
 void Update_SubTree_Partial_Lk(t_edge *b_fcus,t_node *a,t_node *d,t_tree *tree);
 calign *Make_Cseq(int n_otu, int crunch_len, int state_len, int init_len, char **sp_names, option *io);
-calign *Copy_Cseq(calign *ori, option *io);
+calign *Copy_Cseq(calign *ori, option *io,model* mod);
 optimiz *Make_Optimiz();
-int Filexists(char *filename);
-FILE *Openfile(char *filename,int mode);
-void Print_Fp_Out(FILE *fp_out, time_t t_beg, time_t t_end, t_tree *tree, option *input, int n_data_set, int num_rand_tree);
-void Print_Fp_Out_Lines(FILE *fp_out,time_t t_beg,time_t t_end,t_tree *tree,option *input,int n_data_set);
 matrix *K80_dist(calign *data,phydbl g_shape);
 matrix *JC69_Dist(calign *data, model *mod);
 matrix *Hamming_Dist(calign *data,model *mod);
@@ -1380,9 +1393,11 @@ int Num_Derivative_Several_Param(t_tree *tree,phydbl *param,int n_param,phydbl s
 int Compare_Two_States(char *state1,char *state2,int state_size);
 void Copy_One_State(char *from,char *to,int state_size);
 model *Make_Model_Basic();
-void Make_Model_Complete(model *mod); 
+void Make_Model_Complete(model *mod);
+void Copy_Optimiz(optimiz *s_opt, optimiz* ori);
 model *Copy_Model(model *ori);
-void Set_Defaults_Input(option *input);
+model *Copy_Partial_Model(model *ori);
+void Set_Defaults_Input(option *input, model* mod);
 void Set_Defaults_Model(model *mod);
 void Set_Defaults_Optimiz(optimiz *s_opt);
 void Get_Bip(t_node *a,t_node *d,t_tree *tree);
@@ -1390,7 +1405,7 @@ void Alloc_Bip(t_tree *tree);
 int Sort_Phydbl_Increase(const void *a,const void *b);
 int Sort_String(const void *a,const void *b);
 void Compare_Bip(t_tree *tree1,t_tree *tree2);
-void Test_Multiple_Data_Set_Format(option *input);
+void Test_Multiple_Data_Set_Format(option *input,model* mod);
 int Are_Compatible(char *statea,char *stateb,int stepsize,int datatype,char * alta, char * altb);
 void Hide_Ambiguities(calign *data);
 void Print_Site_Lk(t_tree *tree, FILE *fp);
@@ -1458,7 +1473,6 @@ void Make_Tree_Path(t_tree *tree);
 void Share_Pars_Struct(t_tree *t_full, t_tree *t_empt);
 void Share_Spr_Struct(t_tree *t_full, t_tree *t_empt);
 void Clean_Tree_Connections(t_tree *tree);
-void Print_Settings(option *input);
 void Fill_Missing_Dist(matrix *mat);
 void Fill_Missing_Dist_XY(int x, int y, matrix *mat);
 phydbl Least_Square_Missing_Dist_XY(int x, int y, phydbl dxy, matrix *mat);
@@ -1480,7 +1494,7 @@ void NNI_Pars(t_tree *tree, t_edge *b_fcus, int do_swap);
 void Evaluate_One_Regraft_Pos_Triple(spr *move, t_tree *tree);
 int Get_State_From_Ui(int ui, int datatype);
 void Read_Qmat(phydbl *daa, phydbl *pi, FILE *fp);
-void Traverse_Prefix_Tree(int site, int seqnum, int *patt_num, int *n_patt, align **data, option *input, pnode *n);
+void Traverse_Prefix_Tree(int site, int seqnum, int *patt_num, int *n_patt, align **data, option *input, pnode *n, model* mod);
 pnode *Create_Pnode(int size);
 int Assign_State_With_Ambiguity(char *c, int datatype, int stepsize);
 void Randomize_Sequence_Order(calign *data);
@@ -1488,9 +1502,6 @@ void Dist_To_Node_Pre(t_node *a, t_node *d, t_edge *b, t_tree *tree);
 void Add_Root(t_edge *target, t_tree *tree);
 int Is_Invar(int patt_num, int stepsize, int datatype, calign *data);
 void Update_Root_Pos(t_tree *tree);
-void Read_Branch_Label(char *sub_part, char *full_part, t_edge *b);
-void Read_Branch_Length(char *s_d, char *s_a, t_tree *tree);
-void Read_Node_Name(t_node *d, char *s_tree_d, t_tree *tree);
 t_tree *Generate_Random_Tree_From_Scratch(int n_otu, int rooted);
 void Random_Lineage_Rates(t_node *a, t_node *d, t_edge *b, phydbl stick_prob, phydbl *rates, int curr_rate, int n_rates, t_tree *tree);
 t_edge *Find_Edge_With_Label(char *label, t_tree *tree);
@@ -1514,6 +1525,7 @@ void Init_Rate_Struct(trate *rates, t_tree *tree);
 phydbl Var(phydbl *x, int n);
 phydbl Mean(phydbl *x, int n);
 phydbl Multivariate_Kernel_Density_Estimate(phydbl *where, phydbl **x, int sample_size, int vect_size);
+void Record_Partial_Model(model *ori, model *cpy);
 void Record_Model(model *ori, model *cpy);
 void Best_Of_NNI_And_SPR(t_tree *tree);
 int Polint(phydbl *xa, phydbl *ya, int n, phydbl x, phydbl *y, phydbl *dy);
@@ -1589,7 +1601,6 @@ void Detect_Tree_File_Format(option *io);
 int Get_Token(FILE *fp, char *token);
 nexparm *Make_Nexus_Parm();
 void Free_Nexus_Parm(nexparm *parm);
-void Read_Ntax_Len_Phylip(FILE *fp ,int *n_otu, int *n_tax);
 void Set_Model_Name(model *mod);
 void Adjust_Min_Diff_Lk(t_tree *tree);
 void Match_Tip_Numbers(t_tree *tree1, t_tree *tree2);
@@ -1610,7 +1621,7 @@ void CF3x4(phydbl * freq, int gencode); //!< Added by Marcelo.
 phydbl my2norm(phydbl *x,int len); //!< Added by Marcelo.
 int MyGaussElimination_gNxRHS(double *A, double *B, int n, int rhs); //!< Added by Marcelo.
 void Sprint_codon(char *inout,int codon); //!< Added by Marcelo.
-void Make_Ts_and_Tv_Matrix(option *io); //!< Added by Marcelo.
+void Make_Ts_and_Tv_Matrix(option *io,model* mod); //!< Added by Marcelo.
 void Change_Tree_Data(int n_otu, calign *data, t_tree * tree); //!< Added by Marcelo.
 void Scale_freqs(phydbl *f, int n); //!< Added by Marcelo.
 void Freq_to_UnsFreq(phydbl *f, phydbl *uf, int n, int f2U); //!< Added by Marcelo.

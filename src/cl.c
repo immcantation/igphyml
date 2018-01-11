@@ -23,6 +23,7 @@ built upon
  
  */
 #include "cl.h"
+#include "io.h"
 
 extern int stopCodons[64];
 extern int senseCodons[64];
@@ -60,6 +61,8 @@ void Read_Command_Line( option *io, int argc, char **argv )
     io->mod->partfile = mCalloc(T_MAX_FILE,sizeof(char));
     io->mod->motifstring = mCalloc(T_MAX_FILE,sizeof(char));
     io->mod->ambigfile = mCalloc(T_MAX_FILE,sizeof(char));
+    io->mod->structTs_and_Tv = (ts_and_tv *)mCalloc(64*64,sizeof(ts_and_tv));//!< Added by Marcelo. 64 possible codons ... will be initialized together with the model parameters in set model default.
+
 
 
     while((c = getopt_long_only(argc,argv,"qi:d:g:m:b:n:w:t:f:v:c:a:u:ho:s:p",longopts,NULL)) != -1)            //! Removed zk:x:l:e since they are not implemented  (Louis)

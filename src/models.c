@@ -429,7 +429,7 @@ void PMat(phydbl l, model *mod, int pos, phydbl *Pij)
     }
     else
     {
-        switch(mod->io->datatype)
+        switch(mod->datatype)
         {
             case NT :
             {
@@ -470,7 +470,7 @@ void PMat(phydbl l, model *mod, int pos, phydbl *Pij)
                 
             case CODON ://!< Added by Marcelo.
                 {
-                    if(mod->calculate_init_tree && mod->io->init_DistanceTreeCD==NUCLEO) PMat_JC69(l,pos,Pij,mod);
+                    if(mod->calculate_init_tree && mod->init_DistanceTreeCD==NUCLEO) PMat_JC69(l,pos,Pij,mod);
                     else PMat_CODON(l,mod,0,Pij);
                     break;
                 }
@@ -490,7 +490,6 @@ void PMat(phydbl l, model *mod, int pos, phydbl *Pij)
 }
 
 /*********************************************************/
-/*********************************************************/
 
 void Init_Model(calign *data, model *mod, option *io)
 {
@@ -508,7 +507,7 @@ void Init_Model(calign *data, model *mod, option *io)
         if(mod->s_opt->opt_pinvar) {
             mod->pinvar = 0.2;
         }
-        
+printf("here1\n");
         /*! Omega variation model */
         switch(mod->omegaSiteVar) {
             case DM0: {
@@ -533,7 +532,7 @@ void Init_Model(calign *data, model *mod, option *io)
             default:
                 break; 
         } 
-        
+        printf("here2\n");
         if((mod->initqrates != NOINITMAT) && (mod->omegaSiteVar != NOOMEGA) && (io->kappaECM == kap5)) {
             Scale_freqs(mod->pkappa, mod->nkappa);
             Freq_to_UnsFreq(mod->pkappa, mod->unspkappa, mod->nkappa, 1);
@@ -571,9 +570,9 @@ void Init_Model(calign *data, model *mod, option *io)
             Freq_to_UnsFreq(mod->pi, mod->pi_unscaled, mod->ns, 1);
         } else { 
             if((mod->initqrates == ECMUSR) && (mod->freq_model == FUNDEFINED || mod->freq_model == FMODEL)) {
-                For(i, mod->ns) mod->pi[i] = io->mod->userfreq[senseCodons[i]];
+                For(i, mod->ns) mod->pi[i] = mod->userfreq[senseCodons[i]]; //was io-> mod->userfreq[senseCodons[i]]; Ken 9/1/2018
                 if(mod->whichrealmodel == MG) {
-                    For(i, mod->num_base_freq) mod->base_freq[i] = io->mod->userbfreq[i];
+                    For(i, mod->num_base_freq) mod->base_freq[i] = mod->userbfreq[i]; //was io-> mod->userbfreq[i];
                 }
                 mod->s_opt->user_state_freq = NO;
             }
@@ -589,21 +588,22 @@ void Init_Model(calign *data, model *mod, option *io)
             }
             mod->s_opt->opt_state_freq = NO;
         }
-        
         if((mod->s_opt->opt_omega == NO) && 
            (mod->s_opt->opt_kappa == NO) && 
            (mod->s_opt->opt_state_freq == NO)) {
         	if(mod->nparts > 1){printf("options not compatible with partitioned model error 8\n");exit(EXIT_FAILURE);}
             mr = Update_Qmat_Codons(mod, 0, 0); //modified by Ken 19/8
             EigenQREV(mod->qmat, mod->pi, mod->ns, mod->eigen->e_val, mod->eigen->r_e_vect, mod->eigen->l_e_vect, mod->eigen->space);
-            For(i, io->mod->ns) mod->eigen->e_val[i] /= mr;
+            For(i, mod->ns) mod->eigen->e_val[i] /= mr; //was io-> mod->ns 9/1 Ken
             mod->update_eigen = NO;
         } else {
+            printf("here3.3\n");
             mod->update_eigen = YES;
             Set_Model_Parameters(mod);
             mod->update_eigen = NO;
+            printf("here3.4\n");
         }
-        
+        printf("here4\n");
         //mod->omega_old  = mod->omega; //Ken 18/8
         mod->beta_old = mod->beta;
     }//!< Finish Added by Marcelo.
@@ -671,19 +671,19 @@ void Init_Model(calign *data, model *mod, option *io)
             if(mod->whichmodel == TN93)
             {
                 mod->update_eigen          = NO;
-                if(io->mod->s_opt->opt_kappa) io->mod->s_opt->opt_lambda = 1;
+                if(mod->s_opt->opt_kappa) mod->s_opt->opt_lambda = 1; //was io-> mod for both Ken 9/1/2018
             }
             if(mod->whichmodel == GTR)
             {
                 mod->kappa = 1.;
                 mod->update_eigen          = YES;
-                io->mod->s_opt->opt_rr     = YES;
+                mod->s_opt->opt_rr     = YES;// was io-> mod Ken 9/1/2018
             }
             if(mod->whichmodel == CUSTOM)
             {
                 mod->kappa = 1.;
                 mod->update_eigen          = YES;
-                /* 	  io->mod->s_opt->opt_rr     = YES; */ /* What if the user decided not to optimise the rates? */
+                /* 	  io- >mod->s_opt->opt_rr     = YES; */ /* What if the user decided not to optimise the rates? */
             }
             if(mod->whichmodel == GTR)
             {		  
@@ -890,7 +890,7 @@ void Translate_Custom_Mod_String(model *mod)
 
 /*********************************************************/
 void Set_Model_Parameters(model *mod) {
-    if(mod->io->datatype == CODON) { //!Added by Marcelo.
+    if(mod->datatype == CODON) { //!Added by Marcelo.
         phydbl mr;
         int i, j, k, n, nn, n_termsTaylor;
         switch(mod->omegaSiteVar) {
@@ -905,17 +905,20 @@ void Set_Model_Parameters(model *mod) {
                 break;
             }
             case DM0: {
-                mod->omegas[0] = 1.0;
-                mod->prob_omegas[0] = 1.0;
+            //	printf("here1\n");
+           //     mod->omegas[0] = 1.0;
+           //     mod->prob_omegas[0] = 1.0;
                 DiscreteGamma(mod->gamma_r_proba, mod->gamma_rr, mod->alpha, mod->alpha, mod->n_catg, mod->gamma_median);
                 break;
             }
             default:
                 break;
         }
-        
+      //  printf("here2\n");
+     //   printf("base freqs %lf\t%lf\t%d\t%d\t%d\t%d\t%lf\n",mod->pi[0],mod->base_freq[0],mod->ns,mod->freq_model,mod->s_opt->opt_state_freq,mod->s_opt->opt_omega,mod->uns_base_freq[0]);
         if((mod->s_opt->opt_state_freq) &&
            (mod->s_opt->opt_omega == NO)) {
+        	printf("here\n");
             switch(mod->freq_model) {
                 case F1XSENSECODONS: {
                     Freq_to_UnsFreq(mod->pi, mod->pi_unscaled, mod->ns, 0);
@@ -928,6 +931,7 @@ void Set_Model_Parameters(model *mod) {
                 }
                 case F3X4:
                 case CF3X4: {
+                	printf("here\n");
                     Freq_to_UnsFreq(mod->base_freq,   mod->uns_base_freq,   4, 0);
                     Freq_to_UnsFreq(mod->base_freq+4, mod->uns_base_freq+4, 4, 0);
                     Freq_to_UnsFreq(mod->base_freq+8, mod->uns_base_freq+8, 4, 0);
@@ -937,7 +941,7 @@ void Set_Model_Parameters(model *mod) {
                 default:
                     break;
             }
-            
+            printf("here\n");
             if(mod->whichrealmodel == MG) {
                 switch(mod->freq_model) {
                     case F1X4:{
@@ -970,7 +974,7 @@ void Set_Model_Parameters(model *mod) {
 
 
 
-                if(mod->io->kappaECM==kap5) 
+                if(mod->kappaECM==kap5)
                 {
                     Freq_to_UnsFreq(mod->pkappa,   mod->unspkappa,  mod->nkappa, 0);
                     Scale_freqs(mod->pkappa, mod->nkappa);      
@@ -981,11 +985,11 @@ void Set_Model_Parameters(model *mod) {
                 mod->mr_w[0] = Update_Qmat_Codons(mod, 0, modeli); //Ken 19/8
 
 
-                if(mod->io->expm == EIGEN) {
+                if(mod->expm == EIGEN) {
                 	if(mod->nparts > 1){printf("Options not supported with partitioned models error 13\n");exit(EXIT_FAILURE);}
                     EigenQREV(mod->qmat_part[0], mod->pi, mod->ns, mod->eigen->e_val, mod->eigen->r_e_vect, mod->eigen->l_e_vect, mod->eigen->space);
                     For(i,mod->ns) mod->eigen->e_val[i]/=mod->mr_w[0];
-                } else if(mod->io->expm == TAYLOR) {
+                } else if(mod->expm == TAYLOR) {
                 	if(mod->nparts > 1){printf("Options not supported with partitioned models error 14\n");exit(EXIT_FAILURE);}
 
                     int nn=mod->ns*mod->ns, n=mod->ns, l;
@@ -996,7 +1000,7 @@ void Set_Model_Parameters(model *mod) {
                     
                     For(i,nn) mod->A2_part[modeli][nn+i]=mod->qmat_part[modeli][i];
                     
-                    for(l=2;l<mod->io->n_termsTaylor;l++) {  
+                    for(l=2;l<mod->n_termsTaylor;l++) {
 #if defined BLAS || defined BLAS_OMP
                         
                         cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans, n, n, n, 1.0, mod->A2_part[modeli]+(nn*(l-1)), n, mod->A2_part[modeli]+nn,  n, 0.0, mod->A2_part[modeli]+nn*l, n);
@@ -1009,7 +1013,7 @@ void Set_Model_Parameters(model *mod) {
                         
 #endif
                     }
-                } else if(mod->io->expm == SSPADE) {
+                } else if(mod->expm == SSPADE) {
 
                 	//Modified by Ken 17/8/2016
                     n=mod->ns;
@@ -1064,7 +1068,7 @@ void Set_Model_Parameters(model *mod) {
 #endif
                 
                 For(i, mod->n_w_catg) {
-                    if(mod->io->kappaECM == kap5) {
+                    if(mod->kappaECM == kap5) {
                         Freq_to_UnsFreq(mod->pkappa,   mod->unspkappa,  mod->nkappa, 0);
                         Scale_freqs(mod->pkappa, mod->nkappa);    
                     }
@@ -1077,7 +1081,7 @@ void Set_Model_Parameters(model *mod) {
                 
                 
                 
-                if(mod->io->expm==EIGEN) {
+                if(mod->expm==EIGEN) {
 #if defined OMP || defined BLAS_OMP 
                     
 #pragma omp parallel for 
@@ -1087,7 +1091,7 @@ void Set_Model_Parameters(model *mod) {
                         EigenQREV(mod->qmat + k*mod->ns*mod->ns,                                     mod->pi, mod->ns, mod->eigen->e_val + k*mod->ns,                                   mod->eigen->r_e_vect + k*mod->ns*mod->ns,                                              mod->eigen->l_e_vect + k*mod->ns*mod->ns, mod->eigen->space + k*2*mod->ns);
                     }
                     For(i, mod->ns * mod->n_w_catg) mod->eigen->e_val[i]/=mr;
-                } else if(mod->io->expm == TAYLOR) {
+                } else if(mod->expm == TAYLOR) {
                     int catg, nn=mod->ns*mod->ns, n=mod->ns,l;
                     For(i,nn*mod->n_w_catg) mod->qmat[i]/=mr;
                     For(i,nn) mod->A2_part[0][nn+i]=mod->qmat[i]; //modified by Ken 22/8- doesn't work with partitioned models!
@@ -1099,7 +1103,7 @@ void Set_Model_Parameters(model *mod) {
 #endif
                     
                     For(catg, mod->n_w_catg) {
-                        for(l = 2; l < mod->io->n_termsTaylor; l++) {  
+                        for(l = 2; l < mod->n_termsTaylor; l++) {
 #if defined BLAS || defined BLAS_OMP
                         	if(mod->nparts > 1){printf("Options not supported with partitioned models error 15\n");exit(EXIT_FAILURE);}
                             cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans, n, n, n, 1.0, mod->A2_part[0]+(nn*(l-1))+catg*nn*15, n, mod->qmat_part[0]+catg*nn,  n, 0.0, mod->A2_part[0]+nn*l+catg*nn*15, n);
@@ -1112,7 +1116,7 @@ void Set_Model_Parameters(model *mod) {
 #endif
                         }
                     }
-                } else if(mod->io->expm == SSPADE) {
+                } else if(mod->expm == SSPADE) {
                     n=mod->ns;
                     nn=n*n;
                     For(i,nn*mod->n_w_catg) mod->qmat_part[0][i]/=mr; //!< Scaling of the Q matrix.
@@ -1172,7 +1176,7 @@ void Set_Model_Parameters(model *mod) {
         if(mod->n_rr_branch > 0)
             DiscreteGamma(mod->p_rr_branch, mod->rr_branch, mod->rr_branch_alpha, mod->rr_branch_alpha, mod->n_rr_branch, mod->gamma_median);
         
-        if((mod->io->datatype == NT) && (mod->s_opt->opt_state_freq))
+        if((mod->datatype == NT) && (mod->s_opt->opt_state_freq))
         {
             sum = .0;
             For(i,mod->ns) sum += FABS(mod->pi_unscaled[i]);
@@ -1196,7 +1200,7 @@ void Set_Model_Parameters(model *mod) {
         {
             int j;
 
-            if (mod->io->datatype==AA) //!Added by Marcelo
+            if (mod->datatype==AA) //!Added by Marcelo
             {
                 For(i,mod->ns*mod->ns) mod->qmat[i] = .0;
                 For(i,mod->ns       ) mod->pi[i]   = .0;
@@ -1250,7 +1254,7 @@ void Set_Model_Parameters(model *mod) {
             {
                 if(!mod->use_m4mod)
                 {
-                    if(mod->io->datatype == NT)
+                    if(mod->datatype == NT)
                     {
                         if(mod->whichmodel == GTR)
                             Update_Qmat_GTR(mod->rr, mod->rr_val, mod->rr_num, mod->pi, mod->qmat);
@@ -1427,7 +1431,7 @@ phydbl Update_Qmat_Codons(model *mod, int cat, int modeli) {
         default:
             break;
      }
-
+    //printf("qmat pi %lf %lf\n",mod->pi[0],mod->pi[1]);
     //Added by Ken 17/8/2016
    // int modeli;
    // for(modeli=0;modeli<mod->nomega_parts;modeli++){
@@ -1507,7 +1511,7 @@ phydbl Update_Qmat_Codons(model *mod, int cat, int modeli) {
             mod->pi[i] = freqs[i];
         }
     }
-
+   // printf("qmat pi %lf %lf\n",mod->pi[0],mod->pi[1]);
     For(i, numSensecodons*numSensecodons) qmat[i] = 0.0;
     
     // calculate the actual Q matrix
@@ -1586,9 +1590,16 @@ void Update_Qmat_GY(phydbl *mat, phydbl *qmat, phydbl * freqs, int cat, model *m
 //Modified GY94 by Ken
 //Modified to be omega*kappa*pi*(1+b*h) on 12/Jun/2016
 void Update_Qmat_HLP17(phydbl *mat, phydbl *qmat, phydbl * freqs, int cat, model *mod,phydbl omega) {
+	//printf("updating hlp17\n");
+	//printf("%d\n",mod->nmotifs);
+	//printf("hsc %lf\n",mod->hotspotcmps[0][100]);
+	//printf("bmat %lf\n",mod->Bmat[0]);
+	/*printf("hotness %lf\n",mod->hotness[0]);
+	printf("mh %d\n",mod->motif_hotness[0]);*/
 	 int fi,ti,li,ri,hot,c;
 	 double htotal[mod->nmotifs];
 	 for(fi=0;fi<61;fi++){ //Fill in B matrix
+	//	 printf("%d\n",fi);
     	for(ti=0;ti<61;ti++){
     		for(c=0;c< mod->nmotifs;c++){ //set htotal array to zero
  	    			htotal[c]=0;
@@ -1611,7 +1622,9 @@ void Update_Qmat_HLP17(phydbl *mat, phydbl *qmat, phydbl * freqs, int cat, model
             }
     		mod->Bmat[fi*61+ti]=hot;
     	}
+	//	 printf("%d\n",fi);
     }
+	// printf("updated1\n");
 
     int i, j, numSensecodons;
     phydbl value;
@@ -1623,6 +1636,7 @@ void Update_Qmat_HLP17(phydbl *mat, phydbl *qmat, phydbl * freqs, int cat, model
               qmat[ j*numSensecodons+i ] = value * freqs[i]*(1+mod->Bmat[ j*numSensecodons+i ]);
         }
     }
+    //printf("updated2\n");
 }
 
 
@@ -1882,7 +1896,7 @@ phydbl Kappa_Omega_Factor(int senseCodoni, int senseCodonj, model* mod, int cat,
     phydbl *kappa = mod->pkappa;
    // phydbl omega;
     int numSensecodons = mod->ns;
-    ts_and_tv *mat = mod->io->structTs_and_Tv;
+    ts_and_tv *mat = mod->structTs_and_Tv;
    
     switch(mod->omegaSiteVar) {
         case DM0:
@@ -1898,7 +1912,7 @@ phydbl Kappa_Omega_Factor(int senseCodoni, int senseCodonj, model* mod, int cat,
 
     // First deal with kappa...
         if(mod->initqrates != NOINITMAT) {
-            switch(mod->io->kappaECM) {
+            switch(mod->kappaECM) {
                 case kap1: { 
                     val = 1.0;
                     break;
@@ -1976,7 +1990,7 @@ void PMat_CODON(phydbl l, model *mod, int pos, phydbl *Pij) //!< Added by Marcel
 {
     int n = mod->ns, nn = n*n, nw=mod->n_w_catg, i, g, j, k, catg;
     
-    if(mod->io->expm==EIGEN)
+    if(mod->expm==EIGEN)
     {
         phydbl *U, *V, *R, *P;
         phydbl *expt, expt_n, *pP;
@@ -2028,7 +2042,7 @@ void PMat_CODON(phydbl l, model *mod, int pos, phydbl *Pij) //!< Added by Marcel
         
 #endif
     }
-    else if(mod->io->expm==TAYLOR) 
+    else if(mod->expm==TAYLOR)
     {
     	if(mod->nparts > 1){
     		printf("TAYLOR APPROXIMATION DOESN'T WORK WITH PARITTIONED MODELS IN IGPHYML\n");
@@ -2042,14 +2056,14 @@ void PMat_CODON(phydbl l, model *mod, int pos, phydbl *Pij) //!< Added by Marcel
         
         For(catg,nw)
         {
-            For(m,mod->io->n_termsTaylor)
+            For(m,mod->n_termsTaylor)
             {
                 For(i,nn) Pij[i+catg*nn]+=pow(l,m)*Q2[i+catg*nn*15+m*nn]/(phydbl)myFactorial(m);
             }
         } 
         For(i,nn*nw) if(Pij[i]<SMALL_PIJ) Pij[i]=SMALL_PIJ;
     }
-    else  if(mod->io->expm==SSPADE)
+    else  if(mod->expm==SSPADE)
     {
         phydbl norm_1_Q, *Q, *A, *B, *F, theta[5] = {1.495585217958292e-002, 2.539398330063230e-001, 9.504178996162932e-001, 2.097847961257068e+000, 5.371920351148152e+000}; 
         int m_vals[5]={3, 5, 7, 9, 13}, z=5;
@@ -2177,7 +2191,7 @@ void PMat_CODON_part(phydbl l, model *mod, int pos, phydbl *Qmat, phydbl *Pij, i
 {
     int n = mod->ns, nn = n*n, nw=mod->n_w_catg, i, g, j, k, catg;
 
-    if(mod->io->expm==EIGEN)
+    if(mod->expm==EIGEN)
     {
         phydbl *U, *V, *R, *P;
         phydbl *expt, expt_n, *pP;
@@ -2229,7 +2243,7 @@ void PMat_CODON_part(phydbl l, model *mod, int pos, phydbl *Qmat, phydbl *Pij, i
 
 #endif
     }
-    else if(mod->io->expm==TAYLOR)
+    else if(mod->expm==TAYLOR)
     {
     	if(mod->nparts > 1){
     		printf("TAYLOR APPROX DOESNT WORK WITH PARTITIONED MODELS IN IGPHYML YET\n");
@@ -2243,14 +2257,14 @@ void PMat_CODON_part(phydbl l, model *mod, int pos, phydbl *Qmat, phydbl *Pij, i
 
         For(catg,nw)
         {
-            For(m,mod->io->n_termsTaylor)
+            For(m,mod->n_termsTaylor)
             {
                 For(i,nn) Pij[i+catg*nn]+=pow(l,m)*Q2[i+catg*nn*15+m*nn]/(phydbl)myFactorial(m);
             }
         }
         For(i,nn*nw) if(Pij[i]<SMALL_PIJ) Pij[i]=SMALL_PIJ;
     }
-    else  if(mod->io->expm==SSPADE)
+    else  if(mod->expm==SSPADE)
     {
         phydbl norm_1_Q, *Q, *A, *B, *F, theta[5] = {1.495585217958292e-002, 2.539398330063230e-001, 9.504178996162932e-001, 2.097847961257068e+000, 5.371920351148152e+000};
         int m_vals[5]={3, 5, 7, 9, 13}, z=5;

@@ -173,7 +173,7 @@ void Round_Optimize(t_tree *tree, calign *data, int n_round_max)
 	if(!each)
 	{
 	  each = 1;
-	  Optimiz_All_Free_Param(tree,(tree->io->quiet)?(0):(tree->mod->s_opt->print));
+	  Optimiz_All_Free_Param(tree,(tree->mod->quiet)?(0):(tree->mod->s_opt->print));
 
 	}
 	
@@ -186,7 +186,7 @@ void Round_Optimize(t_tree *tree, calign *data, int n_round_max)
 
 
 	lk_new = tree->c_lnL;
-	if((tree->mod->s_opt->print) && (!tree->io->quiet)) Print_Lk(tree,"[Branch lengths     ]");
+	if((tree->mod->s_opt->print) && (!tree->mod->quiet)) Print_Lk(tree,"[Branch lengths     ]");
       }
       else
       {
@@ -199,12 +199,12 @@ void Round_Optimize(t_tree *tree, calign *data, int n_round_max)
 	}
 	
 
-	if((tree->mod->s_opt->print) && (!tree->io->quiet)) Print_Lk(tree,"[Branch lengths     ]");
+	if((tree->mod->s_opt->print) && (!tree->mod->quiet)) Print_Lk(tree,"[Branch lengths     ]");
 
 	if(!each)
 	{
 	  each = 1;
-	  Optimiz_All_Free_Param(tree,(tree->io->quiet)?(0):(tree->mod->s_opt->print));
+	  Optimiz_All_Free_Param(tree,(tree->mod->quiet)?(0):(tree->mod->s_opt->print));
 	}
       }
       Lk(tree);
@@ -226,7 +226,7 @@ void Round_Optimize(t_tree *tree, calign *data, int n_round_max)
       each--;
     }
   
-  Optimiz_All_Free_Param(tree,(tree->io->quiet)?(0):(tree->mod->s_opt->print));
+  Optimiz_All_Free_Param(tree,(tree->mod->quiet)?(0):(tree->mod->s_opt->print));
 }
 
 /*********************************************************/
@@ -352,7 +352,7 @@ phydbl gemin=1e-6; //!< Added by Marcelo.
 void Optimiz_All_Free_Param(t_tree *tree, int verbose)
 {
 
-  if(tree->mod->io->datatype==CODON) //!< Added by Marcelo.
+  if(tree->mod->datatype==CODON) //!< Added by Marcelo.
   {
     char s[100],r[100];
     int  init_both_sides, numParams = 0, i, n;
@@ -389,7 +389,7 @@ void Optimiz_All_Free_Param(t_tree *tree, int verbose)
 	tree->mod->update_eigen = 1;
       }
       
-      if(tree->io->heuristicExpm){ tree->io->expm=TAYLOR; tree->io->optParam=1; }
+      if(tree->mod->heuristicExpm){ tree->mod->expm=TAYLOR; tree->mod->optParam=1; }
       
       if(tree->mod->s_opt->opt_kappa)
       {
@@ -409,7 +409,7 @@ void Optimiz_All_Free_Param(t_tree *tree, int verbose)
 	}
 	else
 	{
-	  switch(tree->io->kappaECM)
+	  switch(tree->mod->kappaECM)
 	  {
 	    case kap1: 
 	      break;
@@ -595,11 +595,11 @@ void Optimiz_All_Free_Param(t_tree *tree, int verbose)
       
       tree->both_sides = init_both_sides;
       
-      if(tree->io->heuristicExpm)
+      if(tree->mod->heuristicExpm)
       {
 	tree->mod->update_eigen = 1; 
-	tree->io->optParam=0;
-	tree->io->expm=EIGEN;
+	tree->mod->optParam=0;
+	tree->mod->expm=EIGEN;
 	Lk(tree);
 	tree->mod->update_eigen = 0;  
       }
@@ -642,7 +642,7 @@ void Optimiz_All_Free_Param(t_tree *tree, int verbose)
 	  tree->mod->update_eigen = 1;
 	}
 	
-	if(tree->io->heuristicExpm){ tree->io->expm=TAYLOR; tree->io->optParam=1; }
+	if(tree->mod->heuristicExpm){ tree->mod->expm=TAYLOR; tree->mod->optParam=1; }
 	
 	if(tree->mod->s_opt->opt_kappa)
 	{
@@ -665,7 +665,7 @@ void Optimiz_All_Free_Param(t_tree *tree, int verbose)
 	  }
 	  else
 	  {
-	    switch(tree->io->kappaECM)
+	    switch(tree->mod->kappaECM)
 	    {
 	      case kap1: 
 		break;
@@ -877,11 +877,11 @@ void Optimiz_All_Free_Param(t_tree *tree, int verbose)
 	
 	tree->both_sides = init_both_sides;
 	
-	if(tree->io->heuristicExpm)
+	if(tree->mod->heuristicExpm)
 	{
 	  tree->mod->update_eigen = 1; 
-	  tree->io->optParam=0;
-	  tree->io->expm=EIGEN;
+	  tree->mod->optParam=0;
+	  tree->mod->expm=EIGEN;
 	  Lk(tree);
 	  tree->mod->update_eigen = 0;  
 	}
@@ -911,7 +911,7 @@ void Optimiz_All_Free_Param(t_tree *tree, int verbose)
 	}
 	else
 	{
-	  switch(tree->io->kappaECM)
+	  switch(tree->mod->kappaECM)
 	  {
 	    case kap1: 
 	      break;

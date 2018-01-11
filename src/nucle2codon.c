@@ -388,7 +388,7 @@ int Site_listEmpty(){
  
 /*######start implementation of the interface of nucleotide to codon translation######*/  
 //!< Translate nucleotides into codons.
-void Nucleotides2Codons(align **data, option *io)
+void Nucleotides2Codons(align **data, option *io,model* mod)
 {
   t_node_nucle2codon * root;
   t_node_listCodons * pointer;
@@ -406,13 +406,13 @@ void Nucleotides2Codons(align **data, option *io)
   root=Tree_Init();                                                                         /*!< Initialize the tree.*/
   Node_listInit();                                                                          /*!< Initialize the linked-list of codons.*/
   
-  alternativeCodons=(char **)mCalloc((io->mod->ns)+1,sizeof(char *));                         //!< Create one matrix that holds the alternative codons for all sites for all taxa.
+  alternativeCodons=(char **)mCalloc((mod->ns)+1,sizeof(char *));                         //!< Create one matrix that holds the alternative codons for all sites for all taxa. was io-> mod Ken 9/1/2018
   if(!alternativeCodons)                                                                    //!< +1 for the marquer at the end of each list of alternatives.
   {
     printf("Impossible to translate codons for taxon %s\n",data[i]->name);
     Warn_And_Exit("Not enough memory");
   }
-  For(j,(io->mod->ns)+1)
+  For(j,(mod->ns)+1) //was io-> mod Ken 9/1/2018
   {
     alternativeCodons[j]=(char *)mCalloc(seqLen/3,sizeof(char));                          //!< Size is #taxa X #senseCodons.
     if(!alternativeCodons[j])
@@ -421,9 +421,9 @@ void Nucleotides2Codons(align **data, option *io)
       Warn_And_Exit("Not enough memory");
     }
   }
-  For(i,io->n_otu)
+  For(i,mod->n_otu)
   {
-    For(k,(io->mod->ns)+1) For(j,seqLen/3) alternativeCodons[k][j]=(char)99;                //!< Initialize the matrix. 
+    For(k,(mod->ns)+1) For(j,seqLen/3) alternativeCodons[k][j]=(char)99;                //!< Initialize the matrix. was io-> mod Ken 9/1/2018
     
     Translate_nucle2codons(root, data[i]->state, seqLen);                                   //!< Translate a whole sequence of the current taxon.
     j=-1;                                                                                   //!< Initialize the index j.
@@ -464,7 +464,7 @@ void Nucleotides2Codons(align **data, option *io)
     data[i]->alternativeCodons=CompactCodonAlternatives(seqLen/3, data[i], alternativeCodons);
     
   }
-  For(j,(io->mod->ns)+1) free(alternativeCodons[j]);//!< Delete old matrix;
+  For(j,(mod->ns)+1) free(alternativeCodons[j]);//!< Delete old matrix; was io-> mod Ken 9/1/2018
   free(alternativeCodons);
   
   Free_listCodons();

@@ -24,7 +24,7 @@ the GNU public licence.  See http://www.opensource.org for details.
 */
 
 #include "simu.h"
-
+#include "io.h"
 
 /*********************************************************/
 
@@ -35,13 +35,13 @@ void Simu_Loop(t_tree *tree)
   tree->both_sides = 0;
   Lk(tree);
 
-  if((tree->mod->s_opt->print) && (!tree->io->quiet)) PhyML_Printf("\n. Maximizing likelihood (using NNI moves)...\n");
+  if((tree->mod->s_opt->print) && (!tree->mod->quiet)) PhyML_Printf("\n. Maximizing likelihood (using NNI moves)...\n");
   
   Print_Lk(tree,"[Initial Tree       ]");
   
   //added by Ken 8/3/2017
   /* Optimise branch lengths */
-  	  Optimiz_All_Free_Param(tree,(tree->io->quiet)?(0):(tree->mod->s_opt->print));
+  	  Optimiz_All_Free_Param(tree,(tree->mod->quiet)?(0):(tree->mod->s_opt->print));
         //optimze branch lengths initially
 	  int startnode = 0;
 	  if(tree->mod->whichrealmodel==HLP17){
@@ -64,20 +64,20 @@ void Simu_Loop(t_tree *tree)
 	  if(tree->mod->whichrealmodel==HLP17){
 		  Get_UPP(tree->noeud[startnode], tree->noeud[startnode]->v[0], tree);
 	  }
-	  if(tree->io->print_trace){
+	  if(tree->mod->print_trace){
 		  Print_Trace(tree);
 	  }
 	  Print_Lk(tree,"[Branch lengths     ]");
 
 
   int first=0;
-  if(tree->io->opt_heuristic_manuel==NO) //!Added by Marcelo
+  if(tree->mod->opt_heuristic_manuel==NO) //!Added by Marcelo
   {
 
     do //optimize topology and parameters while lhood increasing to a certain point
     { 
       lk_old = tree->c_lnL;
-      if(first != 0)Optimiz_All_Free_Param(tree,(tree->io->quiet)?(0):(tree->mod->s_opt->print));
+      if(first != 0)Optimiz_All_Free_Param(tree,(tree->mod->quiet)?(0):(tree->mod->s_opt->print));
       first++;
 
       if(!Simu(tree,10)) 
@@ -95,10 +95,10 @@ void Simu_Loop(t_tree *tree)
     /*****************************/
     
   }
-  else if(tree->io->opt_heuristic_manuel==YES) //!Added by Marcelo
+  else if(tree->mod->opt_heuristic_manuel==YES) //!Added by Marcelo
   {
 
-    Round_Optimize(tree,tree->data,tree->io->roundMax_start); //! last parameter: max number of rounds
+    Round_Optimize(tree,tree->data,tree->mod->roundMax_start); //! last parameter: max number of rounds
     
     do
     { 
@@ -110,7 +110,7 @@ void Simu_Loop(t_tree *tree)
     }
     while(tree->c_lnL > lk_old + tree->mod->s_opt->min_diff_lk_global);
     
-    Round_Optimize(tree,tree->data,tree->io->roundMax_end); //! last parameter: max number of rounds
+    Round_Optimize(tree,tree->data,tree->mod->roundMax_end); //! last parameter: max number of rounds
     
     do
     {
@@ -122,7 +122,7 @@ void Simu_Loop(t_tree *tree)
    
   }
   
-  if((tree->mod->s_opt->print) && (!tree->io->quiet)) PhyML_Printf("\n");
+  if((tree->mod->s_opt->print) && (!tree->mod->quiet)) PhyML_Printf("\n");
 
 }
 
@@ -170,7 +170,7 @@ int Simu(t_tree *tree, int n_step_max)
       Lk(tree);
             
       if(tree->c_lnL < old_loglk){
-    	  if((tree->mod->s_opt->print) && (!tree->io->quiet)) PhyML_Printf("\n\n. Moving backward\n");
+    	  if((tree->mod->s_opt->print) && (!tree->mod->quiet)) PhyML_Printf("\n\n. Moving backward\n");
     	  if(!Mov_Backward_Topo_Bl(tree,old_loglk,tested_b,n_tested))
     		  Exit("\n. Err: mov_back failed\n");
     	  if(!tree->n_swap) n_neg = 0;
@@ -182,13 +182,13 @@ int Simu(t_tree *tree, int n_step_max)
 
       if(step > n_step_max) break;
 
-      if(tree->io->print_trace){
-    	  //PhyML_Fprintf(tree->io->fp_out_trace,"[%f]%s\n",tree->c_lnL,Write_Tree(tree)); fflush(tree->io->fp_out_trace);
-    	  //if(tree->io->print_site_lnl) Print_Site_Lk(tree,tree->io->fp_out_lk); fflush(tree->io->fp_out_lk);
+      if(tree->mod->print_trace){
+    	  //PhyML_Fprintf(tree->mod->fp_out_trace,"[%f]%s\n",tree->c_lnL,Write_Tree(tree)); fflush(tree->mod->fp_out_trace);
+    	  //if(tree->mod->print_site_lnl) Print_Site_Lk(tree,tree->mod->fp_out_lk); fflush(tree->mod->fp_out_lk);
     	  Print_Trace(tree);
       }
 
-      if((tree->mod->s_opt->print) && (!tree->io->quiet)) Print_Lk(tree,"[Topology           ]");
+      if((tree->mod->s_opt->print) && (!tree->mod->quiet)) Print_Lk(tree,"[Topology           ]");
       
 /*       if(((tree->c_lnL > old_loglk) && (FABS(old_loglk-tree->c_lnL) < tree->mod->s_opt->min_diff_lk_global)) || (n_without_swap > it_lim_without_swap)) break; */
       if((FABS(old_loglk-tree->c_lnL) < tree->mod->s_opt->min_diff_lk_global) || (n_without_swap > it_lim_without_swap)) break;
@@ -228,8 +228,8 @@ int Simu(t_tree *tree, int n_step_max)
   free(sorted_b);
   free(tested_b);
 
-  if(tree->io->logtree > 0) {
-        if(!tree->io->quiet) {
+  if(tree->mod->logtree > 0) {
+        if(!tree->mod->quiet) {
             PhyML_Printf("Tree out\n");
         }
         FILE *treefile = GetTreeFile(tree->io);

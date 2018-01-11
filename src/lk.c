@@ -355,12 +355,14 @@ phydbl Lk(t_tree *tree)
  
   #if defined OMP || defined BLAS_OMP
    
-  #pragma omp parallel for if(tree->io->datatype==CODON)
+  #pragma omp parallel for if(tree->mod->datatype==CODON)
    
   #endif
    
   For(br,n_edges) Update_PMat_At_Given_Edge(tree->t_edges[br],tree);
   
+
+ // For(br,2*tree->n_otu-3) printf("%lf\n",tree->t_edges[br]->l);
   //added and modified by Ken to start likelihood calculation at specified node
   int startnode = 0;
   if(tree->mod->whichrealmodel == HLP17){
@@ -725,7 +727,8 @@ n_v1   n_v2
 		    	if(state_anc==i){state=1;}
 			     b->upp[site][i] = state; // Ken 17/8/2016
 		    }else{
-		    	 b->upp[site][i] = anc->b[0]->p_lk_tip_r[site*tree->mod->ns+i];
+		    	// b->upp[site][i] = anc->b[0]->p_lk_tip_r[site*tree->mod->ns+i];
+		    	b->upp[site][i] = tree->mod->pi[i];
 		    }
 		  }
 
@@ -741,6 +744,7 @@ n_v1   n_v2
   }
 }
 
+/*********************************************************/
 
 void Get_Lhood(t_node *a, t_node *d,  t_tree *tree)
 {
@@ -999,7 +1003,7 @@ phydbl Lk_Core_UPP(t_edge *b, t_tree *tree, t_node *anc, t_node *d)
 
 
   site_lk = .0;
-  if(tree->io->datatype!=CODON ) For(catg,tree->mod->n_catg) site_lk += tree->site_lk_cat[catg]*tree->mod->gamma_r_proba[catg];
+  if(tree->mod->datatype!=CODON ) For(catg,tree->mod->n_catg) site_lk += tree->site_lk_cat[catg]*tree->mod->gamma_r_proba[catg];
   else //!< Added by Marcelo.
   {
     if(tree->mod->n_catg>1 && tree->mod->n_w_catg==1) For(catg,tree->mod->n_catg) site_lk += tree->site_lk_cat[catg]*tree->mod->gamma_r_proba[catg];
@@ -1269,7 +1273,7 @@ phydbl Lk_Core(t_edge *b, t_tree *tree)
 
 
   site_lk = .0;
-  if(tree->io->datatype!=CODON ) For(catg,tree->mod->n_catg) site_lk += tree->site_lk_cat[catg]*tree->mod->gamma_r_proba[catg];
+  if(tree->mod->datatype!=CODON ) For(catg,tree->mod->n_catg) site_lk += tree->site_lk_cat[catg]*tree->mod->gamma_r_proba[catg];
   else //!< Added by Marcelo.
   {
     if(tree->mod->n_catg>1 && tree->mod->n_w_catg==1) For(catg,tree->mod->n_catg) site_lk += tree->site_lk_cat[catg]*tree->mod->gamma_r_proba[catg];
@@ -1436,7 +1440,7 @@ n_v1   n_v2
   
   #if defined OMP || defined BLAS_OMP
   
-  #pragma omp parallel for if(tree->io->datatype==CODON) private(state_v1, state_v2, ambiguity_check_v1, ambiguity_check_v2, smallest_p_lk, p1_lk1, catg, i, j, p2_lk2, sum_scale_v1_val, sum_scale_v2_val, curr_scaler_pow, curr_scaler, piecewise_scaler_pow )
+  #pragma omp parallel for if(tree->mod->datatype==CODON) private(state_v1, state_v2, ambiguity_check_v1, ambiguity_check_v2, smallest_p_lk, p1_lk1, catg, i, j, p2_lk2, sum_scale_v1_val, sum_scale_v2_val, curr_scaler_pow, curr_scaler, piecewise_scaler_pow )
   
   #endif
   
@@ -1643,9 +1647,9 @@ matrix *ML_Dist(calign *data, model *mod)
       
       tmpdata->c_seq[1]       = data->c_seq[k];
       tmpdata->c_seq[1]->name = data->c_seq[k]->name;
-      twodata = Compact_Cdata(tmpdata,mod->io);
+      twodata = Compact_Cdata(tmpdata,mod->io,mod);
       For(l,mod->ns) twodata->b_frq[l] = data->b_frq[l];
-      Check_Ambiguities(twodata,mod->io->datatype,mod->io->mod->state_len);
+      Check_Ambiguities(twodata,mod->datatype,mod->state_len);
       
       Hide_Ambiguities(twodata);
       
@@ -1659,12 +1663,12 @@ matrix *ML_Dist(calign *data, model *mod)
       len = 0;
       For(l,twodata->c_seq[0]->len)
       {
-	state0 = Assign_State(twodata->c_seq[0]->state+l*mod->io->mod->state_len,mod->io->datatype,mod->io->mod->state_len);
-	state1 = Assign_State(twodata->c_seq[1]->state+l*mod->io->mod->state_len,mod->io->datatype,mod->io->mod->state_len);
+	state0 = Assign_State(twodata->c_seq[0]->state+l*mod->state_len,mod->datatype,mod->state_len); //was originall mod-> io-> mod->state_len Ken 9/1/2018
+	state1 = Assign_State(twodata->c_seq[1]->state+l*mod->state_len,mod->datatype,mod->state_len);
 	
 	if((state0 > -1) && (state1 > -1))
 	{
-	  if(mod->io->datatype == CODON) //! Added by Marcelo.
+	  if(mod->datatype == CODON) //! Added by Marcelo.
 	  { 
 	    state0=indexSenseCodons[state0];
 	    state1=indexSenseCodons[state1];
@@ -1702,10 +1706,10 @@ matrix *ML_Dist(calign *data, model *mod)
       mat->dist[k][j] = mat->dist[j][k];
       Free_Cseq(twodata);
       progress++;
-      if(!mod->io->quiet) PhyML_Printf("\r. Computing pairwise distances...%3.2f%c concluded.", progress*100.00/loops, '%');
+      if(!mod->quiet) PhyML_Printf("\r. Computing pairwise distances...%3.2f%c concluded.", progress*100.00/loops, '%');
     }
   }
-  if(!mod->io->quiet) PhyML_Printf("\n");
+  if(!mod->quiet) PhyML_Printf("\n");
   time(&tend); //! Added by Marcelo.
   
   if((tend-tbegin)>=1) //! Added by Marcelo.
@@ -1794,23 +1798,23 @@ void Init_P_Lk_Tips_Double(t_tree *tree)
     {
       For(i,tree->n_otu)
 	{
-	  if (tree->io->datatype == NT)
+	  if (tree->mod->datatype == NT)
 	    Init_Tips_At_One_Site_Nucleotides_Float(tree->data->c_seq[i]->state[curr_site],
 						    curr_site*dim1+0*dim2,
 						    tree->noeud[i]->b[0]->p_lk_rght);
 
-	  else if(tree->io->datatype == AA)
+	  else if(tree->mod->datatype == AA)
 	    Init_Tips_At_One_Site_AA_Float(tree->data->c_seq[i]->state[curr_site],
 					   curr_site*dim1+0*dim2,
 					   tree->noeud[i]->b[0]->p_lk_rght);
 
-	  else if(tree->io->datatype == GENERIC)
+	  else if(tree->mod->datatype == GENERIC)
 	    Init_Tips_At_One_Site_Generic_Float(tree->data->c_seq[i]->state+curr_site*tree->mod->state_len,
 						tree->mod->ns,
 						tree->mod->state_len,
 						curr_site*dim1+0*dim2,
 						tree->noeud[i]->b[0]->p_lk_rght);
-	  else if (tree->io->datatype == CODON)//!< Added by Marcelo.
+	  else if (tree->mod->datatype == CODON)//!< Added by Marcelo.
 	    Init_Tips_At_One_Site_Codons_Float(tree->data->c_seq[i]->state[curr_site],
 						    curr_site*dim1+0*dim2,//!< Changed by Marcelo.
 						    tree->noeud[i]->b[0]->p_lk_rght,
@@ -1844,17 +1848,17 @@ void Init_P_Lk_Tips_Int(t_tree *tree)
     {
       For(i,tree->n_otu)
 	{
-	  if(tree->io->datatype == NT)
+	  if(tree->mod->datatype == NT)
 	    Init_Tips_At_One_Site_Nucleotides_Int(tree->data->c_seq[i]->state[curr_site],
 						  curr_site*dim1,
 						  tree->noeud[i]->b[0]->p_lk_tip_r);
 
-	  else if(tree->io->datatype == AA)
+	  else if(tree->mod->datatype == AA)
 	    Init_Tips_At_One_Site_AA_Int(tree->data->c_seq[i]->state[curr_site],
 					 curr_site*dim1,					   
 					 tree->noeud[i]->b[0]->p_lk_tip_r);
 
-	  else if(tree->io->datatype == GENERIC)
+	  else if(tree->mod->datatype == GENERIC)
 	    {
 	      Init_Tips_At_One_Site_Generic_Int(tree->data->c_seq[i]->state+curr_site*tree->mod->state_len,
 						tree->mod->ns,
@@ -1862,7 +1866,7 @@ void Init_P_Lk_Tips_Int(t_tree *tree)
 						curr_site*dim1,
 						tree->noeud[i]->b[0]->p_lk_tip_r);
 	    }
-	    else if(tree->io->datatype == CODON)//!< Added by Marcelo.
+	    else if(tree->mod->datatype == CODON)//!< Added by Marcelo.
 	    {
 	      Init_Tips_At_One_Site_Codons_Int(tree->data->c_seq[i]->state[curr_site],
 						  curr_site*dim1,
@@ -1886,7 +1890,7 @@ void Update_PMat_At_Given_Edge(t_edge *b_fcus, t_tree *tree)
   if(b_fcus->l < BL_MIN)      b_fcus->l = BL_MIN;
   else if(b_fcus->l > BL_MAX) b_fcus->l = BL_MAX;
    
-  if(tree->io->datatype==CODON) //!< Added by Marcelo.
+  if(tree->mod->datatype==CODON) //!< Added by Marcelo.
   {
     if(b_fcus->has_zero_br_len) 
     {
@@ -1909,7 +1913,7 @@ void Update_PMat_At_Given_Edge(t_edge *b_fcus, t_tree *tree)
       else
       {
     	  len = b_fcus->l;
-    	  if(tree->io->testcondition){len=BL_MIN;}
+    	  if(tree->mod->testcondition){len=BL_MIN;}
     	  int modeli;
     	  for(modeli=0;modeli<tree->mod->nparts;modeli++){
     		  PMat_CODON_part(len,tree->mod,0,tree->mod->qmat_part[modeli],b_fcus->bPmat_part[modeli],modeli);
@@ -2183,7 +2187,7 @@ void Init_Tips_At_One_Site_Codons_Int(char state, int pos, short int *p_pars, ch
     }
 }
 /*********************************************************/
-matrix *ML_CODONDist_Pairwise(calign *data, option *io) //!<Added by Marcelo.
+matrix *ML_CODONDist_Pairwise(calign *data, option *io, model *mod) //!<Added by Marcelo.
 {
   int j,k,tmpkappa;
   model *mod_tmp;
@@ -2193,7 +2197,7 @@ matrix *ML_CODONDist_Pairwise(calign *data, option *io) //!<Added by Marcelo.
   phydbl lnL, *expt, *uexpt, brLen, mr;
   time_t tbegin, tend;
  
-
+  printf("\nml codon pairwise1\n");
   mod_tmp = Make_Model_Basic();
   s_opt = Make_Optimiz();
   Set_Defaults_Model(mod_tmp);
@@ -2202,7 +2206,7 @@ matrix *ML_CODONDist_Pairwise(calign *data, option *io) //!<Added by Marcelo.
   Set_Defaults_Optimiz(s_opt);
   mod_tmp->io = io;
   mod_tmp->s_opt = s_opt;
-  mod_tmp->ns = io->mod->ns;
+  mod_tmp->ns = mod->ns;
   mod_tmp->whichmodel = GY;
   mod_tmp->whichrealmodel = GY;
   mod_tmp->initqrates = io->init_DistanceTreeCD;
@@ -2210,27 +2214,73 @@ matrix *ML_CODONDist_Pairwise(calign *data, option *io) //!<Added by Marcelo.
   mod_tmp->omegaSiteVar = NOOMEGA;
   tmpkappa = io->kappaECM;
   io->kappaECM = kap1;
-  Make_Model_Complete(mod_tmp);
-  mod_tmp->s_opt->opt_kappa = NO;
 
-  expt            = (phydbl *)mCalloc(io->mod->ns,sizeof(phydbl));
-  uexpt           = (phydbl *)mCalloc(io->mod->ns*io->mod->ns,sizeof(phydbl));
+  mod_tmp->nparts=mod->nparts;
+  mod_tmp->n_otu = mod->n_otu;
+  mod_tmp->init_len = mod->init_len;
+  mod_tmp->state_len = mod->state_len;
+  mod_tmp->whichrealmodel = mod->whichrealmodel;
+
+
+  mod_tmp->expm=mod->expm; /*!< 0 Eigenvalue; 1 scaling and squaring Pade. approx. COPIED FROM OPTION*/ //!< Added by Marcelo.
+   mod_tmp->datatype=mod->datatype; //copied from option
+   mod_tmp->init_DistanceTreeCD=mod->init_DistanceTreeCD; /*!< 0: ML JC69; 1: ML M0; 2: Schneider 2005 CodonPam; 3: Kosiol 2007 Empirical. COPIED FROM OPTION*/ //!<Added by Marcelo.
+   mod_tmp->kappaECM=mod->kappaECM; /*!< According to Kosiol 2007.COPIED FROM OPTION*///!<Added by Marcelo.
+   mod_tmp->n_termsTaylor=mod->n_termsTaylor; //! Added by Marcelo. COPIED FROM OPTION
+   mod_tmp->heuristicExpm=mod->heuristicExpm; /*!< TAYLOR in parameter opt?.COPIED FROM OPTION*/
+   mod_tmp->modeltypeOpt=mod->modeltypeOpt; //COPIED FROM OPTION
+   mod_tmp->freqmodelOpt=mod->freqmodelOpt; //COPIED FROM OPTION
+   mod_tmp->omegaOpt=mod->omegaOpt; //COPIED FROM OPTION
+   mod_tmp->eq_freq_handling=mod->eq_freq_handling; //COPIED FROM OPTION
+   mod_tmp->quiet=mod->quiet;
+   mod_tmp->optParam=mod->optParam;
+   mod_tmp->opt_heuristic_manuel=mod->io->opt_heuristic_manuel;
+   mod_tmp->opt_heuristic_manuel=mod->io->opt_heuristic_manuel;
+   mod_tmp->roundMax_start=mod->io->roundMax_start;
+   mod_tmp->roundMax_end=mod->io->roundMax_end;
+   mod_tmp->logtree=mod->io->logtree;
+   mod_tmp->print_site_lnl = mod->io->print_site_lnl;
+   mod_tmp->out_stats_format = mod->io->out_stats_format;
+   mod_tmp->random_boot_seq_order = mod->io->random_boot_seq_order;
+   mod_tmp->minParam = mod->io->minParam;
+   mod_tmp->maxParam = mod->io->maxParam;
+   mod_tmp->lkExpStepSize = mod->io->lkExpStepSize;
+
+  //mod_tmp->initqrates = mod->initqrates;
+   printf("expm %d\n",mod_tmp->expm);
+  Make_Model_Complete(mod_tmp);
+  printf("expm %d\n",mod_tmp->expm);
+  mod_tmp->s_opt->opt_kappa = NO;
+  printf("\nml codon pairwise2\n");
+  mod_tmp->structTs_and_Tv  = (ts_and_tv *)mCalloc(64*64,sizeof(ts_and_tv));//!< Added by Marcelo. 64 possible codons ... will be initialized together with the model parameters in set model default.
+  if(mod_tmp->datatype==CODON) Make_Ts_and_Tv_Matrix(mod_tmp->io,mod_tmp);
+
+
+
+  expt            = (phydbl *)mCalloc(mod->ns,sizeof(phydbl));
+  uexpt           = (phydbl *)mCalloc(mod->ns*mod->ns,sizeof(phydbl));
   
   tmpdata         = (calign *)mCalloc(1,sizeof(calign));
   tmpdata->c_seq  = (align **)mCalloc(2,sizeof(align *));
-  tmpdata->b_frq  = (phydbl *)mCalloc(io->mod->ns,sizeof(phydbl));
+  tmpdata->b_frq  = (phydbl *)mCalloc(mod->ns,sizeof(phydbl));
   tmpdata->ambigu = (short int *)mCalloc(data->crunch_len,sizeof(short int));
   
   tmpdata->n_otu  = 2;
   tmpdata->crunch_len = data->crunch_len;
   tmpdata->init_len   = data->init_len;
   
+  int i=0;
+  For(i,mod_tmp->ns){
+	  mod_tmp->pi[i]  = mod->pi[i];
+	//  printf("first pi %lf\n",mod_tmp->pi[i]);
+  }
+
   mat = Make_Mat(data->n_otu);
   Init_Mat(mat,data);
   
   //Added by Ken
   //Make Bmat array equivalent to GY94
-  if(io->mod->whichrealmodel == HLP17){
+  if(mod->whichrealmodel == HLP17){ //was io-> mod
 	  int combinations = 3721;
 	  phydbl hot[combinations];
 	  phydbl *tfr = ecmK07freq;
@@ -2240,8 +2290,8 @@ matrix *ML_CODONDist_Pairwise(calign *data, option *io) //!<Added by Marcelo.
 			  hot[i1*61+i2]=0;
 		  }
 	  }
-	  mod_tmp->Bmat = hot;
-
+	  //mod_tmp->Bmat = hot;
+	  mod_tmp->Bmat = (phydbl *)mCalloc(3721,sizeof(phydbl));
 	  mod_tmp->nmotifs = 1;
 	  mod_tmp->nhotness = 1;
 	  mod_tmp->hotspotcmps = malloc(sizeof(int *) * mod_tmp->nmotifs);
@@ -2249,28 +2299,31 @@ matrix *ML_CODONDist_Pairwise(calign *data, option *io) //!<Added by Marcelo.
 	  mod_tmp->motif_hotness = malloc(sizeof(int ) * mod_tmp->nmotifs);
 	  mod_tmp->hotness[0] = 0.0;
 	  mod_tmp->motif_hotness[0]=0;
-	  mod_tmp->hotspotcmps[0] = io->mod->hotspotcmps[0];
+	  mod_tmp->hotspotcmps[0] = mod->hotspotcmps[0]; //was io-> mod
   }
 
   //Add in stuff for partitioned model
   int modeli;
-  for(modeli=0;modeli<io->mod->nparts;modeli++){
+  for(modeli=0;modeli<mod->nparts;modeli++){ //was io-> mod
 	  mod_tmp->nparts=1;
 	  mod_tmp->nomega_part=mod_tmp->nparts;
 	  mod_tmp->qmat_part = (phydbl**)mCalloc(1,sizeof(phydbl*));
 	  mod_tmp->partNames = (char**)mCalloc(1,sizeof(char*));
 	  mod_tmp->omega_part = (phydbl*)mCalloc(1,sizeof(phydbl));
-	  mod_tmp->qmat_part[0]=(phydbl *)mCalloc(io->mod->n_w_catg*io->mod->ns*io->mod->ns,sizeof(phydbl));
+	  mod_tmp->qmat_part[0]=(phydbl *)mCalloc(mod->n_w_catg*mod->ns*mod->ns,sizeof(phydbl)); //was io-> mod
 	  mod_tmp->partNames[0]="SINGLE";
 	  mod_tmp->omega_part[0]=0.4;
   }
-
+  //printf("first pi %lf %lf\n",mod_tmp->pi[0],mod->pi[0]);
+  printf("initqs %d %d %d\n",mod_tmp->initqrates,mod->initqrates,io->mod->initqrates);
   mr = Update_Qmat_Codons(mod_tmp, 0,0);
+  printf("first pi %lf %lf\n",mod_tmp->pi[0],mod->pi[0]);
 
-  printf("\n. FYI: Using single partitioned GY94 for initial tree.\n\n");
-  EigenQREV(mod_tmp->qmat_part[0], mod_tmp->pi, io->mod->ns, mod_tmp->eigen->e_val, mod_tmp->eigen->r_e_vect, mod_tmp->eigen->l_e_vect, mod_tmp->eigen->space);
+  //printf("\n. FYI: Using single partitioned GY94 for initial tree.\n\n");
+  EigenQREV(mod_tmp->qmat_part[0], mod_tmp->pi, mod->ns, mod_tmp->eigen->e_val, mod_tmp->eigen->r_e_vect, mod_tmp->eigen->l_e_vect, mod_tmp->eigen->space);
+ //printf("first pi %lf %lf\n",mod_tmp->pi[0],mod->pi[0]);
 
-  For(j, io->mod->ns) mod_tmp->eigen->e_val[j] /= mr;
+  For(j, mod->ns) mod_tmp->eigen->e_val[j] /= mr;
   
   brLen=1.0;
   
@@ -2291,10 +2344,11 @@ matrix *ML_CODONDist_Pairwise(calign *data, option *io) //!<Added by Marcelo.
     
     for(k=j+1;k<data->n_otu;k++) {
       tmpdata->c_seq[1]       = data->c_seq[k];
-      twodata = Compact_Cdata(tmpdata,io);
-                                                            
-      lnL=Br_Len_Brent_Codon_Pairwise(BL_MIN, brLen, BL_MAX, io->mod->s_opt->min_diff_lk_local, &brLen, mod_tmp->Pij_rr, mod_tmp->pi, mod_tmp->eigen, twodata, io->mod->ns, io->mod->s_opt->brent_it_max, io->mod->s_opt->quickdirty, uexpt, expt);
-            
+      twodata = Compact_Cdata(tmpdata,io,mod);
+
+      //printf("first pi %lf %lf\n",mod_tmp->pi[0],mod->pi[0]);
+      lnL=Br_Len_Brent_Codon_Pairwise(BL_MIN, brLen, BL_MAX, mod->s_opt->min_diff_lk_local, &brLen, mod_tmp->Pij_rr, mod_tmp->pi, mod_tmp->eigen, twodata, mod->ns, mod->s_opt->brent_it_max, mod->s_opt->quickdirty, uexpt, expt);
+            //was io-> mod
       mat->dist[j][k] = brLen;
       mat->dist[k][j] = mat->dist[j][k];
       Free_Cseq(twodata);
@@ -2377,7 +2431,7 @@ phydbl LK_BFGS_from_CODEML(t_tree* tree, phydbl *x, int n)
 {
   int  i, numParams=0;
   
-  if (tree->io->datatype==CODON)
+  if (tree->mod->datatype==CODON)
   {
     if(tree->mod->s_opt->opt_kappa)
     {
@@ -2395,7 +2449,7 @@ phydbl LK_BFGS_from_CODEML(t_tree* tree, phydbl *x, int n)
       }
       else
       {
-	switch(tree->io->kappaECM)
+	switch(tree->mod->kappaECM)
 	{
 	  case kap6:
 	  case kap2:
@@ -2465,7 +2519,7 @@ phydbl LK_BFGS_from_CODEML(t_tree* tree, phydbl *x, int n)
     if(n!=numParams) Warn_And_Exit("Number of parameters optimized does not match.");
     
   } 
-  else if(tree->io->datatype==AA)
+  else if(tree->mod->datatype==AA)
   {
     
     if(tree->mod->s_opt->opt_state_freq) For(i,tree->mod->ns-1) tree->mod->pi_unscaled[i] = x[numParams++]; 

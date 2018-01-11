@@ -14,6 +14,7 @@
  */
 
 #include "controller.h"
+#include "io.h"
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -133,6 +134,18 @@ void finishOptions(option * io)
     }
     setupModelIdentifier(io);
     
+    io->mod->expm=io->expm; /*!< 0 Eigenvalue; 1 scaling and squaring Pade. approx. COPIED FROM OPTION*/ //!< Added by Marcelo.
+        io->mod->datatype=io->datatype; //copied from option
+        io->mod->init_DistanceTreeCD=io->init_DistanceTreeCD; /*!< 0: ML JC69; 1: ML M0; 2: Schneider 2005 CodonPam; 3: Kosiol 2007 Empirical. COPIED FROM OPTION*/ //!<Added by Marcelo.
+        io->mod->kappaECM=io->kappaECM; /*!< According to Kosiol 2007.COPIED FROM OPTION*///!<Added by Marcelo.
+        io->mod->n_termsTaylor=io->n_termsTaylor; //! Added by Marcelo. COPIED FROM OPTION
+        io->mod->heuristicExpm=io->heuristicExpm; /*!< TAYLOR in parameter opt?.COPIED FROM OPTION*/
+        io->mod->modeltypeOpt=io->modeltypeOpt; //COPIED FROM OPTION
+        io->mod->freqmodelOpt=io->freqmodelOpt; //COPIED FROM OPTION
+        io->mod->omegaOpt=io->omegaOpt; //COPIED FROM OPTION
+        io->mod->eq_freq_handling=io->eq_freq_handling; //COPIED FROM OPTION
+        io->mod->quiet=io->quiet;
+
     Set_Model_Name(io->mod);
 	
 	io->fp_out_tree  = Openfile(io->out_tree_file, io->writemode);
@@ -141,179 +154,202 @@ void finishOptions(option * io)
 
     //set up HLP17 model
     //Added by Ken 12/7/2016
+    io->mod->primary=1;
     if(io->modeltypeOpt == HLP17){
-    	io->mod->opthotness=1;
-    	char *minfo1,*minfo2, *mtemp1;
-    	int c,d;
-    	int nh = 0;
-
-    	//Default values
-    	if(io->mod->motifstringopt==0){
-    		io->mod->motifstring = "WRC_2:0,GYW_0:0";
-    	}
-    	if(io->mod->hotnessstringopt==0){
-    	    io->mod->hotnessstring = "e";
-    	}
-        if((strcmp(io->mod->motifstring,"FCH")==0)){
-            io->mod->motifstring = "WRC_2:0,GYW_0:1,WA_1:2,TW_0:3,SYC_2:4,GRS_0:5";
-            io->mod->hotnessstring = "e,e,e,e,e,e";
-        }
-    	if(io->mod->rootfound==0){
-    		printf("\nError: Root sequence ID must be specified using --root\n\n");
-    		exit(EXIT_FAILURE);
-    	}
-
-    	//parse motif string
-    	minfo1 = strdup(io->mod->motifstring);
-    	minfo2 = strdup(io->mod->motifstring);
-
-   	    	io->mod->nmotifs=0;    	//determine number of motifs
-   	    	while ((mtemp1 = strsep(&minfo1, ",")) != NULL){io->mod->nmotifs++;}
-  	    	io->mod->motifs = malloc(sizeof(char *) * io->mod->nmotifs);
-  	    	io->mod->motif_hotness = malloc(sizeof(int ) * io->mod->nmotifs);
-  	    	for(c=0;c<io->mod->nmotifs;c++){
-   	    	   mtemp1 = strsep(&minfo2, ",");
-   	    	   char* strtemp = strsep(&mtemp1, ":");
-   	    	   io->mod->motifs[c] = malloc(sizeof(char)*10);
-   	    	   strcpy(io->mod->motifs[c],strtemp);
-  	    	   io->mod->motif_hotness[c] = atoi(strsep(&mtemp1, ":"));
-   	    	   if(io->mod->motif_hotness[c] > nh){nh=io->mod->motif_hotness[c];}
-  	    	}
-  	    	nh = nh + 1;
-
-        //parse hotness string
-    	minfo1 = strdup(io->mod->hotnessstring);
-    	minfo2 = strdup(io->mod->hotnessstring);
-    	io->mod->nhotness=0;//determine number of h parameters
-    	while ((mtemp1 = strsep(&minfo1, ",")) != NULL){io->mod->nhotness++;}
-    	io->mod->hotness = (phydbl*)mCalloc(io->mod->nhotness,sizeof(phydbl));
-    	io->mod->hoptindex = (int*)mCalloc(io->mod->nhotness,sizeof(int ));
-    	for(c=0;c<io->mod->nhotness;c++){
-    	    mtemp1 = strsep(&minfo2, ",");
-    	      if (strcmp(mtemp1,"e")==0){
-    	        io->mod->hoptindex[c]=1;
-    	        io->mod->hotness[c]=0.0;
-    	      }else{
-    	        io->mod->hoptindex[c]=0;
-    	        io->mod->hotness[c]=atof(mtemp1);
-    	      }
-    	 }
-
-    	//catch inconsistencies between hotness and motif specification
-    	if(nh != io->mod->nhotness){
-    		printf("\nError in h parameter specification! Too many or too few h's.\n\n");
-    		exit(EXIT_FAILURE);
-    	}
-
-    	//catch errors in hotness index specification
-    	for(c=0;c<nh;c++){
-    		int found = 0;
-    		for(d=0;d<io->mod->nmotifs;d++){
-    			if(io->mod->motif_hotness[d] == c){
-    				found=1;
-    			}
-    		}
-    		if(found==0){
-    			printf("\nError in h index specification! Missing %d\n\n",c);
-    			exit(EXIT_FAILURE);
-    		}
-    	}
-
-    	//Read in hotspot tables
-    	int mot;
-    	printf(". Loading hotspot tables..\n");
-    	io->mod->hotspotcmps = (phydbl**)mCalloc(io->mod->nmotifs,sizeof(phydbl *));
-    	for(mot = 0; mot < io->mod->nmotifs; mot++){
-    	    char *infile = mCalloc(strlen(HTABLE)+strlen(io->mod->motifs[mot])+1,sizeof(char));
-    	    strcpy(infile, HTABLE);
-    	    strcat(infile, io->mod->motifs[mot]);
-    	    printf("%s\n",infile);
-    	    FILE *file = fopen(infile, "r");
-    	    if(file == NULL){
-    	    	printf("\n\nCouldn't open %s\n\n",infile);
-    	    	exit(EXIT_FAILURE);
-    	    }
-    	    phydbl *hot;
-    	    int combinations = 13845841;
-    	    hot = (phydbl *)mCalloc(combinations,sizeof(phydbl));//checked 15/7/2016
-    	    int i=0;
-    	    double num;
-    	    while(i < combinations) {
-    	        int fscn = fscanf(file, "%lf\n",&num);
-    	        hot[i] = num;
-    	        i++;
-    	    }
-    	    fclose(file);
-    	    io->mod->hotspotcmps[mot] = hot;
-    	}
-
-    	//partition model stuff
-    	if(io->mod->partfilespec==1){
-	    FILE *file = fopen(io->mod->partfile, "r");
-	    int npart;
-	    int fscn =  fscanf(file, "%d",&io->mod->nparts);
-        int nsite;
-        fscn = fscanf(file, " %d\n",&nsite);
-
-        io->mod->nomega_part=io->mod->nparts;
-        io->mod->partIndex = (int *)mCalloc(nsite,sizeof(double));
-        io->mod->partNames = (char**)mCalloc(io->mod->nparts,sizeof(char*));
-        io->mod->omega_part = (phydbl*)mCalloc(io->mod->nomega_part,sizeof(phydbl));
-        for(c=0;c<io->mod->nomega_part;c++){
-        	io->mod->omega_part[c]=0.4;
-        }
-
-        int indexi;
-        for(indexi=0;indexi<nsite;indexi++){
-        	io->mod->partIndex[indexi]=-1;
-        }
-
-        ssize_t read;
-        size_t len=0;
-        char *linepart = NULL;
-
-    	int parti;
-    	for(parti=0;parti<io->mod->nparts;parti++){
-    		read = getline(&linepart,&len,file);
-    		char* l1 = strsep(&linepart,":");
-    		printf("%s\t",l1);
-    		io->mod->partNames[parti] = (char*)mCalloc(T_MAX_OPTION,sizeof(char));
-    		strcpy(io->mod->partNames[parti],l1);
-    		//io->mod->partNames[parti] = l1;
-    		char* l2 = strsep(&linepart,"\n");
-    		printf("%s\n",l2);
-    		char *ltemp1;
-    		while ((ltemp1 = strsep(&l2, ",")) != NULL){
-				 int start = atoi((strsep(&ltemp1,".")));
-				 (strsep(&ltemp1,"."));
-				 int end = atoi((strsep(&ltemp1,"\n")));
-				 int tempcount;
-				 for(tempcount=start;tempcount<=end;tempcount++){
-					 if(io->mod->partIndex[tempcount]!=-1){
-						 printf("\nPosition %d specified more than once in partition file!\n",tempcount);
-						 exit(EXIT_FAILURE);
-					 }
-					 io->mod->partIndex[tempcount]=parti;
-				 }
-    		}
-    	}
-
-    	for(indexi=0;indexi<nsite;indexi++){
-    	   	if(io->mod->partIndex[indexi] == -1){
-    	   		printf("\nPosition %d not specified in partition file!\n",indexi);
-    	   		exit(EXIT_FAILURE);
-    	   	}
-    		printf("%d ",io->mod->partIndex[indexi]);
-    	}
-    	printf("\n");
-
-     }else{
-    	 io->mod->nparts=1;
-    	 io->mod->nomega_part=io->mod->nparts;
-    	 io->mod->omega_part[0]=0.4;
-     }//partfilespec==1
+    	setUpHLP17(io, io->mod);
     }
 }
+
+void setUpHLP17(option* io, model *mod){
+
+	/*mod->motifstringopt=0;
+	mod->hotnessstringopt=0;
+	mod->partfilespec=0;
+	mod->rootfound=0;
+	mod->partfile="NONE";
+	mod->ambigprint=0;
+	mod->nomega_part=1;
+	mod->nparts=1;
+	mod->ambigprint=0;
+	mod->startnode=0;
+	mod->slowSPR=0;
+	mod->stretch=1.0;
+
+	mod->rootname = mCalloc(T_MAX_OPTION,sizeof(char));
+	mod->hotnessstring = mCalloc(T_MAX_OPTION,sizeof(char));
+	mod->aamodel = mCalloc(T_MAX_OPTION,sizeof(char));
+	mod->partfile = mCalloc(T_MAX_FILE,sizeof(char));
+	mod->motifstring = mCalloc(T_MAX_FILE,sizeof(char));
+	mod->ambigfile = mCalloc(T_MAX_FILE,sizeof(char));*/
+
+   	mod->opthotness=1;
+   	char *minfo1,*minfo2, *mtemp1;
+   	int c,d;
+   	int nh = 0;
+
+   	if(!mod->primary){
+   		strcpy(mod->motifstring,io->mod->motifstring);
+   		strcpy(mod->hotnessstring,io->mod->hotnessstring);
+   		strcpy(mod->partfile,io->mod->partfile);
+   		strcpy(mod->ambigfile,io->mod->ambigfile);
+   		strcpy(mod->rootname,io->mod->rootname);
+   	}
+
+   	//Default values
+   	if(io->mod->motifstringopt==0){
+   		mod->motifstring = "WRC_2:0,GYW_0:0";
+   	}
+   	if(io->mod->hotnessstringopt==0){
+   	    mod->hotnessstring = "e";
+   	}
+       if((strcmp(io->mod->motifstring,"FCH")==0)){
+           mod->motifstring = "WRC_2:0,GYW_0:1,WA_1:2,TW_0:3,SYC_2:4,GRS_0:5";
+           mod->hotnessstring = "e,e,e,e,e,e";
+       }
+   	if(io->mod->rootfound==0){
+   		printf("\nError: Root sequence ID must be specified using --root\n\n");
+   		exit(EXIT_FAILURE);
+   	}
+   	//parse motif string
+   	minfo1 = strdup(io->mod->motifstring);
+   	minfo2 = strdup(io->mod->motifstring);
+  	mod->nmotifs=0;    	//determine number of motifs
+  	while ((mtemp1 = strsep(&minfo1, ",")) != NULL){mod->nmotifs++;}
+ 	  	mod->motifs = malloc(sizeof(char *) * mod->nmotifs);
+ 	   	mod->motif_hotness = malloc(sizeof(int ) * mod->nmotifs);
+ 	   	for(c=0;c<mod->nmotifs;c++){
+  	   	   mtemp1 = strsep(&minfo2, ",");
+  	   	   char* strtemp = strsep(&mtemp1, ":");
+  	   	   mod->motifs[c] = malloc(sizeof(char)*10);
+  	   	   strcpy(mod->motifs[c],strtemp);
+ 	   	   mod->motif_hotness[c] = atoi(strsep(&mtemp1, ":"));
+  	   	   if(mod->motif_hotness[c] > nh){nh=mod->motif_hotness[c];}
+ 	}
+ 	nh = nh + 1;
+    //parse hotness string
+   	minfo1 = strdup(io->mod->hotnessstring);
+   	minfo2 = strdup(io->mod->hotnessstring);
+   	mod->nhotness=0;//determine number of h parameters
+   	while ((mtemp1 = strsep(&minfo1, ",")) != NULL){mod->nhotness++;}
+   	mod->hotness = (phydbl*)mCalloc(mod->nhotness,sizeof(phydbl));
+   	mod->hoptindex = (int*)mCalloc(mod->nhotness,sizeof(int ));
+   	for(c=0;c<mod->nhotness;c++){
+   	    mtemp1 = strsep(&minfo2, ",");
+   	      if (strcmp(mtemp1,"e")==0){
+   	        mod->hoptindex[c]=1;
+   	        mod->hotness[c]=0.0;
+   	      }else{
+   	        mod->hoptindex[c]=0;
+   	        mod->hotness[c]=atof(mtemp1);
+   	      }
+   	 }
+   	//catch inconsistencies between hotness and motif specification
+   	if(nh != mod->nhotness){
+   		printf("\nError in h parameter specification! Too many or too few h's.\n\n");
+   		exit(EXIT_FAILURE);
+   	}
+   	//catch errors in hotness index specification
+   	for(c=0;c<nh;c++){
+   		int found = 0;
+   		for(d=0;d<mod->nmotifs;d++){
+   			if(mod->motif_hotness[d] == c){
+   				found=1;
+   			}
+   		}
+   		if(found==0){
+   			printf("\nError in h index specification! Missing %d\n\n",c);
+   			exit(EXIT_FAILURE);
+   		}
+   	}
+   	//Read in hotspot tables
+   	int mot;
+   	printf(". Loading hotspot tables..\n");
+   	mod->hotspotcmps = (phydbl**)mCalloc(mod->nmotifs,sizeof(phydbl *));
+   	for(mot = 0; mot < mod->nmotifs; mot++){
+   	    char *infile = mCalloc(strlen(HTABLE)+strlen(mod->motifs[mot])+1,sizeof(char));
+   	    strcpy(infile, HTABLE);
+   	    strcat(infile, mod->motifs[mot]);
+   	    printf("%s\n",infile);
+   	    FILE *file = fopen(infile, "r");
+   	    if(file == NULL){
+   	    	printf("\n\nCouldn't open %s\n\n",infile);
+   	    	exit(EXIT_FAILURE);
+   	    }
+   	    phydbl *hot;
+   	    int combinations = 13845841;
+   	    hot = (phydbl *)mCalloc(combinations,sizeof(phydbl));//checked 15/7/2016
+   	    int i=0;
+   	    double num;
+   	    while(i < combinations) {
+   	        int fscn = fscanf(file, "%lf\n",&num);
+   	        hot[i] = num;
+   	        i++;
+   	    }
+   	    fclose(file);
+   	    mod->hotspotcmps[mot] = hot;
+   	}
+   	//partition model stuff
+   	if(io->mod->partfilespec==1){
+    FILE *file = fopen(io->mod->partfile, "r");
+    int npart;
+    int fscn =  fscanf(file, "%d",&mod->nparts);
+       int nsite;
+       fscn = fscanf(file, " %d\n",&nsite);
+       mod->nomega_part=mod->nparts;
+       mod->partIndex = (int *)mCalloc(nsite,sizeof(double));
+       mod->partNames = (char**)mCalloc(mod->nparts,sizeof(char*));
+       mod->omega_part = (phydbl*)mCalloc(mod->nomega_part,sizeof(phydbl));
+       for(c=0;c<mod->nomega_part;c++){
+       	mod->omega_part[c]=0.4;
+       }
+       int indexi;
+       for(indexi=0;indexi<nsite;indexi++){
+       	mod->partIndex[indexi]=-1;
+       }
+       ssize_t read;
+       size_t len=0;
+       char *linepart = NULL;
+   	int parti;
+   	for(parti=0;parti<mod->nparts;parti++){
+   		read = getline(&linepart,&len,file);
+   		char* l1 = strsep(&linepart,":");
+   		printf("%s\t",l1);
+   		mod->partNames[parti] = (char*)mCalloc(T_MAX_OPTION,sizeof(char));
+   		strcpy(mod->partNames[parti],l1);
+   		//io->mod->partNames[parti] = l1;
+   		char* l2 = strsep(&linepart,"\n");
+   		printf("%s\n",l2);
+   		char *ltemp1;
+   		while ((ltemp1 = strsep(&l2, ",")) != NULL){
+			 int start = atoi((strsep(&ltemp1,".")));
+			 (strsep(&ltemp1,"."));
+			 int end = atoi((strsep(&ltemp1,"\n")));
+			 int tempcount;
+			 for(tempcount=start;tempcount<=end;tempcount++){
+				 if(mod->partIndex[tempcount]!=-1){
+					 printf("\nPosition %d specified more than once in partition file!\n",tempcount);
+					 exit(EXIT_FAILURE);
+				 }
+				 mod->partIndex[tempcount]=parti;
+			 }
+   		}
+   	}
+   	for(indexi=0;indexi<nsite;indexi++){
+   	   	if(mod->partIndex[indexi] == -1){
+   	   		printf("\nPosition %d not specified in partition file!\n",indexi);
+   	   		exit(EXIT_FAILURE);
+   	   	}
+   		printf("%d ",mod->partIndex[indexi]);
+   	}
+   	printf("\n");
+    }else{
+   	 mod->nparts=1;
+   	 mod->nomega_part=mod->nparts;
+   	 mod->omega_part[0]=0.4;
+    }//partfilespec==1
+}
+
+
 
 void checkForRandStartTree(option * io)
 {
@@ -375,7 +411,7 @@ void createOutFiles(option * io)
         }
         io->fp_out_lk = openOutputFile(io->out_lk_file, "_igphyml_lk", ext, io);
     }
-    if(io->print_trace) {
+    if(io->mod->print_trace) {
         io->fp_out_tree_trace = openOutputFile(io->out_trace_tree_file, "_igphyml_tree_trace", ".txt", io);
         io->fp_out_stats_trace = openOutputFile(io->out_trace_stats_file, "_igphyml_stats_trace", ".txt", io);
     }
@@ -1053,7 +1089,7 @@ int mainOptionSwitch(int opt, char * optarg, option * io)
             //
         case 59: {
             if(optarg == NULL || !strcmp(optarg, "true")) {
-                io->testcondition = YES;
+                io->mod->testcondition = YES;
             }
             break;	  
         }
@@ -1506,7 +1542,7 @@ int mainOptionSwitch(int opt, char * optarg, option * io)
             //
         case 30 : {
             if(optarg == NULL || !strcmp(optarg, "true")) {
-                io->print_trace = 1;
+                io->mod->print_trace = 1;
             }
             break;
         }
@@ -1675,7 +1711,7 @@ int mainOptionSwitch(int opt, char * optarg, option * io)
             if((!strcmp(optarg, "spr")) || (!strcmp(optarg, "SPR"))) {
                 io->mod->s_opt->topo_search         = SPR_MOVE;
                 io->mod->s_opt->greedy              = (io->mod->s_opt->steph_spr)?(0):(1);
-                io->print_trace=1;
+                io->mod->print_trace=1;
             } else if((!strcmp(optarg, "nni")) || (!strcmp(optarg, "NNI"))) {
                 io->mod->s_opt->topo_search         = NNI_MOVE;
                 io->mod->s_opt->random_input_tree   = 0;

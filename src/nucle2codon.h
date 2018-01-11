@@ -76,7 +76,7 @@ int Site_listEmpty();
 /*######end definition of the l-list to hold the resulting codons and alternatives in the case of gaps/unknowns######*/
 
 /*######start implementation of the interface of nucleotide to codon translation######*/
-void Nucleotides2Codons(align **, option *);
+void Nucleotides2Codons(align **, option *, model*);
 char **CompactCodonAlternatives(int lenght, align *data, char **alternativeCodons);
 /*######end implementation of the interface of nucleotide to codon translation######*/
 
