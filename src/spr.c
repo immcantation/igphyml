@@ -1088,51 +1088,51 @@ void Spr_Pars(t_tree *tree)
 
 void Print_Trace(t_tree *tree){
 
-	PhyML_Fprintf(tree->io->fp_out_tree_trace,"[%d,%f]%s\n",tree->mod->tracecount,tree->c_lnL,Write_Tree(tree)); fflush(tree->io->fp_out_tree_trace);
+	PhyML_Fprintf(tree->mod->fp_out_tree_trace,"[%d,%f]%s\n",tree->mod->tracecount,tree->c_lnL,Write_Tree(tree)); fflush(tree->mod->fp_out_tree_trace);
 	//if((tree->io->print_site_lnl) && (!tree->mod->s_opt->spr_pars)) Print_Site_Lk(tree,tree->io->fp_out_lk);
-	fflush(tree->io->fp_out_lk);
+	//fflush(tree->io->fp_out_lk);
 
 	//print header of stats file
 	if(tree->mod->tracecount == 0){
-		PhyML_Fprintf(tree->io->fp_out_stats_trace,"Index\tTime\tLnL\tKappa");
+		PhyML_Fprintf(tree->mod->fp_out_stats_trace,"Index\tTime\tLnL\tKappa");
 		if(tree->mod->whichrealmodel == HLP17){
 			int omegai;
 			for(omegai=0;omegai<tree->mod->nomega_part;omegai++){
-				PhyML_Fprintf(tree->io->fp_out_stats_trace,"\tOmega%d",omegai);
+				PhyML_Fprintf(tree->mod->fp_out_stats_trace,"\tOmega%d",omegai);
 			}
 
 			int mot;
 			for(mot=0;mot<tree->mod->nmotifs;mot++){
-				PhyML_Fprintf(tree->io->fp_out_stats_trace,"\t%s:%d;%d",tree->mod->motifs[mot],tree->mod->motif_hotness[mot],tree->mod->hoptindex[tree->mod->motif_hotness[mot]]);
+				PhyML_Fprintf(tree->mod->fp_out_stats_trace,"\t%s:%d;%d",tree->mod->motifs[mot],tree->mod->motif_hotness[mot],tree->mod->hoptindex[tree->mod->motif_hotness[mot]]);
           	}
 
 		}
-		PhyML_Fprintf(tree->io->fp_out_stats_trace,"\tT1\tC1\tA1\tG1\tT2\tC2\tA2\tG2\tT3\tC3\tA3\tG3\n");
+		PhyML_Fprintf(tree->mod->fp_out_stats_trace,"\tT1\tC1\tA1\tG1\tT2\tC2\tA2\tG2\tT3\tC3\tA3\tG3\n");
 
 	}
 
 	//print out stats
-	PhyML_Fprintf(tree->io->fp_out_stats_trace,"\t%d\t%f\t%f",tree->mod->tracecount,(omp_get_wtime()-tree->t_beg),tree->c_lnL);
-	PhyML_Fprintf(tree->io->fp_out_stats_trace,"\t%f",tree->mod->kappa);
+	PhyML_Fprintf(tree->mod->fp_out_stats_trace,"\t%d\t%f\t%f",tree->mod->tracecount,(omp_get_wtime()-tree->t_beg),tree->c_lnL);
+	PhyML_Fprintf(tree->mod->fp_out_stats_trace,"\t%f",tree->mod->kappa);
 	if(tree->mod->whichrealmodel ==HLP17){
 		int omegai;
 		for(omegai=0;omegai<tree->mod->nomega_part;omegai++){
-			PhyML_Fprintf(tree->io->fp_out_stats_trace,"\t%lf",tree->mod->omega_part[omegai]);
+			PhyML_Fprintf(tree->mod->fp_out_stats_trace,"\t%lf",tree->mod->omega_part[omegai]);
 		}
 
 		int mot;
 		for(mot=0;mot<tree->mod->nmotifs;mot++){
-			PhyML_Fprintf(tree->io->fp_out_stats_trace,"\t%lf",tree->mod->hotness[tree->mod->motif_hotness[mot]]);
+			PhyML_Fprintf(tree->mod->fp_out_stats_trace,"\t%lf",tree->mod->hotness[tree->mod->motif_hotness[mot]]);
          }
 
 	}
 	int c;
 	for(c=0;c<12;c++){
-		PhyML_Fprintf(tree->io->fp_out_stats_trace,"\t%lf",tree->mod->base_freq[c]);
+		PhyML_Fprintf(tree->mod->fp_out_stats_trace,"\t%lf",tree->mod->base_freq[c]);
 
 	}
-	PhyML_Fprintf(tree->io->fp_out_stats_trace,"\n");
-	fflush(tree->io->fp_out_stats_trace);
+	PhyML_Fprintf(tree->mod->fp_out_stats_trace,"\n");
+	fflush(tree->mod->fp_out_stats_trace);
 
 	tree->mod->tracecount++;
 }

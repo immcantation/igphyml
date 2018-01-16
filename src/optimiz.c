@@ -346,7 +346,13 @@ void Optimiz_Ext_Br(t_tree *tree)
 }
 
 /*********************************************************/
-phydbl gemin=1e-6; //!< Added by Marcelo.
+
+//Global variable made threadprivate
+//phydbl gemin=1e-6; //!< Added by Marcelo.
+
+/*#if defined OMP || defined BLAS_OMP
+#pragma omp threadprivate(gemin)
+#endif*/
 
 //Modified by Ken to update h
 void Optimiz_All_Free_Param(t_tree *tree, int verbose)
@@ -582,13 +588,13 @@ void Optimiz_All_Free_Param(t_tree *tree, int verbose)
       {
 	space = (phydbl *) mCalloc((20+5*numParams)*numParams, sizeof(phydbl));
 	
-	BFGS_from_CODEML (&fx, tree, x2min, x2minbound, space, gemin, numParams);
+	BFGS_from_CODEML (&fx, tree, x2min, x2minbound, space, tree->gemin, numParams);
 	
 	newf=tree->c_lnL;
-	gemin/=2;  if(FABS(newf-intf)<1) gemin/=2;
-	if(FABS(newf-intf)<0.5)     gemin = min2(gemin,1e-3); 
-	else if(FABS(newf-intf)>10) gemin = max2(gemin,0.1); 
-	gemin = max2(gemin,1e-6);
+	tree->gemin/=2;  if(FABS(newf-intf)<1) tree->gemin/=2;
+	if(FABS(newf-intf)<0.5)     tree->gemin = min2(tree->gemin,1e-3);
+	else if(FABS(newf-intf)>10) tree->gemin = max2(tree->gemin,0.1);
+	tree->gemin = max2(tree->gemin,1e-6);
 	
 	free(space);
       }
@@ -1108,9 +1114,12 @@ void Optimiz_All_Free_Param(t_tree *tree, int verbose)
 
 }
   
-
-
+//Global variable made private in OMP
 static phydbl sqrarg;
+
+#if defined OMP || defined BLAS_OMP
+#pragma omp threadprivate(sqrarg)
+#endif
 
 void BFGS(t_tree *tree, 
 	  phydbl *p, 
@@ -1644,8 +1653,23 @@ phydbl Br_Len_Brent_Codon_Pairwise(phydbl ax, phydbl bx, phydbl cx, phydbl tol, 
 #define SR1
 #define DFP
 */
-phydbl SIZEp=0;
-int noisy=0, Iround=0, NFunCall=0; 
+
+//Global variables made threadprivate for OMP
+//phydbl SIZEp=0;
+//int noisy=0, Iround=0, NFunCall=0;
+
+/*#if defined OMP || defined BLAS_OMP
+#pragma omp threadprivate(SIZEp,noisy,Iround,NFunCall)
+#endif
+
+//int AlwaysCenter=0;
+//phydbl Small_Diff=.5e-6;
+
+#if defined OMP || defined BLAS_OMP
+#pragma omp threadprivate(AlwaysCenter,Small_Diff)
+#endif
+*/
+
 int BFGS_from_CODEML (phydbl *f, t_tree *tree, phydbl *x, phydbl xb[120][2], phydbl space[], phydbl e, int n)
 {
 /* n-variate minimization with bounds using the BFGS algorithm
@@ -1660,6 +1684,7 @@ int BFGS_from_CODEML (phydbl *f, t_tree *tree, phydbl *x, phydbl xb[120][2], phy
   
    ALL CREDIT GOES TO PROF YANG and CODEML
 */
+	//printf("optimiz global variables %lf\t%d\t%d\t%d\n",tree->SIZEp,noisy,Iround,NFunCall);
    int i,j, i1,i2,it, maxround=10000, fail=0, *xmark, *ix, nfree;
    int Ngoodtimes=2, goodtimes=0;
    phydbl small=1.e-30, sizep0=0;     /* small value for checking |w|=0 */
@@ -1681,31 +1706,31 @@ int BFGS_from_CODEML (phydbl *f, t_tree *tree, phydbl *x, phydbl xb[120][2], phy
    f0=*f=LK_BFGS_from_CODEML(tree,x,n);
 
    xtoy(x,x0,n);
-   SIZEp=99;
+   tree->SIZEp=99;
 
    gradientB (n, x0, f0, g0, tree, tv, xmark);
 
    identity (H,nfree);
-   for(Iround=0; Iround<maxround; Iround++) {
+   for(tree->Iround=0; tree->Iround<maxround; tree->Iround++) {
      
 
       for (i=0,zero(p,n); i<nfree; i++)  For (j,nfree)
          p[ix[i]] -= H[i*nfree+j]*g0[ix[j]];
-      sizep0 = SIZEp; 
-      SIZEp  = norm(p,n);      /* check this */
+      sizep0 = tree->SIZEp;
+      tree->SIZEp  = norm(p,n);      /* check this */
 
       for (i=0,am=maxstep; i<n; i++) {  /* max step length */
          if (p[i]>0 && (xb[i][1]-x0[i])/p[i]<am) am=(xb[i][1]-x0[i])/p[i];
          else if (p[i]<0 && (xb[i][0]-x0[i])/p[i]<am) am=(xb[i][0]-x0[i])/p[i];
       }
 
-      if (Iround==0) {
+      if (tree->Iround==0) {
          h=fabs(2*f0*.01/innerp(g0,p,n));  /* check this?? */
          h=min2(h,am/2000);
 
       }
       else {
-         h=norm(s,nfree)/SIZEp;
+         h=norm(s,nfree)/tree->SIZEp;
          h=max2(h,am/500);
       }
       h = max2(h,1e-5);   h = min2(h,am/5);
@@ -1714,20 +1739,20 @@ int BFGS_from_CODEML (phydbl *f, t_tree *tree, phydbl *x, phydbl xb[120][2], phy
 
       if (alpha<=0) {
          if (fail) {
-            if (AlwaysCenter) { Iround=maxround;  break; }
-            else { AlwaysCenter=1; identity(H,n); fail=1; }
+            if (tree->AlwaysCenter) { tree->Iround=maxround;  break; }
+            else { tree->AlwaysCenter=1; identity(H,n); fail=1; }
          }
          else   
-            { if(noisy>2) printf(".. ");  identity(H,nfree); fail=1; }
+            { if(tree->noisy>2) printf(".. ");  identity(H,nfree); fail=1; }
       }
       else  {
          fail=0;
          For(i,n)  x[i]=x0[i]+alpha*p[i];
          w=min2(2,e*1000); if(e<1e-4 && e>1e-6) w=0.01;
 
-         if(Iround==0 || SIZEp<sizep0 || (SIZEp<.001 && sizep0<.001)) goodtimes++;
+         if(tree->Iround==0 || tree->SIZEp<sizep0 || (tree->SIZEp<.001 && sizep0<.001)) goodtimes++;
          else  goodtimes=0;
-         if((n==1||goodtimes>=Ngoodtimes) && SIZEp<(e>1e-5?1:.001)
+         if((n==1||goodtimes>=Ngoodtimes) && tree->SIZEp<(e>1e-5?1:.001)
             && H_end(x0,x,f0,*f,e,e,n))
             break;
       }
@@ -1753,7 +1778,7 @@ for(i=0; i<n; i++) fprintf(frst,"%9.2f", g[i]); FPN(frst);
          if (xmark[i]==-1 && -g[i]>w)     { it=i; w=-g[i]; }
          else if (xmark[i]==1 && -g[i]<-w) { it=i; w=g[i]; }
       }
-      if (w>10*SIZEp/nfree) {          /* *** */
+      if (w>10*tree->SIZEp/nfree) {          /* *** */
          xtoy (H, C, nfree*nfree);
          For (i1,nfree) For (i2,nfree) H[i1*(nfree+1)+i2]=C[i1*nfree+i2];
          For (i1,nfree+1) H[i1*(nfree+1)+nfree]=H[nfree*(nfree+1)+i1]=0;
@@ -1801,7 +1826,7 @@ for(i=0; i<n; i++) fprintf(frst,"%9.2f", g[i]); FPN(frst);
    /* try to remove this after updating LineSearch2() */
    *f=LK_BFGS_from_CODEML(tree,x,n);
   
-   if (Iround==maxround) {
+   if (tree->Iround==maxround) {
 
       return(-1);
    }
@@ -1811,8 +1836,10 @@ for(i=0; i<n; i++) fprintf(frst,"%9.2f", g[i]); FPN(frst);
    }
    return(0);
 }
-int AlwaysCenter=0;
-phydbl Small_Diff=.5e-6;
+//Original declarations for AlwaysCenter and Small_Diff
+//Global variables made threadprivate for OMP
+
+
 /*********************************************************/
 
 int gradientB (int n, phydbl x[], phydbl f0, phydbl g[], 
@@ -1822,11 +1849,11 @@ int gradientB (int n, phydbl x[], phydbl f0, phydbl g[],
    xmark=0: central; 1: upper; -1: down
 */
    int i,j;
-   phydbl *x0=space, *x1=space+n, eh0=Small_Diff, eh;  /* eh0=1e-6 || 1e-7 */
+   phydbl *x0=space, *x1=space+n, eh0=tree->Small_Diff, eh;  /* eh0=1e-6 || 1e-7 */
 
    For(i,n) {
       eh=eh0*(fabs(x[i])+1);
-      if (xmark[i]==0 && (AlwaysCenter || SIZEp<1)) {   /* central */
+      if (xmark[i]==0 && (tree->AlwaysCenter || tree->SIZEp<1)) {   /* central */
          For (j, n)  x0[j]=x1[j]=x[j];
          eh=pow(eh,.67);  x0[i]-=eh; x1[i]+=eh;
          g[i]=(LK_BFGS_from_CODEML(tree,x1,n)-LK_BFGS_from_CODEML(tree,x0,n))/(eh*2.0);
@@ -1842,12 +1869,17 @@ int gradientB (int n, phydbl x[], phydbl f0, phydbl g[],
 }
 
 /*********************************************************/
+
 phydbl innerp (phydbl x[], phydbl y[], int n)
 { int i; phydbl t=0;  for(i=0; i<n; i++)  t += x[i]*y[i];  return(t); }
+
 /*********************************************************/
+
 int xtoy (phydbl x[], phydbl y[], int n)
 { int i; for (i=0; i<n; i++) {y[i]=x[i];} return(0); }
+
 /*********************************************************/
+
 phydbl LineSearch2 (t_tree * tree, phydbl *f, phydbl x0[], 
        phydbl p[], phydbl step, phydbl limit, phydbl e, phydbl space[], int n)
 {
@@ -1996,16 +2028,24 @@ phydbl fun_LineSearch (phydbl t, t_tree *tree, phydbl x0[], phydbl p[], phydbl x
   For (i,n) x[i]=x0[i] + t*p[i];   
   return( LK_BFGS_from_CODEML(tree,x,n) ); 
 }
+
 /*********************************************************/
+
 int zero (phydbl x[], int n)
 { int i; for(i=0; i<n; i++) x[i]=0; return (0);}
+
 /*********************************************************/
+
 int identity (phydbl x[], int n)
 { int i,j;  for(i=0; i<n; i++)  { for(j=0; j<n; j++)   x[i*n+j]=0;  x[i*n+i]=1; }  return (0); }
+
 /*********************************************************/
+
 phydbl norm (phydbl x[], int n)
 { int i; phydbl t=0;  for(i=0; i<n; i++)  t += x[i]*x[i];  return sqrt(t); }
+
 /*********************************************************/
+
 int H_end (phydbl x0[], phydbl x1[], phydbl f0, phydbl f1,
     phydbl e1, phydbl e2, int n)
 /*   Himmelblau termination rule.   return 1 for stop, 0 otherwise.
@@ -2023,12 +2063,15 @@ int H_end (phydbl x0[], phydbl x1[], phydbl f0, phydbl f1,
       return(0);
    return (1);
 }
+
 /*********************************************************/
+
 phydbl distance (phydbl x[], phydbl y[], int n)
 {  int i; phydbl t=0;
    for (i=0; i<n; i++) t += square(x[i]-y[i]);
    return(sqrt(t));
 }
+
 /*********************************************************/
 phydbl Sum (phydbl x[], int n)
 { 

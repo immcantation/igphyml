@@ -114,6 +114,8 @@ struct option longopts[] =
 	{"threads",		  required_argument,NULL,152},  //!<Added by Ken
 	{"slowSPR",		  required_argument,NULL,153},  //!<Added by Ken
 	{"stretch",		  required_argument,NULL,154},  //!<Added by Ken
+	{"repfile",		  required_argument,NULL,155},  //!<Added by Ken
+	{"splitByTree",		  no_argument,NULL,156},  //!<Added by Ken
     {0,0,0,0}
 };
 
@@ -206,7 +208,7 @@ void setUpHLP17(option* io, model *mod){
            mod->motifstring = "WRC_2:0,GYW_0:1,WA_1:2,TW_0:3,SYC_2:4,GRS_0:5";
            mod->hotnessstring = "e,e,e,e,e,e";
        }
-   	if(io->mod->rootfound==0){
+   	if(io->mod->rootfound==0 && io->repMode==0){
    		printf("\nError: Root sequence ID must be specified using --root\n\n");
    		exit(EXIT_FAILURE);
    	}
@@ -411,10 +413,10 @@ void createOutFiles(option * io)
         }
         io->fp_out_lk = openOutputFile(io->out_lk_file, "_igphyml_lk", ext, io);
     }
-    if(io->mod->print_trace) {
-        io->fp_out_tree_trace = openOutputFile(io->out_trace_tree_file, "_igphyml_tree_trace", ".txt", io);
-        io->fp_out_stats_trace = openOutputFile(io->out_trace_stats_file, "_igphyml_stats_trace", ".txt", io);
-    }
+    /*if(io->mod->print_trace) {
+        io->mod->fp_out_tree_trace = openOutputFile(io->mod->out_trace_tree_file, "_igphyml_tree_trace", ".txt", io);
+        io->mod->fp_out_stats_trace = openOutputFile(io->mod->out_trace_stats_file, "_igphyml_stats_trace", ".txt", io);
+    }*/
     if(io->mod->s_opt->random_input_tree) {
         io->fp_out_trees = openOutputFile(io->out_trees_file, "_igphyml_rand_trees", ".txt", io);
     }
@@ -1319,6 +1321,7 @@ int mainOptionSwitch(int opt, char * optarg, option * io)
             //
         case 46: {
             io->append_run_ID = 1;
+           // printf("run id string\n");
             strcpy(io->run_id_string, optarg);
             break;
         }
@@ -1801,6 +1804,7 @@ int mainOptionSwitch(int opt, char * optarg, option * io)
                    (io->modeltypeOpt == CUSTOMAA)) {
                     io->mod->freq_model =CF3X4; 
                     io->modeltypeOpt = GY;
+                    printf("model name\n");
                     strcpy(io->mod->modelname, "GY\0");
                 }
             } else {
@@ -1815,7 +1819,7 @@ int mainOptionSwitch(int opt, char * optarg, option * io)
             //
         case 'm': case 5 : {
             int i;
-            
+            printf("here\n");
             For(i,strlen(optarg)) Uppercase(optarg+i);
             
             if(!isalpha(optarg[0])) {
@@ -2142,6 +2146,7 @@ int mainOptionSwitch(int opt, char * optarg, option * io)
             // -i, --input
             //
         case 'i':case 9: {
+        	printf("here\n");
             tmp = (char *) mCalloc (T_MAX_FILE, sizeof(char));
             if(strlen (optarg) > T_MAX_FILE -16) {
                 strcpy(tmp, "\n. The file name'");
@@ -2154,8 +2159,24 @@ int mainOptionSwitch(int opt, char * optarg, option * io)
                 strcat(tmp, "' does not exist.\n");
                 errorMsg = tmp;
             } else {
-                strcpy(io->in_align_file, optarg);
-                io->fp_in_align = Openfile(io->in_align_file, 0);
+
+            	io->repMode=0;
+            	io->ntrees=1;
+               	io->treefs = mCalloc(io->ntrees,sizeof(char*));	//tree files
+              	io->datafs = mCalloc(io->ntrees,sizeof(char*)); //data files
+                io->rootids = mCalloc(io->ntrees,sizeof(char*)); //root ids
+            	io->partfs = mCalloc(io->ntrees,sizeof(char*)); //partition files
+            	io->tree_s = (t_tree**)mCalloc(io->ntrees,sizeof(t_tree*)); //tree pointers
+            	io->mod_s = (model**)mCalloc(io->ntrees,sizeof(model*)); //model pointers
+            	io->datafs[0] = mCalloc(T_MAX_FILE,sizeof(char));
+       	   		io->treefs[0] = mCalloc(T_MAX_FILE,sizeof(char));
+      	  		io->rootids[0] = mCalloc(T_MAX_OPTION,sizeof(char));
+       	  		io->partfs[0] = mCalloc(T_MAX_FILE,sizeof(char));
+            	strcpy(io->datafs[0],optarg);
+            	printf("trees: %d\n",io->ntrees);
+
+                //strcpy(io->mod->in_align_file, optarg);
+                //io->mod->fp_in_align = Openfile(io->mod->in_align_file, 0);
                 strcpy(io->out_tree_file, optarg);
 #ifdef PHYML
                 strcat(io->out_tree_file, "_igphyml_tree.txt");
@@ -2263,7 +2284,8 @@ int mainOptionSwitch(int opt, char * optarg, option * io)
         }
         //--root
         case 148: {
-           strcpy(io->mod->rootname,optarg);
+           //strcpy(io->mod->rootname,optarg);
+           strcpy(io->rootids[0], optarg);
            io->mod->rootfound=1;
            break;
         }
@@ -2308,7 +2330,55 @@ int mainOptionSwitch(int opt, char * optarg, option * io)
            	printf("stretch by %lf\n",io->mod->stretch);
            	break;
         }
-            
+        case 155: {
+           	 tmp = (char *) mCalloc (T_MAX_FILE, sizeof(char));
+           	if(strlen (optarg) > T_MAX_FILE -16) {
+           	      strcpy(tmp, "\n. The file name'");
+           	      strcat(tmp, optarg);
+           	      strcat(tmp, "' is too long.\n");
+           	      errorMsg = tmp;
+           	 } else if(!Filexists(optarg)) {
+           	      strcpy(tmp, "\n. The file '");
+           	      strcat(tmp, optarg);
+           	      strcat(tmp, "' does not exist.\n");
+           	      errorMsg = tmp;
+           	} else {
+           	     //strcpy(io->in_align_file, optarg);
+           	     strcpy(io->out_tree_file, optarg);
+           	     strcat(io->out_tree_file, "_igphyml_tree.txt");
+                    strcpy(io->out_stats_file, optarg);
+                    strcat(io->out_stats_file, "_igphyml_stats.txt");
+           	}
+           	io->repMode=1;
+           	FILE *file = fopen(optarg, "r");
+           	int fscn =  fscanf(file, "%d\n",&io->ntrees); //number of datasets
+           	io->treefs = mCalloc(io->ntrees,sizeof(char*));	//tree files
+           	io->datafs = mCalloc(io->ntrees,sizeof(char*)); //data files
+           	io->rootids = mCalloc(io->ntrees,sizeof(char*)); //root ids
+           	io->partfs = mCalloc(io->ntrees,sizeof(char*)); //partition files
+           	io->tree_s = (t_tree**)mCalloc(io->ntrees,sizeof(t_tree*)); //tree pointers
+           	io->mod_s = (model**)mCalloc(io->ntrees,sizeof(model*)); //model pointers
+           	printf("trees: %d\n",io->ntrees);
+           	int i;
+           	For(i,io->ntrees){
+           		io->datafs[i] = mCalloc(T_MAX_FILE,sizeof(char));
+           		io->treefs[i] = mCalloc(T_MAX_FILE,sizeof(char));
+           		io->rootids[i] = mCalloc(T_MAX_OPTION,sizeof(char));
+           		io->partfs[i] = mCalloc(T_MAX_FILE,sizeof(char));
+           		fscn = fscanf(file, "%s\t%s\t%s\t%s\n",io->datafs[i],io->treefs[i],io->rootids[i],io->partfs[i]); //number of omega parameters
+           		printf("%s\t%s\t%s\n",io->datafs[i],io->treefs[i],io->rootids[i]);
+           	}
+           	io->in_tree = 2;
+           // io->mod->s_opt->opt_topo        = 0;
+            /*io->mod->s_opt->opt_bl          = 1;
+            io->mod->s_opt->opt_subst_param = 1;*/
+            break;
+        }
+
+        case 156: {
+                   	io->splitByTree=1;
+                   	break;
+                }
             //////////////////////////////////////////////////////////////////////////////////////
             // --multiple
             //
@@ -2346,9 +2416,10 @@ int mainOptionSwitch(int opt, char * optarg, option * io)
                 strcat (tmp, "' doesn't exist.\n");
                 errorMsg = tmp;
             } else {
-                strcpy(io->in_tree_file, optarg);
+                //strcpy(io->mod->in_tree_file, optarg);
+            	strcpy(io->treefs[0], optarg);
                 io->in_tree = 2;
-                io->fp_in_tree = Openfile(io->in_tree_file,0);
+                //io->mod->fp_in_tree = Openfile(io->mod->in_tree_file,0);
             }
             break;
         }

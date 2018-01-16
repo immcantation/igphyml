@@ -470,6 +470,14 @@ typedef struct __Arbre {
   phydbl                      logLk_correction_approx; /*!< correction factor loglikelihood according to Seo Kishino 2009. */
   phydbl                  logLk_correction_gaps_approx; /*!< correction factor (with gaps) loglikelihood according to Seo Kishino 2009. */
   int                       br_len_invar_set; /* is Br_Len_Involving_Invar already done? */
+
+  phydbl								SIZEp; //replacing previously defined global variables in optimiz
+  int 									noisy;
+  int									Iround;
+  int									NFunCall;
+  int									AlwaysCenter;
+  phydbl 								Small_Diff;
+  phydbl 								gemin;
 }t_tree;
 
 /*********************************************************/
@@ -657,8 +665,8 @@ typedef struct __Model {
   int							quiet; //COPIED FROM OPTION
   int            opt_heuristic_manuel; //!< Added by Marcelo. MOVED FROM OPTION
   int					 print_trace; //MOVED FROM OPTION
-  int                  roundMax_start; //! Added by Marcelo. COPED FROM OPTION
-  int                  		  logtree; //! Added by Marcelo. COPED FROM OPTION
+  int                  roundMax_start; //! Added by Marcelo. COPIED FROM OPTION
+  int                  		  logtree; //! Added by Marcelo. COPIED FROM OPTION
   int                    roundMax_end; //! Added by Marcelo. COPIED FROM OPTION
   int                   testcondition; /*! Test Condition of the matrix. MOVED FROM OPTION*/
   int						tracecount; //MOVED FROM OPTION
@@ -668,6 +676,21 @@ typedef struct __Model {
   int				 minParam; //COPIED FROM OPTION
   int				 maxParam; //COPIED FROM OPTION
   int				 lkExpStepSize; //COPIED FROM OPTION
+
+  //MOVED FROM OPTION
+  char               *out_trace_tree_file; /*!< name of the file in which the likelihood of the model is written. */
+  FILE                 *fp_out_tree_trace;
+  char               *out_trace_stats_file; /*!< name of the file in which the likelihood of the model is written. */
+  FILE                 *fp_out_stats_trace;
+
+  int						num; //id of model
+
+
+  char                 *in_tree_file; /*!< input tree file name. */ //MOVED FROM OPTION
+  FILE                   *fp_in_tree; /*!< pointer to the input tree file. */ //MOVED FROM OPTION
+
+  char                *in_align_file; /*!< alignment file name. */ //MOVED FROM OPTION
+  FILE                  *fp_in_align; /*!< pointer to the alignment file. */ //MOVED FROM OPTION
 
   
   int                   ns; /*!< number of states (4 for DNA, 20 for AA, #senseCodons for Codons).*/                             
@@ -842,12 +865,6 @@ typedef struct __Option {
   int                    interleaved; /*!< interleaved or sequential sequence file format ?. */
   int                        in_tree; /*!< =1 iff a user input tree is used as input. */
 
-  char                *in_align_file; /*!< alignment file name. */
-  FILE                  *fp_in_align; /*!< pointer to the alignment file. */
-
-  char                 *in_tree_file; /*!< input tree file name. */
-  FILE                   *fp_in_tree; /*!< pointer to the input tree file. */
-
   char                *out_tree_file; /*!< name of the tree file. */
   FILE                  *fp_out_tree;
 
@@ -866,12 +883,6 @@ typedef struct __Option {
 
   //char               *out_trace_file; /*!< name of the file in which the likelihood of the model is written. */
   //FILE                 *fp_out_trace;
-
-  char               *out_trace_tree_file; /*!< name of the file in which the likelihood of the model is written. */
-  FILE                 *fp_out_tree_trace;
-
-  char               *out_trace_stats_file; /*!< name of the file in which the likelihood of the model is written. */
-  FILE                 *fp_out_stats_trace;
 
   char                  *out_lk_file; /*!< name of the file in which the likelihood of the model is written. */
   FILE                    *fp_out_lk;
@@ -956,8 +967,18 @@ typedef struct __Option {
   int                      confformat; // what format does the configuration file have?
   int                         logtree; // should current trees be logged to disc? 0, 1 -> single tree, 2 -> collect all trees
   int                     treecounter; // if logtree = 2, holds a counter for the filename
-  int            opt_heuristic_manuel; //!< Added by Marcelo. MOVED FROM OPTION
+  int            opt_heuristic_manuel; //!< Added by Marcelo.
 
+  //repertoire analysis variables
+  int						  repMode;
+  int						   ntrees;
+  char** 					   treefs; //tree files
+  char**					   datafs; //
+  char**					   partfs; //partition files
+  char** 					  rootids; //root ids
+  t_tree**					   tree_s; //tree pointers
+  model** 						mod_s; //model pointers
+  int					  splitByTree; //parallelize by tree?
  }option;
 
 /*********************************************************/
@@ -1331,6 +1352,7 @@ typedef struct __DarwinToken {
 
 /*********************************************************/
 
+void copyIOtoMod(option* io, model* mod);
 void Plim_Binom(phydbl pH0,int N,phydbl *pinf,phydbl *psup);
 void Make_All_Edges_Light(t_node *a,t_node *d);
 void Make_All_Edges_Lk(t_node *a,t_node *d,t_tree *tree);
@@ -1596,7 +1618,7 @@ int Read_Nexus_Matrix(char *token, nexparm *curr_parm, option *io);
 int Read_Nexus_Translate(char *token, nexparm *curr_parm, option *io);
 int Read_Nexus_Tree(char *token, nexparm *curr_parm, option *io);
 int Read_Nexus_Taxa(char *token, nexparm *curr_parm, option *io);
-void Detect_Align_File_Format(option *io);
+void Detect_Align_File_Format(option *io, model* mod);
 void Detect_Tree_File_Format(option *io);
 int Get_Token(FILE *fp, char *token);
 nexparm *Make_Nexus_Parm();

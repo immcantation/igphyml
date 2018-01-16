@@ -87,7 +87,7 @@ void Print_Settings(option *io, model* mod)
   PhyML_Printf("oooooooooooooooooooooooo       CURRENT   SETTINGS       oooooooooooooooooooooooo\n");
   PhyML_Printf("                               ..................                               \n");
 
-  PhyML_Printf("\n. Sequence filename:\t\t\t\t %s", Basename(io->in_align_file));
+  PhyML_Printf("\n. Sequence filename:\t\t\t\t %s", Basename(mod->in_align_file));
 
   /*PhyML_Printf("\n. Number of taxa:\t\t\t\t %d", io->n_otu); //!< Added by Marcelo.
   if(io->datatype == CODON ) PhyML_Printf("\n. Sequence length:\t\t\t\t %d", io->init_len/3); //!< Added by Marcelo.
@@ -381,7 +381,7 @@ align **Get_Seq(option *io, model *mod)
 {
   mod->data = NULL;
 
-  Detect_Align_File_Format(io);
+  Detect_Align_File_Format(io,mod);
 
   switch(io->data_file_format)
   {
@@ -494,9 +494,9 @@ align **Read_Seq_Interleaved(option *io, model *mod)
     sprintf(format, "%%%ds", T_MAX_NAME);
     /*       sprintf(format, "%%%ds", 10); */
 
-    if(!fscanf(io->fp_in_align,format,data[i]->name)) Exit("\n");
+    if(!fscanf(mod->fp_in_align,format,data[i]->name)) Exit("\n");
 
-    if(!Read_One_Line_Seq(&data,i,io->fp_in_align))
+    if(!Read_One_Line_Seq(&data,i,mod->fp_in_align))
     {
       end = 1;
       if((i != mod->n_otu) && (i != mod->n_otu-1))
@@ -511,7 +511,7 @@ align **Read_Seq_Interleaved(option *io, model *mod)
 
   if(data[0]->len == mod->init_len * mod->state_len) end = 1;
 
-  /*   if(end) printf("\n. finished yet '%c'\n",fgetc(io->fp_in_align)); */
+  /*   if(end) printf("\n. finished yet '%c'\n",fgetc(mod->fp_in_align)); */
   if(!end)
   {
 
@@ -523,7 +523,7 @@ align **Read_Seq_Interleaved(option *io, model *mod)
       num_block++;
 
       /* interblock */
-      if(!fgets(line,T_MAX_LINE,io->fp_in_align)) break;
+      if(!fgets(line,T_MAX_LINE,mod->fp_in_align)) break;
 
       if(line[0] != 13 && line[0] != 10)
 	    {
@@ -543,7 +543,7 @@ align **Read_Seq_Interleaved(option *io, model *mod)
           PhyML_Printf("\n. Err: Problem with species %s's sequence.\n",data[i]->name);
           Warn_And_Exit("");
         }
-	      else if(!Read_One_Line_Seq(&data,i,io->fp_in_align))
+	      else if(!Read_One_Line_Seq(&data,i,mod->fp_in_align))
         {
           end = 1;
           if((i != mod->n_otu) && (i != mod->n_otu-1))
@@ -603,9 +603,9 @@ align **Read_Seq_Sequential(option *io, model *mod)
     data[i]->len = 0;
 
     sprintf(format, "%%%ds", T_MAX_NAME);
-    if(!fscanf(io->fp_in_align,format,data[i]->name)) Exit("\n");
+    if(!fscanf(mod->fp_in_align,format,data[i]->name)) Exit("\n");
 
-    while(data[i]->len < mod->init_len * mod->state_len) Read_One_Line_Seq(&data,i,io->fp_in_align);
+    while(data[i]->len < mod->init_len * mod->state_len) Read_One_Line_Seq(&data,i,mod->fp_in_align);
 
     if(data[i]->len != mod->init_len * mod->state_len)
     {
@@ -627,7 +627,7 @@ align **Read_Seq_Sequential(option *io, model *mod)
 
 align **Get_Seq_Phylip(option *io, model* mod)
 {
-  Read_Ntax_Len_Phylip(io->fp_in_align,&mod->n_otu,&mod->init_len);
+  Read_Ntax_Len_Phylip(mod->fp_in_align,&mod->n_otu,&mod->init_len);
 
   if(io->interleaved) mod->data = Read_Seq_Interleaved(io,mod);
   else                mod->data = Read_Seq_Sequential(io,mod);
@@ -1452,7 +1452,7 @@ void Print_Fp_Out(FILE *fp_out, time_t t_beg, time_t t_end, t_tree *tree, option
         currTkn = Print_Banner_Small(currTkn);
     }
 
-    currTkn = Emit_Out_Token(currTkn, "Sequence filename", "inputfile", SCALARTKN, TFSTRING, "%s", Basename(io->in_align_file));
+    currTkn = Emit_Out_Token(currTkn, "Sequence filename", "inputfile", SCALARTKN, TFSTRING, "%s", Basename(mod->in_align_file));
     currTkn = Emit_Out_Token(currTkn, "Data set", "dataset", SCALARTKN, TFNUMERIC, "%g", (double) n_data_set);
 
     if(mod->s_opt->random_input_tree) { //was io-> mod Ken 9/1/2018
@@ -1477,7 +1477,7 @@ void Print_Fp_Out(FILE *fp_out, time_t t_beg, time_t t_end, t_tree *tree, option
     /* was after Sequence file ; moved here FLT */
 
     if(io->in_tree == 2) {
-        strcat(strcat(strcat(s,"user tree ("),io->in_tree_file),")");
+        strcat(strcat(strcat(s,"user tree ("),mod->in_tree_file),")");
     } else {
         if(!mod->s_opt->random_input_tree) {  //was io-> mod Ken 9/1/2018
             if(io->in_tree == 0)
@@ -2180,7 +2180,7 @@ void Print_Fp_Out_Lines(FILE *fp_out, time_t t_beg, time_t t_end, t_tree *tree, 
   if (n_data_set==1)
   {
 
-    PhyML_Fprintf(fp_out,". Sequence file : [%s]\n\n", Basename(io->in_align_file));
+    PhyML_Fprintf(fp_out,". Sequence file : [%s]\n\n", Basename(mod->in_align_file));
 
     if((tree->mod->datatype == NT) || (tree->mod->datatype == AA))
 	  {
@@ -2196,7 +2196,7 @@ void Print_Fp_Out_Lines(FILE *fp_out, time_t t_beg, time_t t_end, t_tree *tree, 
       case 0: { strcpy(s,"BioNJ");     break; }
       case 1: { strcpy(s,"parsimony"); break; }
       case 2: { strcpy(s,"user tree (");
-        strcat(s,io->in_tree_file);
+        strcat(s,mod->in_tree_file);
         strcat(s,")");         break; }
 	  }
 

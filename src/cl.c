@@ -53,6 +53,7 @@ void Read_Command_Line( option *io, int argc, char **argv )
     io->mod->startnode=0;
 	io->mod->slowSPR=0;
 	io->mod->stretch=1.0;
+	io->splitByTree=0;
 
 
     io->mod->rootname = mCalloc(T_MAX_OPTION,sizeof(char));
@@ -133,7 +134,7 @@ void Read_Command_Line( option *io, int argc, char **argv )
     
 #ifndef PHYML
     if( (io->open_ps_file) || (io->m4_model == YES) ) {
-        strcpy( io->out_ps_file, io->in_align_file );
+        strcpy( io->out_ps_file, io->mod->in_align_file );
         strcat( io->out_ps_file, "_mc_tree.ps" );
         io->fp_out_ps = Openfile( io->out_ps_file, 1 );
     }

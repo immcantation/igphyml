@@ -449,8 +449,8 @@ void Free_Model(model *mod)
 void Free_Input(option *io)
 {
   int i;
-  free(io->in_align_file);
-  free(io->in_tree_file);
+  //free(io->in_align_file);
+  //free(io->in_tree_file);
   free(io->out_tree_file);
   free(io->out_trees_file);
   free(io->out_boot_tree_file);
@@ -459,8 +459,8 @@ void Free_Input(option *io)
   free(io->out_lk_file); 
   free(io->out_ps_file);
   //free(io->out_trace_file);
-  free(io->out_trace_stats_file);
-  free(io->out_trace_tree_file);
+  //free(io->out_trace_stats_file);
+  //free(io->out_trace_tree_file);
   free(io->nt_or_cd);
   free(io->run_id_string);
   free(io->clade_list_file);

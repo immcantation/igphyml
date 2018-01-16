@@ -354,8 +354,8 @@ phydbl Lk(t_tree *tree)
   #endif
  
   #if defined OMP || defined BLAS_OMP
-   
-  #pragma omp parallel for if(tree->mod->datatype==CODON)
+  //just commented out for testing
+ // #pragma omp parallel for if(tree->mod->datatype==CODON)
    
   #endif
    
@@ -883,8 +883,8 @@ phydbl Lk_Core_UPP(t_edge *b, t_tree *tree, t_node *anc, t_node *d)
 
 
   #if defined OMP || defined BLAS_OMP
-
-  #pragma omp parallel for if(tree->mod->n_w_catg>1) private(site_lk_cat,sum,k,l)
+  //just commented out for testing
+  //#pragma omp parallel for if(tree->mod->n_w_catg>1) private(site_lk_cat,sum,k,l)
 
   #endif
 
@@ -1112,11 +1112,11 @@ phydbl Lk_Core(t_edge *b, t_tree *tree)
   /* Actual likelihood calculation */
   /* For all classes of rates */
  
-  #if defined OMP || defined BLAS_OMP 
+  /*#if defined OMP || defined BLAS_OMP
   
   #pragma omp parallel for if(tree->mod->n_w_catg>1) private(site_lk_cat,sum,k,l) 
      
-  #endif
+  #endif*/
 
  
   For(catg,tree->mod->n_catg)
@@ -1439,8 +1439,8 @@ n_v1   n_v2
   /* For every site in the alignment */
   
   #if defined OMP || defined BLAS_OMP
-  
-  #pragma omp parallel for if(tree->mod->datatype==CODON) private(state_v1, state_v2, ambiguity_check_v1, ambiguity_check_v2, smallest_p_lk, p1_lk1, catg, i, j, p2_lk2, sum_scale_v1_val, sum_scale_v2_val, curr_scaler_pow, curr_scaler, piecewise_scaler_pow )
+  //just commented out for testing
+  //#pragma omp parallel for if(tree->mod->datatype==CODON) private(state_v1, state_v2, ambiguity_check_v1, ambiguity_check_v2, smallest_p_lk, p1_lk1, catg, i, j, p2_lk2, sum_scale_v1_val, sum_scale_v2_val, curr_scaler_pow, curr_scaler, piecewise_scaler_pow )
   
   #endif
   
@@ -2221,8 +2221,10 @@ matrix *ML_CODONDist_Pairwise(calign *data, option *io, model *mod) //!<Added by
   mod_tmp->state_len = mod->state_len;
   mod_tmp->whichrealmodel = mod->whichrealmodel;
 
+  copyIOtoMod(mod_tmp->io,mod_tmp);
 
-  mod_tmp->expm=mod->expm; /*!< 0 Eigenvalue; 1 scaling and squaring Pade. approx. COPIED FROM OPTION*/ //!< Added by Marcelo.
+
+   mod_tmp->expm=mod->expm; /*!< 0 Eigenvalue; 1 scaling and squaring Pade. approx. COPIED FROM OPTION*/ //!< Added by Marcelo.
    mod_tmp->datatype=mod->datatype; //copied from option
    mod_tmp->init_DistanceTreeCD=mod->init_DistanceTreeCD; /*!< 0: ML JC69; 1: ML M0; 2: Schneider 2005 CodonPam; 3: Kosiol 2007 Empirical. COPIED FROM OPTION*/ //!<Added by Marcelo.
    mod_tmp->kappaECM=mod->kappaECM; /*!< According to Kosiol 2007.COPIED FROM OPTION*///!<Added by Marcelo.
@@ -2234,7 +2236,9 @@ matrix *ML_CODONDist_Pairwise(calign *data, option *io, model *mod) //!<Added by
    mod_tmp->eq_freq_handling=mod->eq_freq_handling; //COPIED FROM OPTION
    mod_tmp->quiet=mod->quiet;
    mod_tmp->optParam=mod->optParam;
-   mod_tmp->opt_heuristic_manuel=mod->io->opt_heuristic_manuel;
+
+
+   /*mod_tmp->opt_heuristic_manuel=mod->io->opt_heuristic_manuel;
    mod_tmp->opt_heuristic_manuel=mod->io->opt_heuristic_manuel;
    mod_tmp->roundMax_start=mod->io->roundMax_start;
    mod_tmp->roundMax_end=mod->io->roundMax_end;
@@ -2244,7 +2248,7 @@ matrix *ML_CODONDist_Pairwise(calign *data, option *io, model *mod) //!<Added by
    mod_tmp->random_boot_seq_order = mod->io->random_boot_seq_order;
    mod_tmp->minParam = mod->io->minParam;
    mod_tmp->maxParam = mod->io->maxParam;
-   mod_tmp->lkExpStepSize = mod->io->lkExpStepSize;
+   mod_tmp->lkExpStepSize = mod->io->lkExpStepSize;*/
 
   //mod_tmp->initqrates = mod->initqrates;
    printf("expm %d\n",mod_tmp->expm);
@@ -2408,8 +2412,8 @@ phydbl LK_Codon_Pairwise(calign *data, phydbl *Pij, phydbl *pi, int ns, phydbl l
   seq1=data->c_seq[1]->state;
   
   #if defined OMP || defined BLAS_OMP
-  
-  #pragma omp parallel for reduction(+:cn_lk)
+  //just commented out for testing
+  //#pragma omp parallel for reduction(+:cn_lk)
   
   #endif
   

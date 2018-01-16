@@ -366,32 +366,32 @@ void Make_Node_Lk(t_node *n)
 
 /*********************************************************/
 
-void Detect_Align_File_Format(option *io)
+void Detect_Align_File_Format(option *io, model* mod)
 {
   int c;char *m;
   fpos_t curr_pos;
   
-  fgetpos(io->fp_in_align,&curr_pos);
+  fgetpos(mod->fp_in_align,&curr_pos);
   
   errno = 0;
   
-  while((c=fgetc(io->fp_in_align)) != EOF)
+  while((c=fgetc(mod->fp_in_align)) != EOF)
   {
     if(errno) io->data_file_format = PHYLIP;
     else if(c == '#')
     {
       char s[10],t[6]="NEXUS";
-      m=fgets(s,6,io->fp_in_align);
+      m=fgets(s,6,mod->fp_in_align);
       if(!strcmp(t,s)) 
 	    {
-	      fsetpos(io->fp_in_align,&curr_pos);
+	      fsetpos(mod->fp_in_align,&curr_pos);
 	      io->data_file_format = NEXUS;
 	      return;
 	    }
     }
   }
   
-  fsetpos(io->fp_in_align,&curr_pos);
+  fsetpos(mod->fp_in_align,&curr_pos);
 }
 
 /*********************************************************/
@@ -1200,7 +1200,6 @@ t_tree *Make_Tree_From_Scratch(int n_otu, calign *data)
   return tree;
 }
 
-/*********************************************************/
 /*********************************************************/
 
 t_tree *Make_Tree(int n_otu)
@@ -2434,8 +2433,8 @@ void Bootstrap(t_tree *tree)
     
     if(tree->io->in_tree == 2)
     {
-      rewind(tree->io->fp_in_tree);
-      boot_tree = Read_Tree_File_Phylip(tree->io->fp_in_tree);
+      rewind(tree->mod->fp_in_tree);
+      boot_tree = Read_Tree_File_Phylip(tree->io->mod->fp_in_tree);
     }
     else
     {
@@ -2958,6 +2957,11 @@ model *Copy_Partial_Model(model *ori)
   cpy->motifstring = mCalloc(T_MAX_FILE,sizeof(char));
   cpy->ambigfile = mCalloc(T_MAX_FILE,sizeof(char));
 
+  cpy->in_tree_file = (char *)mCalloc(T_MAX_FILE,sizeof(char)); //input tree file
+  cpy->in_align_file = (char *)mCalloc(T_MAX_FILE,sizeof(char)); //!< Name of input aligned sequences file.
+  cpy->out_trace_tree_file  = (char *)mCalloc(T_MAX_FILE,sizeof(char)); //!< Name of output file containing each phylogeny explored during tree search.  //added by Ken 9/2/2017
+  cpy->out_trace_stats_file = (char *)mCalloc(T_MAX_FILE,sizeof(char)); //!< Name of output file containing each phylogeny explored during tree search. //added by Ken 9/2/201
+
   cpy->nparts=ori->nparts;
   cpy->n_otu = ori->n_otu;
   cpy->init_len = ori->init_len;
@@ -3126,30 +3130,7 @@ void Record_Partial_Model(model *ori, model *cpy)
       cpy->prob_omegas[i]       = ori->prob_omegas[i];*/
     }
 
-
-    cpy->expm=ori->io->expm; /*!< 0 Eigenvalue; 1 scaling and squaring Pade. approx. COPIED FROM OPTION*/ //!< Added by Marcelo.
-    cpy->datatype=ori->io->datatype; //copied from option
-    cpy->init_DistanceTreeCD=ori->io->init_DistanceTreeCD; /*!< 0: ML JC69; 1: ML M0; 2: Schneider 2005 CodonPam; 3: Kosiol 2007 Empirical. COPIED FROM OPTION*/ //!<Added by Marcelo.
-    cpy->kappaECM=ori->io->kappaECM; /*!< According to Kosiol 2007.COPIED FROM OPTION*///!<Added by Marcelo.
-    cpy->n_termsTaylor=ori->io->n_termsTaylor; //! Added by Marcelo. COPIED FROM OPTION
-    cpy->heuristicExpm=ori->io->heuristicExpm; /*!< TAYLOR in parameter opt?.COPIED FROM OPTION*/
-    cpy->modeltypeOpt=ori->io->modeltypeOpt; //COPIED FROM OPTION
-    cpy->freqmodelOpt=ori->io->freqmodelOpt; //COPIED FROM OPTION
-    cpy->omegaOpt=ori->io->omegaOpt; //COPIED FROM OPTION
-    cpy->eq_freq_handling=ori->io->eq_freq_handling; //COPIED FROM OPTION
-    cpy->quiet=ori->io->quiet;
-    cpy->optParam = ori->io->optParam;
-    cpy->opt_heuristic_manuel=ori->io->opt_heuristic_manuel;
-    cpy->roundMax_start=ori->io->roundMax_start;
-    cpy->roundMax_end=ori->io->roundMax_end;
-    cpy->logtree=ori->io->logtree;
-    cpy->print_site_lnl = ori->io->print_site_lnl;
-    cpy->out_stats_format = ori->io->out_stats_format;
-    cpy->random_boot_seq_order = ori->io->random_boot_seq_order;
-    cpy->minParam = ori->io->minParam;
-    cpy->maxParam = ori->io->maxParam;
-    cpy->lkExpStepSize = ori->io->lkExpStepSize;
-
+    copyIOtoMod(ori->io,cpy);
     printf("datatype: %d\n",cpy->datatype);
     cpy->structTs_and_Tv  = (ts_and_tv *)mCalloc(64*64,sizeof(ts_and_tv));//!< Added by Marcelo. 64 possible codons ... will be initialized together with the model parameters in set model default.
     if(cpy->datatype==CODON) Make_Ts_and_Tv_Matrix(cpy->io,cpy);
@@ -3162,6 +3143,34 @@ void Record_Partial_Model(model *ori, model *cpy)
   }
 }
 /*********************************************************/
+void copyIOtoMod(option* io, model* mod){
+		mod->expm=io->expm; /*!< 0 Eigenvalue; 1 scaling and squaring Pade. approx. COPIED FROM OPTION*/ //!< Added by Marcelo.
+	    mod->datatype=io->datatype; //copied from option
+	    mod->init_DistanceTreeCD=io->init_DistanceTreeCD; /*!< 0: ML JC69; 1: ML M0; 2: Schneider 2005 CodonPam; 3: Kosiol 2007 Empirical. COPIED FROM OPTION*/ //!<Added by Marcelo.
+	    mod->kappaECM=io->kappaECM; /*!< According to Kosiol 2007.COPIED FROM OPTION*///!<Added by Marcelo.
+	    mod->n_termsTaylor=io->n_termsTaylor; //! Added by Marcelo. COPIED FROM OPTION
+	    mod->heuristicExpm=io->heuristicExpm; /*!< TAYLOR in parameter opt?.COPIED FROM OPTION*/
+	    mod->modeltypeOpt=io->modeltypeOpt; //COPIED FROM OPTION
+	    mod->freqmodelOpt=io->freqmodelOpt; //COPIED FROM OPTION
+	    mod->omegaOpt=io->omegaOpt; //COPIED FROM OPTION
+	    mod->eq_freq_handling=io->eq_freq_handling; //COPIED FROM OPTION
+	    mod->quiet=io->quiet;
+	    mod->optParam = io->optParam;
+	    mod->opt_heuristic_manuel=io->opt_heuristic_manuel;
+	    mod->roundMax_start=io->roundMax_start;
+	    mod->roundMax_end=io->roundMax_end;
+	    mod->logtree=io->logtree;
+	    mod->print_site_lnl = io->print_site_lnl;
+	    mod->out_stats_format = io->out_stats_format;
+	    mod->random_boot_seq_order = io->random_boot_seq_order;
+	    mod->minParam = io->minParam;
+	    mod->maxParam = io->maxParam;
+	    mod->lkExpStepSize = io->lkExpStepSize;
+}
+
+
+
+/*********************************************************/
 
 //! Allocate memory for pointers to strings that contain the names of input and output files.
 /*!
@@ -3172,8 +3181,6 @@ option *Make_Input()
   int i;
   option* io               = (option *)mCalloc(1,sizeof(option)); 
   
-  io->in_align_file        = (char *)mCalloc(T_MAX_FILE,sizeof(char)); //!< Name of input aligned sequences file.
-  io->in_tree_file         = (char *)mCalloc(T_MAX_FILE,sizeof(char)); //!< Name of input tree file.
   io->out_tree_file        = (char *)mCalloc(T_MAX_FILE,sizeof(char)); //!< Name of output tree file.
   io->out_trees_file       = (char *)mCalloc(T_MAX_FILE,sizeof(char)); //!< Name of output tree file.
   io->out_boot_tree_file   = (char *)mCalloc(T_MAX_FILE,sizeof(char)); //!< Name of output boostrapped tree file.
@@ -3182,8 +3189,8 @@ option *Make_Input()
   io->out_lk_file          = (char *)mCalloc(T_MAX_FILE,sizeof(char)); //!< Name of output likelihood file.
   io->out_ps_file          = (char *)mCalloc(T_MAX_FILE,sizeof(char)); //!< Name of output parsimony score file.
  // io->out_trace_file       = (char *)mCalloc(T_MAX_FILE,sizeof(char)); //!< Name of output file containing each phylogeny explored during tree search.
-  io->out_trace_tree_file  = (char *)mCalloc(T_MAX_FILE,sizeof(char)); //!< Name of output file containing each phylogeny explored during tree search.  //added by Ken 9/2/2017
-  io->out_trace_stats_file = (char *)mCalloc(T_MAX_FILE,sizeof(char)); //!< Name of output file containing each phylogeny explored during tree search. //added by Ken 9/2/2017
+ // io->out_trace_tree_file  = (char *)mCalloc(T_MAX_FILE,sizeof(char)); //!< Name of output file containing each phylogeny explored during tree search.  //added by Ken 9/2/2017
+ // io->out_trace_stats_file = (char *)mCalloc(T_MAX_FILE,sizeof(char)); //!< Name of output file containing each phylogeny explored during tree search. //added by Ken 9/2/2017
   io->nt_or_cd             = (char *)mCalloc(T_MAX_FILE,sizeof(char)); //!< Nucleotide or codon data?.
   io->run_id_string        = (char *)mCalloc(T_MAX_OPTION,sizeof(char)); //!< Name of run id.
   io->clade_list_file      = (char *)mCalloc(T_MAX_FILE,sizeof(char)); //!< Name of output clade list file.
@@ -3202,10 +3209,10 @@ option *Make_Input()
  */
 void Set_Defaults_Input(option* io,model * mod)
 {
-  io->fp_in_align                = NULL; //!< File pointer.
-  io->fp_in_tree                 = NULL; //!< File pointer.
+  mod->fp_in_align                = NULL; //!< File pointer.
+  mod->fp_in_tree                 = NULL; //!< File pointer.
   io->fp_out_tree                = NULL; //!< File pointer.
-  io->fp_out_trees               = NULL; //!< File pointer.
+  io->fp_out_trees               = NULL; //!< File pointerfp_in_t.
   io->fp_out_boot_tree           = NULL; //!< File pointer.
   io->fp_out_boot_stats          = NULL; //!< File pointer.
   io->fp_out_stats               = NULL; //!< File pointer.
@@ -3707,14 +3714,14 @@ void Test_Multiple_Data_Set_Format(option *io, model* mod)
   
   io->n_trees = 0;
   
-  while(fgets(line,T_MAX_LINE,io->fp_in_tree)) if(strstr(line,";")) io->n_trees++;
+  while(fgets(line,T_MAX_LINE,mod->fp_in_tree)) if(strstr(line,";")) io->n_trees++;
   
   free(line);
   
   if((mod->bootstrap > 1) && (io->n_trees > 1))  //was io-> mod Ken 9/1/2018
     Warn_And_Exit("\n. Bootstrap option is not allowed with multiple input trees !\n");
   
-  rewind(io->fp_in_tree);
+  rewind(mod->fp_in_tree);
   
   return;
 }
@@ -5526,7 +5533,7 @@ void Print_Lk(t_tree *tree, char *string)
   time(&(tree->t_current));
   
 #endif
-  PhyML_Printf("\n. (%5d sec) [%15.4f] %s",(int)(tree->t_current-tree->t_beg),tree->c_lnL,string);
+  PhyML_Printf("\n. (%5d sec) [%d %15.4f] %s",(int)(tree->t_current-tree->t_beg),tree->mod->num,tree->c_lnL,string);
 #ifndef QUIET 
   fflush(NULL);
 #endif
@@ -5949,8 +5956,8 @@ t_tree *Read_User_Tree(calign *cdata, model *mod, option *io)
   
   
   PhyML_Printf("\n. Reading user tree...\n"); fflush(NULL);
-  if(io->n_trees == 1) rewind(io->fp_in_tree);
-  tree = Read_Tree_File_Phylip(io->fp_in_tree);
+  if(io->n_trees == 1) rewind(mod->fp_in_tree);
+  tree = Read_Tree_File_Phylip(mod->fp_in_tree);
   if(!tree) Exit("\n. Input tree not found...\n");
   /* Add branch lengths if necessary */
   if(!tree->has_branch_lengths || io->nobl){ PhyML_Printf("\n. Tree does not have branch lengths or you chose to ignore them...\n"); fflush(NULL);Add_BioNJ_Branch_Lengths(tree,cdata,mod);}
@@ -9777,7 +9784,7 @@ int myFactorial(int n) //! Added by Marcelo.
 /********************************************************/
 
 FILE * openOutputFile( char * outFile, char * appendString, char * suffix, option *io ) {
-    strcpy( outFile, io->in_align_file );
+    strcpy( outFile, io->mod->in_align_file );
     strcat( outFile, appendString );
     if( io->append_run_ID ) {
         strcat( outFile, "_");

@@ -189,7 +189,8 @@ int Simu(t_tree *tree, int n_step_max)
       }
 
       if((tree->mod->s_opt->print) && (!tree->mod->quiet)) Print_Lk(tree,"[Topology           ]");
-      
+
+      /*********************************************************/
 /*       if(((tree->c_lnL > old_loglk) && (FABS(old_loglk-tree->c_lnL) < tree->mod->s_opt->min_diff_lk_global)) || (n_without_swap > it_lim_without_swap)) break; */
       if((FABS(old_loglk-tree->c_lnL) < tree->mod->s_opt->min_diff_lk_global) || (n_without_swap > it_lim_without_swap)) break;
 
@@ -228,14 +229,15 @@ int Simu(t_tree *tree, int n_step_max)
   free(sorted_b);
   free(tested_b);
 
-  if(tree->mod->logtree > 0) {
+  /* Commented out by Ken 12/1
+   if(tree->mod->logtree > 0) {
         if(!tree->mod->quiet) {
             PhyML_Printf("Tree out\n");
         }
         FILE *treefile = GetTreeFile(tree->io);
         Print_Tree(treefile, tree);
         fclose(treefile);
-  }
+  }*/
 
   return n_tested;
 }
@@ -597,14 +599,4 @@ void Check_NNI_Scores_Around(t_node *a, t_node *d, t_edge *b, phydbl *best_score
     }
 }
 
-/*********************************************************/
-/*********************************************************/
-/*********************************************************/
-/*********************************************************/
-/*********************************************************/
-/*********************************************************/
-/*********************************************************/
-/*********************************************************/
-/*********************************************************/
-/*********************************************************/
 /*********************************************************/

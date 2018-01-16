@@ -62,22 +62,19 @@ int main(int argc, char **argv){
   tree_size        = -1.0;
   
   r_seed = abs(4*(int)time(NULL)*(int)time(NULL)+4*(int)time(NULL)+1); //!< Modified by Marcelo
-  //r_seed=1234;
+  r_seed=1234;
   srand(r_seed);
   SetSeed(r_seed);
   
   io = (option *)Get_Input(argc,argv); //!< Read the simulation options from interface or command line.
-  io->r_seed = (io->r_seed<0)?r_seed:io->r_seed;
-  //io->r_seed=1234;
+  //io->r_seed = (io->r_seed<0)?r_seed:io->r_seed;
+  io->r_seed=1234;
   if(io->mod->whichrealmodel != HLP17 && io->mod->partfilespec != 0){
 	  printf("\n. Site-partitioned omega only available with HLP17 right now. Sorry.");
 	  printf("\n. This is mostly due to laziness, so feel free to complain to Ken about this.");
 	  printf("\n. In the meantime, try running -m HLP17 --hotness 0 instead of -m GY\n\n");
 	  exit(EXIT_FAILURE);
   }
-
-  if(io->in_tree == 2) Test_Multiple_Data_Set_Format(io,io->mod);
-  else io->n_trees = 1;
   
   mat = NULL;
   tree_line_number = 0;
@@ -85,7 +82,7 @@ int main(int argc, char **argv){
   //ADDED BY KEN
   //TURNS OFF ALRT
   io->ratio_test = 0;
-
+  io->n_trees=1;
   if((io->n_data_sets > 1) && (io->n_trees > 1)){
     io->n_data_sets = MIN(io->n_trees,io->n_data_sets);
     io->n_trees     = MIN(io->n_trees,io->n_data_sets);
@@ -93,12 +90,46 @@ int main(int argc, char **argv){
 
   Make_Model_Complete(io->mod);
 
-  For(num_data_set,io->n_data_sets){
+  For(num_data_set,io->ntrees){
     n_otu = 0;
     best_lnL = UNLIKELY;
+    printf("On data %d\n",num_data_set);
     printf("copying model\n");
     model *mod = Copy_Partial_Model(io->mod); //!< Pointer that will hold the model applied.
     printf("copied model\n");
+
+    strcpy(mod->in_tree_file,io->treefs[num_data_set]); //copy input tree to model
+    strcpy(mod->in_align_file,io->datafs[num_data_set]); //copy input data to model
+    strcpy(mod->rootname,io->rootids[num_data_set]); //copy root name
+
+    printf("%s\n",mod->in_tree_file);
+    printf("%s\n",mod->in_align_file);
+    printf("%s\n",mod->rootname);
+
+    if(io->in_tree == 2)mod->fp_in_tree = Openfile(mod->in_tree_file,0);
+    mod->fp_in_align = Openfile(mod->in_align_file,0);
+
+    if(mod->print_trace) {
+    	strcpy(mod->out_trace_stats_file,mod->in_align_file);
+    	strcat(mod->out_trace_stats_file,"_igphyml_stats_trace");
+    	/*strcat(mod->out_trace_stats_file,num_data_set);
+    	strcat(mod->out_trace_stats_file,"_");*/
+    	strcpy(mod->out_trace_tree_file,mod->in_align_file);
+    	strcat(mod->out_trace_tree_file,"_igphyml_tree_trace");
+    	/*strcat(mod->out_trace_tree_file,"_");
+    	strcat(mod->out_trace_tree_file,num_data_set);
+    	strcat(mod->out_trace_tree_file,"_");*/
+    	printf("%s %s\n",mod->out_trace_stats_file,mod->out_trace_tree_file);
+        mod->fp_out_tree_trace = Openfile(mod->out_trace_tree_file, 1 );//openOutputFile(mod->out_trace_tree_file, "_igphyml_tree_trace", ".txt", io);
+        mod->fp_out_stats_trace = Openfile(mod->out_trace_stats_file, 1 );//openOutputFile(mod->out_trace_stats_file, "_igphyml_stats_trace", ".txt", io);
+        printf("made output files\n");
+    }
+
+    printf("about to test data format\n");
+    if(io->in_tree == 2) Test_Multiple_Data_Set_Format(io,mod);
+    else io->n_trees = 1;
+    printf("tested data format\n");
+
 
     Get_Seq(io,mod);
     //if(io->convert_NT_to_AA) Conv_NT_seq_to_AA_seq(io); unused ken 5/1
@@ -182,6 +213,15 @@ int main(int argc, char **argv){
 	  tree->both_sides  = 1;
 	  tree->n_pattern   = tree->data->crunch_len;
 
+	  //previously global variables in Optimiz, now tree variables to ease in analyzing multiple data sets
+	  tree->SIZEp=0;
+	  tree->noisy=0;
+	  tree->Iround=0;
+	  tree->NFunCall=0;
+	  tree->AlwaysCenter=0;
+	  tree->gemin=1e-6;
+	  tree->Small_Diff=.5e-6;
+
 	  //added by Ken
 	  //Find location of root node if HLP17
 	  if(mod->whichrealmodel == HLP17){
@@ -225,12 +265,6 @@ int main(int argc, char **argv){
 	  Prepare_Tree_For_Lk(tree);
 	  printf("prepping tree for lhood\n");
 
-	  //stretch initial tree branches
-	 /* int n_edges=2*tree->n_otu-3;
-	  int br=0;
-	  For(br,n_edges){
-		  tree->t_edges[br]->l=tree->t_edges[br]->l*tree->mod->stretch;
-	  }*/
 
 	  if(tree->mod->ambigprint && tree->mod->whichrealmodel == HLP17){
 		  FILE *ambigfile = fopen(tree->mod->ambigfile, "w");
@@ -245,7 +279,10 @@ int main(int argc, char **argv){
 		  printf("\n. Can only print ambiguous characters with HLP17 model\n");
 	  }
 
-      tree->br_len_invar_set = NO;
+	  io->mod_s[num_data_set]=mod;
+	  io->tree_s[num_data_set]=tree;
+
+      /*tree->br_len_invar_set = NO;
 	    
 	  if(io->in_tree == 1) Spr_Pars(tree);
 	 
@@ -277,19 +314,19 @@ int main(int argc, char **argv){
 	  Pars(tree);
 	  Get_Tree_Size(tree);
 	  PhyML_Printf("\n. Log-likelihood of the current tree:\t\t\t\t%.2f\n",tree->c_lnL);
-	  
+
 	  if(tree->mod->whichrealmodel==HLP17){
 		  Update_Ancestors_Edge(io->tree->noeud[io->tree->mod->startnode],io->tree->noeud[io->tree->mod->startnode]->v[0],io->tree->noeud[io->tree->mod->startnode]->b[0],tree);
 	  }
 	  
-	  /* Print the tree estimated using the current random (or BioNJ) starting tree */
+	  // Print the tree estimated using the current random (or BioNJ) starting tree
 	  if(io->mod->s_opt->n_rand_starts > 1){
 	    Br_Len_Involving_Invar(tree);
 	    Print_Tree(io->fp_out_trees,tree);
 	    fflush(NULL);
 	  }
 	    
-	  /* Record the most likely tree in a string of characters */
+	  // Record the most likely tree in a string of characters
 	  if(tree->c_lnL > best_lnL){
 	    best_lnL = tree->c_lnL;
 	    Br_Len_Involving_Invar(tree);
@@ -316,9 +353,9 @@ int main(int argc, char **argv){
 			 
 	  if(tree->io->print_site_lnl) Print_Site_Lk(tree,io->fp_out_lk);
 			 
-	  /* Start from BioNJ tree */
+	  // Start from BioNJ tree
 	  if((num_rand_tree == io->mod->s_opt->n_rand_starts-1) && (tree->mod->s_opt->random_input_tree)){
-	    /* Do one more iteration in the loop, but don't randomize the tree */
+	    // Do one more iteration in the loop, but don't randomize the tree
 	    num_rand_tree--;
 	    tree->mod->s_opt->random_input_tree = 0;
 	  }
@@ -329,26 +366,26 @@ int main(int argc, char **argv){
 	  Free_Triplet(tree->triplet_struct);
 	  Free_Tree_Pars(tree);
 	  Free_Tree_Lk(tree);
-	  Free_Tree(tree);
+	  Free_Tree(tree);*/
 	}
-	printf("Ratio test? %d\n",io->ratio_test);
+	/*printf("Ratio test? %d\n",io->ratio_test);
 
 	if(io->testInitTree){ //!< Added by Marcelo
 	  //!< Do nothing!
 	}
 	else
-	/* Launch bootstrap analysis */
+	// Launch bootstrap analysis
 	if(mod->bootstrap){
 	  if(!io->quiet) PhyML_Printf("\n. Launch bootstrap analysis on the most likely tree...\n");
 	  most_likely_tree = Bootstrap_From_String(most_likely_tree,cdata,mod,io);
 	}
 	else if(io->ratio_test){
-	  /* Launch aLRT */
+	  // Launch aLRT
 	  if(!io->quiet) PhyML_Printf("\n. Compute aLRT branch supports on the most likely tree...\n");
 	  most_likely_tree = aLRT_From_String(most_likely_tree,cdata,mod,io);
 	}
 	  
-	/* Print the most likely tree in the output file */
+	// Print the most likely tree in the output file
 	if(!io->quiet) PhyML_Printf("\n. Printing the most likely tree in file:\n" ".... '%s'\n", Basename(io->out_tree_file));
 	if(io->n_data_sets == 1) rewind(io->fp_out_tree);
  
@@ -358,18 +395,144 @@ int main(int argc, char **argv){
 	  fprintf(io->fp_out_compare,"%s\n",most_likely_tree);
 	}
 	  
-	if(io->n_trees > 1 && io->n_data_sets > 1) break;
+	if(io->n_trees > 1 && io->n_data_sets > 1) break;*/
+
+
       }//for(num_tree=(io->n_trees == 1)?(0):(num_data_set);num_tree < io->n_trees;num_tree++)
-      Free_Cseq(cdata);
+
+
+   /*   Free_Cseq(cdata);*/
     }else{
       PhyML_Printf("\n. No data was found.\n");
       PhyML_Printf("\n. Err in file %s at line %d\n",__FILE__,__LINE__);
       Warn_And_Exit("");
     }
-    Free_Model_Complete(mod);
+    //Free_Model_Complete(mod);
+  } //For(num_data_sets
+
+  printf("about to do stuff\n");
+ /*Originally had these declared as private, however, they will be uninitialized in the openmp loop :-/
+  *  int testInitTree = io->testInitTree;
+  int lkExperimentv = io->lkExperiment;
+  int in_tree = io->in_tree;
+  int ntrees = io->ntrees;
+  int RM = ROUND_MAX;*/
+
+  //omp_lock_t *writelock;
+ // omp_init_lock(writelock);
+  printf("about to do stuff\n");
+
+#if defined OMP || defined BLAS_OMP
+
+//#pragma omp parallel for private(in_tree,lkExperimentv,testInitTree) if(io->splitByTree)
+#pragma omp parallel for if(io->splitByTree)
+
+
+#endif
+  For(num_data_set,io->ntrees){
+	  //omp_set_lock(writelock);
+	  printf("DOING LHOODS ON %d\n",num_data_set);
+	  model* mod = io->mod_s[num_data_set];
+	  t_tree* tree = io->tree_s[num_data_set];
+	  mod->num=num_data_set;
+	  tree->br_len_invar_set = NO;
+	  int testInitTree = io->testInitTree;
+	  int lkExperimentv = io->lkExperiment;
+	  int in_tree = io->in_tree;
+	  int ntrees = io->ntrees;
+	  int RM = ROUND_MAX;
+	  //omp_unset_lock(writelock);
+
+	  if(in_tree == 1) Spr_Pars(tree);
+
+	  if(testInitTree){ //!< Added by Marcelo.
+	    //!< Do nothing!
+	  }else if(lkExperimentv){ //!< Added by Marcelo.
+		  lkExperiment(tree,num_tree);
+	  }
+	  else if(tree->mod->s_opt->opt_topo){
+	    if(tree->mod->s_opt->topo_search      == NNI_MOVE) Simu_Loop(tree);
+	    else if(tree->mod->s_opt->topo_search == SPR_MOVE){
+	    	printf("about to do spr moves\n");
+	  	  Speed_Spr_Loop(tree);
+	    }else{
+	    	Best_Of_NNI_And_SPR(tree);
+	    }
+	  }else{
+	    if(tree->mod->s_opt->opt_subst_param || tree->mod->s_opt->opt_bl){
+	    	Round_Optimize(tree,tree->data,RM*2); //! *2 Added by Marcelo to match codeml values.
+	    }else{
+	    	printf("doing lhood\n");
+	    	Lk(tree);
+	    }
+	  }
+	  //omp_set_lock(writelock);
+	  printf("Finished lhood\n");
+	  //omp_unset_lock(writelock);
+
+
+	  tree->both_sides = 1;
+	  Lk(tree);
+	  Pars(tree);
+	  Get_Tree_Size(tree);
+	  //omp_set_lock(writelock);
+	  PhyML_Printf("\n. Log-likelihood of the current tree:\t\t\t\t%.2f\t%d\n",tree->c_lnL, mod->num);
+	  //omp_unset_lock(writelock);
+
+
+	  tree->both_sides = 1;
+	  Lk(tree);
+	  Pars(tree);
+	  Get_Tree_Size(tree);
+	  PhyML_Printf("\n. Log-likelihood of the current tree:\t\t\t\t%.2f\n",tree->c_lnL);
+
+	  if(tree->mod->whichrealmodel==HLP17){
+	  	  Update_Ancestors_Edge(tree->noeud[tree->mod->startnode],tree->noeud[tree->mod->startnode]->v[0],tree->noeud[tree->mod->startnode]->b[0],tree);
+	   }
+
+	  if(io->ntrees==1){
+	  	  // Print the tree estimated using the current random (or BioNJ) starting tree
+	  	  if(mod->s_opt->n_rand_starts > 1){
+	  	    Br_Len_Involving_Invar(tree);
+	  	    printf("about to print tree\n");
+	  	    Print_Tree(io->fp_out_tree,tree);
+	  	    printf("about to print tree\n");
+	  	    fflush(NULL);
+	  	  }
+
+	  	  // Record the most likely tree in a string of characters
+	  	  if(tree->c_lnL > best_lnL){
+	  	    best_lnL = tree->c_lnL;
+	  	    Br_Len_Involving_Invar(tree);
+	  	    if(most_likely_tree) free(most_likely_tree);
+	  	    most_likely_tree = Write_Tree(tree);
+	  	    most_likely_size = Get_Tree_Size(tree);
+	  	  }
+
+	  	  #if defined OMP || defined BLAS_OMP
+
+	  	  t_end=omp_get_wtime();
+
+	  	  #else
+
+	  	  time(&t_end);
+
+	  	  #endif
+	  	    printf("printing output\n");
+	  	  Print_Fp_Out(io->fp_out_stats,t_beg,t_end,tree,
+	  	   io,num_data_set+1,
+	  	   (tree->mod->s_opt->n_rand_starts > 1)?
+	  	   (num_rand_tree):(num_tree),mod);//was io->mod
+	  	  printf("printed to output\n");
+
+	  	  //if(tree->io->print_site_lnl) Print_Site_Lk(tree,io->fp_out_lk);
+	  }
+
   }
   
-  if(most_likely_tree) free(most_likely_tree);
+
+
+  /*if(most_likely_tree) free(most_likely_tree);
   
   if(io->mod->s_opt->n_rand_starts > 1) PhyML_Printf("\n. Best log likelihood: %.2f\n",best_lnL);
   
@@ -379,8 +542,8 @@ int main(int argc, char **argv){
   
   fflush(NULL);
   
-  if(io->fp_in_align)    fclose(io->fp_in_align);
-  if(io->fp_in_tree)     fclose(io->fp_in_tree);
+  //if(io->fp_in_align)    fclose(io->fp_in_align);
+  //if(io->mod->fp_in_tree)     fclose(io->mod->fp_in_tree);
   if(io->fp_out_lk)      fclose(io->fp_out_lk);
   if(io->fp_out_tree)    fclose(io->fp_out_tree);
   if(io->fp_out_trees)   fclose(io->fp_out_trees);
@@ -393,7 +556,7 @@ int main(int argc, char **argv){
   if(io->fp_out_compare) fclose(io->fp_out_compare); //!< Added by Marcelo.
 	
   Free_Input(io);
-      
+    */
   #if defined OMP || defined BLAS_OMP
      
   t_end=omp_get_wtime();
@@ -404,7 +567,7 @@ int main(int argc, char **argv){
     
   #endif
     
-  //Print_Time_Info(t_beg,t_end);
+  Print_Time_Info(t_beg,t_end);
     
   return 0;
 }
