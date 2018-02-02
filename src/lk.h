@@ -41,6 +41,7 @@ void Get_All_Partial_Lk(t_tree *tree,t_edge *b_fcus,t_node *a,t_node *d);
 void Get_All_Partial_Lk_Scale(t_tree *tree,t_edge *b_fcus,t_node *a,t_node *d);
 void Post_Order_Lk(t_node *pere, t_node *fils, t_tree *tree);
 void Pre_Order_Lk(t_node *pere, t_node *fils, t_tree *tree);
+phydbl Lk_rep(option* io);
 phydbl Lk(t_tree *tree);
 void upAllPmats(t_tree *tree);
 
@@ -91,7 +92,7 @@ void Init_Tips_At_One_Site_Codons_Float(char state, int pos, phydbl *p_lk, char 
 void Init_Tips_At_One_Site_Codons_Int(char state, int pos,short int *p_pars, char * alternatives); //!< Added by Marcelo.
 matrix *ML_CODONDist_Pairwise(calign *data,option *io,model* mod); //!< Added by Marcelo.
 phydbl LK_Codon_Pairwise(calign *data, phydbl *Pij, phydbl *pi, int ns, phydbl len, eigen *eigenStruct, phydbl *uexpt, phydbl *expt); //!< Added by Marcelo.
-phydbl LK_BFGS_from_CODEML(t_tree* tree, phydbl *x, int n); //!< Added by Marcelo.
+phydbl LK_BFGS_from_CODEML(option* io, phydbl *x, int n); //!< Added by Marcelo.
 #endif
 
 

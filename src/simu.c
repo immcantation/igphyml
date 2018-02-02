@@ -28,22 +28,32 @@ the GNU public licence.  See http://www.opensource.org for details.
 
 /*********************************************************/
 
-void Simu_Loop(t_tree *tree)
-{
+void Simu_Loop(option* io){
   phydbl lk_old;
+  int i;
+  if(io->mod->opt_heuristic_manuel==YES)Lazy_Exit("Heuristic optimisation for topology search",__FILE__,__LINE__);
 
-  tree->both_sides = 0;
-  Lk(tree);
+  io->mod->update_eigen=YES;
+  io->both_sides = 0;
+  printf("here1\n");
+  Lk_rep(io);
+  printf("here\n");
 
-  if((tree->mod->s_opt->print) && (!tree->mod->quiet)) PhyML_Printf("\n. Maximizing likelihood (using NNI moves)...\n");
+  if((io->mod->s_opt->print) && (!io->mod->quiet)) PhyML_Printf("\n. Maximizing likelihood (using NNI moves)...\n");
   
-  Print_Lk(tree,"[Initial Tree       ]");
+  Print_Lk_rep(io,"[Initial trees and parameters]");
   
   //added by Ken 8/3/2017
-  /* Optimise branch lengths */
-  	  Optimiz_All_Free_Param(tree,(tree->mod->quiet)?(0):(tree->mod->s_opt->print));
-        //optimze branch lengths initially
-	  int startnode = 0;
+  /* Optimise parameters and branch lengths */
+  Optimiz_All_Free_Param(io,(io->mod->quiet)?(0):(io->mod->s_opt->print));
+  io->both_sides=1;
+  	  //optimze branch lengths initially
+#if defined OMP || defined BLAS_OMP
+#pragma omp parallel for if(io->splitByTree)
+#endif
+  For(i,io->ntrees){
+	  t_tree* tree=io->tree_s[i];
+  	  int startnode = 0;
 	  if(tree->mod->whichrealmodel==HLP17){
 		  startnode=tree->mod->startnode;
 		  tree->both_sides = 1;
@@ -51,14 +61,11 @@ void Simu_Loop(t_tree *tree)
 		  Update_Ancestors_Edge(tree->noeud[tree->mod->startnode],tree->noeud[tree->mod->startnode]->v[0],tree->noeud[tree->mod->startnode]->b[0],tree); //added by Ken 7/11
 		  Get_UPP(tree->noeud[startnode], tree->noeud[startnode]->v[0], tree);
 	  }
-
 	  Optimize_Br_Len_Serie(tree->noeud[startnode],
 			tree->noeud[startnode]->v[0],
 			tree->noeud[startnode]->b[0],
 			tree,
 			tree->data);
-
-	  /* Update partial likelihoods */
 	  tree->both_sides = 1;
 	  Lk(tree);
 	  if(tree->mod->whichrealmodel==HLP17){
@@ -68,62 +75,67 @@ void Simu_Loop(t_tree *tree)
 		  Print_Trace(tree);
 	  }
 	  Print_Lk(tree,"[Branch lengths     ]");
+  }
 
-
+  //Start NNI loop while optimizing substitution parameters
+  int j;
   int first=0;
-  if(tree->mod->opt_heuristic_manuel==NO) //!Added by Marcelo
-  {
+  do{
+	  lk_old = io->replnL;
+	  if(first != 0)Optimiz_All_Free_Param(io,(io->mod->quiet)?(0):(io->mod->s_opt->print));
+	  first++;
+	  io->threads=0;
+#if defined OMP || defined BLAS_OMP
+#pragma omp parallel for if(io->splitByTree) private(j)
+#endif
+	  For(i,io->ntrees){//do this in parallel
+		  t_tree* tree;
+#if defined OMP || defined BLAS_OMP
+#pragma omp critical
+#endif
+		  {
+    		  tree=io->tree_s[io->threads++];
+    		  printf("\nSimu Now on %d %d",io->threads,tree->mod->num);
+    	 }
+	     if(!Simu(tree,10)){
+	    	  Check_NNI_Five_Branches(tree);
+	     }
+	  }
+  	  /*For(i,io->ntrees){//do this in parallel
+  		  t_tree* tree = io->tree_s[i];
+  		if(!Simu(tree,10)){
+  		  	Check_NNI_Five_Branches(tree);
+  		}
+  	  }*/
+  	  io->replnL=0.0;
+  	  For(i,io->ntrees)io->replnL+=io->tree_s[i]->c_lnL; //CHANGE BACK - JUST USED FOR DEBUGGING
+  }while(io->replnL > lk_old + io->mod->s_opt->min_diff_lk_global);
 
-    do //optimize topology and parameters while lhood increasing to a certain point
-    { 
-      lk_old = tree->c_lnL;
-      if(first != 0)Optimiz_All_Free_Param(tree,(tree->mod->quiet)?(0):(tree->mod->s_opt->print));
-      first++;
-
-      if(!Simu(tree,10)) 
-      {
-	Check_NNI_Five_Branches(tree);
-      }
+  //Start NNI loop without optimizing substitution parameters
+  io->threads=0;
+#if defined OMP || defined BLAS_OMP
+#pragma omp parallel for if(io->splitByTree) private(j)
+#endif
+  For(i,io->ntrees){
+  	  t_tree* tree;// = io->tree_s[i];
+#if defined OMP || defined BLAS_OMP
+#pragma omp critical
+#endif
+    	 {
+    		  tree=io->tree_s[io->threads++];
+    		  printf("\nNNI Now on %d %d",io->threads,tree->mod->num);
+    	 }
+    	 do{
+    		 if(!Check_NNI_Five_Branches(tree)) break;
+    	 }while(1);
     }
-    while(tree->c_lnL > lk_old + tree->mod->s_opt->min_diff_lk_global);
-    
-    
-    do
-    {
-      if(!Check_NNI_Five_Branches(tree)) break;
-    }while(1);
-    /*****************************/
-    
-  }
-  else if(tree->mod->opt_heuristic_manuel==YES) //!Added by Marcelo
-  {
-
-    Round_Optimize(tree,tree->data,tree->mod->roundMax_start); //! last parameter: max number of rounds
-    
-    do
-    { 
-      lk_old = tree->c_lnL;
-      if(!Simu(tree,10)) 
-      {
-	Check_NNI_Five_Branches(tree);
-      }
-    }
-    while(tree->c_lnL > lk_old + tree->mod->s_opt->min_diff_lk_global);
-    
-    Round_Optimize(tree,tree->data,tree->mod->roundMax_end); //! last parameter: max number of rounds
-    
-    do
-    {
-      if(!Check_NNI_Five_Branches(tree)) break;
-    }while(1);
-    /*****************************/
-    
-    
-   
-  }
-  
-  if((tree->mod->s_opt->print) && (!tree->mod->quiet)) PhyML_Printf("\n");
-
+  /*For(i,io->ntrees){
+	  t_tree* tree = io->tree_s[i];
+  	  do{
+        if(!Check_NNI_Five_Branches(tree)) break;
+  	  }while(1);
+  }*/
+  if((io->mod->s_opt->print) && (!io->mod->quiet)) PhyML_Printf("\n");
 }
 
 /*********************************************************/
@@ -309,7 +321,6 @@ void Make_N_Swap(t_tree *tree,t_edge **b, int beg, int end)
 
       tree->n_swap++;
     }
-
 /*   PhyML_Printf("\n. End Actually performing swaps\n"); */
 
 }

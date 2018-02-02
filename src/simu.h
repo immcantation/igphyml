@@ -35,7 +35,7 @@ the GNU public licence.  See http://www.opensource.org for details.
 #include "pars.h"
 #include "alrt.h"
 
-void Simu_Loop(t_tree *tree);
+void Simu_Loop(option* io);
 int Simu(t_tree *tree,int n_step_max);
 void Select_Edges_To_Swap(t_tree *tree,t_edge **sorted_b,int *n_neg);
 void Update_Bl(t_tree *tree,phydbl fact);

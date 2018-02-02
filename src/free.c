@@ -451,7 +451,7 @@ void Free_Input(option *io)
   int i;
   //free(io->in_align_file);
   //free(io->in_tree_file);
-  free(io->out_tree_file);
+  //free(io->out_tree_file);
   free(io->out_trees_file);
   free(io->out_boot_tree_file);
   free(io->out_boot_stats_file);

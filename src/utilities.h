@@ -125,7 +125,7 @@ static inline int isinf_ld (long double x) { return isnan (x - x); }
 #define  T_MAX_FILE           500
 #define  T_MAX_LINE       2000000
 #define  T_MAX_NAME          1000
-#define  T_MAX_SEQ        2000000
+#define  T_MAX_SEQ        2000000 //Should reduce to save RAM
 #define  T_MAX_OPTION         100
 #define  T_MAX_LABEL          100
 #define  T_MAX_STATE            5
@@ -471,13 +471,6 @@ typedef struct __Arbre {
   phydbl                  logLk_correction_gaps_approx; /*!< correction factor (with gaps) loglikelihood according to Seo Kishino 2009. */
   int                       br_len_invar_set; /* is Br_Len_Involving_Invar already done? */
 
-  phydbl								SIZEp; //replacing previously defined global variables in optimiz
-  int 									noisy;
-  int									Iround;
-  int									NFunCall;
-  int									AlwaysCenter;
-  phydbl 								Small_Diff;
-  phydbl 								gemin;
 }t_tree;
 
 /*********************************************************/
@@ -676,6 +669,17 @@ typedef struct __Model {
   int				 minParam; //COPIED FROM OPTION
   int				 maxParam; //COPIED FROM OPTION
   int				 lkExpStepSize; //COPIED FROM OPTION
+  int				ntrees; //COPIED FROM OPTION
+  int					splitByTree;
+
+  int					       optKappa;
+  int						    optFreq;
+  int*					 omega_part_opt;
+  int*					 omega_part_ci;
+  phydbl*					 omega_part_uci;
+  phydbl*					 omega_part_lci;
+  char*				   omega_opt_string; //string specifying how omega should be optimized
+  int					 omega_opt_spec; //was an omeag opt string specified?
 
   //MOVED FROM OPTION
   char               *out_trace_tree_file; /*!< name of the file in which the likelihood of the model is written. */
@@ -683,8 +687,9 @@ typedef struct __Model {
   char               *out_trace_stats_file; /*!< name of the file in which the likelihood of the model is written. */
   FILE                 *fp_out_stats_trace;
 
-  int						num; //id of model
-
+  int						           num; //id of model
+  phydbl*					       baseCounts;
+  int								optDebug;
 
   char                 *in_tree_file; /*!< input tree file name. */ //MOVED FROM OPTION
   FILE                   *fp_in_tree; /*!< pointer to the input tree file. */ //MOVED FROM OPTION
@@ -792,6 +797,13 @@ typedef struct __Model {
  double		*hotness;
  int		*hoptindex;
 
+ int		*hoptci;
+ phydbl *hoptuci;
+ phydbl *hoptlci;
+
+ int		kappaci;
+ phydbl kappauci;
+ phydbl kappalci;
 
  //partition model stuff
  int		*partIndex; //which q matrix to use for each partition
@@ -830,6 +842,7 @@ typedef struct __Model {
  int		ambigprint;
  char		*ambigfile;
 
+ int		optIter; //number of optimization iterations
  phydbl 	stretch; //stretch branch lengths of initial tree
 
 }model;
@@ -979,6 +992,26 @@ typedef struct __Option {
   t_tree**					   tree_s; //tree pointers
   model** 						mod_s; //model pointers
   int					  splitByTree; //parallelize by tree?
+  int					   both_sides;
+  phydbl					   replnL;
+
+  int						t_current;
+  int							t_beg;
+
+  phydbl								SIZEp; //replacing previously defined global variables in optimiz
+  int 									noisy;
+  int									Iround;
+  int									NFunCall;
+  int									AlwaysCenter;
+  phydbl 								Small_Diff;
+  phydbl 								gemin;
+
+  int*									nsubtrees;
+  int**									subtrees;
+  //int									nthreads;
+  int									threads;
+
+  phydbl*								paramStore; //stores all parameters and subtree branch lengths
  }option;
 
 /*********************************************************/
@@ -1506,6 +1539,8 @@ int Get_State_From_P_Lk(phydbl *p_lk, int pos, t_tree *tree);
 int Get_State_From_P_Pars(short int *p_pars, int pos, t_tree *tree);
 void Unroot_Tree(char **subtrees);
 void Print_Lk(t_tree *tree, char *string);
+void Print_Lk_rep(option* io, char *string);
+void Lazy_Exit(char*,char*,int);
 void Print_Pars(t_tree *tree);
 void Print_Lk_And_Pars(t_tree *tree);
 void Check_Dirs(t_tree *tree);

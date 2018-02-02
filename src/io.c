@@ -373,10 +373,6 @@ void Print_Settings(option *io, model* mod)
 /*********************************************************/
 
 
-
-/*********************************************************/
-
-
 align **Get_Seq(option *io, model *mod)
 {
   mod->data = NULL;
@@ -1422,6 +1418,193 @@ void R_wtree(t_node *pere, t_node *fils, int *available, char **s_tree, int *pos
   }
 }
 
+/********************************************************/
+//replacement output function
+
+void Print_IgPhyML_Out(option* io){
+	FILE* f = io->fp_out_stats;
+
+	int i,j;
+	int stopCodons[64];
+	int indexSenseCodons[64];
+	int senseCodons[64];
+	 For (i,64){
+	    stopCodons[i]=0;
+	    senseCodons[i]=-1;
+	    indexSenseCodons[i]=-1;
+	  }
+
+	stopCodons[10]=1; //!< Set stop codons according to the genetic code.
+	stopCodons[11]=1;
+	stopCodons[14]=1;
+	j=0;
+	  For(i,64){ //!< Shift the sense codons down the array.
+	    if(!stopCodons[i]){
+	    	//printf("%d\t%d\n",i,j);
+	      senseCodons[j++]=i;
+	    }
+	  }
+	  For(i,61){ //!< Correct the index for recovery.
+	    indexSenseCodons[senseCodons[i]]=i;
+	  }
+
+	fprintf(f, "oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo\n");
+	fprintf(f,"%s%s ---\n", "                      --- IgPhyML ", VERSION);
+	fprintf(f, "               Kenneth B Hoehn, Gerton Lunter, Oliver G Pybus\n");
+	fprintf(f,"\n\n");
+	fprintf(f,"                         Based off of codonPhyML\n");
+	fprintf(f,"Marcelo S Zanetti, Stefan Zoller, Manuel Gil, Louis du Plessis, Maria Anisimova\n");
+	fprintf(f,"                 http://sourceforge.net/projects/codonphyml/\n");
+	fprintf(f,"oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo\n");
+	fprintf(f,"                                 Summary\n");
+	fprintf(f,"oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo\n");
+  	fprintf(f,". Data sets: %d\n",io->ntrees);
+	fprintf(f,". Model name:\t%s\n",io->mod->modelname);
+	fprintf(f,". Hotspots:\t%s\n",io->mod->motifstring);
+	fprintf(f,". h optimization:\t%s\n",io->mod->hotnessstring);
+	if(io->mod->s_opt->opt_topo) {
+		switch( io->mod->s_opt->topo_search){
+		case NNI_MOVE:
+			fprintf(f,". Tree topology search:\tNNIs\n");
+			break;
+		case SPR_MOVE:
+			fprintf(f,". Tree topology search:\tSPRs\n");
+			break;
+		default:
+			Lazy_Exit("Topology option output option not supported",__FILE__,__LINE__);
+			break;
+		}
+	}else{
+		fprintf(f,". Tree topology search:\tfixed\n");
+	}
+	fprintf(f,". Combined log-likelihood: 	%.2lf\n",io->replnL);
+	phydbl treel=0.0;
+	For(i,io->ntrees)treel+=Get_Tree_Size(io->tree_s[i]);
+	fprintf(f,". Repertoire length (#mutations):\t%lf",treel);
+
+	if(io->mod->optKappa != 2)fprintf(f,". Transition/transversion ratio: 	%.5lf",io->mod->kappa); //!< Kappa
+	else fprintf(f,". Transition/transversion ratio: 	%s","Submodel_optimized"); //!< Kappa
+	if(io->mod->s_opt->opt_kappa)fprintf(f,"\t(%.5f, %.5f)",io->mod->kappalci,io->mod->kappauci);
+	fprintf(f,"\n");
+
+	int omegai; //Added by Ken 23/8
+		for(omegai=0;omegai<io->mod->nomega_part;omegai++){
+		   char* buf = mCalloc(T_MAX_OPTION,sizeof(char));
+		   int temp = asprintf(&buf, ". Omega %d", omegai);//, io->mod->partNames[omegai]);//changed by Ken 12/1/2017
+		   if(io->mod->omega_part_opt[omegai] != 2)fprintf(f,"%s:\t%.6f",buf,io->mod->omega_part[omegai]);
+		   else fprintf(f,"%s:\t%s",buf,"Submodel_optimized");
+		   if(io->mod->omega_part_ci[omegai])fprintf(f,"\t(%.6f, %.6f)",io->mod->omega_part_lci[omegai],io->mod->omega_part_uci[omegai]);
+		   fprintf(f,"\n");
+		}
+
+	if(io->modeltypeOpt==HLP17){
+		fprintf(f,". Hotspot model\t\th_index\toptimized?\th_value\n");
+	      int mot;
+	      for(mot=0;mot<io->mod->nmotifs;mot++){
+	    	  	  if(io->mod->hoptindex[io->mod->motif_hotness[mot]]!=2){
+	    	  		  fprintf(f,"\tMotif:\t%s\t\t%d\t\t%d\t\t%.8lf",io->mod->motifs[mot],io->mod->motif_hotness[mot],io->mod->hoptindex[io->mod->motif_hotness[mot]],io->mod->hotness[io->mod->motif_hotness[mot]]);
+	    	  	  }else{
+	    	  		  fprintf(f,"\tMotif:\t%s\t\t%d\t\t%d\t\t%s",io->mod->motifs[mot],io->mod->motif_hotness[mot],io->mod->hoptindex[io->mod->motif_hotness[mot]],"Submodel_optimized");
+	    	  	  }
+	    	  	  if(io->mod->hoptci[io->mod->motif_hotness[mot]]){
+	    	  		  fprintf(f,"\t(%.8lf, %.8lf)",io->mod->hoptlci[io->mod->motif_hotness[mot]],io->mod->hoptuci[io->mod->motif_hotness[mot]]);
+	    	  	  }
+	    	  	  fprintf(f,"\n");
+	      }
+	}
+	fprintf(f,". Nucleotides frequencies: \n");
+	fprintf(f,"\tPosition 1:\tf(%s)=%.8lf\tf(%s)=%.8lf\tf(%s)=%.8lf\tf(%s)=%.8lf\n","T1",io->mod->base_freq[0],"C1",io->mod->base_freq[1],"A1",io->mod->base_freq[2],"G1",io->mod->base_freq[3]);
+	fprintf(f,"\tPosition 2:\tf(%s)=%.8lf\tf(%s)=%.8lf\tf(%s)=%.8lf\tf(%s)=%.8lf\n","T2",io->mod->base_freq[4],"C2",io->mod->base_freq[5],"A2",io->mod->base_freq[6],"G2",io->mod->base_freq[7]);
+	fprintf(f,"\tPosition 3:\tf(%s)=%.8lf\tf(%s)=%.8lf\tf(%s)=%.8lf\tf(%s)=%.8lf\n","T3",io->mod->base_freq[8],"C3",io->mod->base_freq[9],"A3",io->mod->base_freq[10],"G3",io->mod->base_freq[11]);
+
+
+	fprintf(f,". Codon frequencies\n");
+	For(i,64){
+		char *buf;
+        char s1[4];
+		Sprint_codon(s1, i);
+		//phydbl val1 = (stopCodons[i])?0.0:io->mod->pi[indexSenseCodons[i]];
+		phydbl val1=0.0;
+		if(!stopCodons[i]){
+			//printf("%d %s %d %lf\n",i,"sense\n",indexSenseCodons[i],io->mod_s[0]->pi[indexSenseCodons[i]]);
+			val1=io->mod_s[0]->pi[indexSenseCodons[i]];
+		}
+		fprintf(f,"\tf(%s)=%lf",s1,val1);
+		if((i-3)%4==0){
+			fprintf(f,"\n");
+		}
+	}
+	 div_t hour = div((int)(io->t_current-io->t_beg),3600);
+	 div_t min  = div((int)(io->t_current-io->t_beg),60  );
+	 min.quot -= hour.quot*60;
+	 fprintf(f,". Time used:\t%dh%dm%ds\n",hour.quot,min.quot,(int)(io->t_current-io->t_beg)%60);
+	 fprintf(f,". Seconds:\t%d\n",io->t_current-io->t_beg);
+
+
+	 fprintf(f,"oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo\n");
+	 fprintf(f,"                                 Submodels\n");
+	 fprintf(f,"oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo\n");
+
+	 fprintf(f,"Ind\tSeq\tTreeL\tLikelihood\tKappa");
+	 For(omegai,io->mod->nomega_part)fprintf(f,"\tOmega%d",omegai);
+	 For(omegai,io->mod->nmotifs)fprintf(f,"\t%s",io->mod->motifs[omegai]);
+	 fprintf(f,"\tRootID\tSeq_File\tTree_File\n");
+	 For(i,io->ntrees){
+		 model* mod=io->mod_s[i];
+		 t_tree* tree=io->tree_s[i];
+		 fprintf(f,"%d\t%d\t%.2lf\t%.2lf\t%.4lf",i,mod->n_otu,Get_Tree_Size(tree),tree->c_lnL,mod->kappa);
+		 if(mod->kappaci==1)fprintf(f,"(%.4lf,%.4lf",mod->kappalci,mod->kappauci);
+		 For(omegai,io->mod->nomega_part){
+			 fprintf(f,"\t%.4lf",mod->omega_part[omegai]);
+			 if(mod->omega_part_ci[omegai]==1)fprintf(f,"(%.4lf,%.4lf)",mod->omega_part_lci[omegai],mod->omega_part_uci[omegai]);
+		 }
+		 For(omegai,io->mod->nmotifs){
+			 fprintf(f,"\t%.4lf",mod->hotness[mod->motif_hotness[omegai]]);
+			 if(mod->hoptci[mod->motif_hotness[omegai]]==1)fprintf(f,"(%.4lf,%.4lf)",mod->hoptlci[mod->motif_hotness[omegai]],mod->hoptuci[mod->motif_hotness[omegai]]);
+		 }
+		 fprintf(f,"\t%s\t%s\t%s\n",io->rootids[i],io->datafs[i],io->treefs[i]);
+	 }
+	 fprintf(f,"oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo\n");
+	 fprintf(f,"                                 Subtrees\n");
+	 fprintf(f,"oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo\n");
+	 For(i,io->ntrees){
+		 fprintf(f,"%d\t%s\n",i,Write_Tree(io->tree_s[i]));
+	 }
+	 fprintf(f,"\n\n#\tIf you use IgPhyML, please cite:\n");
+	 fprintf(f,"#\tK.B. Hoehn, G Lunter, O.G. Pybus\n");
+	 fprintf(f,"#\tA phylogenetic codon substitution model for antibody lineages\n");
+	 fprintf(f,"#\tGenetics. 2017 May; 206(1): 417–427\n");
+	 fprintf(f,"#\n");
+	 fprintf(f,"#\tand\n");
+	 fprintf(f,"#\n");
+	 fprintf(f,"#\tM. Gil, M.S. Zanetti, S. Zoller and M. Anisimova 2013\n");
+	 fprintf(f,"#\tCodonPhyML: Fast Maximum Likelihood Phylogeny Estimation under Codon Substitution Models\n");
+	 fprintf(f,"#\tMolecular Biology and Evolution, pages 1270-1280, volume 30, number 6\n");
+	 fprintf(f,"#\n");
+	 fprintf(f,"#\tIf you use aBayes branch supports please cite:\n");
+	 fprintf(f,"#\tM. Anisimova, M. Gil, J.F. Dufayard, C. Dessimoz and O. Gascuel 2011\n");
+	 fprintf(f,"#\tSurvey of branch support methods demonstrates accuracy, power, and robustness of fast likelihood-based approximation schemes. Syst Biol 60:685-699\n");
+
+
+	 printf("\nPRINTING TREES TO FILES\n");
+	 For(i,io->ntrees){
+		 char fout[T_MAX_FILE];
+		 strcpy(fout,io->datafs[i]);
+		 strcat(fout,"_igphyml_tree.txt");
+		 if(io->append_run_ID){
+			 strcat(fout, "_");
+			 strcat(fout, io->run_id_string);
+		 }
+		 printf("\nPRINTING TREES TO FILES %s\n",fout);
+		 FILE* treeout = Openfile(fout, 1 );
+		 Print_Tree(treeout,io->tree_s[i]);
+		 fclose(treeout);
+	 }
+
+}
+
+
+
 
 /*********************************************************
  * Massive output function
@@ -1995,7 +2178,7 @@ void Print_Fp_Out(FILE *fp_out, time_t t_beg, time_t t_end, t_tree *tree, option
                 }
                 else
                 {
-                    switch(tree->mod->kappaECM) //!< Kappa ECM Kosiol 2007.
+                    switch(tree->mod->kappaECM) //!< modelKappa ECM Kosiol 2007.
                     {
                         case kap1: fprintf(io->fp_out_compare,"1;"); break;
                         case kap2: fprintf(io->fp_out_compare,"%.4f;",tree->mod->pkappa[0]); break;

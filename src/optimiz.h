@@ -33,6 +33,13 @@ the GNU public licence.  See http://www.opensource.org for details.
 /* unused ken 5/1
 #include "mg.h"
 */
+void findCIs(model*,option*,FILE*);
+phydbl binarySearchCI(phydbl* param,option* io,phydbl tol,phydbl delta,phydbl lowerb,FILE*,char*);
+int storeParams(option* io);
+int restoreParams(option* io);
+
+
+
 void Set_Ancestors(t_node *a, t_node *d, t_tree *tree); //added by ken
 void Set_Ancestors_Root(t_tree *tree);
 void      Optimiz_Ext_Br(t_tree *tree);
@@ -42,7 +49,7 @@ void      Optimize_Lambda(t_tree *tree);
 void      Optimize_Param_Parall(t_tree *tree);
 phydbl    Optimize_Branch_Quad(t_tree *tree, calign *cdata, t_edge *b_fcus);
 void      Optimize_After_Hide(t_tree *tree, calign *cdata, t_node *h);
-void      Round_Optimize(t_tree *tree, calign *data, int n_round_max);
+void      Round_Optimize(option *io, int n_round_max);
 int       Dist_Seq_Brak(phydbl *ax, phydbl *bx, phydbl *cx, 
 			phydbl *fa, phydbl *fb, phydbl *fc, 
 			calign *data, int num1, int num2, model *mod);
@@ -85,7 +92,9 @@ int       Alpha_Brak(phydbl *ax, phydbl *bx, phydbl *cx,
 int       Pinvar_Brak(phydbl *ax, phydbl *bx, phydbl *cx, 
 		      phydbl *fa, phydbl *fb, phydbl *fc, 
 		      t_tree *tree);
-void Optimiz_All_Free_Param(t_tree *tree, int verbose);
+
+void Optimiz_Submodel_Params(option* io,int verbose); //Added by Ken 1/25/2018
+void Optimiz_All_Free_Param(option* io, int verbose);
 void      Optimiz_RRparam_GTR(t_tree *tree, int num_param);
 phydbl    RRparam_GTR_Golden(phydbl ax, phydbl bx, phydbl cx, phydbl tol, 
 		   	     phydbl *xmin, t_tree *tree, calign *cdata, phydbl *param, int n_iter_max);
@@ -173,7 +182,7 @@ void      Round_Optimize_New(t_tree *tree, calign *data, int n_round_max); //!Ad
 
 phydbl Br_Len_Brent_Codon_Pairwise(phydbl ax, phydbl bx, phydbl cx, phydbl tol, phydbl *b_fcus, phydbl *Pij, phydbl *pi, eigen *eigenStruct, calign *data, int ns, int n_iter_max, int quickdirty, phydbl *uexpt, phydbl *expt); //!< Added by Marcelo.
 
-int gradientB (int n, phydbl x[], phydbl f0, phydbl g[], t_tree * tree, phydbl space[], int xmark[]);
+int gradientB (int n, phydbl x[], phydbl f0, phydbl g[], option* io, phydbl space[], int xmark[]);//changed to io by Ken 17/1/2018
 extern phydbl SIZEp;
 extern int noisy, Iround,NFunCall;
 extern int AlwaysCenter;
@@ -185,14 +194,14 @@ extern phydbl Small_Diff;
 #define CDFGamma(x,alpha,beta) IncompleteGamma((beta)*(x),alpha,LnGamma(alpha))
 phydbl innerp (phydbl x[], phydbl y[], int n);
 int xtoy (phydbl x[], phydbl y[], int n);
-phydbl fun_LineSearch (phydbl t, t_tree *tree, phydbl x0[], phydbl p[], phydbl x[], int n);
-phydbl LineSearch2 (t_tree * tree, phydbl *f, phydbl x0[], phydbl p[], phydbl step, phydbl limit, phydbl e, phydbl space[], int n);
+phydbl fun_LineSearch (phydbl t, option* io, phydbl x0[], phydbl p[], phydbl x[], int n);//changed to io by Ken 17/1/2018
+phydbl LineSearch2 (option* io, phydbl *f, phydbl x0[], phydbl p[], phydbl step, phydbl limit, phydbl e, phydbl space[], int n);//changed to io by Ken 17/1/2018
 int zero (phydbl x[], int n);
 int identity (phydbl x[], int n);
 phydbl norm (phydbl x[], int n);
 int H_end (phydbl x0[], phydbl x1[], phydbl f0, phydbl f1,phydbl e1, phydbl e2, int n);
 phydbl distance (phydbl x[], phydbl y[], int n);
-int BFGS_from_CODEML (phydbl *f, t_tree *tree, phydbl *x, phydbl xb[120][2], phydbl space[], phydbl e, int n);
+int BFGS_from_CODEML (phydbl *f, option* io, phydbl *x, phydbl xb[120][2], phydbl space[], phydbl e, int n);//changed to io by Ken 17/1/2018
 phydbl Sum (phydbl x[], int n);
 #endif
 

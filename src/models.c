@@ -507,7 +507,7 @@ void Init_Model(calign *data, model *mod, option *io)
         if(mod->s_opt->opt_pinvar) {
             mod->pinvar = 0.2;
         }
-printf("here1\n");
+        if(mod->optDebug)printf("here1\n");
         /*! Omega variation model */
         switch(mod->omegaSiteVar) {
             case DM0: {
@@ -532,7 +532,7 @@ printf("here1\n");
             default:
                 break; 
         } 
-        printf("here2\n");
+        if(mod->optDebug)printf("here2\n");
         if((mod->initqrates != NOINITMAT) && (mod->omegaSiteVar != NOOMEGA) && (io->kappaECM == kap5)) {
             Scale_freqs(mod->pkappa, mod->nkappa);
             Freq_to_UnsFreq(mod->pkappa, mod->unspkappa, mod->nkappa, 1);
@@ -597,13 +597,13 @@ printf("here1\n");
             For(i, mod->ns) mod->eigen->e_val[i] /= mr; //was io-> mod->ns 9/1 Ken
             mod->update_eigen = NO;
         } else {
-            printf("here3.3\n");
+        	if(mod->optDebug)printf("here3.3\n");
             mod->update_eigen = YES;
             Set_Model_Parameters(mod);
             mod->update_eigen = NO;
-            printf("here3.4\n");
+            if(mod->optDebug)printf("here3.4\n");
         }
-        printf("here4\n");
+        if(mod->optDebug)printf("here4\n");
         //mod->omega_old  = mod->omega; //Ken 18/8
         mod->beta_old = mod->beta;
     }//!< Finish Added by Marcelo.
@@ -1422,6 +1422,7 @@ phydbl Update_Qmat_Codons(model *mod, int cat, int modeli) {
         }
         case F3X4:
         case CF3X4: {
+        	//printf("updating freq model\n");
             Freq_to_UnsFreq(mod->base_freq,   mod->uns_base_freq,   4, 0);
             Freq_to_UnsFreq(mod->base_freq+4, mod->uns_base_freq+4, 4, 0);
             Freq_to_UnsFreq(mod->base_freq+8, mod->uns_base_freq+8, 4, 0);

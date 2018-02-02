@@ -54,7 +54,12 @@ void Read_Command_Line( option *io, int argc, char **argv )
 	io->mod->slowSPR=0;
 	io->mod->stretch=1.0;
 	io->splitByTree=0;
-
+	io->mod->omega_opt_spec=0;
+	io->mod->optKappa=1;
+	io->mod->optFreq=1;
+	io->mod->optDebug=0;
+	io->mod->nhotness=0;
+	io->mod->kappaci=0;
 
     io->mod->rootname = mCalloc(T_MAX_OPTION,sizeof(char));
     io->mod->hotnessstring = mCalloc(T_MAX_OPTION,sizeof(char));
@@ -63,8 +68,11 @@ void Read_Command_Line( option *io, int argc, char **argv )
     io->mod->motifstring = mCalloc(T_MAX_FILE,sizeof(char));
     io->mod->ambigfile = mCalloc(T_MAX_FILE,sizeof(char));
     io->mod->structTs_and_Tv = (ts_and_tv *)mCalloc(64*64,sizeof(ts_and_tv));//!< Added by Marcelo. 64 possible codons ... will be initialized together with the model parameters in set model default.
-
-
+    io->mod->omega_opt_string = mCalloc(T_MAX_OPTION,sizeof(char));
+    io->mod->baseCounts = mCalloc(12,sizeof(phydbl));
+    io->mod->in_align_file=mCalloc(T_MAX_FILE,sizeof(char));
+    For(c,12){io->mod->baseCounts[c]=0.0;}
+    io->mod->optIter=0;
 
     while((c = getopt_long_only(argc,argv,"qi:d:g:m:b:n:w:t:f:v:c:a:u:ho:s:p",longopts,NULL)) != -1)            //! Removed zk:x:l:e since they are not implemented  (Louis)
     {

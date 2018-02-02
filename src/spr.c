@@ -137,8 +137,7 @@ void Spr_Subtree(t_edge *b, t_node *link, t_tree *tree)
     	  n_moves = MIN(n_moves,2*tree->n_otu-3);
 
     	  if(tree->mod->s_opt->spr_pars){
-    		  printf("Doing parsimony spr - not supported\n");
-    		  exit(EXIT_FAILURE);
+    		  Lazy_Exit("Topology search",__FILE__,__LINE__);
     	  }else{
     		  best_move = Evaluate_List_Of_Regraft_Pos_Triple(tree->spr_list,n_moves,tree); //evaluate potential moves
     		  if(tree->spr_list[best_move]->lnL > tree->best_lnL + tree->mod->s_opt->min_diff_lk_move){
@@ -706,33 +705,44 @@ int Try_One_Spr_Move_Triple(spr *move, t_tree *tree)
 }
 /*********************************************************/
 
-void Speed_Spr_Loop(t_tree *tree)
-{
+void Speed_Spr_Loop(option *io){
+
+ if(io->mod->opt_heuristic_manuel==YES)Lazy_Exit("Heutristic SPR Topology search",__FILE__,__LINE__);
+
   phydbl lk_old;
   int init_thresh;
-  init_thresh                      = tree->mod->s_opt->pars_thresh;
-  tree->best_pars                  = 1E+8;
-  tree->mod->s_opt->spr_lnL        = 1; //changed by Ken 17/2/2017
-  tree->mod->s_opt->spr_pars       = 0;
-  tree->mod->s_opt->quickdirty     = 0;
-
-  if((tree->mod->s_opt->print) && (!tree->mod->quiet)) PhyML_Printf("\n. Maximizing likelihood (using SPR moves)...\n");
-
-  Lk(tree);//!< Added by Marcelo.
-  Print_Lk(tree,"[Initial Tree       ]");//!< Added by Marcelo.
-  if(tree->mod->print_trace){
-	  Print_Trace(tree);
+  init_thresh                      = io->mod->s_opt->pars_thresh;
+  int i,j;
+  For(i,io->ntrees){//copying these to subtrees
+	  t_tree* tree = io->tree_s[i];
+	  tree->best_pars                  = 1E+8;
+  	  tree->mod->s_opt->spr_lnL        = 1; //changed by Ken 17/2/2017
+  	  tree->mod->s_opt->spr_pars       = 0;
+  	  tree->mod->s_opt->quickdirty     = 0;
   }
+  if((io->mod->s_opt->print) && (!io->mod->quiet)) PhyML_Printf("\n. Maximizing likelihood (using SPR moves)...\n");
 
-  if(tree->mod->opt_heuristic_manuel==NO) //!Added by Marcelo
-  {
-  Optimiz_All_Free_Param(tree,(tree->mod->quiet)?(0):(tree->mod->s_opt->print));
-  tree->best_lnL = tree->c_lnL;
-  if(tree->mod->print_trace){
+  io->mod->update_eigen=YES;
+  Lk_rep(io);//!< Added by Marcelo.
+  Print_Lk_rep(io,"[Initial Tree       ]");//!< Added by Marcelo.
+  /*if(tree->mod->print_trace){
 	  Print_Trace(tree);
-  }
+  }*/
+
+  Optimiz_All_Free_Param(io,(io->mod->quiet)?(0):(io->mod->s_opt->print));
+  For(i,io->ntrees)io->tree_s[i]->best_lnL = io->tree_s[i]->c_lnL; //changed by Ken
+
+  /*if(tree->mod->print_trace){
+	  Print_Trace(tree);
+  }*/
   //added by Ken 8/3/2017
-  /* Optimise branch lengths */
+
+  // Optimise branch lengths
+#if defined OMP || defined BLAS_OMP
+#pragma omp parallel for if(io->splitByTree)
+#endif
+  For(i,io->ntrees){
+	  t_tree* tree=io->tree_s[i];
 	  int startnode = 0;
 	  if(tree->mod->whichrealmodel==HLP17){
 		  startnode=tree->mod->startnode;
@@ -758,89 +768,115 @@ void Speed_Spr_Loop(t_tree *tree)
 		  Print_Trace(tree);
 	  }
 	  Print_Lk(tree,"[Branch lengths     ]");
+	  //moved up into this loop because these variables are tree-specific (Ken 1/19/2018)
+	  tree->mod->s_opt->max_depth_path = 2*tree->n_otu-3;
+	  tree->mod->s_opt->spr_lnL        = 1;
+  }
+  //Lk_rep(io);
+  For(i,io->ntrees)io->replnL+=io->tree_s[i]->c_lnL; //CHANGE BACK - JUST USED FOR DEBUGGING
 
   /*****************************/
+  //SPR Loop
   lk_old = UNLIKELY;
-  tree->mod->s_opt->max_depth_path = 2*tree->n_otu-3;
-  tree->mod->s_opt->spr_lnL        = 1;
-  do
-    {
-      lk_old = tree->c_lnL;
-      Speed_Spr(tree,1);
-      if(tree->n_improvements){ //if there were improvements after the loop, optimize parameters
-    	  Optimiz_All_Free_Param(tree,(tree->mod->quiet)?(0):(tree->mod->s_opt->print));
+  do{
+      lk_old = io->replnL;
+      io->threads=0;
+#if defined OMP || defined BLAS_OMP
+#pragma omp parallel for if(io->splitByTree) private(j)
+#endif
+      For(i,io->ntrees){
+    	  t_tree* tree;
+#if defined OMP || defined BLAS_OMP
+#pragma omp critical
+#endif
+    	 {
+    		  tree=io->tree_s[io->threads++]; //ensures that subtrees are analyzed in order
+    		  printf("\nNow on %d %d",io->threads,tree->mod->num);
+    	 }
+    	 Speed_Spr(tree,1);
       }
-      if((!tree->n_improvements) || (FABS(lk_old-tree->c_lnL) < 1.)){
+      /*For(i,io->ntrees){
+          	t_tree* tree = io->tree_s[i];
+          	Speed_Spr(tree,1);
+          	printf("\ndone tree %d %d",i,io->tree_s[i]->mod->num);
+      }*/
+      int improvements=0;
+      For(i,io->ntrees){
+    	  improvements+=io->tree_s[i]->n_improvements;
+      }
+      io->replnL=0.0;
+      For(i,io->ntrees)io->replnL+=io->tree_s[i]->c_lnL; //CHANGE BACK - JUST USED FOR DEBUGGING
+      if(improvements){ //if there were improvements after the loop, optimize parameters
+    	  Optimiz_All_Free_Param(io,(io->mod->quiet)?(0):(io->mod->s_opt->print));
+      }
+      io->replnL=0.0;
+      For(i,io->ntrees)io->replnL+=io->tree_s[i]->c_lnL; //CHANGE BACK - JUST USED FOR DEBUGGING
+      if((!improvements) || (FABS(lk_old-io->replnL) < 1.)){
     	  break;//if there are no improvements, break
       }
-    }
-  while(1);
-
-
-    /*****************************/
-    lk_old = UNLIKELY;
-    do
-    {
-      lk_old = tree->c_lnL;
-      Simu(tree,10);
-      Optimiz_All_Free_Param(tree,(tree->mod->quiet)?(0):(tree->mod->s_opt->print));
-    }
-    while(FABS(lk_old - tree->c_lnL) > tree->mod->s_opt->min_diff_lk_global);
-    /*****************************/
-
-    /*****************************/
-    do
-    {
-      if(!Check_NNI_Five_Branches(tree)) break;
     }while(1);
+
     /*****************************/
-
-    /*   if((tree->mod->s_opt->print) && (!tree->mod->quiet)) PhyML_Printf("\n"); */
-  }
-  else if(tree->mod->opt_heuristic_manuel==YES) //!Added by Marcelo
-  {
-
-    Round_Optimize(tree,tree->data,tree->mod->roundMax_start); //! last parameter: max number of rounds
-
-    tree->best_lnL = tree->c_lnL;
-    /*****************************/
+    //NNI Loop while optimizing parameters
     lk_old = UNLIKELY;
-    tree->mod->s_opt->max_depth_path = 2*tree->n_otu-3;
-    tree->mod->s_opt->spr_lnL        = 0;
-    do
-    {
-      lk_old = tree->c_lnL;
-      Speed_Spr(tree,1);
-      if((!tree->n_improvements) || (FABS(lk_old-tree->c_lnL) < 1.)) break;
-    }
-    while(1);
-    /*****************************/
+    do{
+      lk_old = io->replnL;
+  	  int bri=0;
+  	  io->threads=0;
+#if defined OMP || defined BLAS_OMP
+#pragma omp parallel for if(io->splitByTree) private(j)
+#endif
+  	  For(i,io->ntrees){//PARALLELIZE
+    	  t_tree* tree;
+#if defined OMP || defined BLAS_OMP
+#pragma omp critical
+#endif
+    	  {
+    		  tree=io->tree_s[io->threads++];
+    		  printf("\nSimu now on %d %d",io->threads,tree->mod->num);
+    	  }
+  	      Simu(tree,10);
+  	   }
+      /*For(i,io->ntrees){//PARALLELIZE
+    	  t_tree* tree=io->tree_s[i];
+      	  Simu(tree,10);
+      }*/
+      io->both_sides=1;
+      io->replnL=0.0;
+      For(i,io->ntrees)io->replnL+=io->tree_s[i]->c_lnL; //CHANGE BACK - JUST USED FOR DEBUGGING
+      Optimiz_All_Free_Param(io,(io->mod->quiet)?(0):(io->mod->s_opt->print));
+      io->replnL=0.0;
+      For(i,io->ntrees)io->replnL+=io->tree_s[i]->c_lnL; //CHANGE BACK - JUST USED FOR DEBUGGING
+    }while(FABS(lk_old - io->replnL) > io->mod->s_opt->min_diff_lk_global);
 
     /*****************************/
-    lk_old = UNLIKELY;
-    do
-    {
-      lk_old = tree->c_lnL;
-      Simu(tree,10);
-    }
-    while(FABS(lk_old - tree->c_lnL) > tree->mod->s_opt->min_diff_lk_global);
+    //NNI loop without optmizing parameters
+    io->threads=0;
+#if defined OMP || defined BLAS_OMP
+#pragma omp parallel for if(io->splitByTree) private(j)
+#endif
+    For(i,io->ntrees){//PARALLELIZE
+         t_tree* tree;
+#if defined OMP || defined BLAS_OMP
+#pragma omp critical
+#endif
+     	  {
+     		  tree=io->tree_s[io->threads++];
+     		  printf("\nNNI now on %d %d",io->threads,tree->mod->num);
+     	  }
+           do{
+        	   if(!Check_NNI_Five_Branches(tree)) break;
+           }while(1);
+      }
+    /*For(i,io->ntrees){//PARALLELIZE
+       t_tree* tree=io->tree_s[i];
+       do{
+    	   if(!Check_NNI_Five_Branches(tree)) break;
+       }while(1);
+    }*/
     /*****************************/
 
-    Round_Optimize(tree,tree->data,tree->mod->roundMax_end); //! last parameter: max number of rounds
-
-    /*****************************/
-    do
-    {
-      if(!Check_NNI_Five_Branches(tree)) break;
-    }while(1);
-    /*****************************/
-
-
-    /*   if((tree->mod->s_opt->print) && (!tree->mod->quiet)) PhyML_Printf("\n"); */
-
-  }
-
-}
+ }
 /*********************************************************/
 
 void Speed_Spr(t_tree *tree, int max_cycles)

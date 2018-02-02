@@ -116,13 +116,18 @@ struct option longopts[] =
 	{"stretch",		  required_argument,NULL,154},  //!<Added by Ken
 	{"repfile",		  required_argument,NULL,155},  //!<Added by Ken
 	{"splitByTree",		  no_argument,NULL,156},  //!<Added by Ken
+	{"omegaOpt",		  required_argument,NULL,157},  //!<Added by Ken
+	{"optKappa",		  required_argument,NULL,158},  //!<Added by Ken
+	{"optFreq",		  required_argument,NULL,159},  //!<Added by Ken
+	{"optDebug",		  no_argument,NULL,160},  //!<Added by Ken
     {0,0,0,0}
 };
 
 
 void finishOptions(option * io)
 {
-    checkForRandStartTree(io);
+    int i,j;
+	checkForRandStartTree(io);
     checkModelCombinations(io);
     adaptForM4(io);
     createOutFiles(io);
@@ -150,39 +155,45 @@ void finishOptions(option * io)
 
     Set_Model_Name(io->mod);
 	
-	io->fp_out_tree  = Openfile(io->out_tree_file, io->writemode);
+	//io->fp_out_tree  = Openfile(io->out_tree_file, io->writemode);
 	io->fp_out_stats = Openfile(io->out_stats_file, io->writemode);
     setupFreqHandling(io);
 
     //set up HLP17 model
     //Added by Ken 12/7/2016
     io->mod->primary=1;
+    if(io->mod->optDebug)printf("\nmodel type opt %d\n",io->mod->modeltypeOpt);
     if(io->modeltypeOpt == HLP17){
     	setUpHLP17(io, io->mod);
     }
+    if(!io->mod->omega_opt_spec){
+    	strcpy(io->mod->omega_opt_string,"e");
+    }
+    int c;
+	char* minfo1 = strdup(io->mod->omega_opt_string);
+   	io->mod->omega_part_opt = (int*)mCalloc(io->mod->nomega_part,sizeof(int ));
+   	io->mod->omega_part_ci = (int*)mCalloc(io->mod->nomega_part,sizeof(int ));
+   	io->mod->omega_part_uci = (phydbl*)mCalloc(io->mod->nomega_part,sizeof(phydbl ));
+   	io->mod->omega_part_lci = (phydbl*)mCalloc(io->mod->nomega_part,sizeof(phydbl ));
+   	for(c=0;c<io->mod->io->mod->nomega_part;c++){
+   	    char* mtemp1 = strsep(&minfo1, ",");
+   	      if(strcmp(mtemp1,"e")==0 || strcmp(mtemp1,"ce")==0){
+   	        io->mod->omega_part_opt[c]=1;
+   	        io->mod->omega_part[c]=0.4;
+   	        if(strcmp(mtemp1,"ce")==0)io->mod->omega_part_ci[c]=1;
+   	      }else if(strcmp(mtemp1,"i")==0 || strcmp(mtemp1,"ci")==0){
+   	    	io->mod->omega_part_opt[c]=2;
+   	    	io->mod->omega_part[c]=0.4;
+   	    	if(strcmp(mtemp1,"ci")==0)io->mod->omega_part_ci[c]=-1;
+   	      }else{
+   	        io->mod->omega_part_opt[c]=0;
+   	        io->mod->omega_part[c]=atof(mtemp1);
+   	      }
+   	 }
+
 }
 
 void setUpHLP17(option* io, model *mod){
-
-	/*mod->motifstringopt=0;
-	mod->hotnessstringopt=0;
-	mod->partfilespec=0;
-	mod->rootfound=0;
-	mod->partfile="NONE";
-	mod->ambigprint=0;
-	mod->nomega_part=1;
-	mod->nparts=1;
-	mod->ambigprint=0;
-	mod->startnode=0;
-	mod->slowSPR=0;
-	mod->stretch=1.0;
-
-	mod->rootname = mCalloc(T_MAX_OPTION,sizeof(char));
-	mod->hotnessstring = mCalloc(T_MAX_OPTION,sizeof(char));
-	mod->aamodel = mCalloc(T_MAX_OPTION,sizeof(char));
-	mod->partfile = mCalloc(T_MAX_FILE,sizeof(char));
-	mod->motifstring = mCalloc(T_MAX_FILE,sizeof(char));
-	mod->ambigfile = mCalloc(T_MAX_FILE,sizeof(char));*/
 
    	mod->opthotness=1;
    	char *minfo1,*minfo2, *mtemp1;
@@ -235,12 +246,20 @@ void setUpHLP17(option* io, model *mod){
    	while ((mtemp1 = strsep(&minfo1, ",")) != NULL){mod->nhotness++;}
    	mod->hotness = (phydbl*)mCalloc(mod->nhotness,sizeof(phydbl));
    	mod->hoptindex = (int*)mCalloc(mod->nhotness,sizeof(int ));
+   	mod->hoptci= (int*)mCalloc(mod->nhotness,sizeof(int ));
+   	mod->hoptuci= (phydbl*)mCalloc(mod->nhotness,sizeof(phydbl));
+   	mod->hoptlci=(phydbl*)mCalloc(mod->nhotness,sizeof(phydbl));
    	for(c=0;c<mod->nhotness;c++){
    	    mtemp1 = strsep(&minfo2, ",");
-   	      if (strcmp(mtemp1,"e")==0){
+   	      if (strcmp(mtemp1,"e")==0 || strcmp(mtemp1,"ce")==0){
    	        mod->hoptindex[c]=1;
    	        mod->hotness[c]=0.0;
-   	      }else{
+   	        if(strcmp(mtemp1,"ce")==0 && mod->primary)mod->hoptci[c]=1;
+   	      }else if (strcmp(mtemp1,"i")==0 || strcmp(mtemp1,"ci")==0){
+     	        mod->hoptindex[c]=2;
+     	        mod->hotness[c]=0.0;
+     	       if(strcmp(mtemp1,"ci")==0 && !mod->primary)mod->hoptci[c]=1;
+     	  }else{
    	        mod->hoptindex[c]=0;
    	        mod->hotness[c]=atof(mtemp1);
    	      }
@@ -265,13 +284,13 @@ void setUpHLP17(option* io, model *mod){
    	}
    	//Read in hotspot tables
    	int mot;
-   	printf(". Loading hotspot tables..\n");
+   	if(mod->primary)printf(". Loading hotspot tables..\n");
    	mod->hotspotcmps = (phydbl**)mCalloc(mod->nmotifs,sizeof(phydbl *));
    	for(mot = 0; mot < mod->nmotifs; mot++){
    	    char *infile = mCalloc(strlen(HTABLE)+strlen(mod->motifs[mot])+1,sizeof(char));
    	    strcpy(infile, HTABLE);
    	    strcat(infile, mod->motifs[mot]);
-   	    printf("%s\n",infile);
+   	    if(mod->primary)printf("%s\n",infile);
    	    FILE *file = fopen(infile, "r");
    	    if(file == NULL){
    	    	printf("\n\nCouldn't open %s\n\n",infile);
@@ -315,12 +334,12 @@ void setUpHLP17(option* io, model *mod){
    	for(parti=0;parti<mod->nparts;parti++){
    		read = getline(&linepart,&len,file);
    		char* l1 = strsep(&linepart,":");
-   		printf("%s\t",l1);
+   		if(mod->primary)printf("%s\t",l1);
    		mod->partNames[parti] = (char*)mCalloc(T_MAX_OPTION,sizeof(char));
    		strcpy(mod->partNames[parti],l1);
    		//io->mod->partNames[parti] = l1;
    		char* l2 = strsep(&linepart,"\n");
-   		printf("%s\n",l2);
+   		if(mod->primary)printf("%s\n",l2);
    		char *ltemp1;
    		while ((ltemp1 = strsep(&l2, ",")) != NULL){
 			 int start = atoi((strsep(&ltemp1,".")));
@@ -341,9 +360,9 @@ void setUpHLP17(option* io, model *mod){
    	   		printf("\nPosition %d not specified in partition file!\n",indexi);
    	   		exit(EXIT_FAILURE);
    	   	}
-   		printf("%d ",mod->partIndex[indexi]);
+   	 if(mod->primary)printf("%d ",mod->partIndex[indexi]);
    	}
-   	printf("\n");
+   	if(mod->primary)printf("\n");
     }else{
    	 mod->nparts=1;
    	 mod->nomega_part=mod->nparts;
@@ -426,9 +445,9 @@ void createOutFiles(option * io)
     }
     
     if(io->append_run_ID) {
-        strcat(io->out_tree_file, "_");
+        //strcat(io->out_tree_file, "_");
         strcat(io->out_stats_file, "_");
-        strcat(io->out_tree_file, io->run_id_string);
+        //strcat(io->out_tree_file, io->run_id_string);
         strcat(io->out_stats_file, io->run_id_string);
     }
     
@@ -442,7 +461,7 @@ void createOutFiles(option * io)
     } else {
         strcat(io->out_stats_file, "");
     }
-    strcat(io->out_tree_file, "");
+    //strcat(io->out_tree_file, "");
 }
 
 void cleanupParameters(option * io)
@@ -1907,6 +1926,7 @@ int mainOptionSwitch(int opt, char * optarg, option * io)
                 strcpy(io->nt_or_cd, "codons");
                 io->datatype              = CODON;
                 io->modeltypeOpt          = GY;
+                printf("GY MODEL USED\n");
             } else if(strcmp(optarg, "MG") == 0) {
                 strcpy(io->nt_or_cd, "codons");
                 io->datatype              = CODON;       
@@ -2175,13 +2195,13 @@ int mainOptionSwitch(int opt, char * optarg, option * io)
             	strcpy(io->datafs[0],optarg);
             	printf("trees: %d\n",io->ntrees);
 
-                //strcpy(io->mod->in_align_file, optarg);
+                strcpy(io->mod->in_align_file, optarg);
                 //io->mod->fp_in_align = Openfile(io->mod->in_align_file, 0);
-                strcpy(io->out_tree_file, optarg);
+                //strcpy(io->out_tree_file, optarg);
 #ifdef PHYML
-                strcat(io->out_tree_file, "_igphyml_tree.txt");
+                //strcat(io->out_tree_file, "_igphyml_tree.txt");
 #else
-                strcat(io->out_tree_file, "_mc_tree.txt");
+                //strcat(io->out_tree_file, "_mc_tree.txt");
 #endif
                 strcpy(io->out_stats_file, optarg);
 #ifdef PHYML
@@ -2199,12 +2219,21 @@ int mainOptionSwitch(int opt, char * optarg, option * io)
         case 't': case  11: {        
             if(io->modeltypeOpt < 0) { // if its a GY, MG or YAP model - PCM gets fixed later, no worries
                 if ((strcmp(optarg, "e") == 0)         ||
+                	(strcmp(optarg, "ce") == 0)         ||
                     (strcmp(optarg, "E") == 0)         ||
                     (strcmp(optarg, "estimated") == 0) ||
                     (strcmp(optarg, "ESTIMATED") == 0)) {
                     io->mod->kappa                 = 1.0;
                     io->mod->s_opt->opt_kappa      = 1;
                     io->userWantsKappa             = YES;
+                    io->mod->optKappa=1;//added by Ken 25/1/2018
+                    if(strcmp(optarg, "ce") == 0)io->mod->kappaci=1;
+                }else if ((strcmp(optarg, "i") == 0) || (strcmp(optarg, "ci") == 0)) {
+                        io->mod->kappa                 = 1.0;
+                        io->mod->s_opt->opt_kappa      = 1;
+                        io->userWantsKappa             = YES;
+                        io->mod->optKappa=2;//added by Ken 25/1/2018
+                        if(strcmp(optarg, "ci") == 0)io->mod->kappaci=-1;
                 } else if(strcmp(optarg, "KAP1") == 0 || strcmp(optarg,"kap1") == 0) { //!< For all KAPn, See Kosiol 2007.
                     io->kappaECM              = kap1;
                     io->mod->s_opt->opt_kappa = 0;
@@ -2249,6 +2278,7 @@ int mainOptionSwitch(int opt, char * optarg, option * io)
                     io->mod->kappa = (phydbl)atof(optarg);
                     io->mod->s_opt->opt_kappa  = 0;
                     io->mod->s_opt->opt_lambda = 0;
+                    io->mod->optKappa=0;
                 }
             } else if((io->modeltypeOpt != JC69) &&
                       (io->modeltypeOpt != F81)  &&
@@ -2315,6 +2345,9 @@ int mainOptionSwitch(int opt, char * optarg, option * io)
            	#if defined OMP || defined BLAS_OMP
            	omp_set_dynamic(0);
            	omp_set_num_threads(threads);
+           	/*if(threads==1)io->nthreads=threads;
+           	else io->nthreads=threads-1;*/
+
 			#else
            	printf("\n. Can't specify number of threads unless compiled with OMP!\n");
            	exit(EXIT_FAILURE);
@@ -2344,12 +2377,13 @@ int mainOptionSwitch(int opt, char * optarg, option * io)
            	      errorMsg = tmp;
            	} else {
            	     //strcpy(io->in_align_file, optarg);
-           	     strcpy(io->out_tree_file, optarg);
-           	     strcat(io->out_tree_file, "_igphyml_tree.txt");
+           	     //strcpy(io->out_tree_file, optarg);
+           	     //strcat(io->out_tree_file, "_igphyml_tree.txt");
                     strcpy(io->out_stats_file, optarg);
                     strcat(io->out_stats_file, "_igphyml_stats.txt");
            	}
            	io->repMode=1;
+           	strcpy(io->mod->in_align_file,optarg);
            	FILE *file = fopen(optarg, "r");
            	int fscn =  fscanf(file, "%d\n",&io->ntrees); //number of datasets
            	io->treefs = mCalloc(io->ntrees,sizeof(char*));	//tree files
@@ -2359,6 +2393,7 @@ int mainOptionSwitch(int opt, char * optarg, option * io)
            	io->tree_s = (t_tree**)mCalloc(io->ntrees,sizeof(t_tree*)); //tree pointers
            	io->mod_s = (model**)mCalloc(io->ntrees,sizeof(model*)); //model pointers
            	printf("trees: %d\n",io->ntrees);
+           	io->mod->ntrees=io->ntrees;
            	int i;
            	For(i,io->ntrees){
            		io->datafs[i] = mCalloc(T_MAX_FILE,sizeof(char));
@@ -2376,9 +2411,21 @@ int mainOptionSwitch(int opt, char * optarg, option * io)
         }
 
         case 156: {
-                   	io->splitByTree=1;
-                   	break;
-                }
+           	io->splitByTree=1;
+           	io->mod->splitByTree=1;
+                  	break;
+            }
+
+        case 157: {
+        	strcpy(io->mod->omega_opt_string,optarg);
+        	io->mod->omega_opt_spec=1;
+            break;
+        }
+        case 160: {
+           	io->mod->optDebug=1;
+             break;
+         }
+
             //////////////////////////////////////////////////////////////////////////////////////
             // --multiple
             //

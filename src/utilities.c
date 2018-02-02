@@ -544,7 +544,7 @@ calign *Compact_Data(align **data, option *io, model *mod)
   cdata_tmp->crunch_len                 = n_patt;
   For(i,n_otu) cdata_tmp->c_seq[i]->len = n_patt;
   
-  if(!io->quiet) PhyML_Printf("\n. %d patterns found (out of a total of %d sites). \n",n_patt,data[0]->len);
+  if(!io->quiet && !mod->quiet) PhyML_Printf("\n. %d patterns found (out of a total of %d sites). \n",n_patt,data[0]->len);
   
   if((io->rm_ambigu) && (n_ambigu)) PhyML_Printf("\n. Removed %d columns of the alignment as they contain ambiguous characters (e.g., gaps) \n",n_ambigu);
   
@@ -564,7 +564,7 @@ calign *Compact_Data(align **data, option *io, model *mod)
     
   }
   
-  if(!io->quiet) PhyML_Printf("\n. %d sites without polymorphism (%.2f%c).\n",n_invar,100.*(phydbl)n_invar/data[0]->len,'%');
+  if(!io->quiet && !mod->quiet) PhyML_Printf("\n. %d sites without polymorphism (%.2f%c).\n",n_invar,100.*(phydbl)n_invar/data[0]->len,'%');
   
   cdata_tmp->obs_pinvar = (phydbl)n_invar/data[0]->len;
   
@@ -2484,10 +2484,13 @@ void Bootstrap(t_tree *tree)
     }
     else
     {
-      if(boot_tree->mod->s_opt->opt_subst_param || boot_tree->mod->s_opt->opt_bl)
-        Round_Optimize(boot_tree,boot_tree->data,ROUND_MAX);
-      else
+      if(boot_tree->mod->s_opt->opt_subst_param || boot_tree->mod->s_opt->opt_bl){
+    	  printf("BOOTSTRAP NOT YET SUPPORTED");
+      	  exit(EXIT_FAILURE);
+        //Round_Optimize(boot_tree,boot_tree->data,ROUND_MAX);
+      }else{
         Lk(boot_tree);
+      }
     }
     
     Free_Bip(boot_tree);
@@ -2624,13 +2627,13 @@ void Make_Model_Complete(model *mod)
 
   int i;
   for(i=0;i<mod->nparts;i++){
-	  printf("Making q mats %d size\n",mod->n_w_catg*mod->ns*mod->ns);
+	  if(mod->optDebug)printf("Making q mats %d size\n",mod->n_w_catg*mod->ns*mod->ns);
 	  mod->qmat_part[i]=(phydbl *)mCalloc(mod->n_w_catg*mod->ns*mod->ns,sizeof(phydbl));
 	  mod->Pmat_part[i]=(phydbl *)mCalloc(mod->n_catg*mod->ns*mod->ns,sizeof(phydbl));
 	  mod->qmat_buff_part[i] = (phydbl *)mCalloc(mod->n_w_catg*mod->ns*mod->ns,sizeof(phydbl));
   }
   mod->qmat_part[0][0]=1.0;
-  printf("just tried1");
+  if(mod->optDebug)printf("just tried1");
 
 
   if(mod->n_rr_branch){
@@ -2692,7 +2695,7 @@ void Make_Model_Complete(model *mod)
     }
   }
   mod->qmat_part[0][i]=1.0;
-  printf("just tried2");
+  if(mod->optDebug)printf("just tried2");
 }
 
 /*********************************************************/
@@ -2961,26 +2964,38 @@ model *Copy_Partial_Model(model *ori)
   cpy->in_align_file = (char *)mCalloc(T_MAX_FILE,sizeof(char)); //!< Name of input aligned sequences file.
   cpy->out_trace_tree_file  = (char *)mCalloc(T_MAX_FILE,sizeof(char)); //!< Name of output file containing each phylogeny explored during tree search.  //added by Ken 9/2/2017
   cpy->out_trace_stats_file = (char *)mCalloc(T_MAX_FILE,sizeof(char)); //!< Name of output file containing each phylogeny explored during tree search. //added by Ken 9/2/201
+  cpy->baseCounts=mCalloc(12,sizeof(phydbl));//basecounts
+  int i;
+  For(i,12){cpy->baseCounts[i]=0.0;}
 
+  cpy->ambigprint=ori->ambigprint;
   cpy->nparts=ori->nparts;
   cpy->n_otu = ori->n_otu;
   cpy->init_len = ori->init_len;
   cpy->state_len = ori->state_len;
   cpy->whichrealmodel = ori->whichrealmodel;
   cpy->initqrates = ori->initqrates;
-  printf("initqrates %d\n",cpy->initqrates);
+  //printf("initqrates %d\n",cpy->initqrates);
   //models need different optimization parameters
   cpy->s_opt = Make_Optimiz();
   Copy_Optimiz(cpy->s_opt,ori->s_opt);
   cpy->testcondition = ori->testcondition;
+  cpy->optDebug=ori->optDebug;
+  cpy->optKappa=ori->optKappa;
+  cpy->optIter=ori->optIter;
+  cpy->ntrees = ori->ntrees;
+  cpy->splitByTree=ori->splitByTree;
 
-  printf("making model complete\n");
-  printf("%d\n",cpy->n_w_catg);
-  printf("%d\n",cpy->n_catg);
+  if(ori->optDebug){
+	  printf("making model complete\n");
+	  printf("%d\n",cpy->n_w_catg);
+	  printf("%d\n",cpy->n_catg);
+  }
   Make_Model_Complete(cpy);
-  printf("made model complete\n");
-
-  printf("nparts %d\n",cpy->nparts);
+  if(ori->optDebug){
+	  printf("made model complete\n");
+	  printf("nparts %d\n",cpy->nparts);
+  }
 
   if(ori->io->datatype==CODON) //!< Added by Marcelo.
   {
@@ -2988,11 +3003,11 @@ model *Copy_Partial_Model(model *ori)
     cpy->omegas      = (phydbl *)mCalloc(cpy->n_w_catg,sizeof(phydbl));
   }
   cpy->qmat_part[0][0]=1.0;
-  printf("just tried3");
+  //printf("just tried3");
 
-  printf("recording model\n");
+  //printf("recording model\n");
   Record_Partial_Model(ori,cpy);
-  printf("recorded model\n");
+  //printf("recorded model\n");
 
 #ifdef M4
   if(ori->m4mod) cpy->m4mod = M4_Copy_M4_Model(ori, ori->m4mod);
@@ -3049,16 +3064,16 @@ void Record_Partial_Model(model *ori, model *cpy)
     printf("about to pis\n");
   }*/
   cpy->qmat_part[0][i]=1.0;
-  printf("just tried");
+  if(ori->optDebug)printf("just tried");
 
-  printf("about to do qmats\n");
+  if(ori->optDebug)printf("about to do qmats\n");
   For(i,ori->n_w_catg*cpy->ns*cpy->ns){
 	  cpy->qmat_part[0][i]=ori->qmat_part[0][i];
 	  cpy->qmat_buff_part[0][i] = ori->qmat_buff_part[0][i];
   }
-  printf("did assigning a qmat value\n");
-  cpy->qmat_part[0][1]=1.0;
-  printf("did qmats\n");
+  //printf("did assigning a qmat value\n");
+  //cpy->qmat_part[0][1]=1.0;
+  //printf("did qmats\n");
 
   For(i,ori->n_w_catg){
     cpy->eigen->size = ori->eigen->size;
@@ -3086,33 +3101,43 @@ void Record_Partial_Model(model *ori, model *cpy)
   if(ori->io->datatype==CODON) //!< Added by Marcelo.
   {
     int j;
-    printf("assigning omegas\n");
+    if(ori->optDebug)printf("assigning omegas\n");
+
+
+    if(ori->kappaci==-1)cpy->kappaci=1;
+    else cpy->kappaci=0;
 
     cpy->omegaSiteVar = ori->omegaSiteVar;
     //cpy->omega        = ori->omega;
     cpy->omega_part=mCalloc(ori->nomega_part,sizeof(phydbl));
+    cpy->omega_part_opt=mCalloc(ori->nomega_part,sizeof(int));
+    cpy->omega_part_ci = (int*)mCalloc(cpy->nomega_part,sizeof(int ));
+    cpy->omega_part_uci = (phydbl*)mCalloc(cpy->nomega_part,sizeof(phydbl ));
+    cpy->omega_part_lci = (phydbl*)mCalloc(cpy->nomega_part,sizeof(phydbl ));
     cpy->nomega_part = ori->nomega_part;
     int omegai; //added by Ken 17/8/2016
     for(omegai=0;omegai<ori->nomega_part;omegai++){
-    	printf("omega: %lf\t%d\t%d\n",ori->omega_part[omegai],omegai,cpy->nomega_part);
+    	if(ori->optDebug)printf("omega: %lf\t%d\t%d\n",ori->omega_part[omegai],omegai,cpy->nomega_part);
     	cpy->omega_part[omegai]    = ori->omega_part[omegai];
+    	cpy->omega_part_opt[omegai]=ori->omega_part_opt[omegai];
+    	if(ori->omega_part_ci[omegai]==-1)cpy->omega_part_ci[omegai]=1;
+    	else cpy->omega_part_ci[omegai]=0;
     }
     cpy->nomega_part = ori->nomega_part;
-    printf("assigned omegas\n");
-
+    if(ori->optDebug)printf("assigned omegas\n");
     cpy->omega_old    = ori->omega_old;
     cpy->freq_model   = ori->freq_model;
     cpy->genetic_code = ori->genetic_code;
-    printf("original model name: %s\n",ori->modelname);
+    if(ori->optDebug)printf("original model name: %s\n",ori->modelname);
     cpy->modelname=mCalloc(100,sizeof(char));
     strcpy(cpy->modelname,ori->modelname);
-    printf("here %s\n",cpy->modelname);
+    if(ori->optDebug)printf("here %s\n",cpy->modelname);
     /*For(i,cpy->num_base_freq)
     {
       cpy->base_freq[i]     = ori->base_freq[i];
       cpy->uns_base_freq[i] = ori->uns_base_freq[i];
     }*/
-    printf("here\n");
+    if(ori->optDebug)printf("here\n");
 
 
     cpy->nkappa             = ori->nkappa;
@@ -3121,7 +3146,7 @@ void Record_Partial_Model(model *ori, model *cpy)
       cpy->pkappa[i]        = ori->pkappa[i];
       cpy->unspkappa[i]     = ori->unspkappa[i];
     }
-    printf("here\n");
+    if(ori->optDebug)printf("here\n");
     For(j,ori->n_w_catg)
     {
     /*  cpy->mr_w[j]              = ori->mr_w[j];
@@ -3131,7 +3156,7 @@ void Record_Partial_Model(model *ori, model *cpy)
     }
 
     copyIOtoMod(ori->io,cpy);
-    printf("datatype: %d\n",cpy->datatype);
+    if(ori->optDebug)printf("datatype: %d\n",cpy->datatype);
     cpy->structTs_and_Tv  = (ts_and_tv *)mCalloc(64*64,sizeof(ts_and_tv));//!< Added by Marcelo. 64 possible codons ... will be initialized together with the model parameters in set model default.
     if(cpy->datatype==CODON) Make_Ts_and_Tv_Matrix(cpy->io,cpy);
 
@@ -3139,7 +3164,7 @@ void Record_Partial_Model(model *ori, model *cpy)
     	  cpy->Bmat = (phydbl *)mCalloc(3721,sizeof(phydbl));
     	  setUpHLP17(ori->io,cpy);
     }
-    printf("here\n");
+    if(ori->optDebug)printf("here\n");
   }
 }
 /*********************************************************/
@@ -3181,7 +3206,7 @@ option *Make_Input()
   int i;
   option* io               = (option *)mCalloc(1,sizeof(option)); 
   
-  io->out_tree_file        = (char *)mCalloc(T_MAX_FILE,sizeof(char)); //!< Name of output tree file.
+  //io->out_tree_file        = (char *)mCalloc(T_MAX_FILE,sizeof(char)); //!< Name of output tree file.
   io->out_trees_file       = (char *)mCalloc(T_MAX_FILE,sizeof(char)); //!< Name of output tree file.
   io->out_boot_tree_file   = (char *)mCalloc(T_MAX_FILE,sizeof(char)); //!< Name of output boostrapped tree file.
   io->out_boot_stats_file  = (char *)mCalloc(T_MAX_FILE,sizeof(char)); //!< Name of output boostrap statistics file.
@@ -5541,6 +5566,34 @@ void Print_Lk(t_tree *tree, char *string)
 
 /*********************************************************/
 
+void Print_Lk_rep(option* io, char *string)
+{
+#if defined OMP || defined BLAS_OMP
+
+  io->t_current=omp_get_wtime();
+
+#else
+
+  time(&(io->t_current));
+
+#endif
+  PhyML_Printf("\n. (%5d sec) [R %15.4f] %s",(int)(io->t_current-io->t_beg),io->replnL,string);
+#ifndef QUIET
+  fflush(NULL);
+#endif
+}
+
+/*********************************************************/
+
+void Lazy_Exit(char *string,char* file, int line){
+	printf("Sorry, %s in file %s line %d isn't supported yet,\n",string,file,line);
+	printf("probably because Ken is lazy -\\ (:/)_ /-");
+	printf("\n");
+	exit(EXIT_FAILURE);
+}
+
+/*********************************************************/
+
 void Print_Pars(t_tree *tree)
 {
 #if defined OMP || defined BLAS_OMP
@@ -5955,13 +6008,13 @@ t_tree *Read_User_Tree(calign *cdata, model *mod, option *io)
   t_tree *tree;
   
   
-  PhyML_Printf("\n. Reading user tree...\n"); fflush(NULL);
+  if(!mod->quiet)PhyML_Printf("\n. Reading user tree...\n"); fflush(NULL);
   if(io->n_trees == 1) rewind(mod->fp_in_tree);
   tree = Read_Tree_File_Phylip(mod->fp_in_tree);
   if(!tree) Exit("\n. Input tree not found...\n");
   /* Add branch lengths if necessary */
   if(!tree->has_branch_lengths || io->nobl){ PhyML_Printf("\n. Tree does not have branch lengths or you chose to ignore them...\n"); fflush(NULL);Add_BioNJ_Branch_Lengths(tree,cdata,mod);}
-  else PhyML_Printf("\n. The user tree does have branch lengths...\n");
+  else if(!mod->quiet) PhyML_Printf("\n. The user tree does have branch lengths...\n");
   return tree;
 }
 
@@ -6978,6 +7031,20 @@ void Get_Base_Freqs_CODONS_FaXb(calign *cdata, align **data, int freqModel, mode
         fC3 = C3/(A3+C3+G3+T3);
         fG3 = G3/(A3+C3+G3+T3);
         fT3 = T3/(A3+C3+G3+T3);
+
+        mod->baseCounts[0] = T1;//Added by Ken 17/1/2018
+        mod->baseCounts[1] = C1;
+        mod->baseCounts[2] = A1;
+        mod->baseCounts[3] = G1;
+        mod->baseCounts[4] = T2;
+        mod->baseCounts[5] = C2;
+        mod->baseCounts[6]= A2;
+        mod->baseCounts[7]= G2;
+        mod->baseCounts[8]= T3;
+        mod->baseCounts[9]= C3;
+        mod->baseCounts[10] = A3;
+        mod->baseCounts[11] = G3;
+        //printf("k %d\n",k);
       }
       
       cdata->b_frq[0 ] = fT1;
@@ -6992,10 +7059,16 @@ void Get_Base_Freqs_CODONS_FaXb(calign *cdata, align **data, int freqModel, mode
       cdata->b_frq[9] = fC3;
       cdata->b_frq[10] = fA3;
       cdata->b_frq[11] = fG3;
+      For(i,12)cdata->b_frq[i]=roundf(cdata->b_frq[i]*10000.0f)/10000.0f; //ADDED BY KEN - REMOVE
+      /*For(i,12)printf("bfrq: %lf\n",cdata->b_frq[i]);
       
-      if(freqModel==CF3X4) CF3x4(cdata->b_frq, mod->genetic_code);
-      
+      //if(freqModel==CF3X4) CF3x4(cdata->b_frq, mod->genetic_code);
+      printf("\n");
+      For(i,12)printf("bfrq: %lf\n",cdata->b_frq[i]);
+      printf("\n");*/
       For(i,mod->num_base_freq) mod->base_freq[i]=cdata->b_frq[i];
+      //For(i,12)printf("bfrq: %lf\n",mod->base_freq[i]);
+
       
       break;
     }
@@ -9520,9 +9593,9 @@ void Make_Ts_and_Tv_Matrix(option *io, model* mod)//!< Added by Marcelo. Store t
   int i,j, numSensecodons, k, icodon[3], jcodon[3], nts, ntv, diff, codoni, codonj,sSub, caseK07;
   ts_and_tv *mat;
   
-  printf("tstv1\n");
+  if(mod->optDebug)printf("tstv1\n");
   mat=mod->structTs_and_Tv;//was io->
-  printf("tstv %d\n",mat[0].sSub);
+  if(mod->optDebug)printf("tstv %d\n",mat[0].sSub);
   numSensecodons=mod->ns;  //was io-> mod Ken 9/1/2018
   
   For(i,numSensecodons)

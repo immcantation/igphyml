@@ -206,7 +206,8 @@ void Init_Tips_At_One_Site_AA_Int(char aa, int pos, short int *p_pars)
   case 'Z' : p_pars[pos+5]  = 1; break;/* Glutamine */
 
   case 'X' : case '?' : case '-' : For(i,20) p_pars[pos+i] = 1; break;
-  default :
+  default :			//printf("here\n");
+
     {
       PhyML_Printf("\n. Unknown character state : %c\n",aa);
       Exit("\n. Init failed (check the data type)\n");
@@ -325,12 +326,71 @@ void Pre_Order_Lk(t_node *a, t_node *d, t_tree *tree)
 	}
     }
 }
+/*********************************************************
+ * Optimization code:
+ * 0: do not optimize upper model, copy from upper to lower models
+ * 1: optimize upper, copy from upper to lower
+ * 2: optimize lower, do not copy from upper to lower
+ * 3: do not optimize lower model, do not copy from upper to lower
+ */
+//added by Ken 17/1/2018
+
+
+phydbl Lk_rep(option *io){
+	phydbl replnL = 0.0;
+	//copy parameters to submodels
+	int i,j;
+	For(i,io->ntrees){
+		model* mod=io->mod_s[i];
+		t_tree* tree=io->tree_s[i];
+		tree->both_sides=io->both_sides;
+		mod->update_eigen=io->mod->update_eigen;
+		For(j,io->mod->nomega_part){ //copy omega values if specified
+			if(io->mod->omega_part_opt[j]<2 || io->mod->optIter==0){
+				mod->omega_part[j]=io->mod->omega_part[j];
+				//printf("omega %lf\n",mod->omega_part[j]);
+			}
+		}
+		if(io->mod->optFreq<1 || io->mod->optIter==0){ //copy frequencies if specified
+			For(j,12){//assumes CF3X4 -\_(:/)_/-
+				mod->base_freq[j]=io->mod->base_freq[j];
+				mod->uns_base_freq[j]=io->mod->uns_base_freq[j];
+			}
+		}
+		if(io->mod->optKappa<2 || io->mod->optIter==0){//copy kappa if specified
+			mod->kappa=io->mod->kappa;
+		}
+		if(io->mod->opthotness || io->mod->optIter==0){ //copy hotness if specified
+			For(j,io->mod->nhotness){
+				if(io->mod->hoptindex[j]<2 || io->mod->optIter==0){
+					mod->hotness[j]=io->mod->hotness[j];
+				}
+			}
+		}
+	}
+
+#if defined OMP || defined BLAS_OMP
+#pragma omp parallel for if(io->splitByTree)
+#endif
+	For(i,io->ntrees){ //do likelihood calculations in parallel
+		t_tree* tree= io->tree_s[i];
+		//if(io->mod->optDebug)printf("Doing lk\n");
+		Lk(tree);
+	}
+	For(i,io->ntrees){
+		replnL += io->tree_s[i]->c_lnL;
+	}
+	io->replnL=replnL;
+	if(io->mod->optDebug)printf("\nreplikelihood %lf",replnL);
+	return replnL;
+}
 
 
 
 /*********************************************************/
 phydbl Lk(t_tree *tree)
 {
+//printf("\nboth sides: %d %d",tree->both_sides,tree->mod->update_eigen);
   int br, n_patterns, n_edges;  
   n_edges=2*tree->n_otu-3;
   tree->old_lnL = tree->c_lnL;
@@ -346,7 +406,6 @@ phydbl Lk(t_tree *tree)
   }
   
   n_patterns = tree->n_pattern;
-  
   Set_Model_Parameters(tree->mod);
   #ifdef TIMES
   if((tree->rates) && (tree->rates->bl_from_rt)) RATES_Update_Cur_Bl(tree);
@@ -355,12 +414,10 @@ phydbl Lk(t_tree *tree)
  
   #if defined OMP || defined BLAS_OMP
   //just commented out for testing
- // #pragma omp parallel for if(tree->mod->datatype==CODON)
+  #pragma omp parallel for if(tree->mod->datatype==CODON && !tree->mod->splitByTree)
    
   #endif
-   
   For(br,n_edges) Update_PMat_At_Given_Edge(tree->t_edges[br],tree);
-  
 
  // For(br,2*tree->n_otu-3) printf("%lf\n",tree->t_edges[br]->l);
   //added and modified by Ken to start likelihood calculation at specified node
@@ -388,9 +445,15 @@ phydbl Lk(t_tree *tree)
 	  if(tree->data->wght[tree->curr_site] > SMALL && tree->mod->whichrealmodel==HLP17) Lk_Core_UPP(tree->noeud[startnode]->b[0],tree,tree->noeud[startnode],tree->noeud[startnode]->b[0]->des_node);
 	  else if(tree->data->wght[tree->curr_site] > SMALL) Lk_Core(tree->noeud[startnode]->b[0],tree);
   }
-
   Adjust_Min_Diff_Lk(tree);
-  
+  if(tree->mod->optDebug){
+#pragma omp critical
+	  printf("\nomega %d %lf %lf %lf %lf %lf %lf",tree->mod->num,tree->mod->omega_part[0],tree->mod-> kappa,tree->c_lnL,tree->mod->qmat_part[0][1],tree->mod->hotness[0],tree->mod->hotness[1]);
+	  int i;
+#pragma omp critical
+	  For(i,12)printf(" %lf",tree->mod->uns_base_freq[i]);
+  }
+
   return tree->c_lnL;
 }
 
@@ -884,7 +947,7 @@ phydbl Lk_Core_UPP(t_edge *b, t_tree *tree, t_node *anc, t_node *d)
 
   #if defined OMP || defined BLAS_OMP
   //just commented out for testing
-  //#pragma omp parallel for if(tree->mod->n_w_catg>1) private(site_lk_cat,sum,k,l)
+  #pragma omp parallel for if(tree->mod->n_w_catg>1  && !tree->mod->splitByTree) private(site_lk_cat,sum,k,l)
 
   #endif
 
@@ -1440,12 +1503,13 @@ n_v1   n_v2
   
   #if defined OMP || defined BLAS_OMP
   //just commented out for testing
-  //#pragma omp parallel for if(tree->mod->datatype==CODON) private(state_v1, state_v2, ambiguity_check_v1, ambiguity_check_v2, smallest_p_lk, p1_lk1, catg, i, j, p2_lk2, sum_scale_v1_val, sum_scale_v2_val, curr_scaler_pow, curr_scaler, piecewise_scaler_pow )
+  #pragma omp parallel for if(tree->mod->datatype==CODON  && !tree->mod->splitByTree) private(state_v1, state_v2, ambiguity_check_v1, ambiguity_check_v2, smallest_p_lk, p1_lk1, catg, i, j, p2_lk2, sum_scale_v1_val, sum_scale_v2_val, curr_scaler_pow, curr_scaler, piecewise_scaler_pow )
   
   #endif
   
   For(site,n_patterns)
     {
+	  //printf("%d\n",omp_get_thread_num());
       state_v1 = state_v2 = -1;
       ambiguity_check_v1 = ambiguity_check_v2 = NO;
       if(!tree->mod->s_opt->greedy)
@@ -2413,7 +2477,7 @@ phydbl LK_Codon_Pairwise(calign *data, phydbl *Pij, phydbl *pi, int ns, phydbl l
   
   #if defined OMP || defined BLAS_OMP
   //just commented out for testing
-  //#pragma omp parallel for reduction(+:cn_lk)
+  #pragma omp parallel for reduction(+:cn_lk)
   
   #endif
   
@@ -2431,107 +2495,91 @@ phydbl LK_Codon_Pairwise(calign *data, phydbl *Pij, phydbl *pi, int ns, phydbl l
 
 
 /*********************************************************/
-phydbl LK_BFGS_from_CODEML(t_tree* tree, phydbl *x, int n)
-{
+phydbl LK_BFGS_from_CODEML(option* io, phydbl *x, int n){
   int  i, numParams=0;
-  
-  if (tree->mod->datatype==CODON)
-  {
-    if(tree->mod->s_opt->opt_kappa)
-    {
-      if(tree->mod->whichmodel!=GYECMK07WK && tree->mod->whichmodel!=GYECMK07WKF && 
-	tree->mod->whichmodel!=GYECMS05WK && tree->mod->whichmodel!=GYECMS05WKF
-	&& tree->mod->whichmodel!=MGECMK07WK && tree->mod->whichmodel!=MGECMK07WKF && 
-	tree->mod->whichmodel!=MGECMS05WK && tree->mod->whichmodel!=MGECMS05WKF
-	&& tree->mod->whichmodel!=YAPECMK07WK && tree->mod->whichmodel!=YAPECMK07WKF && 
-	tree->mod->whichmodel!=YAPECMS05WK && tree->mod->whichmodel!=YAPECMS05WKF &&
-	tree->mod->whichmodel!=GYECMUSRWK && tree->mod->whichmodel!=GYECMUSRWKF &&
-	   tree->mod->whichmodel!=MGECMUSRWKF && tree->mod->whichmodel!=YAPECMUSRWKF &&
-	   tree->mod->whichmodel!=MGECMUSRWK &&tree->mod->whichmodel!=YAPECMUSRWK )
-      {
-	tree->mod->kappa = x[numParams++];
-      }
-      else
-      {
-	switch(tree->mod->kappaECM)
-	{
-	  case kap6:
-	  case kap2:
-	  case kap3:          tree->mod->pkappa[0] = x[numParams++];break;
-	  case kap4:          tree->mod->pkappa[0] = x[numParams++]; tree->mod->pkappa[1] = x[numParams++]; break;
-	  case kap5: For(i,tree->mod->nkappa-1) tree->mod->unspkappa[i] = x[numParams++]; break;
-	  default: break;
-	}
+  //if(io->mod->optDebug)printf("lk bfgs\n");
+  if (io->mod->datatype==CODON){
+    if(io->mod->s_opt->opt_kappa && (io->mod->optKappa==1||(io->mod->optKappa==2 && io->mod->optIter==0))){
+      if(io->mod->whichmodel!=GYECMK07WK && io->mod->whichmodel!=GYECMK07WKF &&
+		io->mod->whichmodel!=GYECMS05WK && io->mod->whichmodel!=GYECMS05WKF
+		&& io->mod->whichmodel!=MGECMK07WK && io->mod->whichmodel!=MGECMK07WKF &&
+		io->mod->whichmodel!=MGECMS05WK && io->mod->whichmodel!=MGECMS05WKF
+		&& io->mod->whichmodel!=YAPECMK07WK && io->mod->whichmodel!=YAPECMK07WKF &&
+		io->mod->whichmodel!=YAPECMS05WK && io->mod->whichmodel!=YAPECMS05WKF &&
+		io->mod->whichmodel!=GYECMUSRWK && io->mod->whichmodel!=GYECMUSRWKF &&
+		io->mod->whichmodel!=MGECMUSRWKF && io->mod->whichmodel!=YAPECMUSRWKF &&
+		io->mod->whichmodel!=MGECMUSRWK &&io->mod->whichmodel!=YAPECMUSRWK ){
+			io->mod->kappa = x[numParams++];
+      }else{
+		switch(io->mod->kappaECM){
+		  case kap6:
+		  case kap2:
+		  case kap3:          io->mod->pkappa[0] = x[numParams++];break;
+		  case kap4:          io->mod->pkappa[0] = x[numParams++]; io->mod->pkappa[1] = x[numParams++]; break;
+		  case kap5: For(i,io->mod->nkappa-1) io->mod->unspkappa[i] = x[numParams++]; break;
+		  default: break;
+		}
       }
     }
     
-    if(tree->mod->s_opt->opt_omega)
-    {
-      if(tree->mod->omegaSiteVar==DM0){
+    if(io->mod->s_opt->opt_omega){
+      if(io->mod->omegaSiteVar==DM0){
     	  int omegai; //added by Ken 18/8/2016
-    	  for(omegai=0;omegai<tree->mod->nomega_part;omegai++){
-    		  tree->mod->omega_part[omegai] = x[numParams++];
+    	  for(omegai=0;omegai<io->mod->nomega_part;omegai++){
+    		  if(io->mod->omega_part_opt[omegai] == 1 || (io->mod->optIter==0 && io->mod->omega_part_opt[omegai] == 2)){
+    			  io->mod->omega_part[omegai] = x[numParams++];
+    		  }
+    		  //printf("opting o %lf\n",io->mod->omega_part[omegai]);
     	  }
-      }
-      else if(tree->mod->omegaSiteVar==DMODELK) 
-      {	
-	For(i,tree->mod->n_w_catg) tree->mod->omegas[i] = x[numParams++];
-	For(i,tree->mod->n_w_catg-1) tree->mod->prob_omegas_uns[i] = x[numParams++];
-      }
-      else if(tree->mod->omegaSiteVar==DGAMMAK)
-      {
-	tree->mod->alpha                = x[numParams++];
-	tree->mod->beta                 = x[numParams++];
+      }else if(io->mod->omegaSiteVar==DMODELK){
+		For(i,io->mod->n_w_catg) io->mod->omegas[i] = x[numParams++];
+		For(i,io->mod->n_w_catg-1) io->mod->prob_omegas_uns[i] = x[numParams++];
+      }else if(io->mod->omegaSiteVar==DGAMMAK){
+		io->mod->alpha                = x[numParams++];
+		io->mod->beta                 = x[numParams++];
       }
     }
 
-    if(tree->mod->opthotness){ //added by Kenneth Hoehn 3/6/2016
-    		int c;
-    		for(c=0;c<tree->mod->nhotness;c++){
-    			if(tree->mod->hoptindex[c] == 1){
-    				tree->mod->hotness[c] = x[numParams++];
-    			}
+    if(io->mod->opthotness){ //added by Kenneth Hoehn 3/6/2016
+    	int c;
+    	for(c=0;c<io->mod->nhotness;c++){
+    		if(io->mod->hoptindex[c] == 1 || (io->mod->optIter==0 && io->mod->hoptindex[c] == 2)){
+    			io->mod->hotness[c] = x[numParams++];
     		}
+    	}
      }
 
-    if(tree->mod->s_opt->opt_state_freq)
-    {
-      switch(tree->mod->freq_model)
-      {
-	case F1XSENSECODONS: For(i,tree->mod->num_base_freq-1) tree->mod->pi_unscaled[i] = x[numParams++]; break;
-	case F1X4: For(i,tree->mod->num_base_freq-1) tree->mod->uns_base_freq[i] = x[numParams++]; break;
-	case F3X4:
-	case CF3X4: 
-	{
-	  for(i=0;i<3;i++) tree->mod->uns_base_freq[i] = x[numParams++]; 
-	  for(i=4;i<7;i++) tree->mod->uns_base_freq[i] = x[numParams++]; 
-	  for(i=8;i<11;i++)tree->mod->uns_base_freq[i] = x[numParams++]; 
-	  break;
-	}
-	default:
-	  break;
+    if(io->mod->s_opt->opt_state_freq){
+      switch(io->mod->freq_model){
+		case F1XSENSECODONS: For(i,io->mod->num_base_freq-1) io->mod->pi_unscaled[i] = x[numParams++]; break;
+		case F1X4: For(i,io->mod->num_base_freq-1) io->mod->uns_base_freq[i] = x[numParams++]; break;
+		case F3X4:
+		case CF3X4:{
+	  		for(i=0;i<3;i++) io->mod->uns_base_freq[i] = x[numParams++];
+	  		for(i=4;i<7;i++) io->mod->uns_base_freq[i] = x[numParams++];
+	  		for(i=8;i<11;i++)io->mod->uns_base_freq[i] = x[numParams++];
+	  		break;
+		}
+		default:
+		  break;
       }
     }
 
+    if(io->mod->s_opt->opt_pinvar) io->mod->pinvar = x[numParams++];
     
-    if(tree->mod->s_opt->opt_pinvar) tree->mod->pinvar = x[numParams++];
+    if(io->mod->n_catg>1 && io->mod->n_w_catg==1 && io->mod->s_opt->opt_alphaCD) io->mod->alpha = x[numParams++];
     
-    if(tree->mod->n_catg>1 && tree->mod->n_w_catg==1 && tree->mod->s_opt->opt_alphaCD) tree->mod->alpha = x[numParams++];
-    
-    if(tree->mod->pcaModel==1) For(i,tree->mod->npcs) tree->mod->pcsC[i] = x[numParams++];
+    if(io->mod->pcaModel==1) For(i,io->mod->npcs) io->mod->pcsC[i] = x[numParams++];
     
     if(n!=numParams) Warn_And_Exit("Number of parameters optimized does not match.");
     
-  } 
-  else if(tree->mod->datatype==AA)
-  {
+  }else if(io->mod->datatype==AA){
     
-    if(tree->mod->s_opt->opt_state_freq) For(i,tree->mod->ns-1) tree->mod->pi_unscaled[i] = x[numParams++]; 
+    if(io->mod->s_opt->opt_state_freq) For(i,io->mod->ns-1) io->mod->pi_unscaled[i] = x[numParams++];
     
     if(n!=numParams) Warn_And_Exit("Number of parameters optimized does not match.");
   }
-
-  return -Lk(tree);
+  //if(io->mod->optDebug)printf("calling lk_rep\n");
+  return -Lk_rep(io);
 }
-
 /*********************************************************/

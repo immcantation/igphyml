@@ -1439,7 +1439,9 @@ phydbl *Covariance_Matrix(t_tree *tree)
 	  tree->data->wght[site_num[position]] += 1;
 	}
 
-      Round_Optimize(tree,tree->data,ROUND_MAX);
+      //Round_Optimize(tree,tree->data,ROUND_MAX);
+      printf("COVEARIANCE MATRIX NOT YET SUPPORTED");
+      	        	  exit(EXIT_FAILURE);
       
       For(i,2*tree->n_otu-3) For(j,2*tree->n_otu-3) cov[i*dim+j] += LOG(tree->t_edges[i]->l) * LOG(tree->t_edges[j]->l);  
       For(i,2*tree->n_otu-3) mean[i] += LOG(tree->t_edges[i]->l);

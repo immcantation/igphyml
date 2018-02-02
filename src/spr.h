@@ -83,7 +83,8 @@ void PostOrder_w      (t_tree *tree, t_node *v, t_edge *v_e, t_node *w, t_edge *
 
 
 void Speed_Spr(t_tree *tree, int max_cycles);
-void Speed_Spr_Loop(t_tree *tree);
+//void Speed_Spr_Loop(t_tree* tree);
+void Speed_Spr_Loop(option* io);
 void Make_Spr_List(t_tree *tree);
 void Init_One_Spr(spr *a_spr);
 spr *Make_One_Spr(t_tree *tree);
