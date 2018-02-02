@@ -1480,7 +1480,7 @@ void Print_IgPhyML_Out(option* io){
 	fprintf(f,". Combined log-likelihood: 	%.2lf\n",io->replnL);
 	phydbl treel=0.0;
 	For(i,io->ntrees)treel+=Get_Tree_Size(io->tree_s[i]);
-	fprintf(f,". Repertoire length (#mutations):\t%lf",treel);
+	fprintf(f,". Repertoire length (#mutations):\t%lf\n",treel);
 
 	if(io->mod->optKappa != 2)fprintf(f,". Transition/transversion ratio: 	%.5lf",io->mod->kappa); //!< Kappa
 	else fprintf(f,". Transition/transversion ratio: 	%s","Submodel_optimized"); //!< Kappa
