@@ -1629,6 +1629,7 @@ void Print_IgPhyML_Out(option* io){
 	fprintf(f,"                                 Summary\n");
 	fprintf(f,"    See doc/IgPhyML_Manual.pdf for further detail on interpretting results\n");
 	fprintf(f,"oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo\n");
+	fprintf(f,". Command: %s\n",io->command);
   	fprintf(f,". Data sets: %d\n",io->ntrees);
 	fprintf(f,". Model name:\t%s\n",io->mod->modelname);
 	fprintf(f,". Hotspots:\t%s\n",io->mod->motifstring);

@@ -68,6 +68,15 @@ int main(int argc, char **argv){
   SetSeed(r_seed);
   
   io = (option *)Get_Input(argc,argv); //!< Read the simulation options from interface or command line.
+
+  io->command=mCalloc(T_MAX_LINE,sizeof(char));
+    //strcpy(io->command,"COMMAND: ");
+    For(i,argc){
+  	  strcat(io->command,argv[i]);
+  	  strcat(io->command," ");
+    }
+    printf("COMMAND: %s\n",io->command);
+
   //io->r_seed = (io->r_seed<0)?r_seed:io->r_seed;
   io->r_seed=1234;
   if(io->mod->whichrealmodel != HLP17 && io->mod->partfilespec != 0){
@@ -76,7 +85,7 @@ int main(int argc, char **argv){
 	  printf("\n. In the meantime, try running -m HLP17 --hotness 0 instead of -m GY\n\n");
 	  exit(EXIT_FAILURE);
   }
-  
+
   mat = NULL;
   tree_line_number = 0;
   

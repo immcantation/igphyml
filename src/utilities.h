@@ -1018,6 +1018,7 @@ typedef struct __Option {
   int									threads;
 
   phydbl*								paramStore; //stores all parameters and subtree branch lengths
+  char* 						command;
  }option;
 
 /*********************************************************/
