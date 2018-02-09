@@ -1852,7 +1852,6 @@ int mainOptionSwitch(int opt, char * optarg, option * io)
             //
         case 'm': case 5 : {
             int i;
-            printf("here\n");
             For(i,strlen(optarg)) Uppercase(optarg+i);
             
             if(!isalpha(optarg[0])) {

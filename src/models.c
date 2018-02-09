@@ -905,18 +905,13 @@ void Set_Model_Parameters(model *mod) {
                 break;
             }
             case DM0: {
-            //	printf("here1\n");
-           //     mod->omegas[0] = 1.0;
-           //     mod->prob_omegas[0] = 1.0;
-                DiscreteGamma(mod->gamma_r_proba, mod->gamma_rr, mod->alpha, mod->alpha, mod->n_catg, mod->gamma_median);
+                     DiscreteGamma(mod->gamma_r_proba, mod->gamma_rr, mod->alpha, mod->alpha, mod->n_catg, mod->gamma_median);
                 break;
             }
             default:
                 break;
         }
-      //  printf("here2\n");
-     //   printf("base freqs %lf\t%lf\t%d\t%d\t%d\t%d\t%lf\n",mod->pi[0],mod->base_freq[0],mod->ns,mod->freq_model,mod->s_opt->opt_state_freq,mod->s_opt->opt_omega,mod->uns_base_freq[0]);
-        if((mod->s_opt->opt_state_freq) &&
+         if((mod->s_opt->opt_state_freq) &&
            (mod->s_opt->opt_omega == NO)) {
         	printf("here\n");
             switch(mod->freq_model) {
@@ -941,7 +936,6 @@ void Set_Model_Parameters(model *mod) {
                 default:
                     break;
             }
-            printf("here\n");
             if(mod->whichrealmodel == MG) {
                 switch(mod->freq_model) {
                     case F1X4:{

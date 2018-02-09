@@ -235,9 +235,9 @@ int main(int argc, char **argv){
 	      	if(strcmp(tree->noeud[nodepos]->name,mod->rootname)==0){
 	      		mod->startnode=nodepos;
 	      		//update ancestors of tree, now that root node is found
-	      		PhyML_Printf("\n. Start node found: %d %s\n",nodepos,mod->rootname);
+	      		//PhyML_Printf("\n. Start node found: %d %s\n",nodepos,mod->rootname);
 	      		Update_Ancestors_Edge(tree->noeud[nodepos],tree->noeud[nodepos]->v[0],tree->noeud[nodepos]->b[0],tree);
-	      		PhyML_Printf("\n. Start node found: %d %s\n",nodepos,mod->rootname);
+	      		//PhyML_Printf("\n. Start node found: %d %s\n",nodepos,mod->rootname);
 	      	}
 	      }
 
@@ -263,7 +263,7 @@ int main(int argc, char **argv){
 
 	  if(mod->s_opt->random_input_tree) Random_Tree(tree);
 	    
-	  if((!num_data_set) && (!num_tree) && (!num_rand_tree)) Check_Memory_Amount(tree);
+	  //if((!num_data_set) && (!num_tree) && (!num_rand_tree)) Check_Memory_Amount(tree);
 	  //For(bri,2*tree->n_otu-3) printf("in main2: %lf\n",tree->t_edges[bri]->l);
 	  if(io->mod->optDebug)printf("prepping tree for lhood\n");
 	  Prepare_Tree_For_Lk(tree);

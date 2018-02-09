@@ -2630,22 +2630,21 @@ void Make_Model_Complete(model *mod)
   mod->Pmat_part = (phydbl **)mCalloc(mod->nparts,sizeof(phydbl*));
   mod->qmat_buff_part = (phydbl **)mCalloc(mod->nparts,sizeof(phydbl*));
   phydbl* test=(phydbl *)mCalloc(mod->n_w_catg*mod->ns*mod->ns,sizeof(phydbl));
-  printf("test0: %lf\n",test[0]);
   /*printf("QMAT0: %lf\n",mod->qmat_part[0]);
   printf("QMAT0: %lf\n",mod->Pmat_part[0]);
   printf("QMAT0: %lf\n",mod->qmat_buff_part[0]);*/
   int i;
   for(i=0;i<mod->nparts;i++){
-	  printf("%d\n",mod->optDebug);
+	  //printf("%d\n",mod->optDebug);
 	  if(mod->optDebug)printf("Making q mats %d %d %d %d %d size\n",i,mod->nparts,mod->n_w_catg*mod->ns*mod->ns,mod->nomega_part,mod->n_catg);
-	  printf("0");
-	  printf("02");
+	  //printf("0");
+	  //printf("02");
 	  mod->qmat_part[i]=mCalloc(mod->n_w_catg*mod->ns*mod->ns,sizeof(phydbl));
-	  printf("1");
+	  //printf("1");
 	  mod->Pmat_part[i]=(phydbl *)mCalloc(mod->n_catg*mod->ns*mod->ns,sizeof(phydbl));
-	  printf("2");
+	  //printf("2");
 	  mod->qmat_buff_part[i] = (phydbl *)mCalloc(mod->n_w_catg*mod->ns*mod->ns,sizeof(phydbl));
-	  printf("3");
+	  //printf("3");
   }
   mod->qmat_part[0][0]=1.0;
   if(mod->optDebug)printf("just tried1");
@@ -2679,7 +2678,7 @@ void Make_Model_Complete(model *mod)
      }
       //Fors(i,mod->ns*mod->ns*mod->n_w_catg*15,mod->ns*mod->ns*15) For(j,mod->ns*mod->ns) mod->A2[i+j]=mod->A0[j];
     }
-    printf("here\n");
+    //printf("here\n");
     //exit(EXIT_FAILURE);
 
     if(mod->expm==SSPADE)
@@ -2694,7 +2693,7 @@ void Make_Model_Complete(model *mod)
       mod->Apowers_part                             = (phydbl **)mCalloc(mod->nomega_part,sizeof(phydbl*));
       mod->matAux_part                              = (phydbl **)mCalloc(mod->nomega_part,sizeof(phydbl*));
       for(modeli=0;modeli<mod->nomega_part;modeli++){
-    	  printf("making models %d\n",modeli);
+    	  //printf("making models %d\n",modeli);
     	        mod->ipiv_part[modeli]                                = (int    *)mCalloc(mod->ns*mod->n_w_catg,sizeof(int));
     	        mod->U_part[modeli]                                   = (phydbl *)mCalloc(mod->ns*mod->ns*mod->n_w_catg,sizeof(phydbl));
     	        mod->V_part[modeli]                                   = (phydbl *)mCalloc(mod->ns*mod->ns*mod->n_w_catg,sizeof(phydbl));
@@ -2714,7 +2713,7 @@ void Make_Model_Complete(model *mod)
   //printf("%d\t%d\t%d\n",mod->ns,mod->n_w_catg,mod->nparts);
   //printf("%lf\n",mod->qmat_part[0][0]);
   mod->qmat_part[0][0]=1.0;
-  if(mod->optDebug)printf("just tried2");
+  //if(mod->optDebug)printf("just tried2");
 }
 
 /*********************************************************/

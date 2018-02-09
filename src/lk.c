@@ -2406,7 +2406,7 @@ void Make_Tree_4_Lk(t_tree *tree, calign *cdata, int n_site)
   tree->log_site_lk_cat      = (phydbl **)mCalloc(tree->mod->n_catg,sizeof(phydbl *));
   For(i,tree->mod->n_catg) tree->log_site_lk_cat[i] = (phydbl *)mCalloc(cdata->crunch_len,sizeof(phydbl));
       
-  printf("%d %d catg cdata crunch_len %d\n",tree->n_pattern,tree->mod->n_catg,cdata->crunch_len);
+  //printf("%d %d catg cdata crunch_len %d\n",tree->n_pattern,tree->mod->n_catg,cdata->crunch_len);
 
   tree->log_lks_aLRT = (phydbl **)mCalloc(3,sizeof(phydbl *));
   For(i,3) tree->log_lks_aLRT[i] = (phydbl *)mCalloc(tree->data->init_len,sizeof(phydbl));

@@ -541,7 +541,7 @@ void scanFasta(model *mod, FILE* f){
 	mod->n_otu=otu;
 	mod->init_len=firstseql;
 	rewind(f);
-	printf("taxa and length %d\t%d\n",mod->n_otu,mod->init_len);
+	//printf("taxa and length %d\t%d\n",mod->n_otu,mod->init_len);
 }
 
 /**********************************************************/
