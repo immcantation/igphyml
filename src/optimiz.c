@@ -39,8 +39,8 @@ void findCIs(model* mod, option *io, FILE* CI){
 
 	  	  	  	  char* buf= mCalloc(T_MAX_OPTION,sizeof(char));
 	  	  	  	  int temp = asprintf(&buf, "omega %d", i);
-	  	  	  	  phydbl upper=binarySearchCI(&mod->omega_part[i],io,0.05,0.5,0,CI,buf);
-	  	  	  	  phydbl lower=binarySearchCI(&mod->omega_part[i],io,0.05,-0.2,0,CI,buf);
+	  	  	  	  phydbl upper=binarySearchCI(&mod->omega_part[i],io,0.05,0.5,0.0,100.0,CI,buf);
+	  	  	  	  phydbl lower=binarySearchCI(&mod->omega_part[i],io,0.05,-0.2,0.0,100.0,CI,buf);
 	  	  	  	  printf("\n%lf %lf %lf",lower,mod->omega_part[i],upper);
 	  	  	  	  mod->omega_part_uci[i]=upper;
 	  	  	  	  mod->omega_part_lci[i]=lower;
@@ -56,8 +56,8 @@ void findCIs(model* mod, option *io, FILE* CI){
 
 	  			 char* buf= mCalloc(T_MAX_OPTION,sizeof(char));
 	  			 int temp = asprintf(&buf, "hotness %d", i);
-	  			 phydbl upper=binarySearchCI(&mod->hotness[i],io,0.05,2.0,-1.0,CI,buf);
-	  			 phydbl lower=binarySearchCI(&mod->hotness[i],io,0.05,-0.5,-1.0,CI,buf);
+	  			 phydbl upper=binarySearchCI(&mod->hotness[i],io,0.05,2.0,-1.0,100.0,CI,buf);
+	  			 phydbl lower=binarySearchCI(&mod->hotness[i],io,0.05,-0.5,-1.0,100.0,CI,buf);
 	  			 printf("\n%lf %lf %lf",lower,mod->hotness[i],upper);
 	  			 mod->hoptuci[i]=upper;
 	  			 mod->hoptlci[i]=lower;
@@ -69,8 +69,8 @@ void findCIs(model* mod, option *io, FILE* CI){
 	  		  	int opt=mod->s_opt->opt_kappa;
 	  		  	if(mod->primary)mod->optKappa=0;
 	  		  	else mod->optKappa=3;
-	  		  	phydbl upper=binarySearchCI(&mod->kappa,io,0.05,0.5,-1,CI,"kappa");
-	  		  	phydbl lower=binarySearchCI(&mod->kappa,io,0.05,-1.0,-1,CI,"kappa");
+	  		  	phydbl upper=binarySearchCI(&mod->kappa,io,0.05,0.5,-1,100.0,CI,"kappa");
+	  		  	phydbl lower=binarySearchCI(&mod->kappa,io,0.05,-1.0,-1,100.0,CI,"kappa");
 	  		  	printf("\n%lf %lf %lf",lower,mod->kappa,upper);
 	  		  	mod->kappauci=upper;
 	  		  	mod->kappalci=lower;
@@ -84,7 +84,7 @@ void findCIs(model* mod, option *io, FILE* CI){
  * 1. Must have the initial value of the parameter as its MLE
  * 2. Optimization for this parameter must be turned off
  */
-phydbl binarySearchCI(phydbl* param,option* io,phydbl tol,phydbl delta,phydbl lowerb,FILE* CI, char* ID){
+phydbl binarySearchCI(phydbl* param,option* io,phydbl tol,phydbl delta,phydbl lowerb,phydbl upperb,FILE* CI, char* ID){
 	io->both_sides=1;
 	io->mod->update_eigen=1;
 	Lk_rep(io);
@@ -99,12 +99,18 @@ phydbl binarySearchCI(phydbl* param,option* io,phydbl tol,phydbl delta,phydbl lo
 	phydbl d1 = delta;
 	phydbl bound;
 	int breaknext=0;
+	int iter=1;
 	do{//need to include lower boundary condition!
 		*param=mle+d1;
-		if(*param < lowerb){
+		if(*param <= lowerb){
 			printf("param at lower b\n");
-			*param=lowerb;
+			*param=lowerb+SMALL;
 			breaknext=1;
+		}
+		if(*param >= upperb){
+			printf("param at upper b\n");
+			*param=upperb;
+			breaknext=2;
 		}
 		bound=*param;
 		//printf("round_max: %d\n",ROUND_MAX*2);
@@ -117,13 +123,20 @@ phydbl binarySearchCI(phydbl* param,option* io,phydbl tol,phydbl delta,phydbl lo
 		phydbl nl2=Lk_rep(io);
 		//if(io->mod->optDebug)
 		printf("\nLooking for boundarz %lf %lf %lf %lf %lf",target,nl2,mle,d1,*param);
-		if(breaknext){
-			printf("Boundary at lower bound!\n");
-			if(nl<=target)return lowerb;
-			else break;
+		if(breaknext>0){
+			if(breaknext==1){
+				printf("Boundary at lower bound!\n");
+				if(nl<=target)return lowerb;
+				else break;
+			}else{
+				printf("Boundary at lower bound!\n");
+				if(nl<=target)return upperb;
+				else break;
+			}
 		}
 		//!Restore parameter values and branch lengths if changed!
-		d1+=delta;
+		d1+=delta*iter; //make iterations progressively larger
+		iter++;
 	}while(nl >= target);
 	if(io->mod->optDebug)printf("\nFound boundary %lf",bound);
 

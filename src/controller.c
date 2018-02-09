@@ -115,11 +115,12 @@ struct option longopts[] =
 	{"slowSPR",		  required_argument,NULL,153},  //!<Added by Ken
 	{"stretch",		  required_argument,NULL,154},  //!<Added by Ken
 	{"repfile",		  required_argument,NULL,155},  //!<Added by Ken
-	{"splitByTree",		  no_argument,NULL,156},  //!<Added by Ken
+	{"splitByTree",		  required_argument,NULL,156},  //!<Added by Ken
 	{"omegaOpt",		  required_argument,NULL,157},  //!<Added by Ken
 	{"optKappa",		  required_argument,NULL,158},  //!<Added by Ken
 	{"optFreq",		  required_argument,NULL,159},  //!<Added by Ken
 	{"optDebug",		  no_argument,NULL,160},  //!<Added by Ken
+	{"ASR",		  no_argument,NULL,161},  //!<Added by Ken
     {0,0,0,0}
 };
 
@@ -152,6 +153,19 @@ void finishOptions(option * io)
         io->mod->omegaOpt=io->omegaOpt; //COPIED FROM OPTION
         io->mod->eq_freq_handling=io->eq_freq_handling; //COPIED FROM OPTION
         io->mod->quiet=io->quiet;
+
+#if defined OMP || defined BLAS_OMP
+           	omp_set_dynamic(0);
+           	omp_set_num_threads(io->threads);
+           	/*if(threads==1)io->nthreads=threads;
+           	else io->nthreads=threads-1;*/
+
+			#else
+           	printf("\n. Can't specify number of threads unless compiled with OMP!\n");
+           	exit(EXIT_FAILURE);
+			#endif
+
+
 
     Set_Model_Name(io->mod);
 	
@@ -2118,7 +2132,7 @@ int mainOptionSwitch(int opt, char * optarg, option * io)
                     io->mod->user_b_freq[2] /= sum;
                     io->mod->user_b_freq[3] /= sum;
                     
-                    
+
                     if(io->mod->user_b_freq[0] < .0 ||
                        io->mod->user_b_freq[1] < .0 ||
                        io->mod->user_b_freq[2] < .0 ||
@@ -2341,17 +2355,7 @@ int mainOptionSwitch(int opt, char * optarg, option * io)
         }
         case 152: {
            	int threads = atoi(strdup(optarg));
-
-           	#if defined OMP || defined BLAS_OMP
-           	omp_set_dynamic(0);
-           	omp_set_num_threads(threads);
-           	/*if(threads==1)io->nthreads=threads;
-           	else io->nthreads=threads-1;*/
-
-			#else
-           	printf("\n. Can't specify number of threads unless compiled with OMP!\n");
-           	exit(EXIT_FAILURE);
-			#endif
+           	io->threads=threads;
            	break;
         }
         case 153: {
@@ -2411,8 +2415,8 @@ int mainOptionSwitch(int opt, char * optarg, option * io)
         }
 
         case 156: {
-           	io->splitByTree=1;
-           	io->mod->splitByTree=1;
+           	io->splitByTree=atoi(strdup(optarg));
+           	io->mod->splitByTree=io->splitByTree;
                   	break;
             }
 
@@ -2423,6 +2427,10 @@ int mainOptionSwitch(int opt, char * optarg, option * io)
         }
         case 160: {
            	io->mod->optDebug=1;
+             break;
+         }
+        case 161: {
+           	io->mod->ASR=1;
              break;
          }
 

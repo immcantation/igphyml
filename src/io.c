@@ -378,6 +378,7 @@ align **Get_Seq(option *io, model *mod)
   mod->data = NULL;
 
   Detect_Align_File_Format(io,mod);
+  //exit(EXIT_FAILURE);
 
   switch(io->data_file_format)
   {
@@ -390,6 +391,12 @@ align **Get_Seq(option *io, model *mod)
     {
         Warn_And_Exit("\n. Err: NEXUS cannot be used. Please switch to Phylip format.\n");
         break;
+    }
+    case FASTA:
+    {
+    	scanFasta(mod,mod->fp_in_align);
+    	mod->data=Read_Seq_Fasta(io,mod);
+    	break;
     }
     default:
     {
@@ -462,6 +469,165 @@ align **Get_Seq(option *io, model *mod)
 }
 
 /**********************************************************/
+// Scan across FASTA file to determine number and length of sequences
+void scanFasta(model *mod, FILE* f){
+	rewind(f);
+	int nseq=0;
+	int seql=0;
+	char c;
+	int maxnl=-1;
+	int firstseql=-1;
+	int seq=0;
+	  int id=0;
+	  int otu=-1;
+	  int idpos=0;
+	  do{
+		  c=(char)fgetc(mod->fp_in_align);
+		  if(c == '>' || c == EOF){
+			  id=1;
+			  otu++;
+			  idpos=0;
+			  if(otu==1)firstseql=seql;
+			  if(firstseql != seql && otu > 0){
+				  printf("\nSome sequences in fasta file are not the same length! %d vs %d\n",firstseql,seql);
+				  exit(EXIT_FAILURE);
+			  }
+			  if(idpos > T_MAX_NAME){
+				  printf("An ID is too long. Maximum sequence name is %d\n",T_MAX_NAME);
+				  exit(EXIT_FAILURE);
+			  }
+			  seql=0;
+		  }else if(c == '\n' && id){
+			  id=0;
+		  }
+		  if(c == EOF)break;
+
+		  if(id){
+			  if(c != '>') idpos++;
+		  }else if(c!='\n')seql++;
+	  }while(1);
+
+
+	/*
+
+	do{
+		c = (char)fgetc(f);
+		if(c == '>'){
+			nseq++;//tally number of sequences
+			int nl=0;
+			seql=0;
+			do{
+				c = fgetc(f);
+				nl++;
+			//	printf("id %c\n",c);
+			}while(c!= '\n');
+			//printf("name length is %d\n",nl);
+			if(nl > maxnl)maxnl=nl;
+
+			do{//get sequence length
+				c = (char)fgetc(f);
+				seql++;
+				//printf("se %c %d\n",c,seql);
+			}while(c!= '\n' && c!=EOF); //need to make usable for hard spaced fasta files
+			seql--;//to account for the newline/EOF
+			if(maxseql==-1)maxseql=seql;
+			if(seql != maxseql){
+				//printf("Sequences are not the same length! %d %d\n",maxseql,seql);
+				exit(EXIT_FAILURE);
+			}
+		}
+	}while(c != EOF);
+	*/
+	mod->n_otu=otu;
+	mod->init_len=firstseql;
+	rewind(f);
+	printf("taxa and length %d\t%d\n",mod->n_otu,mod->init_len);
+}
+
+/**********************************************************/
+
+align **Read_Seq_Fasta(option *io, model *mod)
+{
+  int i,pos;
+  char *line;
+  align **data;
+  char c;
+  //printf("here\n");
+  //printf("%d %d %d \n",mod->state_len,mod->init_len,mod->n_otu);
+  data   = (align **)mCalloc(mod->n_otu,sizeof(align *));
+  For(i,mod->n_otu){
+     data[i]        = (align *)mCalloc(1,sizeof(align));
+     data[i]->name  = (char *)mCalloc(T_MAX_NAME,sizeof(char));
+     data[i]->state = (char *)mCalloc(mod->init_len*mod->state_len+1,sizeof(char));
+     data[i]->is_ambigu = NULL;
+     data[i]->len = 0;
+   }
+  //printf("here\n");
+
+  int seq=0;
+  int id=0;
+  int otu=-1;
+  int idpos=0;
+  do{
+	  c=(char)fgetc(mod->fp_in_align);
+	  if(c == '>'){
+		  id=1;
+		  otu++;
+		  idpos=0;
+	  }else if(c == '\n' && id){
+		  id=0;
+	  }else if(c == EOF)break;
+
+	  if(id){
+		  if(c != '>'){
+			  data[otu]->name[idpos]=c;
+			  idpos++;
+		  }
+	  }else if(c!='\n'){
+		  Uppercase(&c);
+		  data[otu]->state[data[otu]->len++]=c;
+		  //data[otu]->len++;
+	  }
+	  //printf(" %c%s %d\n",c,data[otu]->name,data[otu]->len);
+  }while(1);
+
+
+/*
+  do{
+	  c=(char)fgetc(mod->fp_in_align);
+	  if(c==EOF)break;
+	  //printf("%c\n",c);
+	  if(c=='>'){
+		  pos=0;
+		  do{//read in ID
+			  c=(char)fgetc(mod->fp_in_align);
+			  if(c == '\n'|| c == EOF)break;
+			  //printf("%c\n",c);
+			  data[otu]->name[pos]=c;
+			  pos++;
+		  }while(c!='\n');
+		 // printf("%s\n",data[otu]->name);
+	  }
+	  pos=0;
+	  do{//read in sequence
+		  c=(char)fgetc(mod->fp_in_align);
+		  if(c == '\n' || c == EOF)break;
+		  //printf("%c\n",c);
+		  Uppercase(&c);
+		  data[otu]->state[data[otu]->len]=c;
+		  data[otu]->len++;
+		  pos++;
+	  }while(c!='\n' && c!=EOF);
+	  printf("%s\t%s\n",data[otu]->name,data[otu]->state);
+	  otu++;
+  }while(c!=EOF);
+*/
+
+  return data;
+}
+
+/**********************************************************/
+
 
 align **Read_Seq_Interleaved(option *io, model *mod)
 {
@@ -1208,8 +1374,8 @@ char *Write_Tree(t_tree *tree)
 	  R_wtree(tree->noeud[tree->mod->startnode],tree->noeud[tree->mod->startnode]->v[0],&available,&s,&pos,tree);
 	  R_wtree(tree->noeud[tree->mod->startnode],tree->noeud[tree->mod->startnode]->v[1],&available,&s,&pos,tree);
 
-	  free(r);
 	  free(r->name);
+	  free(r);
 	  free(blank);
 	  tree->noeud[tree->mod->startnode]->b[1]=NULL;
 	  tree->noeud[tree->mod->startnode]->v[1]=NULL;
@@ -1266,7 +1432,9 @@ void R_wtree(t_node *pere, t_node *fils, int *available, char **s_tree, int *pos
       if(tree->print_labels){
 	      if(fils->b[0]->n_labels < 10)
           For(i,fils->b[0]->n_labels){
-          (*pos) += sprintf(*s_tree+*pos,"#%s",fils->b[0]->labels[i]);
+          //(*pos) += sprintf(*s_tree+*pos,"#%s",fils->b[0]->labels[i]);
+	      (*pos) += sprintf(*s_tree+*pos,"[&Num=%d_%s]",tree->mod->num,fils->b[0]->labels[i]);
+	      //printf("%d\t%lf\th\n",fils->b[0]->num,fils->b[0]->l);
 	      }else{
 	    	  (*pos) += sprintf(*s_tree+*pos,"#%d_labels",fils->b[0]->n_labels);
 	      }
@@ -1360,7 +1528,9 @@ void R_wtree(t_node *pere, t_node *fils, int *available, char **s_tree, int *pos
 	      if(fils->b[p]->n_labels < 10)
           For(i,fils->b[p]->n_labels)
         {
-          (*pos) += sprintf(*s_tree+*pos,"#%s",fils->b[p]->labels[i]);
+          //(*pos) += sprintf(*s_tree+*pos,"#%s",fils->b[p]->labels[i]);
+	    	  (*pos) += sprintf(*s_tree+*pos,"[&Num=%d_%s]",tree->mod->num,fils->b[p]->labels[i]);
+	    	  //printf("%d\t%lf\tt\n",fils->b[0]->num,fils->b[0]->l);
         }
 	      else
         {
@@ -1424,7 +1594,7 @@ void R_wtree(t_node *pere, t_node *fils, int *available, char **s_tree, int *pos
 void Print_IgPhyML_Out(option* io){
 	FILE* f = io->fp_out_stats;
 
-	int i,j;
+	int i,j,k;
 	int stopCodons[64];
 	int indexSenseCodons[64];
 	int senseCodons[64];
@@ -1457,6 +1627,7 @@ void Print_IgPhyML_Out(option* io){
 	fprintf(f,"                 http://sourceforge.net/projects/codonphyml/\n");
 	fprintf(f,"oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo\n");
 	fprintf(f,"                                 Summary\n");
+	fprintf(f,"    See doc/IgPhyML_Manual.pdf for further detail on interpretting results\n");
 	fprintf(f,"oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo\n");
   	fprintf(f,". Data sets: %d\n",io->ntrees);
 	fprintf(f,". Model name:\t%s\n",io->mod->modelname);
@@ -1479,8 +1650,8 @@ void Print_IgPhyML_Out(option* io){
 	}
 	fprintf(f,". Combined log-likelihood: 	%.2lf\n",io->replnL);
 	phydbl treel=0.0;
-	For(i,io->ntrees)treel+=Get_Tree_Size(io->tree_s[i]);
-	fprintf(f,". Repertoire length (#mutations):\t%lf\n",treel);
+	For(i,io->ntrees)treel+=(Get_Tree_Size(io->tree_s[i])*io->tree_s[i]->n_pattern);
+	fprintf(f,". Estimated substitutions in repertoire:\t%lf\n",treel);
 
 	if(io->mod->optKappa != 2)fprintf(f,". Transition/transversion ratio: 	%.5lf",io->mod->kappa); //!< Kappa
 	else fprintf(f,". Transition/transversion ratio: 	%s","Submodel_optimized"); //!< Kappa
@@ -1527,6 +1698,7 @@ void Print_IgPhyML_Out(option* io){
 		phydbl val1=0.0;
 		if(!stopCodons[i]){
 			//printf("%d %s %d %lf\n",i,"sense\n",indexSenseCodons[i],io->mod_s[0]->pi[indexSenseCodons[i]]);
+			//val1=io->mod_s[0]->pi[indexSenseCodons[i]];
 			val1=io->mod_s[0]->pi[indexSenseCodons[i]];
 		}
 		fprintf(f,"\tf(%s)=%lf",s1,val1);
@@ -1570,6 +1742,54 @@ void Print_IgPhyML_Out(option* io){
 	 For(i,io->ntrees){
 		 fprintf(f,"%d\t%s\n",i,Write_Tree(io->tree_s[i]));
 	 }
+	if(io->mod->ASR){
+	fprintf(f,"oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo\n");
+	fprintf(f,"                     Ancestral Sequence Reconstruction\n");
+	fprintf(f,"ML codon predictions for each internal node. Open each specified tree file using\n");
+	fprintf(f,"FigTree (tree.bio.ed.ac.uk/software/figtree) to view sequence placement on tree.\n");
+	fprintf(f,"Relative probabilities are under each codon: 90. = 90%%, 2.. = 2%%, *.. > 99%%\n");
+	fprintf(f,"oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo");
+
+	  For(i,io->ntrees){
+		 t_tree* tree=io->tree_s[i];
+		 model* mod = io->mod_s[i];
+		 fprintf(f,"\n# Lineage %d Reconstructions\n# Sequence file: %s\n",i,io->datafs[i]);
+		 fprintf(f,"# Tree file: %s%s%s\n",io->datafs[i],"_igphyml_figtree.txt_",io->run_id_string);
+		 For(j,mod->nedges+1){
+			if(j<mod->nedges){
+				 if(tree->t_edges[j]->des_node->tax)continue;
+			 	 if(!tree->t_edges[j]->des_node->name) fprintf(f,">%d_%d\n",mod->num,j);
+			 	 else if(strcmp(tree->t_edges[j]->des_node->name,"")!=0)fprintf(f,">%s\n",tree->t_edges[j]->des_node->name);
+			 	 else fprintf(f,">%d_%d\n",mod->num,j);
+			}else{
+				fprintf(f,">%s\n",tree->mod->rootname);
+			}
+			For(k,mod->init_len/3){
+				 char s1[4];
+				Sprint_codon(s1,senseCodons[mod->mlASR[j][k]]);
+				fprintf(f,"%s",s1);
+				 //printf("%d\t%d\t%d\t%d\n",j,k,mod->mlASR[j][k],senseCodons[mod->mlASR[j][k]]);
+				//fprintf(f,"%s\t%lf\n",s1,mod->probASR[j][k]);
+			 }
+			fprintf(f,"\n");
+			For(k,mod->init_len/3){
+				char s1[4];
+				int per=roundf(mod->probASR[j][k]*100);
+				//printf("%lf\n",mod->probASR[j][k]);
+				if(mod->probASR[j][k] > 0.99)sprintf(s1,"%s","*..");
+				else if(per>=10)sprintf(s1,"%d.",per);
+				else sprintf(s1,"%d..",per);
+
+				fprintf(f,"%s",s1);
+				//printf("%d\t%d\t%d\t%d\n",j,k,mod->mlASR[j][k],senseCodons[mod->mlASR[j][k]]);
+				//fprintf(f,"%s\t%lf\n",s1,mod->probASR[j][k]);
+			}
+			 fprintf(f,"\n");
+		   }
+		 }
+	   }
+
+
 	 fprintf(f,"\n\n#\tIf you use IgPhyML, please cite:\n");
 	 fprintf(f,"#\tK.B. Hoehn, G Lunter, O.G. Pybus\n");
 	 fprintf(f,"#\tA phylogenetic codon substitution model for antibody lineages\n");
@@ -1588,16 +1808,36 @@ void Print_IgPhyML_Out(option* io){
 
 	 printf("\nPRINTING TREES TO FILES\n");
 	 For(i,io->ntrees){
+		 t_tree* tree=io->tree_s[i];
 		 char fout[T_MAX_FILE];
 		 strcpy(fout,io->datafs[i]);
-		 strcat(fout,"_igphyml_tree.txt");
+		 if(io->mod->ASR)strcat(fout,"_igphyml_figtree.txt");
+		 else strcat(fout,"_igphyml_tree.txt");
 		 if(io->append_run_ID){
 			 strcat(fout, "_");
 			 strcat(fout, io->run_id_string);
 		 }
 		 printf("\nPRINTING TREES TO FILES %s\n",fout);
 		 FILE* treeout = Openfile(fout, 1 );
+		 if(io->mod->ASR){
+			 fprintf(treeout,"#NEXUS\nBegin taxa;\n");
+			 fprintf(treeout,"\tDimensions ntax=%d;\n",tree->mod->n_otu);
+			 fprintf(treeout,"\tTaxlabels\n");
+			 For(j,(tree->mod->n_otu-1)*2){
+			 	 if(tree->noeud[j]->name){
+				 	 if(strcmp(tree->noeud[j]->name,"")!=0){
+					 	 fprintf(treeout,"\t%s\n",tree->noeud[j]->name);
+				 	 }
+			 	 }
+		 	 }
+		 	 fprintf(treeout,"\t;\nEnd;\n");
+		 	 fprintf(treeout,"Begin trees;Tree TREE1 = [&R] ");
+		 }
 		 Print_Tree(treeout,io->tree_s[i]);
+		 if(io->mod->ASR){
+			 fprintf(treeout,"End;");
+			 fprintf(treeout,"begin figtree;\nset nodeLabels.colorAttribute=\"User selection\";\nset nodeLabels.displayAttribute=\"Num\";\nset nodeLabels.fontName=\"sansserif\";\nset nodeLabels.fontSize=9;\nset nodeLabels.fontStyle=0;\nset nodeLabels.isShown=true;\nset nodeLabels.significantDigits=4;\nset trees.order=true;\nset trees.orderType=\"increasing\";\nend;");
+		 }
 		 fclose(treeout);
 	 }
 

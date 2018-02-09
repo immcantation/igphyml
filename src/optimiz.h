@@ -34,7 +34,7 @@ the GNU public licence.  See http://www.opensource.org for details.
 #include "mg.h"
 */
 void findCIs(model*,option*,FILE*);
-phydbl binarySearchCI(phydbl* param,option* io,phydbl tol,phydbl delta,phydbl lowerb,FILE*,char*);
+phydbl binarySearchCI(phydbl* param,option* io,phydbl tol,phydbl delta,phydbl lowerb,phydbl upperb,FILE*,char*);
 int storeParams(option* io);
 int restoreParams(option* io);
 

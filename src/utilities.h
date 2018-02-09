@@ -98,6 +98,7 @@ static inline int isinf_ld (long double x) { return isnan (x - x); }
 
 #define  PHYLIP 0
 #define  NEXUS  1
+#define  FASTA  2
 
 #define  YES 1
 #define  NO  0
@@ -671,6 +672,7 @@ typedef struct __Model {
   int				 lkExpStepSize; //COPIED FROM OPTION
   int				ntrees; //COPIED FROM OPTION
   int					splitByTree;
+  int					nedges;
 
   int					       optKappa;
   int						    optFreq;
@@ -844,6 +846,10 @@ typedef struct __Model {
 
  int		optIter; //number of optimization iterations
  phydbl 	stretch; //stretch branch lengths of initial tree
+
+ int		ASR;
+ int**		mlASR;
+ phydbl**		probASR;
 
 }model;
 

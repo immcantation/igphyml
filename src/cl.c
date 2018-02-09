@@ -53,13 +53,15 @@ void Read_Command_Line( option *io, int argc, char **argv )
     io->mod->startnode=0;
 	io->mod->slowSPR=0;
 	io->mod->stretch=1.0;
-	io->splitByTree=0;
+	io->splitByTree=1;
 	io->mod->omega_opt_spec=0;
 	io->mod->optKappa=1;
 	io->mod->optFreq=1;
 	io->mod->optDebug=0;
 	io->mod->nhotness=0;
 	io->mod->kappaci=0;
+	io->mod->ASR=0;
+	io->threads=1;
 
     io->mod->rootname = mCalloc(T_MAX_OPTION,sizeof(char));
     io->mod->hotnessstring = mCalloc(T_MAX_OPTION,sizeof(char));

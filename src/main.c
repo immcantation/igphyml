@@ -148,6 +148,8 @@ int main(int argc, char **argv){
 
     Set_Model_Name(mod);
 
+    mod->nedges=2*mod->n_otu-3;
+
     //Print_Settings(io,mod);
 
     //mod = io->mod;
@@ -233,8 +235,9 @@ int main(int argc, char **argv){
 	      	if(strcmp(tree->noeud[nodepos]->name,mod->rootname)==0){
 	      		mod->startnode=nodepos;
 	      		//update ancestors of tree, now that root node is found
+	      		PhyML_Printf("\n. Start node found: %d %s\n",nodepos,mod->rootname);
 	      		Update_Ancestors_Edge(tree->noeud[nodepos],tree->noeud[nodepos]->v[0],tree->noeud[nodepos]->b[0],tree);
-	      		//PhyML_Printf("\n. Start node found: %d %s\n",nodepos,mod->rootname);
+	      		PhyML_Printf("\n. Start node found: %d %s\n",nodepos,mod->rootname);
 	      	}
 	      }
 
@@ -384,6 +387,7 @@ int main(int argc, char **argv){
    if(io->mod->optDebug)For(j,12){printf("after %lf\t%lf\t%lf\t%lf\n",io->mod->baseCounts[j],io->mod->base_freq[j],io->mod->uns_base_freq[j],io->mod_s[0]->base_freq[j]);}
 
   io->both_sides = 1;
+  io->mod->update_eigen=1;
   Lk_rep(io);
   Print_Lk_rep(io,"Final likelihood");
 
@@ -416,9 +420,24 @@ int main(int argc, char **argv){
   fclose(CI);
   Print_Lk_rep(io,"Final likelihood");
 
-
-  	  //Get_Tree_Size(tree);
-  //PhyML_Printf("\n. Log-likelihood of the current repertoire:\t\t\t\t%.2f\n",io->replnL);
+  if(io->mod->ASR){
+	  For(j,io->ntrees){
+		  //printf("ASR for model %d\n",j);
+		  t_tree* tree=io->tree_s[j];
+		  model* mod = io->mod_s[j];
+		  Get_UPP(tree->noeud[tree->mod->startnode],tree->noeud[tree->mod->startnode]->v[0],tree);
+		  mod->mlASR=mCalloc(mod->nedges+1,sizeof(int*));
+		  mod->probASR=mCalloc(mod->nedges+1,sizeof(phydbl*));
+  	  	  For(i,mod->nedges+1){
+  	  		  mod->mlASR[i]=mCalloc(mod->init_len/3,sizeof(int));
+  	  		  mod->probASR[i]=mCalloc(mod->init_len/3,sizeof(phydbl));
+  	  		  //printf("LK ON EDGE %d\n",i);
+  	  		  //tree->mod->num=-1;
+  	  		  if(i<mod->nedges)ASR_At_Given_Edge(tree->t_edges[i],tree,0);
+  	  		  else ASR_At_Given_Edge(tree->noeud[tree->mod->startnode]->b[0],tree,1);
+  	  	  }
+	  }
+  }
 
   	  #if defined OMP || defined BLAS_OMP
 

@@ -378,6 +378,11 @@ void Detect_Align_File_Format(option *io, model* mod)
   while((c=fgetc(mod->fp_in_align)) != EOF)
   {
     if(errno) io->data_file_format = PHYLIP;
+    else if(c == '>'){
+    	io->data_file_format = FASTA;
+    	if(!mod->quiet)printf("\nLooks like a fasta file..");
+    	return;
+    }
     else if(c == '#')
     {
       char s[10],t[6]="NEXUS";
@@ -2624,18 +2629,26 @@ void Make_Model_Complete(model *mod)
   mod->qmat_part = (phydbl **)mCalloc(mod->nparts,sizeof(phydbl*));
   mod->Pmat_part = (phydbl **)mCalloc(mod->nparts,sizeof(phydbl*));
   mod->qmat_buff_part = (phydbl **)mCalloc(mod->nparts,sizeof(phydbl*));
-
+  phydbl* test=(phydbl *)mCalloc(mod->n_w_catg*mod->ns*mod->ns,sizeof(phydbl));
+  printf("test0: %lf\n",test[0]);
+  /*printf("QMAT0: %lf\n",mod->qmat_part[0]);
+  printf("QMAT0: %lf\n",mod->Pmat_part[0]);
+  printf("QMAT0: %lf\n",mod->qmat_buff_part[0]);*/
   int i;
   for(i=0;i<mod->nparts;i++){
-	  if(mod->optDebug)printf("Making q mats %d size\n",mod->n_w_catg*mod->ns*mod->ns);
-	  mod->qmat_part[i]=(phydbl *)mCalloc(mod->n_w_catg*mod->ns*mod->ns,sizeof(phydbl));
+	  printf("%d\n",mod->optDebug);
+	  if(mod->optDebug)printf("Making q mats %d %d %d %d %d size\n",i,mod->nparts,mod->n_w_catg*mod->ns*mod->ns,mod->nomega_part,mod->n_catg);
+	  printf("0");
+	  printf("02");
+	  mod->qmat_part[i]=mCalloc(mod->n_w_catg*mod->ns*mod->ns,sizeof(phydbl));
+	  printf("1");
 	  mod->Pmat_part[i]=(phydbl *)mCalloc(mod->n_catg*mod->ns*mod->ns,sizeof(phydbl));
+	  printf("2");
 	  mod->qmat_buff_part[i] = (phydbl *)mCalloc(mod->n_w_catg*mod->ns*mod->ns,sizeof(phydbl));
+	  printf("3");
   }
   mod->qmat_part[0][0]=1.0;
   if(mod->optDebug)printf("just tried1");
-
-
   if(mod->n_rr_branch){
     mod->rr_branch                           = (phydbl *)mCalloc(mod->n_rr_branch,sizeof(phydbl));
     mod->p_rr_branch                         = (phydbl *)mCalloc(mod->n_rr_branch,sizeof(phydbl));
@@ -2666,7 +2679,9 @@ void Make_Model_Complete(model *mod)
      }
       //Fors(i,mod->ns*mod->ns*mod->n_w_catg*15,mod->ns*mod->ns*15) For(j,mod->ns*mod->ns) mod->A2[i+j]=mod->A0[j];
     }
-    
+    printf("here\n");
+    //exit(EXIT_FAILURE);
+
     if(mod->expm==SSPADE)
     {
       mod->ipiv_part                                = (int    **)mCalloc(mod->nomega_part,sizeof(int*));
@@ -2679,6 +2694,7 @@ void Make_Model_Complete(model *mod)
       mod->Apowers_part                             = (phydbl **)mCalloc(mod->nomega_part,sizeof(phydbl*));
       mod->matAux_part                              = (phydbl **)mCalloc(mod->nomega_part,sizeof(phydbl*));
       for(modeli=0;modeli<mod->nomega_part;modeli++){
+    	  printf("making models %d\n",modeli);
     	        mod->ipiv_part[modeli]                                = (int    *)mCalloc(mod->ns*mod->n_w_catg,sizeof(int));
     	        mod->U_part[modeli]                                   = (phydbl *)mCalloc(mod->ns*mod->ns*mod->n_w_catg,sizeof(phydbl));
     	        mod->V_part[modeli]                                   = (phydbl *)mCalloc(mod->ns*mod->ns*mod->n_w_catg,sizeof(phydbl));
@@ -2694,7 +2710,10 @@ void Make_Model_Complete(model *mod)
 
     }
   }
-  mod->qmat_part[0][i]=1.0;
+  //printf("%lf\t%lf\t%lf\t%d\t%d\t%d\n",mod->U_part[0][0],mod->V_part[0][0],mod->A4_part[0][0],mod->ns,mod->n_w_catg,mod->nparts);
+  //printf("%d\t%d\t%d\n",mod->ns,mod->n_w_catg,mod->nparts);
+  //printf("%lf\n",mod->qmat_part[0][0]);
+  mod->qmat_part[0][0]=1.0;
   if(mod->optDebug)printf("just tried2");
 }
 
@@ -2986,6 +3005,28 @@ model *Copy_Partial_Model(model *ori)
   cpy->ntrees = ori->ntrees;
   cpy->splitByTree=ori->splitByTree;
 
+  cpy->omegaSiteVar = ori->omegaSiteVar;
+      //cpy->omega        = ori->omega;
+      cpy->omega_part=mCalloc(ori->nomega_part,sizeof(phydbl));
+      cpy->omega_part_opt=mCalloc(ori->nomega_part,sizeof(int));
+      cpy->omega_part_ci = (int*)mCalloc(cpy->nomega_part,sizeof(int ));
+      cpy->omega_part_uci = (phydbl*)mCalloc(cpy->nomega_part,sizeof(phydbl ));
+      cpy->omega_part_lci = (phydbl*)mCalloc(cpy->nomega_part,sizeof(phydbl ));
+      cpy->nomega_part = ori->nomega_part;
+      int omegai; //added by Ken 17/8/2016
+      for(omegai=0;omegai<ori->nomega_part;omegai++){
+      	if(ori->optDebug)printf("omega: %lf\t%d\t%d\n",ori->omega_part[omegai],omegai,cpy->nomega_part);
+      	cpy->omega_part[omegai]    = ori->omega_part[omegai];
+      	cpy->omega_part_opt[omegai]=ori->omega_part_opt[omegai];
+      	if(ori->omega_part_ci[omegai]==-1)cpy->omega_part_ci[omegai]=1;
+      	else cpy->omega_part_ci[omegai]=0;
+      }
+      if(ori->optDebug)printf("assigned omegas\n");
+      cpy->omega_old    = ori->omega_old;
+
+
+  copyIOtoMod(ori->io,cpy);
+
   if(ori->optDebug){
 	  printf("making model complete\n");
 	  printf("%d\n",cpy->n_w_catg);
@@ -3107,25 +3148,6 @@ void Record_Partial_Model(model *ori, model *cpy)
     if(ori->kappaci==-1)cpy->kappaci=1;
     else cpy->kappaci=0;
 
-    cpy->omegaSiteVar = ori->omegaSiteVar;
-    //cpy->omega        = ori->omega;
-    cpy->omega_part=mCalloc(ori->nomega_part,sizeof(phydbl));
-    cpy->omega_part_opt=mCalloc(ori->nomega_part,sizeof(int));
-    cpy->omega_part_ci = (int*)mCalloc(cpy->nomega_part,sizeof(int ));
-    cpy->omega_part_uci = (phydbl*)mCalloc(cpy->nomega_part,sizeof(phydbl ));
-    cpy->omega_part_lci = (phydbl*)mCalloc(cpy->nomega_part,sizeof(phydbl ));
-    cpy->nomega_part = ori->nomega_part;
-    int omegai; //added by Ken 17/8/2016
-    for(omegai=0;omegai<ori->nomega_part;omegai++){
-    	if(ori->optDebug)printf("omega: %lf\t%d\t%d\n",ori->omega_part[omegai],omegai,cpy->nomega_part);
-    	cpy->omega_part[omegai]    = ori->omega_part[omegai];
-    	cpy->omega_part_opt[omegai]=ori->omega_part_opt[omegai];
-    	if(ori->omega_part_ci[omegai]==-1)cpy->omega_part_ci[omegai]=1;
-    	else cpy->omega_part_ci[omegai]=0;
-    }
-    cpy->nomega_part = ori->nomega_part;
-    if(ori->optDebug)printf("assigned omegas\n");
-    cpy->omega_old    = ori->omega_old;
     cpy->freq_model   = ori->freq_model;
     cpy->genetic_code = ori->genetic_code;
     if(ori->optDebug)printf("original model name: %s\n",ori->modelname);
@@ -3155,7 +3177,7 @@ void Record_Partial_Model(model *ori, model *cpy)
       cpy->prob_omegas[i]       = ori->prob_omegas[i];*/
     }
 
-    copyIOtoMod(ori->io,cpy);
+    //copyIOtoMod(ori->io,cpy);
     if(ori->optDebug)printf("datatype: %d\n",cpy->datatype);
     cpy->structTs_and_Tv  = (ts_and_tv *)mCalloc(64*64,sizeof(ts_and_tv));//!< Added by Marcelo. 64 possible codons ... will be initialized together with the model parameters in set model default.
     if(cpy->datatype==CODON) Make_Ts_and_Tv_Matrix(cpy->io,cpy);
@@ -6293,7 +6315,7 @@ option *Get_Input(int argc, char **argv)
   Read_Command_Line(io,argc,argv);
 #else
   
-  putchar('\n');
+  //putchar('\n');
   
   switch (argc)
   {
@@ -7061,7 +7083,7 @@ void Get_Base_Freqs_CODONS_FaXb(calign *cdata, align **data, int freqModel, mode
       cdata->b_frq[11] = fG3;
       For(i,12)cdata->b_frq[i]=roundf(cdata->b_frq[i]*10000.0f)/10000.0f; //ADDED BY KEN - REMOVE
       /*For(i,12)printf("bfrq: %lf\n",cdata->b_frq[i]);
-      
+
       //if(freqModel==CF3X4) CF3x4(cdata->b_frq, mod->genetic_code);
       printf("\n");
       For(i,12)printf("bfrq: %lf\n",cdata->b_frq[i]);

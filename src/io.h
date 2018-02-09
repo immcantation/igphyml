@@ -23,6 +23,9 @@ align **Get_Seq_Phylip(option *input,model* mod);
 void Read_Ntax_Len_Phylip(FILE *fp ,int *n_otu, int *n_tax);
 int Read_One_Line_Seq(align ***data,int num_otu,FILE *in);
 
+align** Read_Seq_Fasta(option*,model*);
+void scanFasta(model*,FILE*);
+
 //tree reading methods
 FILE* GetTreeFile(option *io);
 t_tree *Read_Tree(char *s_tree);

@@ -50,6 +50,9 @@ void Post_Order_Lk_IrrevPulley(t_node *pere, t_node *fils, t_tree *tree);
 void Pre_Order_Lk_IrrevPulley(t_node *pere, t_node *fils, t_tree *tree);
 phydbl Lk_IrrevPulley(t_tree *tree);
 phydbl Lk_Core_UPP(t_edge *b, t_tree *tree, t_node *anc, t_node *d);
+phydbl ASR_Core(t_edge *b, t_tree *tree, t_node *anc, t_node *d);
+phydbl ASR_Core_root(t_edge *b, t_tree *tree, t_node *anc, t_node *d);
+
 
 void Get_UPP(t_node *a, t_node *d, t_tree *tree); //added by Ken 20/10/2016
 void Get_Lhood(t_node *a, t_node *d, t_tree *tree); //added by Ken 20/10/2016
@@ -60,6 +63,8 @@ void Fill_UPP_root(t_tree *tree, t_edge *b); //added by Ken 20/10/2016
 
 void Site_Lk(t_tree *tree);
 phydbl Lk_At_Given_Edge(t_edge *b_fcus,t_tree *tree);
+phydbl ASR_At_Given_Edge(t_edge *b_fcus,t_tree *tree, int root);
+
 phydbl Return_Abs_Lk(t_tree *tree);
 matrix *ML_Dist(calign *data, model *mod);
 phydbl Lk_Given_Two_Seq(calign *data, int numseq1, int numseq2, phydbl dist, model *mod, phydbl *loglk);
