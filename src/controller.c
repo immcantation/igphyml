@@ -121,6 +121,8 @@ struct option longopts[] =
 	{"optFreq",		  required_argument,NULL,159},  //!<Added by Ken
 	{"optDebug",		  no_argument,NULL,160},  //!<Added by Ken
 	{"ASR",		  no_argument,NULL,161},  //!<Added by Ken
+	{"ASRc",		  required_argument,NULL,162},  //!<Added by Ken
+	{"minSeq",		  required_argument,NULL,163},  //!<Added by Ken
     {0,0,0,0}
 };
 
@@ -172,6 +174,11 @@ void finishOptions(option * io)
 	//io->fp_out_tree  = Openfile(io->out_tree_file, io->writemode);
 	io->fp_out_stats = Openfile(io->out_stats_file, io->writemode);
     setupFreqHandling(io);
+    if(io->mod->ASRcut==0)io->mod->ASRcut=0.95;
+    if(io->ntrees==1){
+    	io->mod->splitByTree=0;
+    	io->splitByTree=0;
+    }
 
     //set up HLP17 model
     //Added by Ken 12/7/2016
@@ -231,7 +238,7 @@ void setUpHLP17(option* io, model *mod){
    	}
        if((strcmp(io->mod->motifstring,"FCH")==0)){
            mod->motifstring = "WRC_2:0,GYW_0:1,WA_1:2,TW_0:3,SYC_2:4,GRS_0:5";
-           mod->hotnessstring = "e,e,e,e,e,e";
+           if(io->mod->hotnessstringopt==0)mod->hotnessstring = "e,e,e,e,e,e";
        }
    	if(io->mod->rootfound==0 && io->repMode==0){
    		printf("\nError: Root sequence ID must be specified using --root\n\n");
@@ -2404,7 +2411,7 @@ int mainOptionSwitch(int opt, char * optarg, option * io)
            		io->rootids[i] = mCalloc(T_MAX_OPTION,sizeof(char));
            		io->partfs[i] = mCalloc(T_MAX_FILE,sizeof(char));
            		fscn = fscanf(file, "%s\t%s\t%s\t%s\n",io->datafs[i],io->treefs[i],io->rootids[i],io->partfs[i]); //number of omega parameters
-           		printf("%s\t%s\t%s\n",io->datafs[i],io->treefs[i],io->rootids[i]);
+           		//printf("%s\t%s\t%s\n",io->datafs[i],io->treefs[i],io->rootids[i]);
            	}
            	io->in_tree = 2;
            // io->mod->s_opt->opt_topo        = 0;
@@ -2432,6 +2439,16 @@ int mainOptionSwitch(int opt, char * optarg, option * io)
            	io->mod->ASR=1;
              break;
          }
+        case 162: {
+           	io->mod->ASR=1;
+           	io->mod->ASRcut=atof(optarg);
+            break;
+          }
+        case 163:{
+        	io->min_otu=atoi(optarg);
+        	printf("\nLimiting analysis to clones with at least %d sequences! Assumes repfile is in decreasing order\n",io->min_otu);
+        	break;
+        }
 
             //////////////////////////////////////////////////////////////////////////////////////
             // --multiple

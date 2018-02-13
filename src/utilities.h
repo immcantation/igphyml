@@ -850,6 +850,8 @@ typedef struct __Model {
  int		ASR;
  int**		mlASR;
  phydbl**		probASR;
+ char**			mlCodon;
+ phydbl		ASRcut;
 
 }model;
 
@@ -1019,6 +1021,7 @@ typedef struct __Option {
 
   phydbl*								paramStore; //stores all parameters and subtree branch lengths
   char* 						command;
+  int 								min_otu; //minimum number of otu's to be included
  }option;
 
 /*********************************************************/

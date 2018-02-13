@@ -1656,7 +1656,7 @@ void Print_IgPhyML_Out(option* io){
 
 	if(io->mod->optKappa != 2)fprintf(f,". Transition/transversion ratio: 	%.5lf",io->mod->kappa); //!< Kappa
 	else fprintf(f,". Transition/transversion ratio: 	%s","Submodel_optimized"); //!< Kappa
-	if(io->mod->s_opt->opt_kappa)fprintf(f,"\t(%.5f, %.5f)",io->mod->kappalci,io->mod->kappauci);
+	if(io->mod->kappaci)fprintf(f,"\t(%.5f, %.5f)",io->mod->kappalci,io->mod->kappauci);
 	fprintf(f,"\n");
 
 	int omegai; //Added by Ken 23/8
@@ -1755,7 +1755,8 @@ void Print_IgPhyML_Out(option* io){
 		 t_tree* tree=io->tree_s[i];
 		 model* mod = io->mod_s[i];
 		 fprintf(f,"\n# Lineage %d Reconstructions\n# Sequence file: %s\n",i,io->datafs[i]);
-		 fprintf(f,"# Tree file: %s%s%s\n",io->datafs[i],"_igphyml_figtree.txt_",io->run_id_string);
+		 if(io->append_run_ID)fprintf(f,"# Tree file: %s%s%s\n",io->datafs[i],"_igphyml_figtree.txt_",io->run_id_string);
+		 else fprintf(f,"# Tree file: %s%s\n",io->datafs[i],"_igphyml_figtree.txt");
 		 For(j,mod->nedges+1){
 			if(j<mod->nedges){
 				 if(tree->t_edges[j]->des_node->tax)continue;
@@ -1765,10 +1766,11 @@ void Print_IgPhyML_Out(option* io){
 			}else{
 				fprintf(f,">%s\n",tree->mod->rootname);
 			}
-			For(k,mod->init_len/3){
+			fprintf(f,"%s\n",mod->mlCodon[j]);
+			/*For(k,mod->init_len/3){
 				 char s1[4];
-				Sprint_codon(s1,senseCodons[mod->mlASR[j][k]]);
-				fprintf(f,"%s",s1);
+				//Sprint_codon(s1,senseCodons[mod->mlASR[j][k]]);
+				//fprintf(f,"%s",s1);
 				 //printf("%d\t%d\t%d\t%d\n",j,k,mod->mlASR[j][k],senseCodons[mod->mlASR[j][k]]);
 				//fprintf(f,"%s\t%lf\n",s1,mod->probASR[j][k]);
 			 }
@@ -1785,7 +1787,7 @@ void Print_IgPhyML_Out(option* io){
 				//printf("%d\t%d\t%d\t%d\n",j,k,mod->mlASR[j][k],senseCodons[mod->mlASR[j][k]]);
 				//fprintf(f,"%s\t%lf\n",s1,mod->probASR[j][k]);
 			}
-			 fprintf(f,"\n");
+			 fprintf(f,"\n");*/
 		   }
 		 }
 	   }
@@ -1807,7 +1809,7 @@ void Print_IgPhyML_Out(option* io){
 	 fprintf(f,"#\tSurvey of branch support methods demonstrates accuracy, power, and robustness of fast likelihood-based approximation schemes. Syst Biol 60:685-699\n");
 
 
-	 printf("\nPRINTING TREES TO FILES\n");
+	 //printf("\nPRINTING TREES TO FILES\n");
 	 For(i,io->ntrees){
 		 t_tree* tree=io->tree_s[i];
 		 char fout[T_MAX_FILE];
@@ -1818,7 +1820,7 @@ void Print_IgPhyML_Out(option* io){
 			 strcat(fout, "_");
 			 strcat(fout, io->run_id_string);
 		 }
-		 printf("\nPRINTING TREES TO FILES %s\n",fout);
+		 //printf("\nPRINTING TREES TO FILES %s\n",fout);
 		 FILE* treeout = Openfile(fout, 1 );
 		 if(io->mod->ASR){
 			 fprintf(treeout,"#NEXUS\nBegin taxa;\n");

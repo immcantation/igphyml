@@ -52,7 +52,8 @@ phydbl Lk_IrrevPulley(t_tree *tree);
 phydbl Lk_Core_UPP(t_edge *b, t_tree *tree, t_node *anc, t_node *d);
 phydbl ASR_Core(t_edge *b, t_tree *tree, t_node *anc, t_node *d);
 phydbl ASR_Core_root(t_edge *b, t_tree *tree, t_node *anc, t_node *d);
-
+void BSort(phydbl* probs, int* codons);
+char ambigAssign(char** codons,int ncodons, int site);
 
 void Get_UPP(t_node *a, t_node *d, t_tree *tree); //added by Ken 20/10/2016
 void Get_Lhood(t_node *a, t_node *d, t_tree *tree); //added by Ken 20/10/2016

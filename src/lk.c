@@ -413,9 +413,7 @@ phydbl Lk(t_tree *tree)
   #endif
  
   #if defined OMP || defined BLAS_OMP
-  //just commented out for testing
   #pragma omp parallel for if(tree->mod->datatype==CODON && !tree->mod->splitByTree)
-   
   #endif
   For(br,n_edges) Update_PMat_At_Given_Edge(tree->t_edges[br],tree);
 
@@ -447,10 +445,14 @@ phydbl Lk(t_tree *tree)
   }
   Adjust_Min_Diff_Lk(tree);
   if(tree->mod->optDebug && tree->mod->whichrealmodel==HLP17){
+#if defined OMP || defined BLAS_OMP
 #pragma omp critical
+#endif
 	  printf("\nomega %d %lf %lf %lf %lf %lf %lf",tree->both_sides,tree->mod->omega_part[0],tree->mod-> kappa,tree->c_lnL,tree->mod->qmat_part[0][1],tree->mod->hotness[0],tree->mod->hotness[1]);
 	  int i;
+#if defined OMP || defined BLAS_OMP
 #pragma omp critical
+#endif
 	  For(i,12)printf(" %lf",tree->mod->uns_base_freq[i]);
   }
 
@@ -790,8 +792,12 @@ n_v1   n_v2
 		    	if(state_anc==i){state=1;}
 			     b->upp[site][i] = state; // Ken 17/8/2016
 		    }else{
-		    	 //b->upp[site][i] = anc->b[0]->p_lk_tip_r[site*tree->mod->ns+i];
-           b->upp[site][i]=tree->mod->pi[i];
+		    	 b->upp[site][i] = anc->b[0]->p_lk_tip_r[site*tree->mod->ns+i];//Changed 12/Feb/2018 by Ken
+		    	 //char* s1=mCalloc(4,sizeof(char));
+		    	//Sprint_codon(s1,senseCodons[i]);
+		    	// printf("\nUPP %d\t%d\t%s\t%lf",site,i,s1,b->upp[site][i]);
+           //b->upp[site][i]=tree->mod->pi[i];
+           //b->upp[site][i]=1/61;
 		    }
 		  }
 
@@ -827,6 +833,62 @@ void Get_Lhood(t_node *a, t_node *d,  t_tree *tree)
       Get_Lhood(d,d->v[desc[0]],tree);
       Get_Lhood(d,d->v[desc[1]],tree);
     }
+}
+/*********************************************************/
+void BSort(phydbl* probs, int* codons){
+int i, j;
+phydbl temp;
+int tempc;
+for (i = 0; i <61-1; i++){
+     for (j = 0; j < 61 - i-1; j++){
+          if (probs[j] < probs[j+1]){
+               temp = probs[j+1];
+               probs[j+1] = probs[j];
+               probs[j] = temp;
+               tempc = codons[j+1];
+               codons[j+1] = codons[j];
+               codons[j] = tempc;
+          	  }
+     	 }
+	}
+}
+/*********************************************************/
+char ambigAssign(char** codons,int ncodons, int site){
+	char result;
+	int i,a,c,g,t;
+	a=c=g=t=0;
+	For(i,ncodons){
+		//printf("here: %c\n",codons[i][site]);
+		if(codons[i][site] == 'A')a++;
+		if(codons[i][site] == 'C')c++;
+		if(codons[i][site] == 'G')g++;
+		if(codons[i][site] == 'T')t++;
+	}
+
+	//https://www.bioinformatics.org/sms/iupac.html
+	if(a && !c && !g && !t)result='A';
+	if(!a && c && !g && !t)result='C';
+	if(!a && !c && g && !t)result='G';
+	if(!a && !c && !g && t)result='T';
+
+	if(a && !c && g && !t)result='R';//R 	A or G
+	if(!a && c && !g && t)result='Y';//Y 	C or T
+	if(!a && c && g && !t)result='S';//S 	G or C
+	if(a && !c && !g && t)result='W';//W 	A or T
+	if(!a && !c && g && t)result='K';//K 	G or T
+	if(a && c && !g && !t)result='M';//M 	A or C
+
+	if(!a && c && g && t)result='B';//B 	C or G or T
+	if(a && !c && g && t)result='D';//D 	A or G or T
+	if(a && c && !g && t)result='H';//H 	A or C or T
+	if(a && c && g && !t)result='V';//V 	A or C or G
+
+	if(a && c && g && t)result='N';//N 	any base
+	if(!a && !c && !g && !t){
+		printf("\nSomething went wrong 0_0 in ASR");
+		exit(EXIT_FAILURE);
+	}
+	return result;
 }
 
 /*********************************************************/
@@ -952,14 +1014,50 @@ phydbl ASR_Core(t_edge *b, t_tree *tree, t_node *anc, t_node *d)
 	  int maxc=-1;
 	  int i;
 	  For(i,ns){
-		  //printf("%lf\t%lf\n",probc[i],max);
+		  char s1[4];
+		  Sprint_codon(s1,senseCodons[i]);
+		  if(site==0 && (i==0 || i==8)){
+			//  printf("\n%d\t%s\t%lf\t%lf\t%lf\t%lf\t%lf",b->num,s1,probc[i]/tree->site_lk_cat[0],b->bPmat_part[0][0],b->bPmat_part[0][8],b->bPmat_part[0][8*61],b->bPmat_part[0][8*61+8]);
+		  }
 		  if(probc[i]>max){
 			  max=probc[i];
 			  maxc=i;
 		  }
 	  }
-	  tree->mod->mlASR[b->num][site]=maxc;
-	  tree->mod->probASR[b->num][site]=max/tree->site_lk_cat[0];
+	  int sense[61];
+	  For(i,61){
+		  probc[i]=probc[i]/tree->site_lk_cat[0];
+		  sense[i]=senseCodons[i];
+	  }
+	  BSort(probc,sense);
+	  int ncodons=0;
+	  phydbl probsum=0;
+	  For(i,61){
+		  char s1[4];
+		  Sprint_codon(s1,sense[i]);
+		 // printf("\npossible: %d\t%d\t%s\t%lf",b->num,site,s1,probc[i]);
+		  probsum+=probc[i];
+		  ncodons++;
+		  if(probsum>=tree->mod->ASRcut)break;
+	  }
+	  char** codonset=malloc(ncodons*sizeof(char*));
+	  For(i,ncodons){
+		  char* s1=mCalloc(4,sizeof(char));
+		  Sprint_codon(s1,sense[i]);
+		  codonset[i]=s1;
+		  //printf("\n%c\t%c\t%c",codonset[i][0],codonset[i][1],codonset[i][2]);
+
+	  }
+	  //printf("\n%c",ambigAssign(codonset,ncodons,1));
+	  //printf("\n%c\t%c\t%c",ambigAssign(codonset,ncodons,0),ambigAssign(codonset,ncodons,1),ambigAssign(codonset,ncodons,2));
+	  For(i,3)tree->mod->mlCodon[b->num][site*3+i]=ambigAssign(codonset,ncodons,i);
+
+
+
+
+
+	  //tree->mod->mlASR[b->num][site]=maxc;
+	  //tree->mod->probASR[b->num][site]=max/tree->site_lk_cat[0];
 	 // printf("%d\t%lf\t%lf\n",maxc,max,tree->site_lk_cat[0]);
 	  if(site==0){
 		//  printf("labels: %d\n",b->n_labels);
@@ -1216,6 +1314,13 @@ phydbl ASR_Core_root(t_edge *b, t_tree *tree, t_node *anc, t_node *d)
 	  int maxc=-1;
 	  int i;
 	  For(i,ns){
+		  char s1[4];
+		  		  Sprint_codon(s1,senseCodons[i]);
+		  		  if(site==0 && (i==0 || i==8)){
+		  			  //printf("%d\t%d\t%s\t%lf\n",-1,i,s1,probc[i]/tree->site_lk_cat[0]);
+					  //printf("\n%d\t%s\t%lf\t%lf\t%lf\t%lf\t%lf",-1,s1,probc[i]/tree->site_lk_cat[0],b->bPmat_part[0][0],b->bPmat_part[0][8],b->bPmat_part[0][8*61],b->bPmat_part[0][8*61+8]);
+
+		  		  }
 		  //printf("%lf\t%lf\n",probc[i],max);
 		  if(probc[i]>max){
 			  max=probc[i];
@@ -1224,6 +1329,33 @@ phydbl ASR_Core_root(t_edge *b, t_tree *tree, t_node *anc, t_node *d)
 	  }
 	  tree->mod->mlASR[tree->mod->nedges][site]=maxc;
 	  tree->mod->probASR[tree->mod->nedges][site]=max/tree->site_lk_cat[0];
+	  int sense[61];
+	  	  For(i,61){
+	  		  probc[i]=probc[i]/tree->site_lk_cat[0];
+	  		  sense[i]=senseCodons[i];
+	  	  }
+	  	  BSort(probc,sense);
+	  	  int ncodons=0;
+	  	  phydbl probsum=0;
+	  	  For(i,61){
+	  		  char s1[4];
+	  		  Sprint_codon(s1,sense[i]);
+	  		  //printf("\npossible: %d\t%d\t%s\t%lf",b->num,site,s1,probc[i]);
+	  		  probsum+=probc[i];
+	  		  ncodons++;
+	  		  if(probsum>=tree->mod->ASRcut)break;
+	  	  }
+	  	  char** codonset=malloc(ncodons*sizeof(char*));
+	  	  For(i,ncodons){
+	  		  char* s1=mCalloc(4,sizeof(char));
+	  		  Sprint_codon(s1,sense[i]);
+	  		  codonset[i]=s1;
+	  		  //printf("\n%c\t%c\t%c",codonset[i][0],codonset[i][1],codonset[i][2]);
+
+	  	  }
+	  	  //printf("\n%c",ambigAssign(codonset,ncodons,1));
+	  	  //printf("\n%c\t%c\t%c",ambigAssign(codonset,ncodons,0),ambigAssign(codonset,ncodons,1),ambigAssign(codonset,ncodons,2));
+	  	  For(i,3)tree->mod->mlCodon[tree->mod->nedges][site*3+i]=ambigAssign(codonset,ncodons,i);
 	  free(probc);
 
 	  max_sum_scale =  (phydbl)BIG;
@@ -1525,9 +1657,7 @@ phydbl Lk_Core_UPP(t_edge *b, t_tree *tree, t_node *anc, t_node *d)
 
 
 	  #if defined OMP || defined BLAS_OMP
-
 	  #pragma omp parallel for if(tree->mod->n_w_catg>1) private(site_lk_cat,sum,k,l)
-
 	  #endif
 
 
@@ -1754,11 +1884,11 @@ phydbl Lk_Core(t_edge *b, t_tree *tree)
   /* Actual likelihood calculation */
   /* For all classes of rates */
  
-  /*#if defined OMP || defined BLAS_OMP
+  #if defined OMP || defined BLAS_OMP
   
   #pragma omp parallel for if(tree->mod->n_w_catg>1) private(site_lk_cat,sum,k,l) 
      
-  #endif*/
+  #endif
 
  
   For(catg,tree->mod->n_catg)
@@ -2081,9 +2211,7 @@ n_v1   n_v2
   /* For every site in the alignment */
   
   #if defined OMP || defined BLAS_OMP
-  //just commented out for testing
   #pragma omp parallel for if(tree->mod->datatype==CODON  && !tree->mod->splitByTree) private(state_v1, state_v2, ambiguity_check_v1, ambiguity_check_v2, smallest_p_lk, p1_lk1, catg, i, j, p2_lk2, sum_scale_v1_val, sum_scale_v2_val, curr_scaler_pow, curr_scaler, piecewise_scaler_pow )
-  
   #endif
   
   For(site,n_patterns)
@@ -3057,9 +3185,7 @@ phydbl LK_Codon_Pairwise(calign *data, phydbl *Pij, phydbl *pi, int ns, phydbl l
   seq1=data->c_seq[1]->state;
   
   #if defined OMP || defined BLAS_OMP
-  //just commented out for testing
   #pragma omp parallel for reduction(+:cn_lk)
-  
   #endif
   
   For(i,data->crunch_len)

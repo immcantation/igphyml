@@ -54,6 +54,7 @@ void Read_Command_Line( option *io, int argc, char **argv )
 	io->mod->slowSPR=0;
 	io->mod->stretch=1.0;
 	io->splitByTree=1;
+	io->mod->splitByTree=1;
 	io->mod->omega_opt_spec=0;
 	io->mod->optKappa=1;
 	io->mod->optFreq=1;
@@ -61,6 +62,7 @@ void Read_Command_Line( option *io, int argc, char **argv )
 	io->mod->nhotness=0;
 	io->mod->kappaci=0;
 	io->mod->ASR=0;
+	io->mod->ASRcut=0;
 	io->threads=1;
 
     io->mod->rootname = mCalloc(T_MAX_OPTION,sizeof(char));

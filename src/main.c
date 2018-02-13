@@ -70,7 +70,6 @@ int main(int argc, char **argv){
   io = (option *)Get_Input(argc,argv); //!< Read the simulation options from interface or command line.
 
   io->command=mCalloc(T_MAX_LINE,sizeof(char));
-    //strcpy(io->command,"COMMAND: ");
     For(i,argc){
   	  strcat(io->command,argv[i]);
   	  strcat(io->command," ");
@@ -111,6 +110,7 @@ int main(int argc, char **argv){
   io->Small_Diff=.5e-6;
   io->both_sides=1;
 
+  int last_otu=0;
   For(num_data_set,io->ntrees){
     n_otu = 0;
     best_lnL = UNLIKELY;
@@ -153,6 +153,18 @@ int main(int argc, char **argv){
 
     if(io->threshold_exp) {if(num_data_set<io->dataset-1) {Free_Seq(mod->data,mod->n_otu);continue;}}//!< Added by Marcelo. Run arbitrary data set.
 
+    if(io->min_otu>0){
+    	printf("\n..has %d sequences.",mod->n_otu);
+    	if(num_data_set > 0 && mod->n_otu > last_otu){
+    		printf("\n repfile is not in order! --minSeq will not function properly. Exiting\n");
+    		exit(EXIT_FAILURE);
+    	}
+    	last_otu=mod->n_otu;
+    	if(mod->n_otu<io->min_otu){
+    		io->ntrees=num_data_set;
+    		continue;
+    	}
+    }
     Make_Model_Complete(mod);
 
     Set_Model_Name(mod);
@@ -232,7 +244,7 @@ int main(int argc, char **argv){
 	  tree->both_sides  = 1;
 	  tree->n_pattern   = tree->data->crunch_len;
 
-	  mod->quiet=NO; //turn back on alerts
+	  //mod->quiet=NO; //turn back on alerts
 
 	  //added by Ken
 	  //Find location of root node if HLP17
@@ -314,6 +326,7 @@ int main(int argc, char **argv){
   For(i,io->ntrees){
 	  For(j,12){
 		  io->mod->baseCounts[j]+=io->mod_s[i]->baseCounts[j];
+		  //io->mod->baseCounts[j]=100;
 	  }
   }
   io->mod->base_freq[0]=(io->mod->baseCounts[0])/(io->mod->baseCounts[0]+io->mod->baseCounts[1]+io->mod->baseCounts[2]+io->mod->baseCounts[3]);
@@ -437,14 +450,24 @@ int main(int argc, char **argv){
 		  Get_UPP(tree->noeud[tree->mod->startnode],tree->noeud[tree->mod->startnode]->v[0],tree);
 		  mod->mlASR=mCalloc(mod->nedges+1,sizeof(int*));
 		  mod->probASR=mCalloc(mod->nedges+1,sizeof(phydbl*));
+		  mod->mlCodon=mCalloc(mod->nedges+1,sizeof(char*));
   	  	  For(i,mod->nedges+1){
   	  		  mod->mlASR[i]=mCalloc(mod->init_len/3,sizeof(int));
   	  		  mod->probASR[i]=mCalloc(mod->init_len/3,sizeof(phydbl));
+  			  mod->mlCodon[i]=mCalloc(mod->init_len,sizeof(char));
+
   	  		  //printf("LK ON EDGE %d\n",i);
   	  		  //tree->mod->num=-1;
   	  		  if(i<mod->nedges)ASR_At_Given_Edge(tree->t_edges[i],tree,0);
   	  		  else ASR_At_Given_Edge(tree->noeud[tree->mod->startnode]->b[0],tree,1);
+  	  		  //printf("\n%s\n",mod->mlCodon[i]);
   	  	  }
+  		  //printf("\n%lf\t%lf\t%lf\t%lf\n",mod->qmat_part[0][0],mod->qmat_part[0][8],mod->qmat_part[0][8*61],mod->qmat_part[0][8*61+8]);
+  		  /*phydbl sumttt=0;
+  		  phydbl sumtat=0;
+  		  for(i=0;i<61;i++)if(mod->qmat_part[0][0+i]!=0 && i !=0)sumttt+=mod->pi[i];
+  		  for(i=0;i<61;i++)if(mod->qmat_part[0][8*61+i]!=0&& i !=8)sumtat+=mod->pi[i];
+  		  printf("\n%lf\t%lf\n",sumttt,sumtat);*/
 	  }
   }
 
