@@ -3115,6 +3115,7 @@ matrix *ML_CODONDist_Pairwise(calign *data, option *io, model *mod) //!<Added by
   #endif
   int progress = 0; //!Added by Marcelo.
   double loops = ((data->n_otu)*(data->n_otu)-(data->n_otu))/2.00;//!Added by Marcelo.
+  PhyML_Printf("\n. Computing pairwise distances...");
   For( j, data->n_otu-1 ) {
     tmpdata->c_seq[0]       = data->c_seq[j];
     tmpdata->wght           = data->wght;
@@ -3131,7 +3132,7 @@ matrix *ML_CODONDist_Pairwise(calign *data, option *io, model *mod) //!<Added by
       Free_Cseq(twodata);
       progress++;
       //if(!io->quiet) PhyML_Printf("\r. Computing pairwise distances...%3.2f%c concluded.", progress*100.00/loops, '%');
-      PhyML_Printf("\n. Computing pairwise distances...");
+      //PhyML_Printf("\n. Computing pairwise distances...");
     }
   }
   if(!io->quiet) PhyML_Printf("\n");
