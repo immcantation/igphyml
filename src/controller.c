@@ -180,6 +180,13 @@ void finishOptions(option * io)
     	io->splitByTree=0;
     }
 
+    if(io->mod->partfilespec){
+    	if(io->ntrees > 1){
+    		printf("Can't specify partfile manually if using more than one dataset\n");
+    		exit(EXIT_FAILURE);
+    	}
+    	strcpy(io->partfs[0],io->mod->partfile);
+    }
     //set up HLP17 model
     //Added by Ken 12/7/2016
     io->mod->primary=1;
@@ -189,6 +196,11 @@ void finishOptions(option * io)
     }
     if(!io->mod->omega_opt_spec){
     	strcpy(io->mod->omega_opt_string,"e");
+    	if(io->mod->nomega_part>1){
+    		for(i=1;i<io->mod->nomega_part;i++){
+    			strcat(io->mod->omega_opt_string,",e");
+    		}
+    	}
     }
     int c;
 	char* minfo1 = strdup(io->mod->omega_opt_string);
@@ -225,8 +237,13 @@ void setUpHLP17(option* io, model *mod){
    		strcpy(mod->motifstring,io->mod->motifstring);
    		strcpy(mod->hotnessstring,io->mod->hotnessstring);
    		strcpy(mod->partfile,io->mod->partfile);
+   		mod->partfilespec=io->mod->partfilespec;
    		strcpy(mod->ambigfile,io->mod->ambigfile);
    		strcpy(mod->rootname,io->mod->rootname);
+   	}else{
+   		strcpy(mod->partfile,io->partfs[mod->num]);
+   		if(strcmp(mod->partfile,"N")==0)mod->partfilespec=0;
+   		else mod->partfilespec=1;
    	}
 
    	//Default values
@@ -331,12 +348,13 @@ void setUpHLP17(option* io, model *mod){
    	    mod->hotspotcmps[mot] = hot;
    	}
    	//partition model stuff
-   	if(io->mod->partfilespec==1){
-    FILE *file = fopen(io->mod->partfile, "r");
+   	if(mod->partfilespec==1){
+    FILE *file = fopen(mod->partfile, "r");
     int npart;
     int fscn =  fscanf(file, "%d",&mod->nparts);
        int nsite;
        fscn = fscanf(file, " %d\n",&nsite);
+       //printf("reading part: %d\t%d\n",mod->nparts,nsite);
        mod->nomega_part=mod->nparts;
        mod->partIndex = (int *)mCalloc(nsite,sizeof(double));
        mod->partNames = (char**)mCalloc(mod->nparts,sizeof(char*));
@@ -383,7 +401,7 @@ void setUpHLP17(option* io, model *mod){
    	   	}
    	 if(mod->primary)printf("%d ",mod->partIndex[indexi]);
    	}
-   	if(mod->primary)printf("\n");
+   	if(mod->primary)printf("\nDone!\n");
     }else{
    	 mod->nparts=1;
    	 mod->nomega_part=mod->nparts;
@@ -2213,6 +2231,7 @@ int mainOptionSwitch(int opt, char * optarg, option * io)
       	  		io->rootids[0] = mCalloc(T_MAX_OPTION,sizeof(char));
        	  		io->partfs[0] = mCalloc(T_MAX_FILE,sizeof(char));
             	strcpy(io->datafs[0],optarg);
+            	strcpy(io->partfs[0],"N");
             	printf("trees: %d\n",io->ntrees);
 
                 strcpy(io->mod->in_align_file, optarg);
@@ -2411,7 +2430,7 @@ int mainOptionSwitch(int opt, char * optarg, option * io)
            		io->rootids[i] = mCalloc(T_MAX_OPTION,sizeof(char));
            		io->partfs[i] = mCalloc(T_MAX_FILE,sizeof(char));
            		fscn = fscanf(file, "%s\t%s\t%s\t%s\n",io->datafs[i],io->treefs[i],io->rootids[i],io->partfs[i]); //number of omega parameters
-           		//printf("%s\t%s\t%s\n",io->datafs[i],io->treefs[i],io->rootids[i]);
+           		printf("%s\t%s\t%s\t%s\n",io->datafs[i],io->treefs[i],io->rootids[i],io->partfs[i]);
            	}
            	io->in_tree = 2;
            // io->mod->s_opt->opt_topo        = 0;

@@ -1627,7 +1627,7 @@ void Print_IgPhyML_Out(option* io){
 	fprintf(f,"                 http://sourceforge.net/projects/codonphyml/\n");
 	fprintf(f,"oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo\n");
 	fprintf(f,"                                 Summary\n");
-	fprintf(f,"    See doc/IgPhyML_Manual.pdf for further detail on interpretting results\n");
+	fprintf(f,"     See doc/IgPhyML_Manual.pdf for further detail on interpreting results\n");
 	fprintf(f,"oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo\n");
 	fprintf(f,". Command: %s\n",io->command);
   	fprintf(f,". Data sets: %d\n",io->ntrees);
@@ -1651,7 +1651,7 @@ void Print_IgPhyML_Out(option* io){
 	}
 	fprintf(f,". Combined log-likelihood: 	%.2lf\n",io->replnL);
 	phydbl treel=0.0;
-	For(i,io->ntrees)treel+=(Get_Tree_Size(io->tree_s[i])*io->tree_s[i]->n_pattern);
+	For(i,io->ntrees)treel+=(Get_Tree_Size(io->tree_s[i])*io->mod_s[i]->init_len/3);
 	fprintf(f,". Estimated substitutions in repertoire:\t%lf\n",treel);
 
 	if(io->mod->optKappa != 2)fprintf(f,". Transition/transversion ratio: 	%.5lf",io->mod->kappa); //!< Kappa
@@ -1746,9 +1746,12 @@ void Print_IgPhyML_Out(option* io){
 	if(io->mod->ASR){
 	fprintf(f,"oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo\n");
 	fprintf(f,"                     Ancestral Sequence Reconstruction\n");
-	fprintf(f,"ML codon predictions for each internal node. Open each specified tree file using\n");
+	fprintf(f,"Marginal ML codon predictions for internal nodes. Open specified tree files using\n");
 	fprintf(f,"FigTree (tree.bio.ed.ac.uk/software/figtree) to view sequence placement on tree.\n");
-	fprintf(f,"Relative probabilities are under each codon: 90. = 90%%, 2.. = 2%%, *.. > 99%%\n");
+	fprintf(f,"Codon assignments use ambiguous nucleotides to summarize the minimal set of codons\n");
+	fprintf(f,"making up 95%% relative probability (or the cutoff specified in --ASRc). Check out\n");
+	fprintf(f,"bioinformatics.org/sms/iupac.html for a reference on nucleotide ambiguity codes.\n");
+	fprintf(f,"             See Manual for more information on this section.\n");
 	fprintf(f,"oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo");
 
 	  For(i,io->ntrees){

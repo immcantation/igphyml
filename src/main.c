@@ -121,32 +121,29 @@ int main(int argc, char **argv){
     mod->num=num_data_set;
 
     mod->quiet=YES;
-
     strcpy(mod->in_tree_file,io->treefs[num_data_set]); //copy input tree to model
     strcpy(mod->in_align_file,io->datafs[num_data_set]); //copy input data to model
     strcpy(mod->rootname,io->rootids[num_data_set]); //copy root name
-
     //if(io->mod->optDebug){
-    	printf("\n. %s\t",mod->in_tree_file);
-    	printf("%s\t",mod->in_align_file);
-    	printf("%s",mod->rootname);
+    	printf("\n. tree file: %s\t",mod->in_tree_file);
+    	printf("align file: %s\t",mod->in_align_file);
+    	printf("root name: %s",mod->rootname);
     //}
 
-    if(io->in_tree == 2)mod->fp_in_tree = Openfile(mod->in_tree_file,0);
     mod->fp_in_align = Openfile(mod->in_align_file,0);
 
-    if(mod->print_trace) {
+    /*if(mod->print_trace) {
     	strcpy(mod->out_trace_stats_file,mod->in_align_file);
     	strcat(mod->out_trace_stats_file,"_igphyml_stats_trace");
     	strcpy(mod->out_trace_tree_file,mod->in_align_file);
     	strcat(mod->out_trace_tree_file,"_igphyml_tree_trace");
         mod->fp_out_tree_trace = Openfile(mod->out_trace_tree_file, 1 );//openOutputFile(mod->out_trace_tree_file, "_igphyml_tree_trace", ".txt", io);
         mod->fp_out_stats_trace = Openfile(mod->out_trace_stats_file, 1 );//openOutputFile(mod->out_trace_stats_file, "_igphyml_stats_trace", ".txt", io);
-    }
+    }*/
 
-    if(io->in_tree == 2) Test_Multiple_Data_Set_Format(io,mod);
-    else io->n_trees = 1;
-
+    //if(io->in_tree == 2) Test_Multiple_Data_Set_Format(io,mod);
+    //else io->n_trees = 1;
+    io->n_trees=1;
 
     Get_Seq(io,mod);
     //if(io->convert_NT_to_AA) Conv_NT_seq_to_AA_seq(io); unused ken 5/1
@@ -216,10 +213,16 @@ int main(int argc, char **argv){
 
 	  io->init_run=0;
 
-	  switch(io->in_tree){
+	  if(io->in_tree<=1 || strcmp(mod->in_tree_file,"N")==0){
+	  	  tree = Dist_And_BioNJ(cdata,mod,io);
+	   }else{
+	  	  mod->fp_in_tree = Openfile(mod->in_tree_file,0);
+	  	  tree = Read_User_Tree(cdata,mod,io);
+	  }
+	  /*switch(io->in_tree){
 	    case 0 : case 1 : { tree = Dist_And_BioNJ(cdata,mod,io); break; }
 	    case 2 :          { tree = Read_User_Tree(cdata,mod,io); break; }
-	  }
+	  }*/
 	  if(io->mod->optDebug)printf("read tree\n");
 	 /* int bri=0;
 	  For(bri,2*tree->n_otu-3) printf("in main: %lf\n",tree->t_edges[bri]->l);*/

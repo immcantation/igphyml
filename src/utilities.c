@@ -3007,12 +3007,13 @@ model *Copy_Partial_Model(model *ori)
 
   cpy->omegaSiteVar = ori->omegaSiteVar;
       //cpy->omega        = ori->omega;
+  cpy->nomega_part = ori->nomega_part;
+
       cpy->omega_part=mCalloc(ori->nomega_part,sizeof(phydbl));
       cpy->omega_part_opt=mCalloc(ori->nomega_part,sizeof(int));
       cpy->omega_part_ci = (int*)mCalloc(cpy->nomega_part,sizeof(int ));
       cpy->omega_part_uci = (phydbl*)mCalloc(cpy->nomega_part,sizeof(phydbl ));
       cpy->omega_part_lci = (phydbl*)mCalloc(cpy->nomega_part,sizeof(phydbl ));
-      cpy->nomega_part = ori->nomega_part;
       int omegai; //added by Ken 17/8/2016
       for(omegai=0;omegai<ori->nomega_part;omegai++){
       	if(ori->optDebug)printf("omega: %lf\t%d\t%d\n",ori->omega_part[omegai],omegai,cpy->nomega_part);
@@ -3022,11 +3023,11 @@ model *Copy_Partial_Model(model *ori)
       	else cpy->omega_part_ci[omegai]=0;
       }
       if(ori->optDebug)printf("assigned omegas\n");
+
       cpy->omega_old    = ori->omega_old;
 
 
   copyIOtoMod(ori->io,cpy);
-
   if(ori->optDebug){
 	  printf("making model complete\n");
 	  printf("%d\n",cpy->n_w_catg);
@@ -3063,8 +3064,8 @@ void Record_Partial_Model(model *ori, model *cpy)
 {
   int i;
   if(ori->nparts > 1){
-	  printf("Record_Model doesn't work with parititions yet\n");
-	  exit(EXIT_FAILURE);
+	  //printf("Record_Model doesn't work with parititions yet\n");
+	  //exit(EXIT_FAILURE);
   }
 
   cpy->alpha_old    = ori->alpha_old;

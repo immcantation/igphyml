@@ -792,11 +792,11 @@ n_v1   n_v2
 		    	if(state_anc==i){state=1;}
 			     b->upp[site][i] = state; // Ken 17/8/2016
 		    }else{
-		    	 b->upp[site][i] = anc->b[0]->p_lk_tip_r[site*tree->mod->ns+i];//Changed 12/Feb/2018 by Ken
+		    	 //b->upp[site][i] = anc->b[0]->p_lk_tip_r[site*tree->mod->ns+i];//Changed 12/Feb/2018 by Ken
 		    	 //char* s1=mCalloc(4,sizeof(char));
 		    	//Sprint_codon(s1,senseCodons[i]);
 		    	// printf("\nUPP %d\t%d\t%s\t%lf",site,i,s1,b->upp[site][i]);
-           //b->upp[site][i]=tree->mod->pi[i];
+           b->upp[site][i]=tree->mod->pi[i];
            //b->upp[site][i]=1/61;
 		    }
 		  }
