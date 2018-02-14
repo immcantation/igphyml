@@ -124,11 +124,11 @@ int main(int argc, char **argv){
     strcpy(mod->in_tree_file,io->treefs[num_data_set]); //copy input tree to model
     strcpy(mod->in_align_file,io->datafs[num_data_set]); //copy input data to model
     strcpy(mod->rootname,io->rootids[num_data_set]); //copy root name
-    //if(io->mod->optDebug){
-    	printf("\n. tree file: %s\t",mod->in_tree_file);
+    if(io->mod->optDebug){
+    	//printf("\n. tree file: %s\t",mod->in_tree_file);
     	printf("align file: %s\t",mod->in_align_file);
-    	printf("root name: %s",mod->rootname);
-    //}
+    	//printf("root name: %s",mod->rootname);
+    }
 
     mod->fp_in_align = Openfile(mod->in_align_file,0);
 
