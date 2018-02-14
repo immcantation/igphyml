@@ -3130,7 +3130,8 @@ matrix *ML_CODONDist_Pairwise(calign *data, option *io, model *mod) //!<Added by
       mat->dist[k][j] = mat->dist[j][k];
       Free_Cseq(twodata);
       progress++;
-      if(!io->quiet) PhyML_Printf("\r. Computing pairwise distances...%3.2f%c concluded.", progress*100.00/loops, '%');
+      //if(!io->quiet) PhyML_Printf("\r. Computing pairwise distances...%3.2f%c concluded.", progress*100.00/loops, '%');
+      PhyML_Printf("\n. Computing pairwise distances...");
     }
   }
   if(!io->quiet) PhyML_Printf("\n");
