@@ -369,14 +369,22 @@ phydbl Lk_rep(option *io){
 		}
 	}
 
-#if defined OMP || defined BLAS_OMP
-#pragma omp parallel for if(io->splitByTree)
-#endif
+	//printf("splitbytree: %d\n",io->splitByTree);
+
+//#if defined OMP || defined BLAS_OMP
+
+if(io->splitByTree){
+#pragma omp parallel for
 	For(i,io->ntrees){ //do likelihood calculations in parallel
 		t_tree* tree= io->tree_s[i];
-		//if(io->mod->optDebug)printf("Doing lk\n");
 		Lk(tree);
 	}
+}else{
+	For(i,io->ntrees){ //do likelihood calculations in parallel
+			t_tree* tree= io->tree_s[i];
+			Lk(tree);
+	}
+}
 	For(i,io->ntrees){
 		replnL += io->tree_s[i]->c_lnL;
 	}
@@ -388,15 +396,13 @@ phydbl Lk_rep(option *io){
 
 
 /*********************************************************/
-phydbl Lk(t_tree *tree)
-{
+phydbl Lk(t_tree *tree){
 //printf("\nboth sides: %d %d",tree->both_sides,tree->mod->update_eigen);
   int br, n_patterns, n_edges;  
   n_edges=2*tree->n_otu-3;
   tree->old_lnL = tree->c_lnL;
  
-  if(tree->rates && tree->rates->lk_approx == NORMAL)
-  {
+  if(tree->rates && tree->rates->lk_approx == NORMAL){
     tree->c_lnL = Dnorm_Multi_Given_InvCov_Det(tree->rates->u_cur_l, 
 					       tree->rates->u_ml_l,
 					       tree->rates->invcov,
@@ -412,10 +418,16 @@ phydbl Lk(t_tree *tree)
   if(tree->bl_from_node_stamps) TIMES_Bl_From_T(tree);
   #endif
  
-  #if defined OMP || defined BLAS_OMP
-  #pragma omp parallel for if(tree->mod->datatype==CODON && !tree->mod->splitByTree)
-  #endif
-  For(br,n_edges) Update_PMat_At_Given_Edge(tree->t_edges[br],tree);
+  //printf("splitbytree: %d\n",tree->mod->splitByTree);
+  if(!tree->mod->splitByTree){
+	#if defined OMP || defined BLAS_OMP
+	#pragma omp parallel for if(tree->mod->datatype==CODON && !tree->mod->splitByTree)
+	#endif
+	  For(br,n_edges) Update_PMat_At_Given_Edge(tree->t_edges[br],tree);
+  }else{
+	  For(br,n_edges) Update_PMat_At_Given_Edge(tree->t_edges[br],tree);
+  }
+
 
  // For(br,2*tree->n_otu-3) printf("%lf\n",tree->t_edges[br]->l);
   //added and modified by Ken to start likelihood calculation at specified node
@@ -438,20 +450,19 @@ phydbl Lk(t_tree *tree)
 	tree->c_lnL             = .0;
 	tree->sum_min_sum_scale = .0;
 
-  For(tree->curr_site,n_patterns)
-  {
+  For(tree->curr_site,n_patterns){
 	  if(tree->data->wght[tree->curr_site] > SMALL && tree->mod->whichrealmodel==HLP17) Lk_Core_UPP(tree->noeud[startnode]->b[0],tree,tree->noeud[startnode],tree->noeud[startnode]->b[0]->des_node);
 	  else if(tree->data->wght[tree->curr_site] > SMALL) Lk_Core(tree->noeud[startnode]->b[0],tree);
   }
   Adjust_Min_Diff_Lk(tree);
   if(tree->mod->optDebug && tree->mod->whichrealmodel==HLP17){
 #if defined OMP || defined BLAS_OMP
-#pragma omp critical
+#pragma omp critical //if(tree->splitByTree)
 #endif
 	  printf("\nomega %d %lf %lf %lf %lf %lf %lf",tree->both_sides,tree->mod->omega_part[0],tree->mod-> kappa,tree->c_lnL,tree->mod->qmat_part[0][1],tree->mod->hotness[0],tree->mod->hotness[1]);
 	  int i;
 #if defined OMP || defined BLAS_OMP
-#pragma omp critical
+#pragma omp critical //if(tree->splitByTree)
 #endif
 	  For(i,12)printf(" %lf",tree->mod->uns_base_freq[i]);
   }
@@ -602,7 +613,12 @@ t_node *d = target->anc_node;
 
   phydbl tarsum=0;
 
-      int interest = 29;
+      //int interest = 29;
+
+#if defined OMP || BLAS_OMP
+//#pragma omp parallel for if(!tree->mod->splitByTree)
+#endif
+
   For(site,n_patterns){
       phydbl tsitesum=0.0;
 
@@ -761,7 +777,11 @@ n_v1   n_v2
 
     }
 
-  For(site,n_patterns){
+#if defined OMP || BLAS_OMP
+//#pragma omp parallel for if(!tree->mod->splitByTree)
+#endif
+
+  For(site,tree->n_pattern){
       state_anc = -1;
       ambiguity_check_anc= NO;
       if(!tree->mod->s_opt->greedy){
@@ -792,11 +812,11 @@ n_v1   n_v2
 		    	if(state_anc==i){state=1;}
 			     b->upp[site][i] = state; // Ken 17/8/2016
 		    }else{
-		    	 //b->upp[site][i] = anc->b[0]->p_lk_tip_r[site*tree->mod->ns+i];//Changed 12/Feb/2018 by Ken
+		    	 b->upp[site][i] = anc->b[0]->p_lk_tip_r[site*tree->mod->ns+i];//Changed 12/Feb/2018 by Ken
 		    	 //char* s1=mCalloc(4,sizeof(char));
 		    	//Sprint_codon(s1,senseCodons[i]);
 		    	// printf("\nUPP %d\t%d\t%s\t%lf",site,i,s1,b->upp[site][i]);
-           b->upp[site][i]=tree->mod->pi[i];
+           //b->upp[site][i]=tree->mod->pi[i];
            //b->upp[site][i]=1/61;
 		    }
 		  }
@@ -808,7 +828,7 @@ n_v1   n_v2
 	      }
 	   	   if(b->upp[site][i] < smallest_p_lk) smallest_p_lk = b->upp[site][i] ;
 	    }
-	  sum_scale[catg*n_patterns+site]=0;
+	  sum_scale[catg*tree->n_pattern+site]=0;
     }
   }
 }
@@ -885,10 +905,214 @@ char ambigAssign(char** codons,int ncodons, int site){
 
 	if(a && c && g && t)result='N';//N 	any base
 	if(!a && !c && !g && !t){
-		printf("\nSomething went wrong 0_0 in ASR");
+		printf("\nSomething went wrong 0_0 in ASR %s",codons[0]);
 		exit(EXIT_FAILURE);
 	}
 	return result;
+}
+
+
+
+phydbl logAdd(phydbl a, phydbl b){
+	return a + log(1+exp(b-a));
+}
+
+
+char* printThreeNum(phydbl G1p){
+	char* s1=malloc(4*sizeof(char));
+	int per=roundf(G1p*100);
+	//printf("%d\n",per);
+	if(per == 100)sprintf(s1,"%d",per);
+	else if(per >=10)sprintf(s1," %d",per);
+	else sprintf(s1,"  %d",per);
+	return s1;
+}
+/*********************************************************/
+//Reconstruct most likely set of germline genotypes and alleles
+void reconGermline(option *io, char* v, int site,FILE* f){
+	int i,j,k,c;
+
+	int matches[io->ntrees];
+	int	imgt[io->ntrees];
+	int nmatch=0;
+	For(i,io->ntrees){//make a list of trees/models with specified V and IMGT site
+		if(io->mod->optDebug)printf("\n%s\t%s\n",io->mod_s[i]->germlineV,v);
+		if(strcmp(io->mod_s[i]->germlineV,v)==0){
+			int found=0;
+			For(j,io->mod_s[i]->init_len/3){
+				if(io->mod_s[i]->imgt[j] == site){
+					imgt[i]=j;
+					found++;
+				}
+			}
+			if(found)matches[nmatch++]=i;
+			//else printf("IMGT site %d not found in %d!\n",site,i);
+		}
+	}
+	if(!nmatch){
+		printf("\nNo matches were found to %s at IMGT site %d!\n",v,site);
+		return;
+		//exit(EXIT_FAILURE);
+	}
+	phydbl** rprobs=mCalloc(nmatch,sizeof(phydbl*));
+	For(i,nmatch)rprobs[i]=mCalloc(61,sizeof(phydbl));
+	For(i,nmatch){//calculate relative probabilities of different codons at the root
+			t_tree* tree = io->tree_s[matches[i]];
+			model* mod = io->mod_s[matches[i]];
+			t_node* root = tree->noeud[mod->startnode];
+			int isite = imgt[i];
+			int ori[61];
+			For(j,61)ori[j]=root->b[0]->p_lk_tip_r[isite*tree->mod->ns+j];
+			phydbl flk=Lk(tree); //full ML using starting sequence
+			tree->curr_site=isite; //find the LK of this site under starting sequence
+			phydbl slk = Lk_Core_UPP(root->b[0],tree,root,root->b[0]->des_node);
+			phydbl blk=flk-slk;
+			For(j,61)root->b[0]->p_lk_tip_r[isite*tree->mod->ns+j]=0;//set all codons to zero
+			For(j,61){
+				root->b[0]->p_lk_tip_r[isite*tree->mod->ns+j]=1;
+				Fill_UPP_root(tree,root->b[0]);
+				rprobs[i][j]=Lk_Core_UPP(root->b[0],tree,root,root->b[0]->des_node)+blk+log(0.5);//rprobs[i][j]
+				//rprobs[i][j]=Lk(tree)+log(0.5);
+				char s[4];
+				Sprint_codon(s,io->senseCodons[j]);
+				printf("%d\t%s\t%lf\t%lf\n",isite,s,flk,rprobs[i][j]);
+				root->b[0]->p_lk_tip_r[isite*tree->mod->ns+j]=0;
+			}
+			For(j,61)root->b[0]->p_lk_tip_r[isite*tree->mod->ns+j]=ori[j];
+	}
+	/*For(i,nmatch){//calculate relative probabilities of different codons at the root
+		t_tree* tree = io->tree_s[matches[i]];
+		model* mod = io->mod_s[matches[i]];
+		t_node* root = tree->noeud[mod->startnode];
+		int isite = imgt[i];
+		int ori = Get_State_From_P_Pars(root->b[0]->p_lk_tip_r,isite*61,tree); //store original codon
+		phydbl flk=Lk(tree);
+		For(j,61)root->b[0]->p_lk_tip_r[isite*tree->mod->ns+j]=0;//set all codons to zero
+		For(j,61){
+			root->b[0]->p_lk_tip_r[isite*tree->mod->ns+j]=1;
+			//rprobs[i][j]=Lk(tree)+log(0.5);
+			rprobs[i][j]=Lk(tree);
+			printf("%d\t%lf\t%lf\n",isite,flk,rprobs[i][j]);
+			root->b[0]->p_lk_tip_r[isite*tree->mod->ns+j]=0;
+		}
+		root->b[0]->p_lk_tip_r[isite*tree->mod->ns+ori]=1; //restore original codon
+		if(io->mod->optDebug)printf("%d\t%d\n",ori,Get_State_From_P_Pars(root->b[0]->p_lk_tip_r,isite*61,tree));
+		if(io->mod->optDebug)printf("\n%d\t%d\t%lf\t%lf",i,j,flk,Lk(tree));
+	}*/
+
+
+
+	phydbl* recons=mCalloc(61*61,sizeof(phydbl));
+	phydbl* mprobs=mCalloc(61,sizeof(phydbl));
+	phydbl sum=0;
+
+	For(i,61){
+		for(j=i;j<61;j++){
+			For(k,nmatch)recons[i*61+j] += logAdd(rprobs[k][j],rprobs[k][i]);
+			if(i==0&&j==0)sum=recons[i*61+j];
+			else sum=logAdd(sum,recons[i*61+j]);
+			if(mprobs[i]==0)mprobs[i]=recons[i*61+j];
+			else mprobs[i]=logAdd(mprobs[i],recons[i*61+j]);
+			if(mprobs[j]==0)mprobs[j]=recons[i*61+j];
+			else mprobs[j]=logAdd(mprobs[j],recons[i*61+j]);
+		}
+	}
+	//Find ML genotypes
+	int G1=-1;
+	phydbl G1p=-DBL_MAX;
+	For(i,61){
+		for(j=i;j<61;j++){
+			if(recons[i*61+j]>G1p){
+				G1p=recons[i*61+j];
+				G1=i*61+j;
+			}
+		}
+	}
+	int mi=(int)G1/61;
+	int mj=G1%61;
+	//Find number of genotypes with LRs close enough to the MLE
+	int ci_size=0;
+	For(i,61){
+		for(j=i;j<61;j++){
+			if(recons[i*61+j]>=(G1p-1.96))ci_size++;
+		}
+	}
+	//place in CI intervals
+	int* ci1 = mCalloc(ci_size,sizeof(int));
+	int* ci2 = mCalloc(ci_size,sizeof(int));
+	c=0;
+	For(i,61){
+		for(j=i;j<61;j++){
+			if(recons[i*61+j]>=(G1p-1.96)){
+				/*if(mi==mj){
+					if(i==mi){
+						ci1[c]=i;
+						ci2[c]=j;
+					}else if(j==mi){
+						ci1[c]=j;
+						ci2[c]=i;
+					}else{
+						ci1[c]=i;
+						ci2[c]=j;
+					}
+				}else{
+					if(i==mj || j==mi){//if genotype in order with at least one of the ML types, keep it
+						ci1[c]=j;
+						ci2[c]=i;
+					}else{
+						ci1[c]=i;
+						ci2[c]=j;
+					}
+				}*/
+				if(mprobs[i] > mprobs[j]){
+					ci1[c]=i;
+					ci2[c]=j;
+				}else if(mprobs[i] < mprobs[j]){
+					ci1[c]=j;
+					ci2[c]=i;
+				}else{
+					if(i!=j)printf("Exactly equal marginals for a plausible genotype. Might mess up CI: %d\t%d",i,j);
+					ci1[c]=i;
+					ci2[c]=j;
+				}
+				char s1[4];
+				char s2[4];
+				Sprint_codon(s1,io->senseCodons[ci1[c]]);
+				Sprint_codon(s2,io->senseCodons[ci2[c]]);
+				printf("%s\t%s\t%lf\t%lf\t%lf\t%lf\t%d\t%d\t%d\n",s1,s2,mprobs[ci1[c]],mprobs[ci2[c]],recons[i*61+j],G1p-1.96,i,j,ci1[c]);
+				c++;
+			}
+		}
+	}
+	char** codonset1=malloc(c*sizeof(char*));
+	char** codonset2=malloc(c*sizeof(char*));
+	For(i,c){
+		char* s1=mCalloc(4,sizeof(char));
+		char* s2=mCalloc(4,sizeof(char));
+		Sprint_codon(s1,io->senseCodons[ci1[i]]);
+		Sprint_codon(s2,io->senseCodons[ci2[i]]);
+		codonset1[i]=s1;
+		codonset2[i]=s2;
+	}
+
+	char cigen[8];
+	For(i,3)cigen[i]=ambigAssign(codonset1,c,i);
+	cigen[3]=':';
+	for(i=4;i<7;i++)cigen[i]=ambigAssign(codonset2,c,i-4);
+	cigen[7]='\0';
+
+
+	char s1[4];
+	char s2[4];
+	Sprint_codon(s1,io->senseCodons[mi]);
+	Sprint_codon(s2,io->senseCodons[mj]);
+	fprintf(f,"%s\t%d\t%d\t%s\t%s:%s\n",v,site,nmatch,cigen,s1,s2);
+
+
+	//printf("Genotype: %s\n",cigen);
+
+
+
 }
 
 /*********************************************************/
@@ -1015,19 +1239,19 @@ phydbl ASR_Core(t_edge *b, t_tree *tree, t_node *anc, t_node *d)
 	  int i;
 	  For(i,ns){
 		  char s1[4];
-		  Sprint_codon(s1,senseCodons[i]);
+		  Sprint_codon(s1,tree->io->senseCodons[i]);
 		  if(site==0 && (i==0 || i==8)){
-			//  printf("\n%d\t%s\t%lf\t%lf\t%lf\t%lf\t%lf",b->num,s1,probc[i]/tree->site_lk_cat[0],b->bPmat_part[0][0],b->bPmat_part[0][8],b->bPmat_part[0][8*61],b->bPmat_part[0][8*61+8]);
+			  printf("\n%d\t%lf\t%s\t%lf\t%lf\t%lf\t%lf\t%lf",b->num,b->l,s1,probc[i]/tree->site_lk_cat[0],b->bPmat_part[0][0],b->bPmat_part[0][8],b->bPmat_part[0][8*61],b->bPmat_part[0][8*61+8]);
 		  }
 		  if(probc[i]>max){
 			  max=probc[i];
 			  maxc=i;
 		  }
 	  }
-	  int sense[61];
+	 /* int sense[61];
 	  For(i,61){
 		  probc[i]=probc[i]/tree->site_lk_cat[0];
-		  sense[i]=senseCodons[i];
+		  sense[i]=tree->io->senseCodons[i];
 	  }
 	  BSort(probc,sense);
 	  int ncodons=0;
@@ -1039,21 +1263,36 @@ phydbl ASR_Core(t_edge *b, t_tree *tree, t_node *anc, t_node *d)
 		  probsum+=probc[i];
 		  ncodons++;
 		  if(probsum>=tree->mod->ASRcut)break;
+	  }*/
+
+	  int ncodons=0;
+	  For(i,61){
+		 // printf("\n%d\t%lf\t%lf",i,probc[i],probc[i]/tree->site_lk_cat[0]);
+		  if(probc[i]==0)probc[i]=-DBL_MAX;
+		  else{
+			  probc[i]=log(probc[i]);
+			  printf("\n%d\t%d\t%lf\t%lf",site,i,probc[i],log(max)-1.96);
+		  }
+		  if(probc[i]>=(log(max)-1.96))ncodons++;
 	  }
+
 	  char** codonset=malloc(ncodons*sizeof(char*));
-	  For(i,ncodons){
-		  char* s1=mCalloc(4,sizeof(char));
-		  Sprint_codon(s1,sense[i]);
-		  codonset[i]=s1;
-		  //printf("\n%c\t%c\t%c",codonset[i][0],codonset[i][1],codonset[i][2]);
-
+	  int c=0;
+	  //For(i,ncodons){
+	  For(i,61){
+		  if(probc[i]>=(log(max)-1.96)){
+			  codonset[c]=mCalloc(4,sizeof(char));
+		  	  char* s1=mCalloc(4,sizeof(char));
+		  	  Sprint_codon(s1,tree->io->senseCodons[i]);
+		  	  strcpy(codonset[c],s1);
+		  	printf("\n%c\t%c\t%c\t%s",codonset[c][0],codonset[c][1],codonset[c][2],codonset[c]);
+		  	c++;
+		  }
 	  }
-	  //printf("\n%c",ambigAssign(codonset,ncodons,1));
-	  //printf("\n%c\t%c\t%c",ambigAssign(codonset,ncodons,0),ambigAssign(codonset,ncodons,1),ambigAssign(codonset,ncodons,2));
-	  For(i,3)tree->mod->mlCodon[b->num][site*3+i]=ambigAssign(codonset,ncodons,i);
-
-
-
+	  For(i,3){
+		  printf("\n%s\t%d\n",codonset[0],ncodons);
+		  tree->mod->mlCodon[b->num][site*3+i]=ambigAssign(codonset,ncodons,i);
+	  }
 
 
 	  //tree->mod->mlASR[b->num][site]=maxc;
@@ -1072,6 +1311,7 @@ phydbl ASR_Core(t_edge *b, t_tree *tree, t_node *anc, t_node *d)
 	  	  //printf("edge and des: %d\t%d\n",b->num,b->des_node->num);
 	  }
 	  free(probc);
+	 // exit(EXIT_FAILURE);
 
 	  max_sum_scale =  (phydbl)BIG;
 	  For(catg,tree->mod->n_catg){
@@ -1315,7 +1555,8 @@ phydbl ASR_Core_root(t_edge *b, t_tree *tree, t_node *anc, t_node *d)
 	  int i;
 	  For(i,ns){
 		  char s1[4];
-		  		  Sprint_codon(s1,senseCodons[i]);
+		  		  Sprint_codon(s1,tree->io->senseCodons[i]);
+		  		  //printf("%s\t%lf\n",s1,probc[i]/tree->site_lk_cat[0]);
 		  		  if(site==0 && (i==0 || i==8)){
 		  			  //printf("%d\t%d\t%s\t%lf\n",-1,i,s1,probc[i]/tree->site_lk_cat[0]);
 					  //printf("\n%d\t%s\t%lf\t%lf\t%lf\t%lf\t%lf",-1,s1,probc[i]/tree->site_lk_cat[0],b->bPmat_part[0][0],b->bPmat_part[0][8],b->bPmat_part[0][8*61],b->bPmat_part[0][8*61+8]);
@@ -1329,10 +1570,10 @@ phydbl ASR_Core_root(t_edge *b, t_tree *tree, t_node *anc, t_node *d)
 	  }
 	  tree->mod->mlASR[tree->mod->nedges][site]=maxc;
 	  tree->mod->probASR[tree->mod->nedges][site]=max/tree->site_lk_cat[0];
-	  int sense[61];
+	  /*int sense[61];
 	  	  For(i,61){
 	  		  probc[i]=probc[i]/tree->site_lk_cat[0];
-	  		  sense[i]=senseCodons[i];
+	  		  sense[i]=tree->io->senseCodons[i];
 	  	  }
 	  	  BSort(probc,sense);
 	  	  int ncodons=0;
@@ -1340,7 +1581,7 @@ phydbl ASR_Core_root(t_edge *b, t_tree *tree, t_node *anc, t_node *d)
 	  	  For(i,61){
 	  		  char s1[4];
 	  		  Sprint_codon(s1,sense[i]);
-	  		  //printf("\npossible: %d\t%d\t%s\t%lf",b->num,site,s1,probc[i]);
+	  		  printf("\npossible: %d\t%d\t%s\t%lf",b->num,site,s1,probc[i]);
 	  		  probsum+=probc[i];
 	  		  ncodons++;
 	  		  if(probsum>=tree->mod->ASRcut)break;
@@ -1355,7 +1596,37 @@ phydbl ASR_Core_root(t_edge *b, t_tree *tree, t_node *anc, t_node *d)
 	  	  }
 	  	  //printf("\n%c",ambigAssign(codonset,ncodons,1));
 	  	  //printf("\n%c\t%c\t%c",ambigAssign(codonset,ncodons,0),ambigAssign(codonset,ncodons,1),ambigAssign(codonset,ncodons,2));
-	  	  For(i,3)tree->mod->mlCodon[tree->mod->nedges][site*3+i]=ambigAssign(codonset,ncodons,i);
+	  	  For(i,3)tree->mod->mlCodon[tree->mod->nedges][site*3+i]=ambigAssign(codonset,ncodons,i);*/
+
+
+		  int ncodons=0;
+		  For(i,61){
+			 // printf("\n%d\t%lf\t%lf",i,probc[i],probc[i]/tree->site_lk_cat[0]);
+			  if(probc[i]==0)probc[i]=-DBL_MAX;
+			  else{
+				  probc[i]=log(probc[i]);
+				  printf("\n%d\t%d\t%lf\t%lf",site,i,probc[i],log(max)-1.96);
+			  }
+			  if(probc[i]>=(log(max)-1.96))ncodons++;
+		  }
+
+		  char** codonset=malloc(ncodons*sizeof(char*));
+		  int c=0;
+		  //For(i,ncodons){
+		  For(i,61){
+			  if(probc[i]>=(log(max)-1.96)){
+				  codonset[c]=mCalloc(4,sizeof(char));
+			  	  char* s1=mCalloc(4,sizeof(char));
+			  	  Sprint_codon(s1,tree->io->senseCodons[i]);
+			  	  strcpy(codonset[c],s1);
+			  	printf("\n%c\t%c\t%c\t%s",codonset[c][0],codonset[c][1],codonset[c][2],codonset[c]);
+			  	c++;
+			  }
+		  }
+		  For(i,3){
+			  printf("\n%s\t%d\n",codonset[0],ncodons);
+			  For(i,3)tree->mod->mlCodon[tree->mod->nedges][site*3+i]=ambigAssign(codonset,ncodons,i);
+		  }
 	  free(probc);
 
 	  max_sum_scale =  (phydbl)BIG;
@@ -1657,7 +1928,7 @@ phydbl Lk_Core_UPP(t_edge *b, t_tree *tree, t_node *anc, t_node *d)
 
 
 	  #if defined OMP || defined BLAS_OMP
-	  #pragma omp parallel for if(tree->mod->n_w_catg>1) private(site_lk_cat,sum,k,l)
+	  //#pragma omp parallel for if(tree->mod->n_w_catg>1) private(site_lk_cat,sum,k,l)
 	  #endif
 
 
@@ -1886,7 +2157,7 @@ phydbl Lk_Core(t_edge *b, t_tree *tree)
  
   #if defined OMP || defined BLAS_OMP
   
-  #pragma omp parallel for if(tree->mod->n_w_catg>1) private(site_lk_cat,sum,k,l) 
+  //#pragma omp parallel for if(tree->mod->n_w_catg>1) private(site_lk_cat,sum,k,l)
      
   #endif
 
@@ -2163,155 +2434,125 @@ n_v1   n_v2
   
   /* TO DO: Might be worth keeping these directions in memory instead of
      calculating them every time... */
-  dir1=dir2=-1;
-  For(i,3) if(d->b[i] != b) (dir1<0)?(dir1=i):(dir2=i);
   
-  n_v1 = d->v[dir1];
-  n_v2 = d->v[dir2];
-
-  /* Get the partial likelihood vectors on edge b and the two pendant
-     edges (i.e., the two other edges connected to d) */
-  if(d == b->left)
-    {
-      p_lk = b->p_lk_left;
-      sum_scale = b->sum_scale_left;
-    }
-  else
-    {
-      p_lk = b->p_lk_rght;
-      sum_scale = b->sum_scale_rght;
-    }
-      
-  if(d == d->b[dir1]->left)
-    {
-      p_lk_v1 = d->b[dir1]->p_lk_rght;
-      sum_scale_v1 = d->b[dir1]->sum_scale_rght;
-    }
-  else
-    {
-      p_lk_v1 = d->b[dir1]->p_lk_left;
-      sum_scale_v1 = d->b[dir1]->sum_scale_left;
-    }
-  
-  if(d == d->b[dir2]->left)
-    {
-      p_lk_v2 = d->b[dir2]->p_lk_rght;
-      sum_scale_v2 = d->b[dir2]->sum_scale_rght;
-    }
-  else
-    {
-      p_lk_v2 = d->b[dir2]->p_lk_left;
-      sum_scale_v2 = d->b[dir2]->sum_scale_left;
-    }
-  
-
-  phydbl **Ppart1 = d->b[dir1]->bPmat_part;
-  phydbl **Ppart2 = d->b[dir2]->bPmat_part;
   
   /* For every site in the alignment */
   
   #if defined OMP || defined BLAS_OMP
-  #pragma omp parallel for if(tree->mod->datatype==CODON  && !tree->mod->splitByTree) private(state_v1, state_v2, ambiguity_check_v1, ambiguity_check_v2, smallest_p_lk, p1_lk1, catg, i, j, p2_lk2, sum_scale_v1_val, sum_scale_v2_val, curr_scaler_pow, curr_scaler, piecewise_scaler_pow )
+  //#pragma omp parallel for if(tree->mod->datatype==CODON  && !tree->mod->splitByTree) private(state_v1, state_v2, ambiguity_check_v1, ambiguity_check_v2, smallest_p_lk, p1_lk1, catg, i, j, p2_lk2, sum_scale_v1_val, sum_scale_v2_val, curr_scaler_pow, curr_scaler, piecewise_scaler_pow )
+  #pragma omp parallel for if(tree->mod->datatype==CODON  && !tree->mod->splitByTree) private(p_lk,n_v1,n_v2,dir1,dir2,sum_scale,p_lk_v1,sum_scale_v1,p_lk_v2,sum_scale_v2,state_v1, state_v2, ambiguity_check_v1, ambiguity_check_v2, smallest_p_lk, p1_lk1, catg, i, j, p2_lk2, sum_scale_v1_val, sum_scale_v2_val, curr_scaler_pow, curr_scaler, piecewise_scaler_pow )
   #endif
   
-  For(site,n_patterns)
-    {
-	  //printf("%d\n",omp_get_thread_num());
+  For(site,n_patterns){
+
+	  dir1=dir2=-1;
       state_v1 = state_v2 = -1;
       ambiguity_check_v1 = ambiguity_check_v2 = NO;
-      if(!tree->mod->s_opt->greedy)
-	{
+      int ns;
+      int ncatg;
+//moved into parallel loop
+#pragma omp critical
+	  {
+    	  ns=tree->mod->ns;
+    	  ncatg=tree->mod->n_catg;
+	    For(i,3) if(d->b[i] != b) (dir1<0)?(dir1=i):(dir2=i);
+	    n_v1 = d->v[dir1];
+	    n_v2 = d->v[dir2];
+
+	    /* Get the partial likelihood vectors on edge b and the two pendant
+	       edges (i.e., the two other edges connected to d) */
+	    if(d == b->left){
+	        p_lk = b->p_lk_left;
+	        sum_scale = b->sum_scale_left;
+	      }else{
+	        p_lk = b->p_lk_rght;
+	        sum_scale = b->sum_scale_rght;
+	      }
+
+	    if(d == d->b[dir1]->left){
+	        p_lk_v1 = d->b[dir1]->p_lk_rght;
+	        sum_scale_v1 = d->b[dir1]->sum_scale_rght;
+	      }else{
+	        p_lk_v1 = d->b[dir1]->p_lk_left;
+	        sum_scale_v1 = d->b[dir1]->sum_scale_left;
+	      }
+
+	    if(d == d->b[dir2]->left){
+	        p_lk_v2 = d->b[dir2]->p_lk_rght;
+	        sum_scale_v2 = d->b[dir2]->sum_scale_rght;
+	      }else{
+	        p_lk_v2 = d->b[dir2]->p_lk_left;
+	        sum_scale_v2 = d->b[dir2]->sum_scale_left;
+	      }
+
+	  //printf("%d\n",omp_get_thread_num());
+      if(!tree->mod->s_opt->greedy){
 	  /* n_v1 and n_v2 are tip nodes */
-	  if(n_v1->tax)
-	    {
+	  if(n_v1->tax){
 	      /* Is the state at this tip ambiguous? */
 	      ambiguity_check_v1 = tree->data->c_seq[n_v1->num]->is_ambigu[site];
 	      if(ambiguity_check_v1 == NO) state_v1 = Get_State_From_P_Pars(n_v1->b[0]->p_lk_tip_r,site*dim2,tree);
 	    }
 	      
-	  if(n_v2->tax)
-	    {
+	  if(n_v2->tax){
 	      /* Is the state at this tip ambiguous? */
 	      ambiguity_check_v2 = tree->data->c_seq[n_v2->num]->is_ambigu[site];
 	      if(ambiguity_check_v2 == NO) state_v2 = Get_State_From_P_Pars(n_v2->b[0]->p_lk_tip_r,site*dim2,tree);
-
 	    }
-	}
+      }
+
       
-      if(tree->mod->use_m4mod)
-	{
+      if(tree->mod->use_m4mod){
 	  ambiguity_check_v1 = YES;
 	  ambiguity_check_v2 = YES;
-	}
+      }
+	  }
 
       /* For all the rate classes */
-      For(catg,tree->mod->n_catg)
-	{
+      For(catg,ncatg){
 	  smallest_p_lk  =  BIG;
-
 	  /* For all the state at node d */
-	  For(i,tree->mod->ns)
-	    {
+	  For(i,ns){
 	      p1_lk1 = .0;
-	      
 	      /* n_v1 is a tip */
-	      if((n_v1->tax) && (!tree->mod->s_opt->greedy))
-		{
-		  if(ambiguity_check_v1 == NO)
-		    {
+	      if((n_v1->tax) && (!tree->mod->s_opt->greedy)){
+		  if(ambiguity_check_v1 == NO){
 		      /* For the (non-ambiguous) state at node n_v1 */
 		      p1_lk1 = d->b[dir1]->bPmat_part[tree->mod->partIndex[site]][catg*dim3+i*dim2+state_v1]; // Ken 17/8/2016
-		    }
-		  else
-		    {
+		   } else{
 		      /* For all the states at node n_v1 */
-		      For(j,tree->mod->ns)
-			{
-			  p1_lk1 +=d->b[dir1]->bPmat_part[tree->mod->partIndex[site]][catg*dim3+i*dim2+j] * (phydbl)n_v1->b[0]->p_lk_tip_r[site*dim2+j]; //!!!!!
-			  phydbl temp = (phydbl)n_v1->b[0]->p_lk_tip_r[site*dim2+j];
-			}
-		    }
-		}
-	      /* n_v1 is an internal node */
-	      else
-		{
+		      For(j,tree->mod->ns){
+		    	  p1_lk1 +=d->b[dir1]->bPmat_part[tree->mod->partIndex[site]][catg*dim3+i*dim2+j] * (phydbl)n_v1->b[0]->p_lk_tip_r[site*dim2+j]; //!!!!!
+			  	  //phydbl temp = (phydbl)n_v1->b[0]->p_lk_tip_r[site*dim2+j];
+		      }
+		   }
+		}else{/* n_v1 is an internal node */
 		  /* For the states at node n_v1 */
-		  For(j,tree->mod->ns)
-		    {
+		  For(j,tree->mod->ns){
 		      p1_lk1 += d->b[dir1]->bPmat_part[tree->mod->partIndex[site]][catg*dim3+i*dim2+j] * p_lk_v1[site*dim1+catg*dim2+j];//!!!!!!
-		    }
+		  }
 		}
 	      
 	      p2_lk2 = .0;
 	      
 	      /* We do exactly the same as for node n_v1 but for node n_v2 this time.*/
 	      /* n_v2 is a tip */
-	      if((n_v2->tax) && (!tree->mod->s_opt->greedy))
-		{
-		  if(ambiguity_check_v2 == NO)
-		    {
+	      if((n_v2->tax) && (!tree->mod->s_opt->greedy)){
+		  if(ambiguity_check_v2 == NO){
 		      /* For the (non-ambiguous) state at node n_v2 */
 		      p2_lk2 =  d->b[dir2]->bPmat_part[tree->mod->partIndex[site]][catg*dim3+i*dim2+state_v2];
-
-		    }
-		  else
-		    {
+		    }else{
 		      /* For all the states at node n_v2 */
-		      For(j,tree->mod->ns)
-			{
-			  p2_lk2 += d->b[dir2]->bPmat_part[tree->mod->partIndex[site]][catg*dim3+i*dim2+j] * (phydbl)n_v2->b[0]->p_lk_tip_r[site*dim2+j]; //!!!!!
-			  phydbl temp = (phydbl)n_v2->b[0]->p_lk_tip_r[site*dim2+j];
-			}
+		      For(j,tree->mod->ns){
+		    	  p2_lk2 += d->b[dir2]->bPmat_part[tree->mod->partIndex[site]][catg*dim3+i*dim2+j] * (phydbl)n_v2->b[0]->p_lk_tip_r[site*dim2+j]; //!!!!!
+		    	  //phydbl temp = (phydbl)n_v2->b[0]->p_lk_tip_r[site*dim2+j];
+		      }
 		    }
-		}
-	      /* n_v2 is an internal node */
-	      else
-		{
+		}else{/* n_v2 is an internal node */
 		  /* For all the states at node n_v2 */
-		  For(j,tree->mod->ns)
-		    {
+		  For(j,tree->mod->ns){
 		      p2_lk2 += d->b[dir2]->bPmat_part[tree->mod->partIndex[site]][catg*dim3+i*dim2+j] * p_lk_v2[site*dim1+catg*dim2+j];//!!!!!
-		    }
+		  }
 		}
 	      
 	      p_lk[site*dim1+catg*dim2+i] = p1_lk1 * p2_lk2;	    
@@ -2336,7 +2577,7 @@ n_v1   n_v2
 		{
 		  piecewise_scaler_pow = MIN(curr_scaler_pow,63);
 		  curr_scaler = (phydbl)((unsigned long long)(1) << piecewise_scaler_pow);
-		  For(i,tree->mod->ns)
+		  For(i,ns)
 		    {
 		      p_lk[site*dim1+catg*dim2+i] *= curr_scaler;
 		      

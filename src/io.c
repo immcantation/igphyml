@@ -1593,30 +1593,7 @@ void R_wtree(t_node *pere, t_node *fils, int *available, char **s_tree, int *pos
 
 void Print_IgPhyML_Out(option* io){
 	FILE* f = io->fp_out_stats;
-
 	int i,j,k;
-	int stopCodons[64];
-	int indexSenseCodons[64];
-	int senseCodons[64];
-	 For (i,64){
-	    stopCodons[i]=0;
-	    senseCodons[i]=-1;
-	    indexSenseCodons[i]=-1;
-	  }
-
-	stopCodons[10]=1; //!< Set stop codons according to the genetic code.
-	stopCodons[11]=1;
-	stopCodons[14]=1;
-	j=0;
-	  For(i,64){ //!< Shift the sense codons down the array.
-	    if(!stopCodons[i]){
-	    	//printf("%d\t%d\n",i,j);
-	      senseCodons[j++]=i;
-	    }
-	  }
-	  For(i,61){ //!< Correct the index for recovery.
-	    indexSenseCodons[senseCodons[i]]=i;
-	  }
 
 	fprintf(f, "oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo\n");
 	fprintf(f,"%s%s ---\n", "                      --- IgPhyML ", VERSION);
@@ -1697,10 +1674,10 @@ void Print_IgPhyML_Out(option* io){
 		Sprint_codon(s1, i);
 		//phydbl val1 = (stopCodons[i])?0.0:io->mod->pi[indexSenseCodons[i]];
 		phydbl val1=0.0;
-		if(!stopCodons[i]){
+		if(!io->stopCodons[i]){
 			//printf("%d %s %d %lf\n",i,"sense\n",indexSenseCodons[i],io->mod_s[0]->pi[indexSenseCodons[i]]);
 			//val1=io->mod_s[0]->pi[indexSenseCodons[i]];
-			val1=io->mod_s[0]->pi[indexSenseCodons[i]];
+			val1=io->mod_s[0]->pi[io->indexSenseCodons[i]];
 		}
 		fprintf(f,"\tf(%s)=%lf",s1,val1);
 		if((i-3)%4==0){
@@ -1743,6 +1720,26 @@ void Print_IgPhyML_Out(option* io){
 	 For(i,io->ntrees){
 		 fprintf(f,"%d\t%s\n",i,Write_Tree(io->tree_s[i]));
 	 }
+
+
+	 if(io->GR){
+	 fprintf(f,"oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo\n");
+	 fprintf(f,"                     Germline Genotype Reconstruction\n");
+	 fprintf(f,"oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo\n");
+	 fprintf(f,"V_Gene\tSite\tMatches\tGenotype_CI\tGenotype_MLE\n");
+	  For(i,io->ntrees){
+		  t_tree* tree=io->tree_s[i];
+		  Get_UPP(tree->noeud[tree->mod->startnode],tree->noeud[tree->mod->startnode]->v[0],tree);
+	  }
+
+	 	 For(i,io->GRv){
+	 		 for(j=0;j<150;j++){
+	 			 printf("%s\t%d\n",io->GRgenes[i],j);
+	 			reconGermline(io,io->GRgenes[i],j,f);
+	 		 }
+	 	 }
+	 }
+
 	if(io->mod->ASR){
 	fprintf(f,"oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo\n");
 	fprintf(f,"                     Ancestral Sequence Reconstruction\n");
@@ -1794,7 +1791,6 @@ void Print_IgPhyML_Out(option* io){
 		   }
 		 }
 	   }
-
 
 	 fprintf(f,"\n\n#\tIf you use IgPhyML, please cite:\n");
 	 fprintf(f,"#\tK.B. Hoehn, G Lunter, O.G. Pybus\n");

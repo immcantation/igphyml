@@ -123,6 +123,7 @@ struct option longopts[] =
 	{"ASR",		  no_argument,NULL,161},  //!<Added by Ken
 	{"ASRc",		  required_argument,NULL,162},  //!<Added by Ken
 	{"minSeq",		  required_argument,NULL,163},  //!<Added by Ken
+	{"GR",		  required_argument,NULL,164},  //!<Added by Ken
     {0,0,0,0}
 };
 
@@ -175,10 +176,10 @@ void finishOptions(option * io)
 	io->fp_out_stats = Openfile(io->out_stats_file, io->writemode);
     setupFreqHandling(io);
     if(io->mod->ASRcut==0)io->mod->ASRcut=0.95;
-    if(io->ntrees==1){
+    /*if(io->ntrees==1){
     	io->mod->splitByTree=0;
     	io->splitByTree=0;
-    }
+    }*/
 
     if(io->mod->partfilespec){
     	if(io->ntrees > 1){
@@ -401,6 +402,25 @@ void setUpHLP17(option* io, model *mod){
    	   	}
    	 if(mod->primary)printf("%d ",mod->partIndex[indexi]);
    	}
+   	char* nline=NULL;
+   	char* nline2=NULL;
+   	len=0;
+   	mod->germlineV=mCalloc(T_MAX_OPTION,sizeof(char));
+   	read = getline(&nline2,&len,file);
+   	char* v=strsep(&nline2,"\n");
+   	strcpy(mod->germlineV,v);
+   	printf("\nGermlineV: %s",mod->germlineV);
+   	mod->imgt=mCalloc(nsite,sizeof(int));
+   	len=0;
+   	read = getline(&nline,&len,file);
+   	//printf("\nlinepart: %s",nline);
+   	For(c,nsite){
+   		char* l1 = strsep(&nline,",");
+   		//printf("\n%d\t%s",c,l1);
+   		mod->imgt[c]=atoi(l1);
+   	}
+
+
    	if(mod->primary)printf("\nDone!\n");
     }else{
    	 mod->nparts=1;
@@ -2466,6 +2486,28 @@ int mainOptionSwitch(int opt, char * optarg, option * io)
         case 163:{
         	io->min_otu=atoi(optarg);
         	printf("\nLimiting analysis to clones with at least %d sequences! Assumes repfile is in decreasing order\n",io->min_otu);
+        	break;
+        }
+        case 164:{
+        	io->GR=1;
+        	strcpy(io->GRstring,optarg);
+        	printf("grstring %s\n",io->GRstring);
+        	char* temp = strdup(io->GRstring);
+        	//printf("%s\t%s\n",temp,temp2);
+        	int nv=0;
+        	char* temp2;
+        	while ((temp2 = strsep(&temp, ",")) != NULL){nv++;}
+        	//printf("%s\t%s\n",temp,temp2);
+        	printf("nv %d\n",nv);
+        	io->GRv=nv;
+        	io->GRgenes=mCalloc(nv,sizeof(char*));
+        	char* temp3 = strdup(io->GRstring);
+        	For(i,nv){
+        		io->GRgenes[i]=mCalloc(T_MAX_OPTION,sizeof(char));
+        		strcpy(io->GRgenes[i],strsep(&temp3,","));
+        		printf("%s\n",io->GRgenes[i]);
+        	}
+//exit(EXIT_FAILURE);
         	break;
         }
 

@@ -54,7 +54,7 @@ int main(int argc, char **argv){
   phydbl best_lnL,most_likely_size,tree_size;
   int r_seed;
   char *most_likely_tree=NULL;
-  int i,j;
+  int i,j,k;
 
   tree             = NULL;
   //mod              = NULL;
@@ -96,6 +96,35 @@ int main(int argc, char **argv){
     io->n_data_sets = MIN(io->n_trees,io->n_data_sets);
     io->n_trees     = MIN(io->n_trees,io->n_data_sets);
   }
+
+    int* stopCodons=malloc(64*sizeof(int));
+  	int* indexSenseCodons=malloc(64*sizeof(int));
+  	int* senseCodons=malloc(64*sizeof(int));
+  	 For (i,64){
+  	    stopCodons[i]=0;
+  	    senseCodons[i]=-1;
+  	    indexSenseCodons[i]=-1;
+  	  }
+
+  	stopCodons[10]=1; //!< Set stop codons according to the genetic code.
+  	stopCodons[11]=1;
+  	stopCodons[14]=1;
+  	j=0;
+  	  For(i,64){ //!< Shift the sense codons down the array.
+  	    if(!stopCodons[i]){
+  	    	//printf("%d\t%d\n",i,j);
+  	      senseCodons[j++]=i;
+  	    }
+  	  }
+  	  For(i,61){ //!< Correct the index for recovery.
+  	    indexSenseCodons[senseCodons[i]]=i;
+  	  }
+  	  io->stopCodons=stopCodons;
+  	  io->senseCodons=senseCodons;
+  	  io->indexSenseCodons=indexSenseCodons;
+
+
+
 
   Make_Model_Complete(io->mod);
 

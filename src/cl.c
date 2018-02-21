@@ -75,6 +75,7 @@ void Read_Command_Line( option *io, int argc, char **argv )
     io->mod->omega_opt_string = mCalloc(T_MAX_OPTION,sizeof(char));
     io->mod->baseCounts = mCalloc(12,sizeof(phydbl));
     io->mod->in_align_file=mCalloc(T_MAX_FILE,sizeof(char));
+    io->GRstring=mCalloc(T_MAX_OPTION,sizeof(char));
     For(c,12){io->mod->baseCounts[c]=0.0;}
     io->mod->optIter=0;
 

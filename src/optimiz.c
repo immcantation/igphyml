@@ -25,6 +25,8 @@ the GNU public licence.  See http://www.opensource.org for details.
 
 #include "optimiz.h"
 #include "io.h"
+
+
 /*********************************************************/
 
 void findCIs(model* mod, option *io, FILE* CI){

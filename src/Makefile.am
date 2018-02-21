@@ -10,7 +10,7 @@
 #CC=/usr/local/Cellar/llvm/5.0.1/bin/clang
 #MACOMP = /usr/local/Cellar/llvm/5.0.1/lib/clang/5.0.1/include/omp.h
 #MACLLVM = /usr/local/Cellar/llvm/5.0.1/lib
-#CC=/home/kenneth/nofutexgcc/bin/gcc
+CC=/home/kenneth/nofutexgcc/bin/gcc
 
 DEFS=-DUNIX -D$(PROG) -DDEBUG -D$(OPT)
 

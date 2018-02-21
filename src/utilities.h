@@ -853,6 +853,9 @@ typedef struct __Model {
  char**			mlCodon;
  phydbl		ASRcut;
 
+ //germline reconstruction stuff
+ char*		germlineV;
+ int*		imgt;
 }model;
 
 /*********************************************************/
@@ -1022,6 +1025,15 @@ typedef struct __Option {
   phydbl*								paramStore; //stores all parameters and subtree branch lengths
   char* 						command;
   int 								min_otu; //minimum number of otu's to be included
+  int*						stopCodons;
+  int*						senseCodons;
+  int*						indexSenseCodons;
+
+  int 							GR;//reconstruct germlines?
+  char**					GRgenes;//germline genes to reconstruct
+  int**						GRsites;//germline sites to reconstruct
+  char*							GRstring;
+  int							GRv;
  }option;
 
 /*********************************************************/
