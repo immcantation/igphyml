@@ -3004,6 +3004,7 @@ model *Copy_Partial_Model(model *ori)
   cpy->ntrees = ori->ntrees;
   cpy->splitByTree=ori->splitByTree;
   cpy->ASRcut=ori->ASRcut;
+  cpy->rootpi=ori->rootpi;
 
   cpy->omegaSiteVar = ori->omegaSiteVar;
       //cpy->omega        = ori->omega;

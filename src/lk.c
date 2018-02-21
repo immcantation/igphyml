@@ -334,8 +334,6 @@ void Pre_Order_Lk(t_node *a, t_node *d, t_tree *tree)
  * 3: do not optimize lower model, do not copy from upper to lower
  */
 //added by Ken 17/1/2018
-
-
 phydbl Lk_rep(option *io){
 	phydbl replnL = 0.0;
 	//copy parameters to submodels
@@ -369,22 +367,14 @@ phydbl Lk_rep(option *io){
 		}
 	}
 
-	//printf("splitbytree: %d\n",io->splitByTree);
-
-//#if defined OMP || defined BLAS_OMP
-
-if(io->splitByTree){
-#pragma omp parallel for
+#if defined OMP || defined BLAS_OMP
+#pragma omp parallel for if(io->splitByTree)
+#endif
 	For(i,io->ntrees){ //do likelihood calculations in parallel
 		t_tree* tree= io->tree_s[i];
+		//if(io->mod->optDebug)printf("Doing lk\n");
 		Lk(tree);
 	}
-}else{
-	For(i,io->ntrees){ //do likelihood calculations in parallel
-			t_tree* tree= io->tree_s[i];
-			Lk(tree);
-	}
-}
 	For(i,io->ntrees){
 		replnL += io->tree_s[i]->c_lnL;
 	}
@@ -396,13 +386,15 @@ if(io->splitByTree){
 
 
 /*********************************************************/
-phydbl Lk(t_tree *tree){
+phydbl Lk(t_tree *tree)
+{
 //printf("\nboth sides: %d %d",tree->both_sides,tree->mod->update_eigen);
   int br, n_patterns, n_edges;  
   n_edges=2*tree->n_otu-3;
   tree->old_lnL = tree->c_lnL;
  
-  if(tree->rates && tree->rates->lk_approx == NORMAL){
+  if(tree->rates && tree->rates->lk_approx == NORMAL)
+  {
     tree->c_lnL = Dnorm_Multi_Given_InvCov_Det(tree->rates->u_cur_l, 
 					       tree->rates->u_ml_l,
 					       tree->rates->invcov,
@@ -418,16 +410,10 @@ phydbl Lk(t_tree *tree){
   if(tree->bl_from_node_stamps) TIMES_Bl_From_T(tree);
   #endif
  
-  //printf("splitbytree: %d\n",tree->mod->splitByTree);
-  if(!tree->mod->splitByTree){
-	#if defined OMP || defined BLAS_OMP
-	#pragma omp parallel for if(tree->mod->datatype==CODON && !tree->mod->splitByTree)
-	#endif
-	  For(br,n_edges) Update_PMat_At_Given_Edge(tree->t_edges[br],tree);
-  }else{
-	  For(br,n_edges) Update_PMat_At_Given_Edge(tree->t_edges[br],tree);
-  }
-
+  #if defined OMP || defined BLAS_OMP
+  #pragma omp parallel for if(tree->mod->datatype==CODON && !tree->mod->splitByTree)
+  #endif
+  For(br,n_edges) Update_PMat_At_Given_Edge(tree->t_edges[br],tree);
 
  // For(br,2*tree->n_otu-3) printf("%lf\n",tree->t_edges[br]->l);
   //added and modified by Ken to start likelihood calculation at specified node
@@ -457,12 +443,12 @@ phydbl Lk(t_tree *tree){
   Adjust_Min_Diff_Lk(tree);
   if(tree->mod->optDebug && tree->mod->whichrealmodel==HLP17){
 #if defined OMP || defined BLAS_OMP
-#pragma omp critical //if(tree->splitByTree)
+#pragma omp critical
 #endif
 	  printf("\nomega %d %lf %lf %lf %lf %lf %lf",tree->both_sides,tree->mod->omega_part[0],tree->mod-> kappa,tree->c_lnL,tree->mod->qmat_part[0][1],tree->mod->hotness[0],tree->mod->hotness[1]);
 	  int i;
 #if defined OMP || defined BLAS_OMP
-#pragma omp critical //if(tree->splitByTree)
+#pragma omp critical
 #endif
 	  For(i,12)printf(" %lf",tree->mod->uns_base_freq[i]);
   }
@@ -812,11 +798,12 @@ n_v1   n_v2
 		    	if(state_anc==i){state=1;}
 			     b->upp[site][i] = state; // Ken 17/8/2016
 		    }else{
-		    	 b->upp[site][i] = anc->b[0]->p_lk_tip_r[site*tree->mod->ns+i];//Changed 12/Feb/2018 by Ken
-		    	 //char* s1=mCalloc(4,sizeof(char));
+		    	if(!tree->mod->rootpi) b->upp[site][i] = anc->b[0]->p_lk_tip_r[site*tree->mod->ns+i];//Changed 12/Feb/2018 by Ken
+		    	else b->upp[site][i]=tree->mod->pi[i];
+		    	//char* s1=mCalloc(4,sizeof(char));
 		    	//Sprint_codon(s1,senseCodons[i]);
 		    	// printf("\nUPP %d\t%d\t%s\t%lf",site,i,s1,b->upp[site][i]);
-           //b->upp[site][i]=tree->mod->pi[i];
+
            //b->upp[site][i]=1/61;
 		    }
 		  }
@@ -1928,7 +1915,7 @@ phydbl Lk_Core_UPP(t_edge *b, t_tree *tree, t_node *anc, t_node *d)
 
 
 	  #if defined OMP || defined BLAS_OMP
-	  //#pragma omp parallel for if(tree->mod->n_w_catg>1) private(site_lk_cat,sum,k,l)
+	  #pragma omp parallel for if(tree->mod->n_w_catg>1) private(site_lk_cat,sum,k,l)
 	  #endif
 
 
@@ -2157,7 +2144,7 @@ phydbl Lk_Core(t_edge *b, t_tree *tree)
  
   #if defined OMP || defined BLAS_OMP
   
-  //#pragma omp parallel for if(tree->mod->n_w_catg>1) private(site_lk_cat,sum,k,l)
+  #pragma omp parallel for if(tree->mod->n_w_catg>1) private(site_lk_cat,sum,k,l) 
      
   #endif
 
@@ -2434,125 +2421,155 @@ n_v1   n_v2
   
   /* TO DO: Might be worth keeping these directions in memory instead of
      calculating them every time... */
+  dir1=dir2=-1;
+  For(i,3) if(d->b[i] != b) (dir1<0)?(dir1=i):(dir2=i);
   
+  n_v1 = d->v[dir1];
+  n_v2 = d->v[dir2];
+
+  /* Get the partial likelihood vectors on edge b and the two pendant
+     edges (i.e., the two other edges connected to d) */
+  if(d == b->left)
+    {
+      p_lk = b->p_lk_left;
+      sum_scale = b->sum_scale_left;
+    }
+  else
+    {
+      p_lk = b->p_lk_rght;
+      sum_scale = b->sum_scale_rght;
+    }
+      
+  if(d == d->b[dir1]->left)
+    {
+      p_lk_v1 = d->b[dir1]->p_lk_rght;
+      sum_scale_v1 = d->b[dir1]->sum_scale_rght;
+    }
+  else
+    {
+      p_lk_v1 = d->b[dir1]->p_lk_left;
+      sum_scale_v1 = d->b[dir1]->sum_scale_left;
+    }
+  
+  if(d == d->b[dir2]->left)
+    {
+      p_lk_v2 = d->b[dir2]->p_lk_rght;
+      sum_scale_v2 = d->b[dir2]->sum_scale_rght;
+    }
+  else
+    {
+      p_lk_v2 = d->b[dir2]->p_lk_left;
+      sum_scale_v2 = d->b[dir2]->sum_scale_left;
+    }
+  
+
+  phydbl **Ppart1 = d->b[dir1]->bPmat_part;
+  phydbl **Ppart2 = d->b[dir2]->bPmat_part;
   
   /* For every site in the alignment */
   
   #if defined OMP || defined BLAS_OMP
-  //#pragma omp parallel for if(tree->mod->datatype==CODON  && !tree->mod->splitByTree) private(state_v1, state_v2, ambiguity_check_v1, ambiguity_check_v2, smallest_p_lk, p1_lk1, catg, i, j, p2_lk2, sum_scale_v1_val, sum_scale_v2_val, curr_scaler_pow, curr_scaler, piecewise_scaler_pow )
-  #pragma omp parallel for if(tree->mod->datatype==CODON  && !tree->mod->splitByTree) private(p_lk,n_v1,n_v2,dir1,dir2,sum_scale,p_lk_v1,sum_scale_v1,p_lk_v2,sum_scale_v2,state_v1, state_v2, ambiguity_check_v1, ambiguity_check_v2, smallest_p_lk, p1_lk1, catg, i, j, p2_lk2, sum_scale_v1_val, sum_scale_v2_val, curr_scaler_pow, curr_scaler, piecewise_scaler_pow )
+  #pragma omp parallel for if(tree->mod->datatype==CODON  && !tree->mod->splitByTree) private(state_v1, state_v2, ambiguity_check_v1, ambiguity_check_v2, smallest_p_lk, p1_lk1, catg, i, j, p2_lk2, sum_scale_v1_val, sum_scale_v2_val, curr_scaler_pow, curr_scaler, piecewise_scaler_pow )
   #endif
   
-  For(site,n_patterns){
-
-	  dir1=dir2=-1;
+  For(site,n_patterns)
+    {
+	  //printf("%d\n",omp_get_thread_num());
       state_v1 = state_v2 = -1;
       ambiguity_check_v1 = ambiguity_check_v2 = NO;
-      int ns;
-      int ncatg;
-//moved into parallel loop
-#pragma omp critical
-	  {
-    	  ns=tree->mod->ns;
-    	  ncatg=tree->mod->n_catg;
-	    For(i,3) if(d->b[i] != b) (dir1<0)?(dir1=i):(dir2=i);
-	    n_v1 = d->v[dir1];
-	    n_v2 = d->v[dir2];
-
-	    /* Get the partial likelihood vectors on edge b and the two pendant
-	       edges (i.e., the two other edges connected to d) */
-	    if(d == b->left){
-	        p_lk = b->p_lk_left;
-	        sum_scale = b->sum_scale_left;
-	      }else{
-	        p_lk = b->p_lk_rght;
-	        sum_scale = b->sum_scale_rght;
-	      }
-
-	    if(d == d->b[dir1]->left){
-	        p_lk_v1 = d->b[dir1]->p_lk_rght;
-	        sum_scale_v1 = d->b[dir1]->sum_scale_rght;
-	      }else{
-	        p_lk_v1 = d->b[dir1]->p_lk_left;
-	        sum_scale_v1 = d->b[dir1]->sum_scale_left;
-	      }
-
-	    if(d == d->b[dir2]->left){
-	        p_lk_v2 = d->b[dir2]->p_lk_rght;
-	        sum_scale_v2 = d->b[dir2]->sum_scale_rght;
-	      }else{
-	        p_lk_v2 = d->b[dir2]->p_lk_left;
-	        sum_scale_v2 = d->b[dir2]->sum_scale_left;
-	      }
-
-	  //printf("%d\n",omp_get_thread_num());
-      if(!tree->mod->s_opt->greedy){
+      if(!tree->mod->s_opt->greedy)
+	{
 	  /* n_v1 and n_v2 are tip nodes */
-	  if(n_v1->tax){
+	  if(n_v1->tax)
+	    {
 	      /* Is the state at this tip ambiguous? */
 	      ambiguity_check_v1 = tree->data->c_seq[n_v1->num]->is_ambigu[site];
 	      if(ambiguity_check_v1 == NO) state_v1 = Get_State_From_P_Pars(n_v1->b[0]->p_lk_tip_r,site*dim2,tree);
 	    }
 	      
-	  if(n_v2->tax){
+	  if(n_v2->tax)
+	    {
 	      /* Is the state at this tip ambiguous? */
 	      ambiguity_check_v2 = tree->data->c_seq[n_v2->num]->is_ambigu[site];
 	      if(ambiguity_check_v2 == NO) state_v2 = Get_State_From_P_Pars(n_v2->b[0]->p_lk_tip_r,site*dim2,tree);
-	    }
-      }
 
+	    }
+	}
       
-      if(tree->mod->use_m4mod){
+      if(tree->mod->use_m4mod)
+	{
 	  ambiguity_check_v1 = YES;
 	  ambiguity_check_v2 = YES;
-      }
-	  }
+	}
 
       /* For all the rate classes */
-      For(catg,ncatg){
+      For(catg,tree->mod->n_catg)
+	{
 	  smallest_p_lk  =  BIG;
+
 	  /* For all the state at node d */
-	  For(i,ns){
+	  For(i,tree->mod->ns)
+	    {
 	      p1_lk1 = .0;
+	      
 	      /* n_v1 is a tip */
-	      if((n_v1->tax) && (!tree->mod->s_opt->greedy)){
-		  if(ambiguity_check_v1 == NO){
+	      if((n_v1->tax) && (!tree->mod->s_opt->greedy))
+		{
+		  if(ambiguity_check_v1 == NO)
+		    {
 		      /* For the (non-ambiguous) state at node n_v1 */
 		      p1_lk1 = d->b[dir1]->bPmat_part[tree->mod->partIndex[site]][catg*dim3+i*dim2+state_v1]; // Ken 17/8/2016
-		   } else{
+		    }
+		  else
+		    {
 		      /* For all the states at node n_v1 */
-		      For(j,tree->mod->ns){
-		    	  p1_lk1 +=d->b[dir1]->bPmat_part[tree->mod->partIndex[site]][catg*dim3+i*dim2+j] * (phydbl)n_v1->b[0]->p_lk_tip_r[site*dim2+j]; //!!!!!
-			  	  //phydbl temp = (phydbl)n_v1->b[0]->p_lk_tip_r[site*dim2+j];
-		      }
-		   }
-		}else{/* n_v1 is an internal node */
+		      For(j,tree->mod->ns)
+			{
+			  p1_lk1 +=d->b[dir1]->bPmat_part[tree->mod->partIndex[site]][catg*dim3+i*dim2+j] * (phydbl)n_v1->b[0]->p_lk_tip_r[site*dim2+j]; //!!!!!
+			  phydbl temp = (phydbl)n_v1->b[0]->p_lk_tip_r[site*dim2+j];
+			}
+		    }
+		}
+	      /* n_v1 is an internal node */
+	      else
+		{
 		  /* For the states at node n_v1 */
-		  For(j,tree->mod->ns){
+		  For(j,tree->mod->ns)
+		    {
 		      p1_lk1 += d->b[dir1]->bPmat_part[tree->mod->partIndex[site]][catg*dim3+i*dim2+j] * p_lk_v1[site*dim1+catg*dim2+j];//!!!!!!
-		  }
+		    }
 		}
 	      
 	      p2_lk2 = .0;
 	      
 	      /* We do exactly the same as for node n_v1 but for node n_v2 this time.*/
 	      /* n_v2 is a tip */
-	      if((n_v2->tax) && (!tree->mod->s_opt->greedy)){
-		  if(ambiguity_check_v2 == NO){
+	      if((n_v2->tax) && (!tree->mod->s_opt->greedy))
+		{
+		  if(ambiguity_check_v2 == NO)
+		    {
 		      /* For the (non-ambiguous) state at node n_v2 */
 		      p2_lk2 =  d->b[dir2]->bPmat_part[tree->mod->partIndex[site]][catg*dim3+i*dim2+state_v2];
-		    }else{
-		      /* For all the states at node n_v2 */
-		      For(j,tree->mod->ns){
-		    	  p2_lk2 += d->b[dir2]->bPmat_part[tree->mod->partIndex[site]][catg*dim3+i*dim2+j] * (phydbl)n_v2->b[0]->p_lk_tip_r[site*dim2+j]; //!!!!!
-		    	  //phydbl temp = (phydbl)n_v2->b[0]->p_lk_tip_r[site*dim2+j];
-		      }
+
 		    }
-		}else{/* n_v2 is an internal node */
+		  else
+		    {
+		      /* For all the states at node n_v2 */
+		      For(j,tree->mod->ns)
+			{
+			  p2_lk2 += d->b[dir2]->bPmat_part[tree->mod->partIndex[site]][catg*dim3+i*dim2+j] * (phydbl)n_v2->b[0]->p_lk_tip_r[site*dim2+j]; //!!!!!
+			  phydbl temp = (phydbl)n_v2->b[0]->p_lk_tip_r[site*dim2+j];
+			}
+		    }
+		}
+	      /* n_v2 is an internal node */
+	      else
+		{
 		  /* For all the states at node n_v2 */
-		  For(j,tree->mod->ns){
+		  For(j,tree->mod->ns)
+		    {
 		      p2_lk2 += d->b[dir2]->bPmat_part[tree->mod->partIndex[site]][catg*dim3+i*dim2+j] * p_lk_v2[site*dim1+catg*dim2+j];//!!!!!
-		  }
+		    }
 		}
 	      
 	      p_lk[site*dim1+catg*dim2+i] = p1_lk1 * p2_lk2;	    
@@ -2577,7 +2594,7 @@ n_v1   n_v2
 		{
 		  piecewise_scaler_pow = MIN(curr_scaler_pow,63);
 		  curr_scaler = (phydbl)((unsigned long long)(1) << piecewise_scaler_pow);
-		  For(i,ns)
+		  For(i,tree->mod->ns)
 		    {
 		      p_lk[site*dim1+catg*dim2+i] *= curr_scaler;
 		      

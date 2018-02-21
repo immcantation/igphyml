@@ -673,6 +673,7 @@ typedef struct __Model {
   int				ntrees; //COPIED FROM OPTION
   int					splitByTree;
   int					nedges;
+  int						rootpi;
 
   int					       optKappa;
   int						    optFreq;

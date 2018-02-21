@@ -124,6 +124,7 @@ struct option longopts[] =
 	{"ASRc",		  required_argument,NULL,162},  //!<Added by Ken
 	{"minSeq",		  required_argument,NULL,163},  //!<Added by Ken
 	{"GR",		  required_argument,NULL,164},  //!<Added by Ken
+	{"rootpi",		  no_argument,NULL,165},  //!<Added by Ken
     {0,0,0,0}
 };
 
@@ -2510,6 +2511,11 @@ int mainOptionSwitch(int opt, char * optarg, option * io)
 //exit(EXIT_FAILURE);
         	break;
         }
+        case 165:{
+        	io->mod->rootpi=1;
+        	break;
+        }
+
 
             //////////////////////////////////////////////////////////////////////////////////////
             // --multiple
