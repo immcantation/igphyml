@@ -31,6 +31,9 @@ the GNU public licence.  See http://www.opensource.org for details.
 
 void findCIs(model* mod, option *io, FILE* CI){
 	int i;
+	phydbl ori_min = io->mod->s_opt->min_diff_lk_global;
+	io->mod->s_opt->min_diff_lk_global *= io->roughCI;
+	printf("Mindiff needed: %lf\n",io->mod->s_opt->min_diff_lk_global);
 
 	For(i,mod->nomega_part){
 	  		  if(mod->omega_part_ci[i]==1){
@@ -78,6 +81,7 @@ void findCIs(model* mod, option *io, FILE* CI){
 	  		  	mod->kappalci=lower;
 	  		  	mod->s_opt->opt_kappa=opt;
 	  	  }
+	  	io->mod->s_opt->min_diff_lk_global=ori_min;
 }
 
 

@@ -1035,6 +1035,7 @@ typedef struct __Option {
   int**						GRsites;//germline sites to reconstruct
   char*							GRstring;
   int							GRv;
+  phydbl 					roughCI;
  }option;
 
 /*********************************************************/

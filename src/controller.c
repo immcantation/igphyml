@@ -125,6 +125,7 @@ struct option longopts[] =
 	{"minSeq",		  required_argument,NULL,163},  //!<Added by Ken
 	{"GR",		  required_argument,NULL,164},  //!<Added by Ken
 	{"rootpi",		  no_argument,NULL,165},  //!<Added by Ken
+	{"roughCI",		  required_argument,NULL,166},  //!<Added by Ken
     {0,0,0,0}
 };
 
@@ -2513,6 +2514,10 @@ int mainOptionSwitch(int opt, char * optarg, option * io)
         }
         case 165:{
         	io->mod->rootpi=1;
+        	break;
+        }
+        case 166:{
+        	io->roughCI=atof(optarg);
         	break;
         }
 
