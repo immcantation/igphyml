@@ -325,7 +325,8 @@ void setUpHLP17(option* io, model *mod){
    	}
    	//Read in hotspot tables
    	int mot;
-   	if(mod->primary)printf(". Loading hotspot tables..\n");
+   	if(mod->primary){
+   	printf(". Loading hotspot tables..\n");
    	mod->hotspotcmps = (phydbl**)mCalloc(mod->nmotifs,sizeof(phydbl *));
    	for(mot = 0; mot < mod->nmotifs; mot++){
    	    char *infile = mCalloc(strlen(HTABLE)+strlen(mod->motifs[mot])+1,sizeof(char));
@@ -349,6 +350,7 @@ void setUpHLP17(option* io, model *mod){
    	    }
    	    fclose(file);
    	    mod->hotspotcmps[mot] = hot;
+   	}
    	}
    	//partition model stuff
    	if(mod->partfilespec==1){
