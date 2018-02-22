@@ -1585,12 +1585,6 @@ void Update_Qmat_GY(phydbl *mat, phydbl *qmat, phydbl * freqs, int cat, model *m
 //Modified GY94 by Ken
 //Modified to be omega*kappa*pi*(1+b*h) on 12/Jun/2016
 void Update_Qmat_HLP17(phydbl *mat, phydbl *qmat, phydbl * freqs, int cat, model *mod,phydbl omega) {
-	//printf("updating hlp17\n");
-	//printf("%d\n",mod->nmotifs);
-	//printf("hsc %lf\n",mod->hotspotcmps[0][100]);
-	//printf("bmat %lf\n",mod->Bmat[0]);
-	/*printf("hotness %lf\n",mod->hotness[0]);
-	printf("mh %d\n",mod->motif_hotness[0]);*/
 	 int fi,ti,li,ri,hot,c;
 	 double htotal[mod->nmotifs];
 	 for(fi=0;fi<61;fi++){ //Fill in B matrix
@@ -1600,17 +1594,19 @@ void Update_Qmat_HLP17(phydbl *mat, phydbl *qmat, phydbl * freqs, int cat, model
  	    			htotal[c]=0;
     		}
 //should drastically cut down on RAM usage by using a single copy of all hotspot tables at the upper level
-//#pragma omp critical
- //   		{
+    		omp_lock_t writelock;
+    		omp_init_lock(&writelock);
+    		omp_set_lock(&writelock);
     		for(li=0;li<61;li++){
     			for(ri=0;ri<61;ri++){
     				for(c=0;c< mod->nmotifs;c++){ //tally up expected number of each type of hotspot mutation
-//#pragma omp atomic
     						htotal[c] += freqs[li]*freqs[ri]*mod->io->mod->hotspotcmps[c][fi*61*61*61+ti*61*61+li*61+ri];
 	 	    		}
     			}
 	 	    }
-   // 	}
+			omp_unset_lock(&writelock);
+    	    omp_destroy_lock(&writelock);
+
             //additive interaction function
             double hot = 0;
            		for(c=0;c<mod->nmotifs;c++){
