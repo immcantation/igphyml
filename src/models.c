@@ -1600,16 +1600,17 @@ void Update_Qmat_HLP17(phydbl *mat, phydbl *qmat, phydbl * freqs, int cat, model
  	    			htotal[c]=0;
     		}
 //should drastically cut down on RAM usage by using a single copy of all hotspot tables at the upper level
-#pragma omp critical
-    		{
+//#pragma omp critical
+ //   		{
     		for(li=0;li<61;li++){
     			for(ri=0;ri<61;ri++){
     				for(c=0;c< mod->nmotifs;c++){ //tally up expected number of each type of hotspot mutation
+//#pragma omp atomic
     						htotal[c] += freqs[li]*freqs[ri]*mod->io->mod->hotspotcmps[c][fi*61*61*61+ti*61*61+li*61+ri];
 	 	    		}
     			}
 	 	    }
-    	}
+   // 	}
             //additive interaction function
             double hot = 0;
            		for(c=0;c<mod->nmotifs;c++){
