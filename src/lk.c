@@ -366,13 +366,18 @@ phydbl Lk_rep(option *io){
 			}
 		}
 	}
-
+io->threads=0;
 #if defined OMP || defined BLAS_OMP
 #pragma omp parallel for if(io->splitByTree)
 #endif
 	For(i,io->ntrees){ //do likelihood calculations in parallel
-		t_tree* tree= io->tree_s[i];
-		//if(io->mod->optDebug)printf("Doing lk\n");
+		t_tree* tree;
+#if defined OMP || defined BLAS_OMP
+#pragma omp critical
+#endif
+		{
+			tree= io->tree_s[io->threads++];
+		}
 		Lk(tree);
 	}
 	For(i,io->ntrees){
@@ -3313,29 +3318,29 @@ matrix *ML_CODONDist_Pairwise(calign *data, option *io, model *mod) //!<Added by
 
   mat = Make_Mat(data->n_otu);
   Init_Mat(mat,data);
-  
+  printf("inited mat\n");
   //Added by Ken
   //Make Bmat array equivalent to GY94
   if(mod->whichrealmodel == HLP17){ //was io-> mod
-	  int combinations = 3721;
+	  /*int combinations = 3721;
 	  phydbl hot[combinations];
-	  phydbl *tfr = ecmK07freq;
+	  //phydbl *tfr = ecmK07freq;
 	  int i1, i2;
 	  for(i1=0;i1<61;i1++){
 		  for(i2=0;i2<61;i2++){
 			  hot[i1*61+i2]=0;
 		  }
 	  }
-	  //mod_tmp->Bmat = hot;
+	  mod_tmp->Bmat = hot;*/
 	  mod_tmp->Bmat = (phydbl *)mCalloc(3721,sizeof(phydbl));
 	  mod_tmp->nmotifs = 1;
 	  mod_tmp->nhotness = 1;
-	  mod_tmp->hotspotcmps = malloc(sizeof(int *) * mod_tmp->nmotifs);
+	  //mod_tmp->hotspotcmps = malloc(sizeof(int *) * mod_tmp->nmotifs);
 	  mod_tmp->hotness = malloc(sizeof(double ) * mod_tmp->nhotness);
 	  mod_tmp->motif_hotness = malloc(sizeof(int ) * mod_tmp->nmotifs);
 	  mod_tmp->hotness[0] = 0.0;
 	  mod_tmp->motif_hotness[0]=0;
-	  mod_tmp->hotspotcmps[0] = mod->hotspotcmps[0]; //was io-> mod
+	  //mod_tmp->hotspotcmps[0] = mod->hotspotcmps[0]; //was io-> mod
   }
 
   //Add in stuff for partitioned model

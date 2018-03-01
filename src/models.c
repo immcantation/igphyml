@@ -1593,12 +1593,12 @@ void Update_Qmat_HLP17(phydbl *mat, phydbl *qmat, phydbl * freqs, int cat, model
     		for(c=0;c< mod->nmotifs;c++){ //set htotal array to zero
  	    			htotal[c]=0;
     		}
-//should drastically cut down on RAM usage by using a single copy of all hotspot tables at the upper level
+
     		omp_lock_t writelock;
     		omp_init_lock(&writelock);
     		omp_set_lock(&writelock);
     		for(li=0;li<61;li++){
-    			for(ri=0;ri<61;ri++){
+    			for(ri=0;ri<61;ri++){//should drastically cut down on RAM usage by using a single copy of all hotspot tables at the upper level
     				for(c=0;c< mod->nmotifs;c++){ //tally up expected number of each type of hotspot mutation
     						htotal[c] += freqs[li]*freqs[ri]*mod->io->mod->hotspotcmps[c][fi*61*61*61+ti*61*61+li*61+ri];
 	 	    		}
