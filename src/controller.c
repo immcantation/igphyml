@@ -242,12 +242,17 @@ void setUpHLP17(option* io, model *mod){
    		strcpy(mod->partfile,io->mod->partfile);
    		mod->partfilespec=io->mod->partfilespec;
    		strcpy(mod->ambigfile,io->mod->ambigfile);
-   		strcpy(mod->rootname,io->mod->rootname);
+   		//strcpy(mod->rootname,io->mod->rootname);
+   		//strcpy(mod->partfile,io->partfs[mod->num]);
+   		strcpy(mod->partfile,io->partfs[mod->num]);
+   		if(strcmp(mod->partfile,"N")==0)mod->partfilespec=0;
+   		else mod->partfilespec=1;
    	}else{
    		strcpy(mod->partfile,io->partfs[mod->num]);
    		if(strcmp(mod->partfile,"N")==0)mod->partfilespec=0;
    		else mod->partfilespec=1;
    	}
+   	printf("mod: %d %d %s\n",mod->primary,mod->partfilespec,mod->partfile);
 
    	//Default values
    	if(io->mod->motifstringopt==0){
@@ -384,7 +389,8 @@ void setUpHLP17(option* io, model *mod){
    		strcpy(mod->partNames[parti],l1);
    		//io->mod->partNames[parti] = l1;
    		char* l2 = strsep(&linepart,"\n");
-   		if(mod->primary)printf("%s\n",l2);
+   		//if(mod->primary)printf("%s\n",l2);
+   		printf("%s\n",l2);
    		char *ltemp1;
    		while ((ltemp1 = strsep(&l2, ",")) != NULL){
 			 int start = atoi((strsep(&ltemp1,".")));

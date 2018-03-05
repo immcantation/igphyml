@@ -2943,8 +2943,7 @@ void Record_Model(model *ori, model *cpy)
 
 /*********************************************************/
 
-model *Copy_Partial_Model(model *ori)
-{
+model *Copy_Partial_Model(model *ori, int num){
   model *cpy;
 
   cpy                = Make_Model_Basic();
@@ -2958,7 +2957,7 @@ model *Copy_Partial_Model(model *ori)
 
 
   cpy->primary=0;
-
+  cpy->num=num;
   cpy->motifstringopt=0;
   cpy->hotnessstringopt=0;
   cpy->partfilespec=0;

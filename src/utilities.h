@@ -1475,7 +1475,7 @@ model *Make_Model_Basic();
 void Make_Model_Complete(model *mod);
 void Copy_Optimiz(optimiz *s_opt, optimiz* ori);
 model *Copy_Model(model *ori);
-model *Copy_Partial_Model(model *ori);
+model *Copy_Partial_Model(model *ori,int num);
 void Set_Defaults_Input(option *input, model* mod);
 void Set_Defaults_Model(model *mod);
 void Set_Defaults_Optimiz(optimiz *s_opt);

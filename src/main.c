@@ -145,7 +145,7 @@ int main(int argc, char **argv){
     best_lnL = UNLIKELY;
     if(io->mod->optDebug)printf("On data %d\n",num_data_set);
     if(io->mod->optDebug)printf("copying mode`l\n");
-    model *mod = Copy_Partial_Model(io->mod); //!< Pointer that will hold the model applied.
+    model *mod = Copy_Partial_Model(io->mod,num_data_set); //!< Pointer that will hold the model applied.
     if(io->mod->optDebug)printf("copied model\n");
     mod->num=num_data_set;
 
