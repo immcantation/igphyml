@@ -361,7 +361,8 @@ void setUpHLP17(option* io, model *mod){
        fscn = fscanf(file, " %d\n",&nsite);
        //printf("reading part: %d\t%d\n",mod->nparts,nsite);
        mod->nomega_part=mod->nparts;
-       mod->partIndex = (int *)mCalloc(nsite,sizeof(double));
+      // printf("%d\t%d\n",mod->nparts,nsite);
+       mod->partIndex = (int *)mCalloc(nsite,sizeof(int));
        mod->partNames = (char**)mCalloc(mod->nparts,sizeof(char*));
        mod->omega_part = (phydbl*)mCalloc(mod->nomega_part,sizeof(phydbl));
        for(c=0;c<mod->nomega_part;c++){
@@ -399,13 +400,17 @@ void setUpHLP17(option* io, model *mod){
 			 }
    		}
    	}
+ //  	printf("here\n");
    	for(indexi=0;indexi<nsite;indexi++){
+   		//printf("%d\n",indexi);
    	   	if(mod->partIndex[indexi] == -1){
    	   		printf("\nPosition %d not specified in partition file!\n",indexi);
    	   		exit(EXIT_FAILURE);
    	   	}
    	 if(mod->primary)printf("%d ",mod->partIndex[indexi]);
    	}
+
+   	if(io->GR){
    	char* nline=NULL;
    	char* nline2=NULL;
    	len=0;
@@ -423,7 +428,7 @@ void setUpHLP17(option* io, model *mod){
    		//printf("\n%d\t%s",c,l1);
    		mod->imgt[c]=atoi(l1);
    	}
-
+   	}
 
    	if(mod->primary)printf("\nDone!\n");
     }else{
