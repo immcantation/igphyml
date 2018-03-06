@@ -252,7 +252,7 @@ void setUpHLP17(option* io, model *mod){
    		if(strcmp(mod->partfile,"N")==0)mod->partfilespec=0;
    		else mod->partfilespec=1;
    	}
-   	printf("mod: %d %d %s\n",mod->primary,mod->partfilespec,mod->partfile);
+   //	printf("mod: %d %d %s\n",mod->primary,mod->partfilespec,mod->partfile);
 
    	//Default values
    	if(io->mod->motifstringopt==0){
@@ -359,6 +359,7 @@ void setUpHLP17(option* io, model *mod){
    	}
    	//partition model stuff
    	if(mod->partfilespec==1){
+   		int imgt=0;
     FILE *file = fopen(mod->partfile, "r");
     int npart;
     int fscn =  fscanf(file, "%d",&mod->nparts);
@@ -391,40 +392,45 @@ void setUpHLP17(option* io, model *mod){
    		char* l2 = strsep(&linepart,"\n");
    		//if(mod->primary)printf("%s\n",l2);
    		printf("%s\n",l2);
-   		char *ltemp1;
-   		while ((ltemp1 = strsep(&l2, ",")) != NULL){
-			 int start = atoi((strsep(&ltemp1,".")));
-			 (strsep(&ltemp1,"."));
-			 int end = atoi((strsep(&ltemp1,"\n")));
-			 int tempcount;
-			 for(tempcount=start;tempcount<=end;tempcount++){
-				 if(mod->partIndex[tempcount]!=-1){
-					 printf("\nPosition %d specified more than once in partition file!\n",tempcount);
-					 exit(EXIT_FAILURE);
-				 }
-				 mod->partIndex[tempcount]=parti;
-			 }
+   		if(strcmp(l2,"IMGT")!=0){
+   			char *ltemp1;
+   			while ((ltemp1 = strsep(&l2, ",")) != NULL){
+   				int start = atoi((strsep(&ltemp1,".")));
+   				(strsep(&ltemp1,"."));
+   				int end = atoi((strsep(&ltemp1,"\n")));
+   				int tempcount;
+   				for(tempcount=start;tempcount<=end;tempcount++){
+   					if(mod->partIndex[tempcount]!=-1){
+					 	 printf("\nPosition %d specified more than once in partition file!\n",tempcount);
+					 	 exit(EXIT_FAILURE);
+   					}
+   					mod->partIndex[tempcount]=parti;
+   				}
+   			}
+   		}else{
+   			printf("Doing IMGT CDR and FWR assignments\n");
+   			imgt=1;
    		}
    	}
  //  	printf("here\n");
-   	for(indexi=0;indexi<nsite;indexi++){
-   		//printf("%d\n",indexi);
-   	   	if(mod->partIndex[indexi] == -1){
-   	   		printf("\nPosition %d not specified in partition file!\n",indexi);
-   	   		exit(EXIT_FAILURE);
-   	   	}
-   	 if(mod->primary)printf("%d ",mod->partIndex[indexi]);
-   	}
 
-   	if(io->GR){
+
+   	//if(io->GR){
    	char* nline=NULL;
    	char* nline2=NULL;
+	char* nline3=NULL;
    	len=0;
    	mod->germlineV=mCalloc(T_MAX_OPTION,sizeof(char));
+   	mod->germlineJ=mCalloc(T_MAX_OPTION,sizeof(char));
    	read = getline(&nline2,&len,file);
    	char* v=strsep(&nline2,"\n");
    	strcpy(mod->germlineV,v);
    	printf("\nGermlineV: %s",mod->germlineV);
+   	read = getline(&nline3,&len,file);
+   	char* j=strsep(&nline3,"\n");
+   	strcpy(mod->germlineJ,j);
+   	printf("\nGermlineJ: %s\n",mod->germlineJ);
+
    	mod->imgt=mCalloc(nsite,sizeof(int));
    	len=0;
    	read = getline(&nline,&len,file);
@@ -434,6 +440,27 @@ void setUpHLP17(option* io, model *mod){
    		//printf("\n%d\t%s",c,l1);
    		mod->imgt[c]=atoi(l1);
    	}
+
+   	if(imgt){
+   		For(c,nsite){
+   			int s =mod->imgt[c];
+   			if(s >= 26 && s < 38)mod->partIndex[c]=1;
+   			else if(s >= 56 && s < 65)mod->partIndex[c]=1;
+   			else if(s >= 105 && s < 116)mod->partIndex[c]=1;
+   			else mod->partIndex[c]=0;
+   		}
+   	}
+
+   //	}
+
+
+   	for(indexi=0;indexi<nsite;indexi++){
+   		//printf("%d\n",indexi);
+   	   	if(mod->partIndex[indexi] == -1){
+   	   		printf("\nPosition %d not specified in partition file!\n",indexi);
+   	   		exit(EXIT_FAILURE);
+   	   	}
+   	 if(mod->primary)printf("%d ",mod->partIndex[indexi]);
    	}
 
    	if(mod->primary)printf("\nDone!\n");

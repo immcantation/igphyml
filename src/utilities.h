@@ -856,6 +856,7 @@ typedef struct __Model {
 
  //germline reconstruction stuff
  char*		germlineV;
+ char*		germlineJ;
  int*		imgt;
 }model;
 
