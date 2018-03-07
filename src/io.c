@@ -406,7 +406,9 @@ align **Get_Seq(option *io, model *mod)
     }
   }
   if(mod->n_otu < 3) {
-      Warn_And_Exit("\n. Err: we need at least 3 sequences to analyze.\n");
+      //Warn_And_Exit("\n. Err: we need at least 3 sequences to analyze.\n");
+	  printf("Need at least 3 sequences to analyze\n");
+	  return NULL;
   }
 
   if(!mod->data)
@@ -1733,7 +1735,7 @@ void Print_IgPhyML_Out(option* io){
 	  }
 
 	 	 For(i,io->GRv){
-	 		 for(j=0;j<150;j++){
+	 		 for(j=0;j<130;j++){
 	 			 printf("%s\t%d\n",io->GRgenes[i],j);
 	 			reconGermline(io,io->GRgenes[i],j,f);
 	 		 }
@@ -1809,6 +1811,11 @@ void Print_IgPhyML_Out(option* io){
 
 
 	 //printf("\nPRINTING TREES TO FILES\n");
+	 FILE* orep;
+	 if(io->outrepspec){
+		 orep=Openfile(io->outrep, 1 );
+		 fprintf(orep,"%d\n",io->ntrees);
+	 }
 	 For(i,io->ntrees){
 		 t_tree* tree=io->tree_s[i];
 		 char fout[T_MAX_FILE];
@@ -1819,6 +1826,10 @@ void Print_IgPhyML_Out(option* io){
 			 strcat(fout, "_");
 			 strcat(fout, io->run_id_string);
 		 }
+
+		 //potentially output new repertoire file
+		 if(io->outrepspec)fprintf(orep,"%s\t%s\t%s\t%s\n",io->datafs[i],fout,io->rootids[i],io->partfs[i]);
+
 		 //printf("\nPRINTING TREES TO FILES %s\n",fout);
 		 FILE* treeout = Openfile(fout, 1 );
 		 if(io->mod->ASR){
@@ -1842,7 +1853,6 @@ void Print_IgPhyML_Out(option* io){
 		 }
 		 fclose(treeout);
 	 }
-
 }
 
 

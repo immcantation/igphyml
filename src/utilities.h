@@ -1037,6 +1037,8 @@ typedef struct __Option {
   char*							GRstring;
   int							GRv;
   phydbl 					roughCI;
+  char*						outrep;
+  int						outrepspec;
  }option;
 
 /*********************************************************/

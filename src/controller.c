@@ -126,6 +126,7 @@ struct option longopts[] =
 	{"GR",		  required_argument,NULL,164},  //!<Added by Ken
 	{"rootpi",		  no_argument,NULL,165},  //!<Added by Ken
 	{"roughCI",		  required_argument,NULL,166},  //!<Added by Ken
+	{"outrep",		  required_argument,NULL,167},  //!<Added by Ken
     {0,0,0,0}
 };
 
@@ -169,7 +170,6 @@ void finishOptions(option * io)
            	printf("\n. Can't specify number of threads unless compiled with OMP!\n");
            	exit(EXIT_FAILURE);
 			#endif
-
 
 
     Set_Model_Name(io->mod);
@@ -412,10 +412,7 @@ void setUpHLP17(option* io, model *mod){
    			imgt=1;
    		}
    	}
- //  	printf("here\n");
 
-
-   	//if(io->GR){
    	char* nline=NULL;
    	char* nline2=NULL;
 	char* nline3=NULL;
@@ -445,14 +442,11 @@ void setUpHLP17(option* io, model *mod){
    		For(c,nsite){
    			int s =mod->imgt[c];
    			if(s >= 26 && s < 38)mod->partIndex[c]=1;
-   			else if(s >= 56 && s < 65)mod->partIndex[c]=1;
+   			else if(s >= 55 && s < 65)mod->partIndex[c]=1;
    			else if(s >= 105 && s < 116)mod->partIndex[c]=1;
    			else mod->partIndex[c]=0;
    		}
    	}
-
-   //	}
-
 
    	for(indexi=0;indexi<nsite;indexi++){
    		//printf("%d\n",indexi);
@@ -462,7 +456,7 @@ void setUpHLP17(option* io, model *mod){
    	   	}
    	 if(mod->primary)printf("%d ",mod->partIndex[indexi]);
    	}
-
+   	fclose(file);
    	if(mod->primary)printf("\nDone!\n");
     }else{
    	 mod->nparts=1;
@@ -2558,6 +2552,11 @@ int mainOptionSwitch(int opt, char * optarg, option * io)
         }
         case 166:{
         	io->roughCI=atof(optarg);
+        	break;
+        }
+        case 167:{ //if rep
+        	strcpy(io->outrep,optarg);
+        	io->outrepspec=1;
         	break;
         }
 

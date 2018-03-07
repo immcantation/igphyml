@@ -222,6 +222,7 @@ void Branch_intheTree(t_node_nucle2codon *ppointer,char nucleo){
     Push_nodeStack(ppointer->gP);
     break;
     
+  case '.':
   case '-':
   case 'n':
   case 'N':
@@ -233,7 +234,7 @@ void Branch_intheTree(t_node_nucle2codon *ppointer,char nucleo){
     Push_nodeStack(ppointer->aP);
     Push_nodeStack(ppointer->gP);
     break;
-  default: printf("Forbiden character in input sequence.\n"); exit(1);break;
+  default: printf("Forbiden character in input sequence %c.\n", nucleo); exit(1);break;
   }
 }
 /*######end implementation of the quad-tree######*/ 

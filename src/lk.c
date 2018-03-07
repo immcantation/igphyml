@@ -928,7 +928,7 @@ void reconGermline(option *io, char* v, int site,FILE* f){
 	int	imgt[io->ntrees];
 	int nmatch=0;
 	For(i,io->ntrees){//make a list of trees/models with specified V and IMGT site
-		if(io->mod->optDebug)printf("\n%s\t%s\n",io->mod_s[i]->germlineV,v);
+		if(io->mod->optDebug)printf("\n%d\t%s\t%s\n",i,io->mod_s[i]->germlineV,v);
 		if(strcmp(io->mod_s[i]->germlineV,v)==0){
 			int found=0;
 			For(j,io->mod_s[i]->init_len/3){
@@ -967,7 +967,7 @@ void reconGermline(option *io, char* v, int site,FILE* f){
 				//rprobs[i][j]=Lk(tree)+log(0.5);
 				char s[4];
 				Sprint_codon(s,io->senseCodons[j]);
-				printf("%d\t%s\t%lf\t%lf\n",isite,s,flk,rprobs[i][j]);
+				//printf("%d\t%s\t%lf\t%lf\n",isite,s,flk,rprobs[i][j]);
 				root->b[0]->p_lk_tip_r[isite*tree->mod->ns+j]=0;
 			}
 			For(j,61)root->b[0]->p_lk_tip_r[isite*tree->mod->ns+j]=ori[j];
@@ -991,8 +991,6 @@ void reconGermline(option *io, char* v, int site,FILE* f){
 		if(io->mod->optDebug)printf("%d\t%d\n",ori,Get_State_From_P_Pars(root->b[0]->p_lk_tip_r,isite*61,tree));
 		if(io->mod->optDebug)printf("\n%d\t%d\t%lf\t%lf",i,j,flk,Lk(tree));
 	}*/
-
-
 
 	phydbl* recons=mCalloc(61*61,sizeof(phydbl));
 	phydbl* mprobs=mCalloc(61,sizeof(phydbl));
@@ -1071,7 +1069,7 @@ void reconGermline(option *io, char* v, int site,FILE* f){
 				char s2[4];
 				Sprint_codon(s1,io->senseCodons[ci1[c]]);
 				Sprint_codon(s2,io->senseCodons[ci2[c]]);
-				printf("%s\t%s\t%lf\t%lf\t%lf\t%lf\t%d\t%d\t%d\n",s1,s2,mprobs[ci1[c]],mprobs[ci2[c]],recons[i*61+j],G1p-1.96,i,j,ci1[c]);
+				//printf("%s\t%s\t%lf\t%lf\t%lf\t%lf\t%d\t%d\t%d\n",s1,s2,mprobs[ci1[c]],mprobs[ci2[c]],recons[i*61+j],G1p-1.96,i,j,ci1[c]);
 				c++;
 			}
 		}
@@ -1099,12 +1097,7 @@ void reconGermline(option *io, char* v, int site,FILE* f){
 	Sprint_codon(s1,io->senseCodons[mi]);
 	Sprint_codon(s2,io->senseCodons[mj]);
 	fprintf(f,"%s\t%d\t%d\t%s\t%s:%s\n",v,site,nmatch,cigen,s1,s2);
-
-
 	//printf("Genotype: %s\n",cigen);
-
-
-
 }
 
 /*********************************************************/

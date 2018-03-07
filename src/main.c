@@ -175,22 +175,22 @@ int main(int argc, char **argv){
     io->n_trees=1;
 
     Get_Seq(io,mod);
-    //if(io->convert_NT_to_AA) Conv_NT_seq_to_AA_seq(io); unused ken 5/1
+    if(io->min_otu>0){
+        	printf("\n..has %d sequences.",mod->n_otu);
+        	if(num_data_set > 0 && mod->n_otu > last_otu){
+        		printf("\n repfile is not in order! --minSeq will not function properly. Exiting\n");
+        		exit(EXIT_FAILURE);
+        	}
+        	last_otu=mod->n_otu;
+        	if(mod->n_otu<io->min_otu){
+        		io->ntrees=num_data_set;
+        		continue;
+        	}
+        }
 
     if(io->threshold_exp) {if(num_data_set<io->dataset-1) {Free_Seq(mod->data,mod->n_otu);continue;}}//!< Added by Marcelo. Run arbitrary data set.
 
-    if(io->min_otu>0){
-    	printf("\n..has %d sequences.",mod->n_otu);
-    	if(num_data_set > 0 && mod->n_otu > last_otu){
-    		printf("\n repfile is not in order! --minSeq will not function properly. Exiting\n");
-    		exit(EXIT_FAILURE);
-    	}
-    	last_otu=mod->n_otu;
-    	if(mod->n_otu<io->min_otu){
-    		io->ntrees=num_data_set;
-    		continue;
-    	}
-    }
+
     Make_Model_Complete(mod);
 
     Set_Model_Name(mod);
