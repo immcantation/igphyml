@@ -226,9 +226,39 @@ void finishOptions(option * io)
    	        io->mod->omega_part[c]=atof(mtemp1);
    	      }
    	 }
+}
+
+
+/**************************************************************/
+// Set up predicting all GRs with at least X number of sequences
+void setUpGR(option* io){
+	char** genes = mCalloc(io->ntrees,sizeof(char*));
+	int* count = mCalloc(io->ntrees,sizeof(int));
+	int i,j,k;
+	For(i,io->ntrees){
+		genes[i]=mCalloc(T_MAX_OPTION,sizeof(char));
+	}
+	int gcounter=0;
+	strcpy(genes[gcounter++],io->mod_s[0]->germlineV);
+	For(i,io->ntrees){
+		int found=0;
+		For(j,gcounter){
+			if(strcmp(genes[j],io->mod_s[i]->germlineV)==0){
+				found=1;
+				count[j]++;
+				break;
+			}
+		}
+		if(!found){
+			count[gcounter]++;
+			strcpy(genes[gcounter++],io->mod_s[i]->germlineV);
+		}
+	}
 
 }
 
+/**************************************************************/
+// Set up predicting all HLP17 model
 void setUpHLP17(option* io, model *mod){
 
    	mod->opthotness=1;
