@@ -443,6 +443,7 @@ void setUpHLP17(option* io, model *mod){
    		}
    	}
 
+   	if(imgt||io->GR){
    	char* nline=NULL;
    	char* nline2=NULL;
 	char* nline3=NULL;
@@ -476,6 +477,7 @@ void setUpHLP17(option* io, model *mod){
    			else if(s >= 105 && s < 116)mod->partIndex[c]=1;
    			else mod->partIndex[c]=0;
    		}
+   	}
    	}
 
    	for(indexi=0;indexi<nsite;indexi++){
