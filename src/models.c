@@ -1587,46 +1587,49 @@ void Update_Qmat_GY(phydbl *mat, phydbl *qmat, phydbl * freqs, int cat, model *m
 void Update_Qmat_HLP17(phydbl *mat, phydbl *qmat, phydbl * freqs, int cat, model *mod,phydbl omega) {
 	 int fi,ti,li,ri,hot,c;
 	 double htotal[mod->nmotifs];
+	 if(!mod->constB){//if B matrix is updated with changing frequencies
 	 for(fi=0;fi<61;fi++){ //Fill in B matrix
-	//	 printf("%d\n",fi);
     	for(ti=0;ti<61;ti++){
-    		for(c=0;c< mod->nmotifs;c++){ //set htotal array to zero
- 	    			htotal[c]=0;
-    		}
+    		for(c=0;c< mod->nmotifs;c++)htotal[c]=0; //set htotal array to zero
 
-    		omp_lock_t writelock;
-    		omp_init_lock(&writelock);
-    		omp_set_lock(&writelock);
-    		for(li=0;li<61;li++){
-    			for(ri=0;ri<61;ri++){//should drastically cut down on RAM usage by using a single copy of all hotspot tables at the upper level
-    				for(c=0;c< mod->nmotifs;c++){ //tally up expected number of each type of hotspot mutation
-    						htotal[c] += freqs[li]*freqs[ri]*mod->io->mod->hotspotcmps[c][fi*61*61*61+ti*61*61+li*61+ri];
-	 	    		}
+    			omp_lock_t writelock;
+    			omp_init_lock(&writelock);
+    			omp_set_lock(&writelock);
+    			for(li=0;li<61;li++){
+    				for(ri=0;ri<61;ri++){//should drastically cut down on RAM usage by using a single copy of all hotspot tables at the upper level
+    					for(c=0;c< mod->nmotifs;c++){ //tally up expected number of each type of hotspot mutation
+    							htotal[c] += freqs[li]*freqs[ri]*mod->io->mod->hotspotcmps[c][fi*61*61*61+ti*61*61+li*61+ri];
+    					}
+    				}
     			}
-	 	    }
-			omp_unset_lock(&writelock);
-    	    omp_destroy_lock(&writelock);
+    			omp_unset_lock(&writelock);
+    			omp_destroy_lock(&writelock);
+    			 double hot = 0;
+    			           	for(c=0;c<mod->nmotifs;c++)hot += htotal[c]*mod->hotness[mod->motif_hotness[c]];//additive interaction function
+    			            if(hot < -1)hot=-1; //constrain total modification to never go below -1
+    			    		mod->Bmat[fi*61+ti]=hot;
+    		}/*else{ //skip all that if B matrix isn't updated with eq freqs
+    			for(c=0;c<mod->nmotifs;c++)htotal[c]=mod->cBmat[fi*61+ti][c];
+    		}*/
 
-            //additive interaction function
-            double hot = 0;
-           		for(c=0;c<mod->nmotifs;c++){
-               		hot += htotal[c]*mod->hotness[mod->motif_hotness[c]];
-           		}
-            //constrain total modification to never go below -1
-            if(hot < -1){
-              	hot=-1;
-            }
-    		mod->Bmat[fi*61+ti]=hot;
     	}
-	//	 printf("%d\n",fi);
     }
-	// printf("updated1\n");
-
     int i, j, numSensecodons;
     phydbl value;
     numSensecodons = mod->ns;
     For(i, numSensecodons) {
         For(j, i) {
+        		if(mod->constB){
+        			mod->Bmat[i*numSensecodons+j]=0.0;
+        			mod->Bmat[j*numSensecodons+i]=0.0;
+        			for(c=0;c<mod->nmotifs;c++){
+        				mod->Bmat[i*numSensecodons+j] += mod->cBmat[i*61+j][c]*mod->hotness[mod->motif_hotness[c]];
+        				mod->Bmat[j*numSensecodons+i] += mod->cBmat[j*61+i][c]*mod->hotness[mod->motif_hotness[c]];
+        			}
+        			if(mod->Bmat[i*numSensecodons+j] < -1)mod->Bmat[i*numSensecodons+j]=-1;
+        			if(mod->Bmat[j*numSensecodons+i] < -1)mod->Bmat[j*numSensecodons+i]=-1;
+        		}
+
             	value = mat[i*numSensecodons+j] * Kappa_Omega_Factor(i, j, mod, cat,omega);
               qmat[ i*numSensecodons+j ] = value * freqs[j]*(1+mod->Bmat[ i*numSensecodons+j ]);
               qmat[ j*numSensecodons+i ] = value * freqs[i]*(1+mod->Bmat[ j*numSensecodons+i ]);

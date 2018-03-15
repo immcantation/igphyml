@@ -33,10 +33,11 @@ void findCIs(model* mod, option *io, FILE* CI){
 	int i;
 	phydbl ori_min = io->mod->s_opt->min_diff_lk_global;
 	io->mod->s_opt->min_diff_lk_global *= io->roughCI;
-	printf("\nMindiff needed: %lf",io->mod->s_opt->min_diff_lk_global);
+
 
 	For(i,mod->nomega_part){
 	  		  if(mod->omega_part_ci[i]==1){
+	  			printf("\nMindiff needed: %lf",io->mod->s_opt->min_diff_lk_global);
 	  			  printf("\nEstimating 95%% confidence intervals for omega %d model %d\n",i,mod->num);
 	  			  int opt=mod->omega_part_opt[i];
 	  	  	  	  if(mod->primary)mod->omega_part_opt[i]=0;
@@ -54,6 +55,7 @@ void findCIs(model* mod, option *io, FILE* CI){
 	  }
 	  For(i,mod->nhotness){
 	  	if(mod->hoptci[i]==1){
+	  		printf("\nMindiff needed: %lf",io->mod->s_opt->min_diff_lk_global);
 	  			printf("\nEstimating 95%% confidence intervals for h %d model %d\n",i,mod->num);
 	  			 int opt=mod->hoptindex[i];
 	  			 if(mod->primary)mod->hoptindex[i]=0;
@@ -70,6 +72,7 @@ void findCIs(model* mod, option *io, FILE* CI){
 	  		}
 	  	  }
 	  	  if(mod->kappaci==1){
+	  		printf("\nMindiff needed: %lf",io->mod->s_opt->min_diff_lk_global);
 	  		printf("\nEstimating 95%% confidence intervals for kappa model %d\n",mod->num);
 	  		  	int opt=mod->s_opt->opt_kappa;
 	  		  	if(mod->primary)mod->optKappa=0;

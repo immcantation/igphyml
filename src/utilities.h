@@ -858,6 +858,8 @@ typedef struct __Model {
  char*		germlineV;
  char*		germlineJ;
  int*		imgt;
+ phydbl** 	cBmat;
+ int		constB;
 }model;
 
 /*********************************************************/

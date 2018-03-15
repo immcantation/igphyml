@@ -127,6 +127,7 @@ struct option longopts[] =
 	{"rootpi",		  no_argument,NULL,165},  //!<Added by Ken
 	{"roughCI",		  required_argument,NULL,166},  //!<Added by Ken
 	{"outrep",		  required_argument,NULL,167},  //!<Added by Ken
+	{"cbmat",		  no_argument,NULL,168},  //!<Added by Ken
     {0,0,0,0}
 };
 
@@ -387,6 +388,30 @@ void setUpHLP17(option* io, model *mod){
    	    mod->hotspotcmps[mot] = hot;
    	}
    	}
+
+  	//set up constant Bmat if desired
+  	if(mod->constB){
+  		mod->cBmat=(phydbl **)mCalloc(3721,sizeof(phydbl*));
+  		 int fi,ti,li,ri,hot,c;
+  			 double htotal[mod->nmotifs];
+  			 for(fi=0;fi<61;fi++){ //Fill in B matrix
+  		    	for(ti=0;ti<61;ti++){
+  		    		mod->cBmat[fi*61+ti]=mCalloc(mod->nmotifs,sizeof(phydbl));
+  		    		for(c=0;c< mod->nmotifs;c++)htotal[c]=0; //set htotal array to zero
+  		    		for(li=0;li<61;li++){
+  		    			for(ri=0;ri<61;ri++){
+  		    				for(c=0;c< mod->nmotifs;c++){
+  		    						htotal[c] += (1.0/61)*(1.0/61)*mod->io->mod->hotspotcmps[c][fi*61*61*61+ti*61*61+li*61+ri];
+  			 	    		}
+  		    			}
+  			 	    }
+  		           	for(c=0;c<mod->nmotifs;c++)mod->cBmat[fi*61+ti][c]=htotal[c];
+  		    	}
+  		    }
+  	}
+
+
+
    	//partition model stuff
    	if(mod->partfilespec==1){
    		int imgt=0;
@@ -2591,6 +2616,11 @@ int mainOptionSwitch(int opt, char * optarg, option * io)
         	io->outrepspec=1;
         	break;
         }
+        case 168:{ //if rep
+        	printf("Using uniform frequencies in B matrix\n");
+             io->mod->constB=1;
+             break;
+         }
 
 
             //////////////////////////////////////////////////////////////////////////////////////

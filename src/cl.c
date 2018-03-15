@@ -65,6 +65,7 @@ void Read_Command_Line( option *io, int argc, char **argv )
 	io->mod->ASRcut=0;
 	io->threads=1;
 	io->mod->rootpi=0;
+	io->mod->constB=0;
 	io->roughCI=1.0;
 	io->outrepspec=0;
 

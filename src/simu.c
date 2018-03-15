@@ -95,7 +95,7 @@ void Simu_Loop(option* io){
 #endif
 		  {
     		  tree=io->tree_s[io->threads++];
-    		  printf("\nSimu Now on %d %d",io->threads,tree->mod->num);
+    		 // printf("\nSimu Now on %d %d",io->threads,tree->mod->num);
     	 }
 	     if(!Simu(tree,10)){
 	    	  Check_NNI_Five_Branches(tree);
@@ -123,7 +123,7 @@ void Simu_Loop(option* io){
 #endif
     	 {
     		  tree=io->tree_s[io->threads++];
-    		  printf("\nNNI Now on %d %d",io->threads,tree->mod->num);
+    		  //printf("\nNNI Now on %d %d",io->threads,tree->mod->num);
     	 }
     	 do{
     		 if(!Check_NNI_Five_Branches(tree)) break;

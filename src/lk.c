@@ -3226,7 +3226,7 @@ matrix *ML_CODONDist_Pairwise(calign *data, option *io, model *mod) //!<Added by
   phydbl lnL, *expt, *uexpt, brLen, mr;
   time_t tbegin, tend;
  
-  printf("\nml codon pairwise1\n");
+  //printf("\nml codon pairwise1\n");
   mod_tmp = Make_Model_Basic();
   s_opt = Make_Optimiz();
   Set_Defaults_Model(mod_tmp);
@@ -3244,6 +3244,7 @@ matrix *ML_CODONDist_Pairwise(calign *data, option *io, model *mod) //!<Added by
   tmpkappa = io->kappaECM;
   io->kappaECM = kap1;
 
+  mod_tmp->constB = mod->constB;
   mod_tmp->nparts=mod->nparts;
   mod_tmp->n_otu = mod->n_otu;
   mod_tmp->init_len = mod->init_len;
@@ -3281,11 +3282,11 @@ matrix *ML_CODONDist_Pairwise(calign *data, option *io, model *mod) //!<Added by
    mod_tmp->lkExpStepSize = mod->io->lkExpStepSize;*/
 
   //mod_tmp->initqrates = mod->initqrates;
-   printf("expm %d\n",mod_tmp->expm);
+   //printf("expm %d\n",mod_tmp->expm);
   Make_Model_Complete(mod_tmp);
-  printf("expm %d\n",mod_tmp->expm);
+  //printf("expm %d\n",mod_tmp->expm);
   mod_tmp->s_opt->opt_kappa = NO;
-  printf("\nml codon pairwise2\n");
+  //printf("\nml codon pairwise2\n");
   mod_tmp->structTs_and_Tv  = (ts_and_tv *)mCalloc(64*64,sizeof(ts_and_tv));//!< Added by Marcelo. 64 possible codons ... will be initialized together with the model parameters in set model default.
   if(mod_tmp->datatype==CODON) Make_Ts_and_Tv_Matrix(mod_tmp->io,mod_tmp);
 

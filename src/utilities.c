@@ -3005,6 +3005,8 @@ model *Copy_Partial_Model(model *ori, int num){
   cpy->ASRcut=ori->ASRcut;
   cpy->rootpi=ori->rootpi;
 
+  cpy->constB = ori->constB;
+
   cpy->omegaSiteVar = ori->omegaSiteVar;
       //cpy->omega        = ori->omega;
   cpy->nomega_part = ori->nomega_part;
