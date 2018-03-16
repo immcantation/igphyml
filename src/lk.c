@@ -1028,10 +1028,23 @@ void reconGermline(option *io, char* v, int site,FILE* f){
 				}
 			}
 		}
+		int G3=-1;
+		phydbl G3p=-DBL_MAX;
+		For(i,61){
+			for(j=i;j<61;j++){
+				if(recons[i*61+j]>G3p && (i*61+j) != G1&& (i*61+j) != G2){
+					G3p=recons[i*61+j];
+					G3=i*61+j;
+				}
+			}
+		}
+
 	int mi=(int)G1/61;
 	int mj=G1%61;
 	int m2i=(int)G2/61;
 	int m2j=G2%61;
+	int m3i=(int)G3/61;
+	int m3j=G3%61;
 	//Find number of genotypes with LRs close enough to the MLE
 	int ci_size=0;
 	For(i,61){
@@ -1088,11 +1101,15 @@ void reconGermline(option *io, char* v, int site,FILE* f){
 	char s2[4];
 	char s2_1[4];
 	char s2_2[4];
+	char s3_1[4];
+	char s3_2[4];
 	Sprint_codon(s1,io->senseCodons[mi]);
 	Sprint_codon(s2,io->senseCodons[mj]);
 	Sprint_codon(s2_1,io->senseCodons[m2i]);
 	Sprint_codon(s2_2,io->senseCodons[m2j]);
-	fprintf(f,"%s\t%d\t%d\t%s\t%s:%s\t%s:%s\t%.2lf\n",v,site,nmatch,cigen,s1,s2,s2_1,s2_2,G1p-G2p);
+	Sprint_codon(s3_1,io->senseCodons[m3i]);
+	Sprint_codon(s3_2,io->senseCodons[m3j]);
+	fprintf(f,"%s\t%d\t%d\t%s\t%s:%s\t%s:%s:%.2lf\t%s:%s:%.2lf\n",v,site,nmatch,cigen,s1,s2,s2_1,s2_2,G1p-G2p,s3_1,s3_2,G1p-G3p);
 	//printf("Genotype: %s\n",cigen);
 }
 

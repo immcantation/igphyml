@@ -1728,7 +1728,7 @@ void Print_IgPhyML_Out(option* io){
 	 fprintf(f,"oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo\n");
 	 fprintf(f,"                     Germline Genotype Reconstruction\n");
 	 fprintf(f,"oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo\n");
-	 fprintf(f,"V_Gene\tSite\tMatches\tGenotype_CI\tGenotype_MLE\tGenotype_2nd\tlog(LR)\n");
+	 fprintf(f,"V_Gene\tSite\tMatches\tGenotype_CI\tGenotype_MLE\tGenotype_2nd:log(LR)\tGenotype_3rd:log(LR)\n");
 	  For(i,io->ntrees){
 		  t_tree* tree=io->tree_s[i];
 		  Get_UPP(tree->noeud[tree->mod->startnode],tree->noeud[tree->mod->startnode]->v[0],tree);
