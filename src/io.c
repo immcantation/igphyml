@@ -1728,14 +1728,14 @@ void Print_IgPhyML_Out(option* io){
 	 fprintf(f,"oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo\n");
 	 fprintf(f,"                     Germline Genotype Reconstruction\n");
 	 fprintf(f,"oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo\n");
-	 fprintf(f,"V_Gene\tSite\tMatches\tGenotype_CI\tGenotype_MLE\n");
+	 fprintf(f,"V_Gene\tSite\tMatches\tGenotype_CI\tGenotype_MLE\tGenotype_2nd\tlog(LR)\n");
 	  For(i,io->ntrees){
 		  t_tree* tree=io->tree_s[i];
 		  Get_UPP(tree->noeud[tree->mod->startnode],tree->noeud[tree->mod->startnode]->v[0],tree);
 	  }
 
 	 	 For(i,io->GRv){
-	 		 for(j=0;j<130;j++){
+	 		 for(j=0;j<105;j++){
 	 			 printf("%s\t%d\n",io->GRgenes[i],j);
 	 			reconGermline(io,io->GRgenes[i],j,f);
 	 		 }

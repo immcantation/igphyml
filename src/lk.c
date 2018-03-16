@@ -928,7 +928,7 @@ void reconGermline(option *io, char* v, int site,FILE* f){
 	int	imgt[io->ntrees];
 	int nmatch=0;
 	For(i,io->ntrees){//make a list of trees/models with specified V and IMGT site
-		if(io->mod->optDebug)printf("\n%d\t%s\t%s\n",i,io->mod_s[i]->germlineV,v);
+		if(io->mod->optDebug)printf("\n%d\t%s\t%s\t%d\n",i,io->mod_s[i]->germlineV,v,site);
 		if(strcmp(io->mod_s[i]->germlineV,v)==0){
 			int found=0;
 			For(j,io->mod_s[i]->init_len/3){
@@ -937,7 +937,7 @@ void reconGermline(option *io, char* v, int site,FILE* f){
 					found++;
 				}
 			}
-			if(found)matches[nmatch++]=i;
+			if(found>0)matches[nmatch++]=i;
 			//else printf("IMGT site %d not found in %d!\n",site,i);
 		}
 	}
@@ -952,7 +952,7 @@ void reconGermline(option *io, char* v, int site,FILE* f){
 			t_tree* tree = io->tree_s[matches[i]];
 			model* mod = io->mod_s[matches[i]];
 			t_node* root = tree->noeud[mod->startnode];
-			int isite = imgt[i];
+			int isite = imgt[matches[i]];
 			int ori[61];
 			For(j,61)ori[j]=root->b[0]->p_lk_tip_r[isite*tree->mod->ns+j];
 			phydbl flk=Lk(tree); //full ML using starting sequence
@@ -1018,8 +1018,20 @@ void reconGermline(option *io, char* v, int site,FILE* f){
 			}
 		}
 	}
+	int G2=-1;
+		phydbl G2p=-DBL_MAX;
+		For(i,61){
+			for(j=i;j<61;j++){
+				if(recons[i*61+j]>G2p && (i*61+j) != G1){
+					G2p=recons[i*61+j];
+					G2=i*61+j;
+				}
+			}
+		}
 	int mi=(int)G1/61;
 	int mj=G1%61;
+	int m2i=(int)G2/61;
+	int m2j=G2%61;
 	//Find number of genotypes with LRs close enough to the MLE
 	int ci_size=0;
 	For(i,61){
@@ -1034,26 +1046,6 @@ void reconGermline(option *io, char* v, int site,FILE* f){
 	For(i,61){
 		for(j=i;j<61;j++){
 			if(recons[i*61+j]>=(G1p-1.96)){
-				/*if(mi==mj){
-					if(i==mi){
-						ci1[c]=i;
-						ci2[c]=j;
-					}else if(j==mi){
-						ci1[c]=j;
-						ci2[c]=i;
-					}else{
-						ci1[c]=i;
-						ci2[c]=j;
-					}
-				}else{
-					if(i==mj || j==mi){//if genotype in order with at least one of the ML types, keep it
-						ci1[c]=j;
-						ci2[c]=i;
-					}else{
-						ci1[c]=i;
-						ci2[c]=j;
-					}
-				}*/
 				if(mprobs[i] > mprobs[j]){
 					ci1[c]=i;
 					ci2[c]=j;
@@ -1061,7 +1053,7 @@ void reconGermline(option *io, char* v, int site,FILE* f){
 					ci1[c]=j;
 					ci2[c]=i;
 				}else{
-					if(i!=j)printf("Exactly equal marginals for a plausible genotype. Might mess up CI: %d\t%d",i,j);
+					if(i!=j && (i*61+j) != G1)printf("Exactly equal marginals for a plausible genotype. Might mess up CI: %d\t%d",i,j);
 					ci1[c]=i;
 					ci2[c]=j;
 				}
@@ -1094,9 +1086,13 @@ void reconGermline(option *io, char* v, int site,FILE* f){
 
 	char s1[4];
 	char s2[4];
+	char s2_1[4];
+	char s2_2[4];
 	Sprint_codon(s1,io->senseCodons[mi]);
 	Sprint_codon(s2,io->senseCodons[mj]);
-	fprintf(f,"%s\t%d\t%d\t%s\t%s:%s\n",v,site,nmatch,cigen,s1,s2);
+	Sprint_codon(s2_1,io->senseCodons[m2i]);
+	Sprint_codon(s2_2,io->senseCodons[m2j]);
+	fprintf(f,"%s\t%d\t%d\t%s\t%s:%s\t%s:%s\t%.2lf\n",v,site,nmatch,cigen,s1,s2,s2_1,s2_2,G1p-G2p);
 	//printf("Genotype: %s\n",cigen);
 }
 
@@ -1225,9 +1221,9 @@ phydbl ASR_Core(t_edge *b, t_tree *tree, t_node *anc, t_node *d)
 	  For(i,ns){
 		  char s1[4];
 		  Sprint_codon(s1,tree->io->senseCodons[i]);
-		  if(site==0 && (i==0 || i==8)){
+		  /*if(site==0 && (i==0 || i==8)){
 			  printf("\n%d\t%lf\t%s\t%lf\t%lf\t%lf\t%lf\t%lf",b->num,b->l,s1,probc[i]/tree->site_lk_cat[0],b->bPmat_part[0][0],b->bPmat_part[0][8],b->bPmat_part[0][8*61],b->bPmat_part[0][8*61+8]);
-		  }
+		  }*/
 		  if(probc[i]>max){
 			  max=probc[i];
 			  maxc=i;
@@ -1256,7 +1252,7 @@ phydbl ASR_Core(t_edge *b, t_tree *tree, t_node *anc, t_node *d)
 		  if(probc[i]==0)probc[i]=-DBL_MAX;
 		  else{
 			  probc[i]=log(probc[i]);
-			  printf("\n%d\t%d\t%lf\t%lf",site,i,probc[i],log(max)-1.96);
+			  //printf("\n%d\t%d\t%lf\t%lf",site,i,probc[i],log(max)-1.96);
 		  }
 		  if(probc[i]>=(log(max)-1.96))ncodons++;
 	  }
@@ -1270,12 +1266,12 @@ phydbl ASR_Core(t_edge *b, t_tree *tree, t_node *anc, t_node *d)
 		  	  char* s1=mCalloc(4,sizeof(char));
 		  	  Sprint_codon(s1,tree->io->senseCodons[i]);
 		  	  strcpy(codonset[c],s1);
-		  	printf("\n%c\t%c\t%c\t%s",codonset[c][0],codonset[c][1],codonset[c][2],codonset[c]);
+		  	//printf("\n%c\t%c\t%c\t%s",codonset[c][0],codonset[c][1],codonset[c][2],codonset[c]);
 		  	c++;
 		  }
 	  }
 	  For(i,3){
-		  printf("\n%s\t%d\n",codonset[0],ncodons);
+		  //printf("\n%s\t%d\n",codonset[0],ncodons);
 		  tree->mod->mlCodon[b->num][site*3+i]=ambigAssign(codonset,ncodons,i);
 	  }
 
@@ -1590,7 +1586,7 @@ phydbl ASR_Core_root(t_edge *b, t_tree *tree, t_node *anc, t_node *d)
 			  if(probc[i]==0)probc[i]=-DBL_MAX;
 			  else{
 				  probc[i]=log(probc[i]);
-				  printf("\n%d\t%d\t%lf\t%lf",site,i,probc[i],log(max)-1.96);
+				  //printf("\n%d\t%d\t%lf\t%lf",site,i,probc[i],log(max)-1.96);
 			  }
 			  if(probc[i]>=(log(max)-1.96))ncodons++;
 		  }
@@ -1604,12 +1600,12 @@ phydbl ASR_Core_root(t_edge *b, t_tree *tree, t_node *anc, t_node *d)
 			  	  char* s1=mCalloc(4,sizeof(char));
 			  	  Sprint_codon(s1,tree->io->senseCodons[i]);
 			  	  strcpy(codonset[c],s1);
-			  	printf("\n%c\t%c\t%c\t%s",codonset[c][0],codonset[c][1],codonset[c][2],codonset[c]);
+			  	//printf("\n%c\t%c\t%c\t%s",codonset[c][0],codonset[c][1],codonset[c][2],codonset[c]);
 			  	c++;
 			  }
 		  }
 		  For(i,3){
-			  printf("\n%s\t%d\n",codonset[0],ncodons);
+			 // printf("\n%s\t%d\n",codonset[0],ncodons);
 			  For(i,3)tree->mod->mlCodon[tree->mod->nedges][site*3+i]=ambigAssign(codonset,ncodons,i);
 		  }
 	  free(probc);

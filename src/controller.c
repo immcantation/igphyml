@@ -255,7 +255,6 @@ void setUpGR(option* io){
 			strcpy(genes[gcounter++],io->mod_s[i]->germlineV);
 		}
 	}
-
 }
 
 /**************************************************************/
