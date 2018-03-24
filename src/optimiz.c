@@ -99,6 +99,7 @@ phydbl binarySearchCI(phydbl* param,option* io,phydbl tol,phydbl delta,phydbl lo
 	Lk_rep(io);
 	phydbl mle=*param;
 	phydbl target=io->replnL-1.96;//95% CI value
+	phydbl ol = io->replnL;
 	phydbl nl=0;
 	fprintf(CI,"%s %lf %lf %lf %lf %lf %lf\n",ID,target,io->replnL,*param,0.0,0.0,0.0);
 
@@ -125,6 +126,10 @@ phydbl binarySearchCI(phydbl* param,option* io,phydbl tol,phydbl delta,phydbl lo
 		//printf("round_max: %d\n",ROUND_MAX*2);
 		Round_Optimize(io,ROUND_MAX*2);
 		nl=Lk_rep(io);
+		if(nl > ol){
+			printf("Optimization failed! Interval is higher lhood than MLE!\n");
+			exit(EXIT_FAILURE);
+		}
 		//if(io->mod->optDebug)
 		printf("\nLooking for boundary %lf %lf %lf %lf %lf",target,nl,mle,d1,*param);
 		restoreParams(io);
