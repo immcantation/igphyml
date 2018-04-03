@@ -913,7 +913,7 @@ void Set_Model_Parameters(model *mod) {
         }
          if((mod->s_opt->opt_state_freq) &&
            (mod->s_opt->opt_omega == NO)) {
-        	printf("here\n");
+        	if(mod->optDebug)printf("here\n");
             switch(mod->freq_model) {
                 case F1XSENSECODONS: {
                     Freq_to_UnsFreq(mod->pi, mod->pi_unscaled, mod->ns, 0);
@@ -926,7 +926,7 @@ void Set_Model_Parameters(model *mod) {
                 }
                 case F3X4:
                 case CF3X4: {
-                	printf("here\n");
+                	if(mod->optDebug)printf("here\n");
                     Freq_to_UnsFreq(mod->base_freq,   mod->uns_base_freq,   4, 0);
                     Freq_to_UnsFreq(mod->base_freq+4, mod->uns_base_freq+4, 4, 0);
                     Freq_to_UnsFreq(mod->base_freq+8, mod->uns_base_freq+8, 4, 0);
@@ -1440,13 +1440,13 @@ phydbl Update_Qmat_Codons(model *mod, int cat, int modeli) {
         switch(mod->initqrates) {
             case KOSI07:
                 mat = (phydbl *) ecmK07;
-                printf("USING KOSI07\n");
+                if(mod->optDebug)printf("USING KOSI07\n");
                 freqs = ecmK07freq;
                 break;
                 
             case SCHN05:
                 mat = (phydbl *) mCalloc(numSensecodons * numSensecodons, sizeof(phydbl));
-                printf("USING SHN05n");
+                if(mod->optDebug)printf("USING SHN05n");
                 For(i, numSensecodons) {
                     For(j, numSensecodons) {
                         mat[ i*numSensecodons + j ] = ecmS05[senseCodons[i]][senseCodons[j]];
@@ -1614,6 +1614,7 @@ void Update_Qmat_HLP17(phydbl *mat, phydbl *qmat, phydbl * freqs, int cat, model
 
     	}
     }
+	 //printf("%lf\t%lf\n",freqs[0],freqs[1]);
     int i, j, numSensecodons;
     phydbl value;
     numSensecodons = mod->ns;

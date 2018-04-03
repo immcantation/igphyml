@@ -3281,7 +3281,6 @@ matrix *ML_CODONDist_Pairwise(calign *data, option *io, model *mod) //!<Added by
    mod_tmp->optParam=mod->optParam;
 	  mod_tmp->nomega_part=mod_tmp->nparts;
 
-
    /*mod_tmp->opt_heuristic_manuel=mod->io->opt_heuristic_manuel;
    mod_tmp->opt_heuristic_manuel=mod->io->opt_heuristic_manuel;
    mod_tmp->roundMax_start=mod->io->roundMax_start;
@@ -3325,7 +3324,7 @@ matrix *ML_CODONDist_Pairwise(calign *data, option *io, model *mod) //!<Added by
 
   mat = Make_Mat(data->n_otu);
   Init_Mat(mat,data);
-  printf("inited mat\n");
+  if(mod->optDebug)printf("inited mat\n");
   //Added by Ken
   //Make Bmat array equivalent to GY94
   if(mod->whichrealmodel == HLP17){ //was io-> mod
@@ -3362,9 +3361,9 @@ matrix *ML_CODONDist_Pairwise(calign *data, option *io, model *mod) //!<Added by
 	  mod_tmp->omega_part[0]=0.4;
   }
   //printf("first pi %lf %lf\n",mod_tmp->pi[0],mod->pi[0]);
-  printf("initqs %d %d %d\n",mod_tmp->initqrates,mod->initqrates,io->mod->initqrates);
+  if(io->mod->optDebug)printf("initqs %d %d %d\n",mod_tmp->initqrates,mod->initqrates,io->mod->initqrates);
   mr = Update_Qmat_Codons(mod_tmp, 0,0);
-  printf("first pi %lf %lf\n",mod_tmp->pi[0],mod->pi[0]);
+  if(io->mod->optDebug)printf("first pi %lf %lf\n",mod_tmp->pi[0],mod->pi[0]);
 
   //printf("\n. FYI: Using single partitioned GY94 for initial tree.\n\n");
   EigenQREV(mod_tmp->qmat_part[0], mod_tmp->pi, mod->ns, mod_tmp->eigen->e_val, mod_tmp->eigen->r_e_vect, mod_tmp->eigen->l_e_vect, mod_tmp->eigen->space);
@@ -3385,7 +3384,7 @@ matrix *ML_CODONDist_Pairwise(calign *data, option *io, model *mod) //!<Added by
   #endif
   int progress = 0; //!Added by Marcelo.
   double loops = ((data->n_otu)*(data->n_otu)-(data->n_otu))/2.00;//!Added by Marcelo.
-  PhyML_Printf("\n. Computing pairwise distances...");
+  if(io->mod->optDebug)PhyML_Printf("\n. Computing pairwise distances...");
   For( j, data->n_otu-1 ) {
     tmpdata->c_seq[0]       = data->c_seq[j];
     tmpdata->wght           = data->wght;
@@ -3416,10 +3415,12 @@ matrix *ML_CODONDist_Pairwise(calign *data, option *io, model *mod) //!<Added by
  
   #endif
   
-  if((tend-tbegin)>=1) {
-    PhyML_Printf("\n. Calculation of pairwise distances completed in %ld sec.\n",(long int)(tend-tbegin));
-  } else {
-    PhyML_Printf("\n. Calculation of pairwise distances completed in less than 1 sec.\n");
+  if(io->ntrees == 1 || io->mod->optDebug){
+	  if((tend-tbegin)>=1) {
+	  	  PhyML_Printf("\n. Calculation of pairwise distances completed in %ld sec.\n",(long int)(tend-tbegin));
+  	  } else {
+  		  PhyML_Printf("\n. Calculation of pairwise distances completed in less than 1 sec.\n");
+  	  }
   }
   
   tmpdata->c_seq[0] = NULL;

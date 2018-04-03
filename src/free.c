@@ -339,7 +339,7 @@ void Free_Edge_Lk(t_tree *tree, t_edge *b)
 
 void Free_Model_Complete(model *mod)
 {
-	printf("freeing model\n");
+  if(mod->optDebug)printf("freeing model\n");
   Free_Eigen(mod->eigen); 
   free(mod->gamma_r_proba);
   free(mod->gamma_rr);
@@ -360,15 +360,15 @@ void Free_Model_Complete(model *mod)
     
     if(mod->io->heuristicExpm)
     {
-    	printf("freeing during heuristic expm?");
+      if(mod->optDebug)printf("freeing during heuristic expm?");
       free(mod->A2_part[0]);
     }
     
     if(mod->io->expm==SSPADE){
     int modeli; //Added by Ken 22/8
     for(modeli=0;modeli<mod->nparts;modeli++){
-      printf("about to do this %d %d %d %d %d\n",modeli,mod->n_w_catg,mod->ns,mod->nomega_part,mod->nparts);
-      printf("%lf\t%lf\t%lf\n",mod->U_part[modeli][0],mod->V_part[modeli][0],mod->A4_part[modeli][0]);
+      if(mod->optDebug)printf("about to do this %d %d %d %d %d\n",modeli,mod->n_w_catg,mod->ns,mod->nomega_part,mod->nparts);
+      if(mod->optDebug)printf("%lf\t%lf\t%lf\n",mod->U_part[modeli][0],mod->V_part[modeli][0],mod->A4_part[modeli][0]);
       free(mod->U_part[modeli]);
       free(mod->V_part[modeli]);
       free(mod->ipiv_part[modeli]);
@@ -380,7 +380,7 @@ void Free_Model_Complete(model *mod)
       free(mod->Apowers_part[modeli]);
       free(mod->A0_part[modeli]);
       free(mod->qmat_buff_part[modeli]);
-      printf("about to do this\n");
+      if(mod->optDebug)printf("about to do this\n");
      }
     }
     

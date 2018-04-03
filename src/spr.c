@@ -666,7 +666,7 @@ int Try_One_Spr_Move_Triple(spr *move, t_tree *tree)
       if((tree->mod->s_opt->print) && (!tree->mod->quiet)){
     	  Print_Lk(tree,"[Topology           ]");
 	  	  PhyML_Printf("[depth=%5d]",move->depth_path); fflush(NULL);
-	  	  Print_Trace(tree);
+	  	  //Print_Trace(tree);
       }
 
       upAllPmats(tree);
@@ -724,6 +724,7 @@ void Speed_Spr_Loop(option *io){
 
   io->mod->update_eigen=YES;
   Lk_rep(io);//!< Added by Marcelo.
+
   Print_Lk_rep(io,"[Initial Tree       ]");//!< Added by Marcelo.
   /*if(tree->mod->print_trace){
 	  Print_Trace(tree);
@@ -764,9 +765,9 @@ void Speed_Spr_Loop(option *io){
 	  if(tree->mod->whichrealmodel==HLP17){
 		  Get_UPP(tree->noeud[startnode], tree->noeud[startnode]->v[0], tree);
 	  }
-	  if(tree->mod->print_trace){
+	  /*if(tree->mod->print_trace){
 		  Print_Trace(tree);
-	  }
+	  }*/
 	  Print_Lk(tree,"[Branch lengths     ]");
 	  //moved up into this loop because these variables are tree-specific (Ken 1/19/2018)
 	  tree->mod->s_opt->max_depth_path = 2*tree->n_otu-3;
@@ -791,7 +792,7 @@ void Speed_Spr_Loop(option *io){
 #endif
     	 {
     		  tree=io->tree_s[io->threads++]; //ensures that subtrees are analyzed in order
-    		  printf("\nNow on %d %d",io->threads,tree->mod->num);
+    		  if(tree->mod->optDebug)printf("\nNow on %d %d",io->threads,tree->mod->num);
     	 }
     	 Speed_Spr(tree,1);
       }
@@ -833,7 +834,7 @@ void Speed_Spr_Loop(option *io){
 #endif
     	  {
     		  tree=io->tree_s[io->threads++];
-    		  printf("\nSimu now on %d %d",io->threads,tree->mod->num);
+    		  if(tree->mod->optDebug)printf("\nSimu now on %d %d",io->threads,tree->mod->num);
     	  }
   	      Simu(tree,10);
   	   }
@@ -862,7 +863,7 @@ void Speed_Spr_Loop(option *io){
 #endif
      	  {
      		  tree=io->tree_s[io->threads++];
-     		  printf("\nNNI now on %d %d",io->threads,tree->mod->num);
+     		 if(tree->mod->optDebug)printf("\nNNI now on %d %d",io->threads,tree->mod->num);
      	  }
            do{
         	   if(!Check_NNI_Five_Branches(tree)) break;
@@ -949,7 +950,7 @@ void Speed_Spr(t_tree *tree, int max_cycles)
       }
 
       Pars(tree);
-      if(tree->mod->print_trace){Print_Trace(tree);}
+      //if(tree->mod->print_trace){Print_Trace(tree);}
 
       /* Record the current best log-likelihood and parsimony */
       tree->best_lnL  = tree->c_lnL;

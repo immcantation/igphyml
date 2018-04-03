@@ -2375,7 +2375,7 @@ void Clean_Tree_Connections(t_tree *tree)
 
 void Bootstrap(t_tree *tree)
 {
-  int *site_num, n_site;
+/*  int *site_num, n_site;
   int replicate,j,k;
   int position,init_len;
   calign *boot_data;
@@ -2383,7 +2383,6 @@ void Bootstrap(t_tree *tree)
   model *boot_mod;
   matrix *boot_mat;
   char *s;
-  /*   phydbl rf; */
   
   tree->print_boot_val = 1;
   tree->print_alrt_val = 0;
@@ -2430,10 +2429,10 @@ void Bootstrap(t_tree *tree)
     if(tree->mod->random_boot_seq_order) Randomize_Sequence_Order(boot_data);
     
     boot_mod        = Copy_Model(tree->mod);
-    boot_mod->s_opt = tree->mod->s_opt; /* WARNING: re-using the same address here instead of creating a copying
-                                         requires to leave the value of s_opt unchanged during the boostrap. */
-    boot_mod->io    = tree->io; /* WARNING: re-using the same address here instead of creating a copying
-                                 requires to leave the value of io unchanged during the boostrap. */
+    boot_mod->s_opt = tree->mod->s_opt; // WARNING: re-using the same address here instead of creating a copying
+                                        // requires to leave the value of s_opt unchanged during the boostrap.
+    boot_mod->io    = tree->io; //WARNING: re-using the same address here instead of creating a copying
+                                 //requires to leave the value of io unchanged during the boostrap.
     Init_Model(boot_data,boot_mod,tree->io);
     
     if(tree->io->in_tree == 2)
@@ -2521,10 +2520,7 @@ void Bootstrap(t_tree *tree)
       free(s);
       Print_Fp_Out_Lines(tree->io->fp_out_boot_stats,0,0,boot_tree,tree->io,replicate+1,tree->mod);//added tree->mod instead of mod Ken 9/1/2018
     }
-    
-    /*       rf = .0; */
-    /*       For(j,2*tree->n_otu-3)  */
-    /* 	rf += tree->t_edges[j]->bip_score; */
+
     
     
     PhyML_Printf("."); 
@@ -2544,7 +2540,7 @@ void Bootstrap(t_tree *tree)
   
   if(((replicate)%20)) PhyML_Printf("] %4d/%4d\n ",replicate,tree->mod->bootstrap);
   
-  tree->lock_topo = 1; /* Topology should not be modified afterwards */
+  tree->lock_topo = 1; // Topology should not be modified afterwards
   
   if(tree->io->print_boot_trees)
   {
@@ -2554,6 +2550,7 @@ void Bootstrap(t_tree *tree)
   
   Free_Cseq(boot_data);
   free(site_num);
+  */
 }
 
 /*********************************************************/
@@ -5873,7 +5870,7 @@ void Print_Ambig_States(t_node *d, t_tree *tree, FILE *ambigfile)
 
 void Best_Of_NNI_And_SPR(t_tree *tree)
 {
-  if(tree->mod->s_opt->random_input_tree) Speed_Spr_Loop(tree); /* Don't do simultaneous NNIs if starting tree is random */
+ /* if(tree->mod->s_opt->random_input_tree) Speed_Spr_Loop(tree); // Don't do simultaneous NNIs if starting tree is random
   else
   {
     t_tree *ori_tree,*best_tree;
@@ -5900,21 +5897,21 @@ void Best_Of_NNI_And_SPR(t_tree *tree)
     Lk(tree);
     Copy_Tree(tree,ori_tree);
     Record_Br_Len(ori_bl,tree);
-    ori_lnL = tree->c_lnL; /* Record likelihood of the starting tree */
+    ori_lnL = tree->c_lnL; // Record likelihood of the starting tree
     
-    Simu_Loop(tree); /* Perform simultaneous NNIs */
-    best_lnL = tree->c_lnL; /* Record the likelihood */
+    Simu_Loop(tree); // Perform simultaneous NNIs
+    best_lnL = tree->c_lnL; // Record the likelihood
     nni_lnL = tree->c_lnL;
-    Copy_Tree(tree,best_tree); /* Record the tree topology and branch lengths */
+    Copy_Tree(tree,best_tree); // Record the tree topology and branch lengths
     Record_Br_Len(best_bl,tree);
     Restore_Br_Len(best_bl,best_tree);
     Record_Model(tree->mod,best_mod);
     
-    Copy_Tree(ori_tree,tree); /* Back to the original tree topology */
-    Restore_Br_Len(ori_bl,tree); /* Back to the original branch lengths */
-    Record_Model(ori_mod,tree->mod); /* Back to the original model */
+    Copy_Tree(ori_tree,tree); // Back to the original tree topology
+    Restore_Br_Len(ori_bl,tree); // Back to the original branch lengths
+    Record_Model(ori_mod,tree->mod); // Back to the original model
     
-    /* Make sure the tree is in its original form */
+    // Make sure the tree is in its original form
     Lk(tree);
 //     if(FABS(tree->c_lnL - ori_lnL) > tree->mod->s_opt->min_diff_lk_global)
 //     {
@@ -5928,7 +5925,7 @@ void Best_Of_NNI_And_SPR(t_tree *tree)
     if(tree->c_lnL > best_lnL)
     {
       best_lnL = tree->c_lnL;
-      Copy_Tree(tree,best_tree); /* Record tree topology, branch lengths and model parameters */
+      Copy_Tree(tree,best_tree); // Record tree topology, branch lengths and model parameters
       Record_Br_Len(best_bl,tree);
       Restore_Br_Len(best_bl,best_tree);
       Record_Model(tree->mod,best_mod);
@@ -5938,7 +5935,7 @@ void Best_Of_NNI_And_SPR(t_tree *tree)
     Restore_Br_Len(best_bl,tree);
     Record_Model(best_mod,tree->mod);
     
-    /* Make sure the current tree has the best topology, branch lengths and model parameters */
+    // Make sure the current tree has the best topology, branch lengths and model parameters
     Lk(tree);
 //     if(FABS(tree->c_lnL - best_lnL) > tree->mod->s_opt->min_diff_lk_global)
 //     {
@@ -5961,7 +5958,7 @@ void Best_Of_NNI_And_SPR(t_tree *tree)
     
     Free_Tree(ori_tree);
     Free_Tree(best_tree);
-  }
+  }*/
 }
 
 /*********************************************************/

@@ -390,17 +390,13 @@ void Round_Optimize(option *io, int n_round_max){
   each = 0;
   tol = 1.e-2;
   int i,j;
-  /*root = tree->noeud[tree->mod->startnode];
-  if(tree->mod->whichrealmodel == HLP17){
-	  root = tree->noeud[tree->mod->startnode];
-  }*/
+
   while(n_round < n_round_max){
 	  //if(io->mod->whichrealmodel != HLP17) (!((n_round+2)%2))?(root=tree->noeud[0]):(root=tree->noeud[tree->n_otu-1]);
       if(io->tree_s[0]->has_branch_lengths){//!< Added by Marcelo ... in this case opt parameters first
       	if(!each){
 	  		each = 1;
 	  		if(io->mod->optDebug)printf("optimizing all free params\n");
-	  		//printf("here1\n");
 	  		Optimiz_All_Free_Param(io,(io->mod->quiet)?(0):(io->mod->s_opt->print));
 		}
 		if(io->mod->s_opt->opt_bl){ //do branch length optimization on all subtrees - should do in parallel!
@@ -414,7 +410,6 @@ void Round_Optimize(option *io, int n_round_max){
 				if(tree->mod->whichrealmodel != HLP17)(!((n_roundt+2)%2))?(root=tree->noeud[0]):(root=tree->noeud[tree->n_otu-1]);
 				Lk(tree);
 				if(tree->mod->whichrealmodel == HLP17){Get_UPP(root, root->v[0], tree);}
-				//printf("here2\n");
 				Optimize_Br_Len_Serie(root,root->v[0],root->b[0],tree,tree->data);
 				//Lk(tree);
 				//printf("%d mod quiet\n",tree->mod->quiet);
@@ -438,7 +433,6 @@ void Round_Optimize(option *io, int n_round_max){
 				tree->both_sides = 1;
 				Lk(tree);
 				if(tree->mod->whichrealmodel == HLP17){Get_UPP(root, root->v[0], tree);}
-				//printf("here3\n");
 				Optimize_Br_Len_Serie(root,root->v[0],root->b[0],tree,tree->data);
 				//Lk(tree);
 				if((tree->mod->s_opt->print) && (!tree->mod->quiet)) Print_Lk(tree,"[Branch lengths     ]");
@@ -448,7 +442,6 @@ void Round_Optimize(option *io, int n_round_max){
 		}
 		if(!each){
 	  		each = 1;
-	  		//printf("here4\n");
 	  		Optimiz_All_Free_Param(io,(io->mod->quiet)?(0):(io->mod->s_opt->print));
 		}
       }
@@ -469,7 +462,6 @@ void Round_Optimize(option *io, int n_round_max){
       n_round++;
       each--;
    }
-  //printf("here5\n");
   Optimiz_All_Free_Param(io,(io->mod->quiet)?(0):(io->mod->s_opt->print));
 }
 
@@ -833,6 +825,7 @@ void Optimiz_All_Free_Param(option* io, int verbose){
      }
       
     if(io->mod->s_opt->opt_state_freq){
+    	//printf("optimizing state freq\n");
 		switch(io->mod->freq_model){
 		  case F1XSENSECODONS:{
 		    For(i,io->mod->num_base_freq-1){

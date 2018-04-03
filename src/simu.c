@@ -35,9 +35,9 @@ void Simu_Loop(option* io){
 
   io->mod->update_eigen=YES;
   io->both_sides = 0;
-  printf("here1\n");
+  if(io->mod->optDebug)printf("here1\n");
   Lk_rep(io);
-  printf("here\n");
+  if(io->mod->optDebug)printf("here\n");
 
   if((io->mod->s_opt->print) && (!io->mod->quiet)) PhyML_Printf("\n. Maximizing likelihood (using NNI moves)...\n");
   
@@ -72,7 +72,7 @@ void Simu_Loop(option* io){
 		  Get_UPP(tree->noeud[startnode], tree->noeud[startnode]->v[0], tree);
 	  }
 	  if(tree->mod->print_trace){
-		  Print_Trace(tree);
+		 // Print_Trace(tree);
 	  }
 	  Print_Lk(tree,"[Branch lengths     ]");
   }
@@ -135,7 +135,7 @@ void Simu_Loop(option* io){
         if(!Check_NNI_Five_Branches(tree)) break;
   	  }while(1);
   }*/
-  if((io->mod->s_opt->print) && (!io->mod->quiet)) PhyML_Printf("\n");
+  //if((io->mod->s_opt->print) && (!io->mod->quiet)) PhyML_Printf("\n");
 }
 
 /*********************************************************/
@@ -197,7 +197,7 @@ int Simu(t_tree *tree, int n_step_max)
       if(tree->mod->print_trace){
     	  //PhyML_Fprintf(tree->mod->fp_out_trace,"[%f]%s\n",tree->c_lnL,Write_Tree(tree)); fflush(tree->mod->fp_out_trace);
     	  //if(tree->mod->print_site_lnl) Print_Site_Lk(tree,tree->mod->fp_out_lk); fflush(tree->mod->fp_out_lk);
-    	  Print_Trace(tree);
+    	  //Print_Trace(tree);
       }
 
       if((tree->mod->s_opt->print) && (!tree->mod->quiet)) Print_Lk(tree,"[Topology           ]");

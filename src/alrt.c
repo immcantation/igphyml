@@ -61,7 +61,6 @@ int Check_NNI_Five_Branches(t_tree *tree)
     {
       Update_Dirs(tree);
       Update_Ancestors_Edge(tree->noeud[tree->mod->startnode],tree->noeud[tree->mod->startnode]->v[0],tree->noeud[tree->mod->startnode]->b[0],tree); //added by Ken 7/11
-	  printf("\n\n");
 
       //Interface output
       if((tree->mod->s_opt->print) && (!tree->mod->quiet)) PhyML_Printf("\n\n. Checking for NNIs, optimizing five branches...\n");

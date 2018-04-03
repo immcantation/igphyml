@@ -355,6 +355,7 @@ int main(int argc, char **argv){
 
 
   //Set up equilibrium base freqs for the repertoire
+  if(io->eq_freq_handling != USER){
   For(i,io->ntrees){
 	  For(j,12){
 		  io->mod->baseCounts[j]+=io->mod_s[i]->baseCounts[j];
@@ -376,6 +377,10 @@ int main(int argc, char **argv){
   For(j,12)io->mod->base_freq[j]=roundf(io->mod->base_freq[j]*10000.0f)/10000.0f; //round base freqs to 5 decimal places to help make comparisons to previous versions
   if(io->mod->optDebug)For(j,12){printf("%lf\t%lf\n",io->mod->baseCounts[j],io->mod->base_freq[j]);}
   CF3x4(io->mod->base_freq, io->mod->genetic_code);
+  }else{
+	  CF3x4(io->mod->base_freq, io->mod->genetic_code);
+	  For(i,12)io->mod->base_freq[i]=io->mod->user_b_freq[i];
+  }
   if(io->mod->optDebug)printf("cf3x4\n");
 
 
@@ -400,7 +405,10 @@ int main(int argc, char **argv){
   }else if(tree->mod->s_opt->opt_topo){
 	  if(tree->mod->s_opt->topo_search      == NNI_MOVE){
 		  if(io->mod->optDebug)printf("model type %d\n",io->mod->whichrealmodel);
-		  if(io->mod->whichrealmodel==HLP17)Get_UPP(io->tree_s[0]->noeud[io->tree_s[0]->mod->startnode], io->tree_s[0]->noeud[io->tree_s[0]->mod->startnode]->v[0], io->tree_s[0]);
+		  if(io->mod->whichrealmodel==HLP17){
+			  Lk(io->tree_s[i]);
+			  For(i,io->ntrees)Get_UPP(io->tree_s[i]->noeud[io->tree_s[i]->mod->startnode], io->tree_s[i]->noeud[io->tree_s[i]->mod->startnode]->v[0], io->tree_s[i]);
+		  }
 		  if(io->mod->optDebug)printf("here\n");
 		  Simu_Loop(io);
 	  }
@@ -408,7 +416,13 @@ int main(int argc, char **argv){
   		  if(io->mod->optDebug)printf("about to do spr moves\n");
   		  io->mod->print_trace=0;
   		  io->mod_s[0]->print_trace=0;
-  		  if(io->mod->whichrealmodel==HLP17)Get_UPP(io->tree_s[0]->noeud[io->tree_s[0]->mod->startnode], io->tree_s[0]->noeud[io->tree_s[0]->mod->startnode]->v[0], io->tree_s[0]);
+  		  if(io->mod->whichrealmodel==HLP17){
+  			  For(i,io->ntrees){
+  				 // Lk(io->tree_s[i]);
+  				  Get_UPP(io->tree_s[i]->noeud[io->tree_s[i]->mod->startnode], io->tree_s[i]->noeud[io->tree_s[i]->mod->startnode]->v[0], io->tree_s[i]);
+  				 // exit(EXIT_FAILURE);
+  			  }
+  		  }
   	  	  Speed_Spr_Loop(io);
   		  //Speed_Spr_Loop(io->tree_s[0]);
   	  }else{
@@ -472,7 +486,7 @@ int main(int argc, char **argv){
 	  findCIs(io->mod_s[i],io,CI);
   }
   fclose(CI);
-  Print_Lk_rep(io,"Final likelihood");
+  //Print_Lk_rep(io,"Final likelihood");
 
   if(io->mod->ASR){
 	  For(j,io->ntrees){
@@ -514,7 +528,7 @@ int main(int argc, char **argv){
   	  #endif
 
 
-  	  Print_Lk_rep(io,"Final likelihood");
+  	  //Print_Lk_rep(io,"Final likelihood");
   	  Print_IgPhyML_Out(io);
   	  /*Print_Fp_Out(io->fp_out_stats,t_beg,t_end,tree,
   	   io,num_data_set+1,

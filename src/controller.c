@@ -2076,7 +2076,6 @@ int mainOptionSwitch(int opt, char * optarg, option * io)
                 strcpy(io->nt_or_cd, "codons");
                 io->datatype              = CODON;
                 io->modeltypeOpt          = GY;
-                printf("GY MODEL USED\n");
             } else if(strcmp(optarg, "MG") == 0) {
                 strcpy(io->nt_or_cd, "codons");
                 io->datatype              = CODON;       
@@ -2241,6 +2240,7 @@ int mainOptionSwitch(int opt, char * optarg, option * io)
                       strcmp(optarg,"O") == 0) {
                 io->eq_freq_handling = OPTIMIZE;
             } else if(!isalpha(optarg[0])) {
+            	printf("here %d\n",optarg[0]);
                 phydbl sum;
                 double val1, val2, val3, val4;
                 phydbl freqs[64] = {0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0}; 
@@ -2280,10 +2280,14 @@ int mainOptionSwitch(int opt, char * optarg, option * io)
                         errorMsg = "\n. Invalid base frequencies.\n";
                     }
                 } else if(io->datatype == CODON) {
-                    for(i=0; optarg[i] != 0; i++) {
-                        io->userFreqs[i] = optarg[i];
+                    //for(i=0; optarg[i] != 0; i++) {
+                        //io->userFreqs[i] = optarg[i];
+                    	k=sscanf(optarg,"%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf",&freqs[0],&freqs[1],&freqs[2],&freqs[3],&freqs[4],&freqs[5],&freqs[6],&freqs[7],&freqs[8],&freqs[9],&freqs[10],&freqs[11]);
+                    	//printf("Here! %lf\t%lf\t%lf\n",freqs[0],freqs[1],freqs[2]);
+                    	For(i,12)io->mod->user_b_freq[i]=freqs[i];
+                    	if(k != 12) {printf("error!");}
                         io->eq_freq_handling = USER;
-                    }
+                    //}
                 } else if(io->datatype==AA) {
                     k=sscanf(optarg,"%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf",&freqs[0],&freqs[1],&freqs[2],&freqs[3],&freqs[4],&freqs[5],&freqs[6],&freqs[7],&freqs[8],&freqs[9],&freqs[10],&freqs[11],&freqs[12],&freqs[13],&freqs[14],&freqs[15],&freqs[16],&freqs[17],&freqs[18],&freqs[19]);
                     if(k != 20) {
@@ -2316,7 +2320,6 @@ int mainOptionSwitch(int opt, char * optarg, option * io)
             // -i, --input
             //
         case 'i':case 9: {
-        	printf("here\n");
             tmp = (char *) mCalloc (T_MAX_FILE, sizeof(char));
             if(strlen (optarg) > T_MAX_FILE -16) {
                 strcpy(tmp, "\n. The file name'");
