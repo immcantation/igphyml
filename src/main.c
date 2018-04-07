@@ -309,7 +309,7 @@ int main(int argc, char **argv){
 	     }
 	     mod->nparts=1;
 	     mod->nomega_part=mod->nparts;
-    	 mod->partNames = (char**)mCalloc(mod->nparts,sizeof(char*));
+    	 mod->partNames = (char**)mCalloc(mod->nomega_part,sizeof(char*));
     	 mod->partNames[0]=(char*)mCalloc(T_MAX_OPTION,sizeof(char));
     	 strcpy(mod->partNames[0],"SINGLE");
 	  }
@@ -378,7 +378,7 @@ int main(int argc, char **argv){
   if(io->mod->optDebug)For(j,12){printf("%lf\t%lf\n",io->mod->baseCounts[j],io->mod->base_freq[j]);}
   CF3x4(io->mod->base_freq, io->mod->genetic_code);
   }else{
-	  CF3x4(io->mod->base_freq, io->mod->genetic_code);
+	  //CF3x4(io->mod->base_freq, io->mod->genetic_code);
 	  For(i,12)io->mod->base_freq[i]=io->mod->user_b_freq[i];
   }
   if(io->mod->optDebug)printf("cf3x4\n");
@@ -406,8 +406,11 @@ int main(int argc, char **argv){
 	  if(tree->mod->s_opt->topo_search      == NNI_MOVE){
 		  if(io->mod->optDebug)printf("model type %d\n",io->mod->whichrealmodel);
 		  if(io->mod->whichrealmodel==HLP17){
-			  Lk(io->tree_s[i]);
-			  For(i,io->ntrees)Get_UPP(io->tree_s[i]->noeud[io->tree_s[i]->mod->startnode], io->tree_s[i]->noeud[io->tree_s[i]->mod->startnode]->v[0], io->tree_s[i]);
+			  if(io->mod->optDebug)printf("here0\n");
+			  For(i,io->ntrees){
+				  //Lk(io->tree_s[i]);
+				  Get_UPP(io->tree_s[i]->noeud[io->tree_s[i]->mod->startnode], io->tree_s[i]->noeud[io->tree_s[i]->mod->startnode]->v[0], io->tree_s[i]);
+			  }
 		  }
 		  if(io->mod->optDebug)printf("here\n");
 		  Simu_Loop(io);
@@ -470,7 +473,7 @@ int main(int argc, char **argv){
   if(io->mod->optDebug)printf("\nNeed to store %d parameters",nparams);
   io->paramStore=(phydbl*)mCalloc(nparams,sizeof(phydbl));
 
-
+  if(io->CIest>0){
   	char* CIf = (char*)malloc(T_MAX_FILE*sizeof(char));
   	strcpy(CIf,io->mod->in_align_file);
   	strcat(CIf,"_igphyml_CIlog.txt");
@@ -486,8 +489,8 @@ int main(int argc, char **argv){
 	  findCIs(io->mod_s[i],io,CI);
   }
   fclose(CI);
-  //Print_Lk_rep(io,"Final likelihood");
-
+  Print_Lk_rep(io,"Final likelihood after CI estimation");
+  }
   if(io->mod->ASR){
 	  For(j,io->ntrees){
 		  //printf("ASR for model %d\n",j);

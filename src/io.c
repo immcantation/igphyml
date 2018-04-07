@@ -2192,7 +2192,7 @@ void Print_Fp_Out(FILE *fp_out, time_t t_beg, time_t t_end, t_tree *tree, option
             {
                 if(tree->mod->n_w_catg == 1)
                 {
-                	if(tree->mod->nparts > 1){printf("options not compatible with partitioned model error 3\n");exit(EXIT_FAILURE);}
+                	if(tree->mod->nomega_part > 1){printf("options not compatible with partitioned model error 3\n");exit(EXIT_FAILURE);}
                     currTkn = Emit_Out_Token(currTkn, "Emp. corrected nonsyn./syn. ratio", "EmpCorrOmega", SCALARTKN, TFNUMERIC, "%.6f", Omega_ECMtoMmechModels(tree->mod->pi, tree->mod->qmat_part[0], tree->mod->qmat_buff_part[0], tree->mod->ns, tree->mod->n_w_catg));
                     if( (tree->mod->omegaSiteVar != NOOMEGA) & (tree->mod->s_opt->opt_omega == NO) ) {
                         currTkn = Emit_Out_Token(currTkn, "User defined nonsyn./syn. ratio", "UserdefOmega", SCALARTKN, TFNUMERIC, "%.6f", tree->mod->omega_part[0] ); //modified by Ken 17/8
@@ -2200,7 +2200,7 @@ void Print_Fp_Out(FILE *fp_out, time_t t_beg, time_t t_end, t_tree *tree, option
                 }
                 else
                 {
-                	if(tree->mod->nparts > 1){printf("options not compatible with partitioned model error 4\n");exit(EXIT_FAILURE);}
+                	if(tree->mod->nomega_part > 1){printf("options not compatible with partitioned model error 4\n");exit(EXIT_FAILURE);}
                     currTkn = Emit_Out_Token(currTkn, "Estimated dn/ds rate ratio (w) values", "EstimatedOmega", TBLSTARTTKN, TFNUMERIC, "%i", 2);
 
                     for(i = 0; i < tree->mod->n_w_catg; i++ ) {
@@ -2464,7 +2464,7 @@ void Print_Fp_Out(FILE *fp_out, time_t t_beg, time_t t_end, t_tree *tree, option
                 }
                 else
                 {
-                	if(mod->nparts > 1){printf("options not compatible with partitioned model error 1\n");exit(EXIT_FAILURE);}//Ken 22/8
+                	if(mod->nomega_part > 1){printf("options not compatible with partitioned model error 1\n");exit(EXIT_FAILURE);}//Ken 22/8
                     fprintf(io->fp_out_compare,"%.6f;",Omega_ECMtoMmechModels(tree->mod->pi, tree->mod->qmat_part[0], tree->mod->qmat_buff_part[0], tree->mod->ns, tree->mod->n_w_catg)); //!< # omega//modified by Ken 22/8
                     fprintf(io->fp_out_compare,"1;;"); //!< # prob omega and and empty space corresponding to alpha and beta
                 }
@@ -2483,7 +2483,7 @@ void Print_Fp_Out(FILE *fp_out, time_t t_beg, time_t t_end, t_tree *tree, option
                 }
                 else
                 {
-                	if(tree->mod->nparts > 1){printf("options not compatible with partitioned model error 2\n");exit(EXIT_FAILURE);}
+                	if(tree->mod->nomega_part > 1){printf("options not compatible with partitioned model error 2\n");exit(EXIT_FAILURE);}
                     For(i,tree->mod->n_w_catg) fprintf(io->fp_out_compare,"%.6f ",Omega_ECMtoMmechModels(tree->mod->pi, tree->mod->qmat_part[0]+i*tree->mod->ns*tree->mod->ns, tree->mod->qmat_buff_part[0]+i*tree->mod->ns*tree->mod->ns, tree->mod->ns,tree->mod->n_w_catg));
                     fprintf(io->fp_out_compare,";");
                 }

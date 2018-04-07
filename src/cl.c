@@ -68,6 +68,7 @@ void Read_Command_Line( option *io, int argc, char **argv )
 	io->mod->constB=0;
 	io->roughCI=1.0;
 	io->outrepspec=0;
+	io->CIest=0;
 
     io->mod->rootname = mCalloc(T_MAX_OPTION,sizeof(char));
     io->mod->hotnessstring = mCalloc(T_MAX_OPTION,sizeof(char));

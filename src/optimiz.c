@@ -1268,7 +1268,7 @@ void Optimiz_All_Free_Param(option* io, int verbose){
 		  			}
 	  			}else{
 	    			Print_Lk_rep(io,"[Emp. dn/ds ratio   ]");
-    				if(io->mod->nparts > 1){printf("options not compatible with partitioned model error 5\n");exit(EXIT_FAILURE);}
+    				if(io->mod->nomega_part > 1){printf("options not compatible with partitioned model error 5\n");exit(EXIT_FAILURE);}
 	    			PhyML_Printf("[%.2f ]",Omega_ECMtoMmechModels(io->mod->pi, io->mod->qmat_part[0], io->mod->qmat_buff_part[0], io->mod->ns, io->mod->n_w_catg));
 	  			}
 		}else if(io->mod->omegaSiteVar==DMODELK){
@@ -1288,7 +1288,7 @@ void Optimiz_All_Free_Param(option* io, int verbose){
 			      int m;
 			      Print_Lk_rep(io,"[Emp. dn/ds ratio   ]");
 			      printf("[");
-			      if(io->mod->nparts > 1){printf("options not compatible with partitioned model error 6\n");exit(EXIT_FAILURE);}
+			      if(io->mod->nomega_part > 1){printf("options not compatible with partitioned model error 6\n");exit(EXIT_FAILURE);}
 			      For(m,io->mod->n_w_catg) printf("%.2f ",Omega_ECMtoMmechModels(io->mod->pi, io->mod->qmat_part[0]+m*io->mod->ns*io->mod->ns, io->mod->qmat_buff_part[0]+m*io->mod->ns*io->mod->ns, io->mod->ns, io->mod->n_w_catg));
 			      printf("]");
 			      Print_Lk_rep(io,"[dn/ds frequencies  ]");
@@ -1314,7 +1314,7 @@ void Optimiz_All_Free_Param(option* io, int verbose){
 		    }else{
 		      Print_Lk_rep(io,"[Emp. dn/ds ratio   ]");
 		      printf("[");
-	      	if(io->mod->nparts > 1){printf("options not compatible with partitioned model error 7\n");exit(EXIT_FAILURE);}
+	      	if(io->mod->nomega_part > 1){printf("options not compatible with partitioned model error 7\n");exit(EXIT_FAILURE);}
 		      For(m,io->mod->n_w_catg) printf("%.2f ",Omega_ECMtoMmechModels(io->mod->pi, io->mod->qmat_part[0]+(m*io->mod->ns*io->mod->ns), io->mod->qmat_buff_part[0]+(m*io->mod->ns*io->mod->ns), io->mod->ns,io->mod->n_w_catg ));
 		      printf("]");
 		      Print_Lk_rep(io,"[Alpha and Beta     ]");

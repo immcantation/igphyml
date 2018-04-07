@@ -194,20 +194,22 @@ void finishOptions(option * io)
     //set up HLP17 model
     //Added by Ken 12/7/2016
     io->mod->primary=1;
+    if(!io->mod->omega_opt_spec){
+       	strcpy(io->mod->omega_opt_string,"e");
+       	/*if(io->mod->nomega_part>1){
+       		for(i=1;i<io->mod->nomega_part;i++){
+       			strcat(io->mod->omega_opt_string,",e");
+       		}
+      	}*/
+    }
     if(io->mod->optDebug)printf("\nmodel type opt %d\n",io->mod->modeltypeOpt);
     if(io->modeltypeOpt == HLP17){
     	setUpHLP17(io, io->mod);
     }
-    if(!io->mod->omega_opt_spec){
-    	strcpy(io->mod->omega_opt_string,"e");
-    	if(io->mod->nomega_part>1){
-    		for(i=1;i<io->mod->nomega_part;i++){
-    			strcat(io->mod->omega_opt_string,",e");
-    		}
-    	}
-    }
+
     int c;
 	char* minfo1 = strdup(io->mod->omega_opt_string);
+	if(io->mod->optDebug)printf("%s\t%d\n",io->mod->omega_opt_string,io->mod->nomega_part);
    	io->mod->omega_part_opt = (int*)mCalloc(io->mod->nomega_part,sizeof(int ));
    	io->mod->omega_part_ci = (int*)mCalloc(io->mod->nomega_part,sizeof(int ));
    	io->mod->omega_part_uci = (phydbl*)mCalloc(io->mod->nomega_part,sizeof(phydbl ));
@@ -217,11 +219,17 @@ void finishOptions(option * io)
    	      if(strcmp(mtemp1,"e")==0 || strcmp(mtemp1,"ce")==0){
    	        io->mod->omega_part_opt[c]=1;
    	        io->mod->omega_part[c]=0.4;
-   	        if(strcmp(mtemp1,"ce")==0)io->mod->omega_part_ci[c]=1;
+   	        if(strcmp(mtemp1,"ce")==0){
+   	        	io->mod->omega_part_ci[c]=1;
+   	        	io->CIest++;
+   	        }
    	      }else if(strcmp(mtemp1,"i")==0 || strcmp(mtemp1,"ci")==0){
    	    	io->mod->omega_part_opt[c]=2;
    	    	io->mod->omega_part[c]=0.4;
-   	    	if(strcmp(mtemp1,"ci")==0)io->mod->omega_part_ci[c]=-1;
+   	    	if(strcmp(mtemp1,"ci")==0){
+   	    		io->mod->omega_part_ci[c]=-1;
+   	    		io->CIest++;
+   	    	}
    	      }else{
    	        io->mod->omega_part_opt[c]=0;
    	        io->mod->omega_part[c]=atof(mtemp1);
@@ -291,14 +299,19 @@ void setUpHLP17(option* io, model *mod){
    	if(io->mod->hotnessstringopt==0){
    	    mod->hotnessstring = "e";
    	}
-       if((strcmp(io->mod->motifstring,"FCH")==0)){
-           mod->motifstring = "WRC_2:0,GYW_0:1,WA_1:2,TW_0:3,SYC_2:4,GRS_0:5";
-           if(io->mod->hotnessstringopt==0)mod->hotnessstring = "e,e,e,e,e,e";
-       }
+    if((strcmp(io->mod->motifstring,"FCH")==0)){
+        mod->motifstring = "WRC_2:0,GYW_0:1,WA_1:2,TW_0:3,SYC_2:4,GRS_0:5";
+        if(io->mod->hotnessstringopt==0)mod->hotnessstring = "e,e,e,e,e,e";
+    }
    	if(io->mod->rootfound==0 && io->repMode==0){
    		printf("\nError: Root sequence ID must be specified using --root\n\n");
    		exit(EXIT_FAILURE);
    	}
+
+   	minfo1 = strdup(io->mod->omega_opt_string);
+   	mod->nomega_part=0;
+	while ((mtemp1 = strsep(&minfo1, ",")) != NULL){mod->nomega_part++;}
+	//printf("omega: %d\n",mod->nomega_part);
    	//parse motif string
    	minfo1 = strdup(io->mod->motifstring);
    	minfo2 = strdup(io->mod->motifstring);
@@ -330,11 +343,17 @@ void setUpHLP17(option* io, model *mod){
    	      if (strcmp(mtemp1,"e")==0 || strcmp(mtemp1,"ce")==0){
    	        mod->hoptindex[c]=1;
    	        mod->hotness[c]=0.0;
-   	        if(strcmp(mtemp1,"ce")==0 && mod->primary)mod->hoptci[c]=1;
+   	        if(strcmp(mtemp1,"ce")==0 && mod->primary){
+   	        	mod->hoptci[c]=1;
+   	        	io->CIest++;
+   	        }
    	      }else if (strcmp(mtemp1,"i")==0 || strcmp(mtemp1,"ci")==0){
      	        mod->hoptindex[c]=2;
      	        mod->hotness[c]=0.0;
-     	       if(strcmp(mtemp1,"ci")==0 && !mod->primary)mod->hoptci[c]=1;
+     	       if(strcmp(mtemp1,"ci")==0 && !mod->primary){
+     	    	   mod->hoptci[c]=1;
+     	    	   io->CIest++;
+     	       }
      	  }else{
    	        mod->hoptindex[c]=0;
    	        mod->hotness[c]=atof(mtemp1);
@@ -409,8 +428,6 @@ void setUpHLP17(option* io, model *mod){
   		    }
   	}
 
-
-
    	//partition model stuff
    	if(mod->partfilespec==1){
    		int imgt=0;
@@ -420,7 +437,7 @@ void setUpHLP17(option* io, model *mod){
        int nsite;
        fscn = fscanf(file, " %d\n",&nsite);
        //printf("reading part: %d\t%d\n",mod->nparts,nsite);
-       mod->nomega_part=mod->nparts;
+       //mod->nomega_part=mod->nparts;
       // printf("%d\t%d\n",mod->nparts,nsite);
        mod->partIndex = (int *)mCalloc(nsite,sizeof(int));
        mod->partNames = (char**)mCalloc(mod->nparts,sizeof(char*));
@@ -445,7 +462,7 @@ void setUpHLP17(option* io, model *mod){
    		//io->mod->partNames[parti] = l1;
    		char* l2 = strsep(&linepart,"\n");
    		//if(mod->primary)printf("%s\n",l2);
-   		printf("%s\n",l2);
+   		//printf("%s\n",l2);
    		if(strcmp(l2,"IMGT")!=0){
    			char *ltemp1;
    			while ((ltemp1 = strsep(&l2, ",")) != NULL){
@@ -462,7 +479,7 @@ void setUpHLP17(option* io, model *mod){
    				}
    			}
    		}else{
-   			printf("Doing IMGT CDR and FWR assignments\n");
+   			if(mod->optDebug)printf("Doing IMGT CDR and FWR assignments\n");
    			imgt=1;
    		}
    	}
@@ -477,11 +494,11 @@ void setUpHLP17(option* io, model *mod){
    	read = getline(&nline2,&len,file);
    	char* v=strsep(&nline2,"\n");
    	strcpy(mod->germlineV,v);
-   	printf("\nGermlineV: %s",mod->germlineV);
+   	if(mod->optDebug)printf("\nGermlineV: %s",mod->germlineV);
    	read = getline(&nline3,&len,file);
    	char* j=strsep(&nline3,"\n");
    	strcpy(mod->germlineJ,j);
-   	printf("\nGermlineJ: %s\n",mod->germlineJ);
+   	if(mod->optDebug)	printf("\nGermlineJ: %s\n",mod->germlineJ);
 
    	mod->imgt=mCalloc(nsite,sizeof(int));
    	len=0;
@@ -494,11 +511,13 @@ void setUpHLP17(option* io, model *mod){
    	}
 
    	if(imgt){
+   		int cdr=0;
+   		if(mod->nomega_part>1)cdr=1;
    		For(c,nsite){
    			int s =mod->imgt[c];
-   			if(s >= 26 && s < 38)mod->partIndex[c]=1;
-   			else if(s >= 55 && s < 65)mod->partIndex[c]=1;
-   			else if(s >= 105 && s < 116)mod->partIndex[c]=1;
+   			if(s >= 26 && s < 38)mod->partIndex[c]=cdr;
+   			else if(s >= 55 && s < 65)mod->partIndex[c]=cdr;
+   			else if(s >= 105 && s < 116)mod->partIndex[c]=cdr;
    			else mod->partIndex[c]=0;
    		}
    	}
@@ -510,10 +529,13 @@ void setUpHLP17(option* io, model *mod){
    	   		printf("\nPosition %d not specified in partition file!\n",indexi);
    	   		exit(EXIT_FAILURE);
    	   	}
-   	 if(mod->primary)printf("%d ",mod->partIndex[indexi]);
+   	 if(mod->primary){
+   		 printf("%d ",mod->partIndex[indexi]);
+   	 }
    	}
    	fclose(file);
-   	if(mod->primary)printf("\nDone!\n");
+   	if(mod->primary)printf("\n");
+   	//if(mod->primary)printf("\nDone!\n");
     }else{
    	 mod->nparts=1;
    	 mod->nomega_part=mod->nparts;
@@ -2381,13 +2403,19 @@ int mainOptionSwitch(int opt, char * optarg, option * io)
                     io->mod->s_opt->opt_kappa      = 1;
                     io->userWantsKappa             = YES;
                     io->mod->optKappa=1;//added by Ken 25/1/2018
-                    if(strcmp(optarg, "ce") == 0)io->mod->kappaci=1;
+                    if(strcmp(optarg, "ce") == 0){
+                    	io->mod->kappaci=1;
+                    	io->CIest++;
+                    }
                 }else if ((strcmp(optarg, "i") == 0) || (strcmp(optarg, "ci") == 0)) {
                         io->mod->kappa                 = 1.0;
                         io->mod->s_opt->opt_kappa      = 1;
                         io->userWantsKappa             = YES;
                         io->mod->optKappa=2;//added by Ken 25/1/2018
-                        if(strcmp(optarg, "ci") == 0)io->mod->kappaci=-1;
+                        if(strcmp(optarg, "ci") == 0){
+                        	io->mod->kappaci=-1;
+                        	io->CIest++;
+                        }
                 } else if(strcmp(optarg, "KAP1") == 0 || strcmp(optarg,"kap1") == 0) { //!< For all KAPn, See Kosiol 2007.
                     io->kappaECM              = kap1;
                     io->mod->s_opt->opt_kappa = 0;

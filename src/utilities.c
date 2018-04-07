@@ -243,9 +243,9 @@ void Make_Edge_Lk(t_edge *b, t_tree *tree)
   
   //Added by Ken 17/8/2016
 
-  b->bPmat_part = (phydbl**)mCalloc(tree->mod->nparts,sizeof(phydbl*));
+  b->bPmat_part = (phydbl**)mCalloc(tree->mod->nomega_part,sizeof(phydbl*));
   b->up_upp = 1;
-  for(i=0;i<tree->mod->nparts;i++){
+  for(i=0;i<tree->mod->nomega_part;i++){
 	phydbl* tp = (phydbl *)mCalloc(tree->mod->n_catg*tree->mod->ns*tree->mod->ns,sizeof(phydbl));
 	b->bPmat_part[i]=tp;
   }
@@ -2623,17 +2623,17 @@ void Make_Model_Complete(model *mod)
   mod->pi                                    = (phydbl *)mCalloc(mod->ns,sizeof(phydbl));
 
   //added by Ken 17/8/2016
-  mod->qmat_part = (phydbl **)mCalloc(mod->nparts,sizeof(phydbl*));
-  mod->Pmat_part = (phydbl **)mCalloc(mod->nparts,sizeof(phydbl*));
-  mod->qmat_buff_part = (phydbl **)mCalloc(mod->nparts,sizeof(phydbl*));
+  mod->qmat_part = (phydbl **)mCalloc(mod->nomega_part,sizeof(phydbl*));
+  mod->Pmat_part = (phydbl **)mCalloc(mod->nomega_part,sizeof(phydbl*));
+  mod->qmat_buff_part = (phydbl **)mCalloc(mod->nomega_part,sizeof(phydbl*));
   phydbl* test=(phydbl *)mCalloc(mod->n_w_catg*mod->ns*mod->ns,sizeof(phydbl));
   /*printf("QMAT0: %lf\n",mod->qmat_part[0]);
   printf("QMAT0: %lf\n",mod->Pmat_part[0]);
   printf("QMAT0: %lf\n",mod->qmat_buff_part[0]);*/
   int i;
-  for(i=0;i<mod->nparts;i++){
+  for(i=0;i<mod->nomega_part;i++){
 	  //printf("%d\n",mod->optDebug);
-	  if(mod->optDebug)printf("Making q mats %d %d %d %d %d size\n",i,mod->nparts,mod->n_w_catg*mod->ns*mod->ns,mod->nomega_part,mod->n_catg);
+	  if(mod->optDebug)printf("Making q mats %d %d %d %d %d size\n",i,mod->nomega_part,mod->n_w_catg*mod->ns*mod->ns,mod->nomega_part,mod->n_catg);
 	  //printf("0");
 	  //printf("02");
 	  mod->qmat_part[i]=mCalloc(mod->n_w_catg*mod->ns*mod->ns,sizeof(phydbl));
@@ -2706,8 +2706,8 @@ void Make_Model_Complete(model *mod)
 
     }
   }
-  //printf("%lf\t%lf\t%lf\t%d\t%d\t%d\n",mod->U_part[0][0],mod->V_part[0][0],mod->A4_part[0][0],mod->ns,mod->n_w_catg,mod->nparts);
-  //printf("%d\t%d\t%d\n",mod->ns,mod->n_w_catg,mod->nparts);
+  //printf("%lf\t%lf\t%lf\t%d\t%d\t%d\n",mod->U_part[0][0],mod->V_part[0][0],mod->A4_part[0][0],mod->ns,mod->n_w_catg,mod->nomega_part);
+  //printf("%d\t%d\t%d\n",mod->ns,mod->n_w_catg,mod->nomega_part);
   //printf("%lf\n",mod->qmat_part[0][0]);
   mod->qmat_part[0][0]=1.0;
   //if(mod->optDebug)printf("just tried2");
@@ -2826,7 +2826,7 @@ model *Copy_Model(model *ori)
 void Record_Model(model *ori, model *cpy)
 {
   int i;
-  if(ori->nparts > 1){
+  if(ori->nomega_part > 1){
 	  printf("Record_Model doesn't work with parititions yet\n");
 	  exit(EXIT_FAILURE);
   }
@@ -3062,7 +3062,7 @@ model *Copy_Partial_Model(model *ori, int num){
 void Record_Partial_Model(model *ori, model *cpy)
 {
   int i;
-  if(ori->nparts > 1){
+  if(ori->nomega_part > 1){
 	  //printf("Record_Model doesn't work with parititions yet\n");
 	  //exit(EXIT_FAILURE);
   }

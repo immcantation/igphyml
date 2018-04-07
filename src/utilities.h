@@ -1041,6 +1041,7 @@ typedef struct __Option {
   phydbl 					roughCI;
   char*						outrep;
   int						outrepspec;
+  int							CIest;
  }option;
 
 /*********************************************************/

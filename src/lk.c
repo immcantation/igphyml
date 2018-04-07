@@ -2957,7 +2957,7 @@ void Update_PMat_At_Given_Edge(t_edge *b_fcus, t_tree *tree)
     	  len = b_fcus->l;
     	  if(tree->mod->testcondition){len=BL_MIN;}
     	  int modeli;
-    	  for(modeli=0;modeli<tree->mod->nparts;modeli++){
+    	  for(modeli=0;modeli<tree->mod->nomega_part;modeli++){
     		  PMat_CODON_part(len,tree->mod,0,tree->mod->qmat_part[modeli],b_fcus->bPmat_part[modeli],modeli);
     	  }
       }
@@ -3279,7 +3279,7 @@ matrix *ML_CODONDist_Pairwise(calign *data, option *io, model *mod) //!<Added by
    mod_tmp->eq_freq_handling=mod->eq_freq_handling; //COPIED FROM OPTION
    mod_tmp->quiet=mod->quiet;
    mod_tmp->optParam=mod->optParam;
-	  mod_tmp->nomega_part=mod_tmp->nparts;
+	  mod_tmp->nomega_part=mod->nomega_part;
 
    /*mod_tmp->opt_heuristic_manuel=mod->io->opt_heuristic_manuel;
    mod_tmp->opt_heuristic_manuel=mod->io->opt_heuristic_manuel;
@@ -3351,8 +3351,8 @@ matrix *ML_CODONDist_Pairwise(calign *data, option *io, model *mod) //!<Added by
 
   //Add in stuff for partitioned model
   int modeli;
-  for(modeli=0;modeli<mod->nparts;modeli++){ //was io-> mod
-	  mod_tmp->nparts=1;
+  for(modeli=0;modeli<mod->nomega_part;modeli++){ //was io-> mod
+	  mod_tmp->nomega_part=1;
 	  mod_tmp->qmat_part = (phydbl**)mCalloc(1,sizeof(phydbl*));
 	  mod_tmp->partNames = (char**)mCalloc(1,sizeof(char*));
 	  mod_tmp->omega_part = (phydbl*)mCalloc(1,sizeof(phydbl));

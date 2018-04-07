@@ -366,8 +366,8 @@ void Free_Model_Complete(model *mod)
     
     if(mod->io->expm==SSPADE){
     int modeli; //Added by Ken 22/8
-    for(modeli=0;modeli<mod->nparts;modeli++){
-      if(mod->optDebug)printf("about to do this %d %d %d %d %d\n",modeli,mod->n_w_catg,mod->ns,mod->nomega_part,mod->nparts);
+    for(modeli=0;modeli<mod->nomega_part;modeli++){
+      if(mod->optDebug)printf("about to do this %d %d %d %d %d\n",modeli,mod->n_w_catg,mod->ns,mod->nomega_part,mod->nomega_part);
       if(mod->optDebug)printf("%lf\t%lf\t%lf\n",mod->U_part[modeli][0],mod->V_part[modeli][0],mod->A4_part[modeli][0]);
       free(mod->U_part[modeli]);
       free(mod->V_part[modeli]);

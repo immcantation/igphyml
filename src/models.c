@@ -591,7 +591,7 @@ void Init_Model(calign *data, model *mod, option *io)
         if((mod->s_opt->opt_omega == NO) && 
            (mod->s_opt->opt_kappa == NO) && 
            (mod->s_opt->opt_state_freq == NO)) {
-        	if(mod->nparts > 1){printf("options not compatible with partitioned model error 8\n");exit(EXIT_FAILURE);}
+        	if(mod->nomega_part > 1){printf("options not compatible with partitioned model error 8\n");exit(EXIT_FAILURE);}
             mr = Update_Qmat_Codons(mod, 0, 0); //modified by Ken 19/8
             EigenQREV(mod->qmat, mod->pi, mod->ns, mod->eigen->e_val, mod->eigen->r_e_vect, mod->eigen->l_e_vect, mod->eigen->space);
             For(i, mod->ns) mod->eigen->e_val[i] /= mr; //was io-> mod->ns 9/1 Ken
@@ -974,17 +974,17 @@ void Set_Model_Parameters(model *mod) {
                     Scale_freqs(mod->pkappa, mod->nkappa);      
                 }
                 int modeli;
-               for(modeli=0;modeli<mod->nparts;modeli++){ //Ken 19/8
+               for(modeli=0;modeli<mod->nomega_part;modeli++){ //Ken 19/8
             	   //for(modeli=0;modeli<1;modeli++){ //Ken 19/8
                 mod->mr_w[0] = Update_Qmat_Codons(mod, 0, modeli); //Ken 19/8
 
 
                 if(mod->expm == EIGEN) {
-                	if(mod->nparts > 1){printf("Options not supported with partitioned models error 13\n");exit(EXIT_FAILURE);}
+                	if(mod->nomega_part > 1){printf("Options not supported with partitioned models error 13\n");exit(EXIT_FAILURE);}
                     EigenQREV(mod->qmat_part[0], mod->pi, mod->ns, mod->eigen->e_val, mod->eigen->r_e_vect, mod->eigen->l_e_vect, mod->eigen->space);
                     For(i,mod->ns) mod->eigen->e_val[i]/=mod->mr_w[0];
                 } else if(mod->expm == TAYLOR) {
-                	if(mod->nparts > 1){printf("Options not supported with partitioned models error 14\n");exit(EXIT_FAILURE);}
+                	if(mod->nomega_part > 1){printf("Options not supported with partitioned models error 14\n");exit(EXIT_FAILURE);}
 
                     int nn=mod->ns*mod->ns, n=mod->ns, l;
                     
@@ -1051,7 +1051,7 @@ void Set_Model_Parameters(model *mod) {
                 }
             }//for(modeli)
             } else if(mod->n_w_catg > 1) { 
-            	if(mod->nparts > 1){
+            	if(mod->nomega_part > 1){
             		printf("CAN'T COMBINE PARTITIONS WITH SITE CLASSES\n");
             		exit(EXIT_FAILURE);
             	}
@@ -1099,7 +1099,7 @@ void Set_Model_Parameters(model *mod) {
                     For(catg, mod->n_w_catg) {
                         for(l = 2; l < mod->n_termsTaylor; l++) {
 #if defined BLAS || defined BLAS_OMP
-                        	if(mod->nparts > 1){printf("Options not supported with partitioned models error 15\n");exit(EXIT_FAILURE);}
+                        	if(mod->nomega_part > 1){printf("Options not supported with partitioned models error 15\n");exit(EXIT_FAILURE);}
                             cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans, n, n, n, 1.0, mod->A2_part[0]+(nn*(l-1))+catg*nn*15, n, mod->qmat_part[0]+catg*nn,  n, 0.0, mod->A2_part[0]+nn*l+catg*nn*15, n);
                             
 #else
@@ -1125,7 +1125,7 @@ void Set_Model_Parameters(model *mod) {
                     
                     For(catg, mod->n_w_catg) {
 #if defined BLAS || defined BLAS_OMP
-                    	if(mod->nparts > 1){printf("Options not supported with partitioned models error 12\n");exit(EXIT_FAILURE);}
+                    	if(mod->nomega_part > 1){printf("Options not supported with partitioned models error 12\n");exit(EXIT_FAILURE);}
                         cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans, n, n, n, 1.0, mod->qmat_part[0]+catg*nn,       n, mod->qmat_part[0]+catg*nn,       n, 0.0, mod->A2_part[0]+catg*nn, n);
                         cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans, n, n, n, 1.0, mod->A2_part[0]+catg*nn,         n, mod->A2_part[0]+catg*nn,         n, 0.0, mod->A4_part[0]+catg*nn, n);
                         cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans, n, n, n, 1.0, mod->A2_part[0]+catg*nn,         n, mod->A4_part[0]+catg*nn,         n, 0.0, mod->A6_part[0]+catg*nn, n);
@@ -1137,7 +1137,7 @@ void Set_Model_Parameters(model *mod) {
                         cblas_dcopy(nn,mod->A8_part[0]+catg*nn, 1, mod->Apowers_part[0]+5*nn*catg+4*nn,1);
                         
 #else
-                    	if(mod->nparts > 1){printf("Options not supported with partitioned models error 12\n");exit(EXIT_FAILURE);}
+                    	if(mod->nomega_part > 1){printf("Options not supported with partitioned models error 12\n");exit(EXIT_FAILURE);}
                         For(i,nn) mod->A2_part[0][i+catg*nn]=0.0;//modified by Ken 22/8 won't work with partitioned models
                         For(i,nn) mod->A4_part[0][i+catg*nn]=0.0;
                         For(i,nn) mod->A6_part[0][i+catg*nn]=0.0;
@@ -1222,7 +1222,7 @@ void Set_Model_Parameters(model *mod) {
                 For (i,mod->ns*mod->ns) mod->qmat[i] /= mod->mr;
                 /* compute eigenvectors/values */
                 result = 0;
-            	if(mod->nparts > 1){printf("options not compatible with partitioned model error 10\n");exit(EXIT_FAILURE);}
+            	if(mod->nomega_part > 1){printf("options not compatible with partitioned model error 10\n");exit(EXIT_FAILURE);}
                 For(i,mod->ns*mod->ns) mod->qmat_buff_part[0][i] = mod->qmat_part[0][i];
                 if(!Eigen(1,mod->qmat_buff_part[0],mod->eigen->size,mod->eigen->e_val,
                           mod->eigen->e_val_im,mod->eigen->r_e_vect,
@@ -1271,7 +1271,7 @@ void Set_Model_Parameters(model *mod) {
                 scalar   = 1.0;
                 n_iter   = 0;
                 result   = 0;
-            	if(mod->nparts > 1){printf("options not compatible with partitioned model error 11\n");exit(EXIT_FAILURE);}
+            	if(mod->nomega_part > 1){printf("options not compatible with partitioned model error 11\n");exit(EXIT_FAILURE);}
                 For(i,mod->ns*mod->ns) mod->qmat_buff_part[0][i] = mod->qmat_part[0][i];
                 
                 /* compute eigenvectors/values */
@@ -2046,7 +2046,7 @@ void PMat_CODON(phydbl l, model *mod, int pos, phydbl *Pij) //!< Added by Marcel
     }
     else if(mod->expm==TAYLOR)
     {
-    	if(mod->nparts > 1){
+    	if(mod->nomega_part > 1){
     		printf("TAYLOR APPROXIMATION DOESN'T WORK WITH PARITTIONED MODELS IN IGPHYML\n");
     		exit(EXIT_FAILURE);
     	}
@@ -2247,7 +2247,7 @@ void PMat_CODON_part(phydbl l, model *mod, int pos, phydbl *Qmat, phydbl *Pij, i
     }
     else if(mod->expm==TAYLOR)
     {
-    	if(mod->nparts > 1){
+    	if(mod->nomega_part > 1){
     		printf("TAYLOR APPROX DOESNT WORK WITH PARTITIONED MODELS IN IGPHYML YET\n");
     		exit(EXIT_FAILURE);
     	}
