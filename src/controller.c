@@ -619,9 +619,13 @@ void createOutFiles(option * io)
     
     if(io->append_run_ID) {
         //strcat(io->out_tree_file, "_");
+    	strcat(io->out_stats_file, "_igphyml_stats");
         strcat(io->out_stats_file, "_");
         //strcat(io->out_tree_file, io->run_id_string);
         strcat(io->out_stats_file, io->run_id_string);
+        strcat(io->out_stats_file, ".txt");
+    }else{
+    	strcat(io->out_stats_file, "_igphyml_stats.txt");
     }
     
 #ifdef USEYAML
@@ -2381,7 +2385,7 @@ int mainOptionSwitch(int opt, char * optarg, option * io)
 #endif
                 strcpy(io->out_stats_file, optarg);
 #ifdef PHYML
-                strcat(io->out_stats_file, "_igphyml_stats.txt");
+                //strcat(io->out_stats_file, "_igphyml_stats.txt");
 #else
                 strcat(io->out_stats_file, "_mc_stats.txt");
 #endif
@@ -2551,8 +2555,8 @@ int mainOptionSwitch(int opt, char * optarg, option * io)
            	     //strcpy(io->in_align_file, optarg);
            	     //strcpy(io->out_tree_file, optarg);
            	     //strcat(io->out_tree_file, "_igphyml_tree.txt");
-                    strcpy(io->out_stats_file, optarg);
-                    strcat(io->out_stats_file, "_igphyml_stats.txt");
+           		strcpy(io->out_stats_file, optarg);
+                //strcat(io->out_stats_file, "_igphyml_stats.txt");
            	}
            	io->repMode=1;
            	strcpy(io->mod->in_align_file,optarg);

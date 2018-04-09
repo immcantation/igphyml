@@ -1820,12 +1820,13 @@ void Print_IgPhyML_Out(option* io){
 		 t_tree* tree=io->tree_s[i];
 		 char fout[T_MAX_FILE];
 		 strcpy(fout,io->datafs[i]);
-		 if(io->mod->ASR)strcat(fout,"_igphyml_figtree.txt");
-		 else strcat(fout,"_igphyml_tree.txt");
+		 if(io->mod->ASR)strcat(fout,"_igphyml_figtree");
+		 else strcat(fout,"_igphyml_tree");
 		 if(io->append_run_ID){
 			 strcat(fout, "_");
 			 strcat(fout, io->run_id_string);
 		 }
+		 strcat(fout,".txt");
 
 		 //potentially output new repertoire file
 		 if(io->outrepspec)fprintf(orep,"%s\t%s\t%s\t%s\n",io->datafs[i],fout,io->rootids[i],io->partfs[i]);
