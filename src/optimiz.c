@@ -492,6 +492,7 @@ void Optimize_Br_Len_Serie(t_node *a, t_node *d, t_edge *b_fcus, t_tree *tree, c
 	   Fill_UPP_root(tree,d->anc_edge,d,a);
   }*/
 
+  if(tree->mod->optDebug)printf("\n%d\t%lf\t%lf",b_fcus->num,b_fcus->l,tree->c_lnL);
 
   Br_Len_Brent(l_infa,l_max,l_infb,
 	       tree->mod->s_opt->min_diff_lk_local,
@@ -500,6 +501,7 @@ void Optimize_Br_Len_Serie(t_node *a, t_node *d, t_edge *b_fcus, t_tree *tree, c
 	       tree->mod->s_opt->quickdirty);
 
   	//Added to catch potential issues with branch optimization
+  if(tree->mod->optDebug)printf("\n%d\t%lf\t%lf",b_fcus->num,b_fcus->l,tree->c_lnL);
 
   if(tree->mod->whichrealmodel == HLP17){
    if(tree->c_lnL < lk_init - tree->mod->s_opt->min_diff_lk_local){
