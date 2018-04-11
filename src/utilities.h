@@ -252,7 +252,7 @@ typedef  double phydbl;
 #define SMALL_PIJ 1.E-10 //!Adjustable. original value 1e-10 //!< Added by Marcelo; //! Likelihood calculation needs to be revised ... 
 #ifndef MC
 #define BL_MIN 1.E-8 //!Adjustable. original value 1e-8 //! Likelihood calculation needs to be revised ... 
-#define BL_MAX 5.//100.
+#define BL_MAX 5. //5.//100.
 #else
 #define BL_MIN 1.E-5
 #define BL_MAX 5.

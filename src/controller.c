@@ -2562,6 +2562,10 @@ int mainOptionSwitch(int opt, char * optarg, option * io)
            	strcpy(io->mod->in_align_file,optarg);
            	FILE *file = fopen(optarg, "r");
            	int fscn =  fscanf(file, "%d\n",&io->ntrees); //number of datasets
+           	if(io->ntrees<=0){
+           		printf("No trees specified in file!\n");
+           		exit(EXIT_FAILURE);
+           	}
            	io->treefs = mCalloc(io->ntrees,sizeof(char*));	//tree files
            	io->datafs = mCalloc(io->ntrees,sizeof(char*)); //data files
            	io->rootids = mCalloc(io->ntrees,sizeof(char*)); //root ids
