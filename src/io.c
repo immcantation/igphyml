@@ -1757,7 +1757,7 @@ void Print_IgPhyML_Out(option* io){
 		 t_tree* tree=io->tree_s[i];
 		 model* mod = io->mod_s[i];
 		 fprintf(f,"\n# Lineage %d Reconstructions\n# Sequence file: %s\n",i,io->datafs[i]);
-		 if(io->append_run_ID)fprintf(f,"# Tree file: %s%s%s\n",io->datafs[i],"_igphyml_figtree.txt_",io->run_id_string);
+		 if(io->append_run_ID)fprintf(f,"# Tree file: %s%s%s%s\n",io->datafs[i],"_igphyml_figtree_",io->run_id_string,".txt");
 		 else fprintf(f,"# Tree file: %s%s\n",io->datafs[i],"_igphyml_figtree.txt");
 		 For(j,mod->nedges+1){
 			if(j<mod->nedges){
