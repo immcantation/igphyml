@@ -860,6 +860,7 @@ typedef struct __Model {
  int*		imgt;
  phydbl** 	cBmat;
  int		constB;
+ int prior;
 }model;
 
 /*********************************************************/

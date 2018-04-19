@@ -128,6 +128,7 @@ struct option longopts[] =
 	{"roughCI",		  required_argument,NULL,166},  //!<Added by Ken
 	{"outrep",		  required_argument,NULL,167},  //!<Added by Ken
 	{"cbmat",		  no_argument,NULL,168},  //!<Added by Ken
+	{"prior",		  no_argument,NULL,169},  //!<Added by Ken
     {0,0,0,0}
 };
 
@@ -2659,6 +2660,10 @@ int mainOptionSwitch(int opt, char * optarg, option * io)
              io->mod->constB=1;
              break;
          }
+        case 169:{
+        	io->mod->prior=1;
+        	break;
+        }
 
 
             //////////////////////////////////////////////////////////////////////////////////////

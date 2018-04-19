@@ -24,6 +24,7 @@ the GNU public licence. See http://www.opensource.org for details.
 */
 
 #include "lk.h"
+#include "stats.h"
 extern int senseCodons[64];
 extern int indexSenseCodons[64];
 extern phydbl ecmK07freq[61];
@@ -326,6 +327,26 @@ void Pre_Order_Lk(t_node *a, t_node *d, t_tree *tree)
 	}
     }
 }
+/***********************************************************/
+// Return prior probability of parameter set
+phydbl prior(model* mod){
+	int i;
+	phydbl p=log(Dgamma(mod->kappa,2.0,1.09));
+	p+=log(Dgamma(mod->omega_part[0],5,0.0978));
+	p+=log(Dgamma(mod->hotness[0]+1,7.0,0.58));
+	p+=log(Dgamma(mod->hotness[1]+1,7.0,0.91));
+	p+=log(Dgamma(mod->hotness[2]+1,7.0,0.58));
+	p+=log(Dgamma(mod->hotness[3]+1,7.0,0.29));
+	p+=log(Dgamma(mod->hotness[4]+1,2.0,0.17));
+	p+=log(Dgamma(mod->hotness[5]+1,2.0,0.18));
+	//printf("kappa: %lf\t%lf\n",mod->kappa,p);
+	return p;
+}
+
+/*phydbl dgamma(phydbl x,phydbl k, phydbl theta){
+	return pow(x,k-1)*exp(-x/theta);
+}*/
+
 /*********************************************************
  * Optimization code:
  * 0: do not optimize upper model, copy from upper to lower models
@@ -383,7 +404,9 @@ io->threads=0;
 	For(i,io->ntrees){
 		replnL += io->tree_s[i]->c_lnL;
 	}
+	if(io->mod->prior)replnL+=prior(io->mod);
 	io->replnL=replnL;
+	//printf("%lf\n",io->replnL);
 	//if(io->mod->optDebug)printf("\nreplikelihood %lf",replnL);
 	return replnL;
 }
@@ -3279,6 +3302,7 @@ matrix *ML_CODONDist_Pairwise(calign *data, option *io, model *mod) //!<Added by
    mod_tmp->eq_freq_handling=mod->eq_freq_handling; //COPIED FROM OPTION
    mod_tmp->quiet=mod->quiet;
    mod_tmp->optParam=mod->optParam;
+   mod_tmp->prior=mod->prior;
 	  mod_tmp->nomega_part=mod->nomega_part;
 
    /*mod_tmp->opt_heuristic_manuel=mod->io->opt_heuristic_manuel;

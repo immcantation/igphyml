@@ -69,6 +69,7 @@ void Read_Command_Line( option *io, int argc, char **argv )
 	io->roughCI=1.0;
 	io->outrepspec=0;
 	io->CIest=0;
+	io->mod->prior=0;
 
 	//new defaults, mostly for GY94 model
 	io->omegaOpt=DM0;
