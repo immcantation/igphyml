@@ -1197,8 +1197,6 @@ phydbl PointNormal (phydbl p)
 /* MISCs */
 /*********************************************************/
 
-/*********************************************************/
-
 phydbl Bico(int n, int k)
 {
   return FLOOR(0.5+EXP(Factln(n)-Factln(k)-Factln(n-k)));

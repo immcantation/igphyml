@@ -161,17 +161,6 @@ int main(int argc, char **argv){
 
     mod->fp_in_align = Openfile(mod->in_align_file,0);
 
-    /*if(mod->print_trace) {
-    	strcpy(mod->out_trace_stats_file,mod->in_align_file);
-    	strcat(mod->out_trace_stats_file,"_igphyml_stats_trace");
-    	strcpy(mod->out_trace_tree_file,mod->in_align_file);
-    	strcat(mod->out_trace_tree_file,"_igphyml_tree_trace");
-        mod->fp_out_tree_trace = Openfile(mod->out_trace_tree_file, 1 );//openOutputFile(mod->out_trace_tree_file, "_igphyml_tree_trace", ".txt", io);
-        mod->fp_out_stats_trace = Openfile(mod->out_trace_stats_file, 1 );//openOutputFile(mod->out_trace_stats_file, "_igphyml_stats_trace", ".txt", io);
-    }*/
-
-    //if(io->in_tree == 2) Test_Multiple_Data_Set_Format(io,mod);
-    //else io->n_trees = 1;
     io->n_trees=1;
 
     Get_Seq(io,mod);
@@ -295,7 +284,7 @@ int main(int argc, char **argv){
 	      }
 
 	     if(mod->startnode==-1){
-	    	 PhyML_Printf("\n\nRoot sequence ID not found in data file!\n");
+	    	 PhyML_Printf("\n\nRoot sequence ID not found in data file! %s %s\n",mod->rootname,io->datafs[i]);
 	    	 exit(EXIT_FAILURE);
 	     }
 	  }
@@ -345,6 +334,8 @@ int main(int argc, char **argv){
       }//for(num_tree=(io->n_trees == 1)?(0):(num_data_set);num_tree < io->n_trees;num_tree++)
 
    /*   Free_Cseq(cdata);*/
+
+      fclose(mod->fp_in_align);
     }else{
       PhyML_Printf("\n. No data was found.\n");
       PhyML_Printf("\n. Err in file %s at line %d\n",__FILE__,__LINE__);

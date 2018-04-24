@@ -327,6 +327,11 @@ void Pre_Order_Lk(t_node *a, t_node *d, t_tree *tree)
 	}
     }
 }
+
+phydbl dbeta(phydbl x,phydbl alpha, phydbl beta){
+	return pow(x,alpha-1)*pow(1-x,beta-1);
+}
+
 /***********************************************************/
 // Return prior probability of parameter set
 phydbl prior(model* mod){
@@ -339,13 +344,31 @@ phydbl prior(model* mod){
 	p+=log(Dgamma(mod->hotness[3]+1,7.0,0.29));
 	p+=log(Dgamma(mod->hotness[4]+1,2.0,0.17));
 	p+=log(Dgamma(mod->hotness[5]+1,2.0,0.18));
+	phydbl betas[12];
+	betas[0]=19.49;
+	betas[1]=19.60;
+	betas[2]=10.92;
+	betas[3]=12.94;
+	betas[4]=13.27;
+	betas[5]=16.58;
+	betas[6]=13.71;
+	betas[7]=16.96;
+	betas[8]=14.34;
+	betas[9]=12.58;
+	betas[10]=17.88;
+	betas[11]=15.95;
+	//phydbl freqs[12];
+	Freq_to_UnsFreq(mod->base_freq,   mod->uns_base_freq,   4, 0);
+	Freq_to_UnsFreq(mod->base_freq+4, mod->uns_base_freq+4, 4, 0);
+	Freq_to_UnsFreq(mod->base_freq+8, mod->uns_base_freq+8, 4, 0);
+	For(i,12){
+		p+= log(dbeta(mod->base_freq[i],5,betas[i]));
+	}
 	//printf("kappa: %lf\t%lf\n",mod->kappa,p);
 	return p;
 }
 
-/*phydbl dgamma(phydbl x,phydbl k, phydbl theta){
-	return pow(x,k-1)*exp(-x/theta);
-}*/
+
 
 /*********************************************************
  * Optimization code:

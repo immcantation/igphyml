@@ -2540,7 +2540,7 @@ int mainOptionSwitch(int opt, char * optarg, option * io)
            	printf("stretch by %lf\n",io->mod->stretch);
            	break;
         }
-        case 155: {
+        case 155: {//--repfile
            	 tmp = (char *) mCalloc (T_MAX_FILE, sizeof(char));
            	if(strlen (optarg) > T_MAX_FILE -16) {
            	      strcpy(tmp, "\n. The file name'");
