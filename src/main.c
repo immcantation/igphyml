@@ -165,7 +165,7 @@ int main(int argc, char **argv){
 
     Get_Seq(io,mod);
     if(io->min_otu>0){
-        	printf("\n..has %d sequences.",mod->n_otu);
+        	printf("\n%s\n..has %d sequences.",mod->in_align_file,mod->n_otu);
         	if(num_data_set > 0 && mod->n_otu > last_otu){
         		printf("\n repfile is not in order! --minSeq will not function properly. Exiting\n");
         		exit(EXIT_FAILURE);
