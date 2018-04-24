@@ -284,7 +284,7 @@ int main(int argc, char **argv){
 	      }
 
 	     if(mod->startnode==-1){
-	    	 PhyML_Printf("\n\nRoot sequence ID not found in data file! %s %s\n",mod->rootname,io->datafs[i]);
+	    	 PhyML_Printf("\n\nRoot sequence ID not found in data file! %s %s\n",mod->rootname,mod->in_align_file);
 	    	 exit(EXIT_FAILURE);
 	     }
 	  }
