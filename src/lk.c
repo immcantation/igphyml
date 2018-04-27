@@ -2147,8 +2147,12 @@ phydbl Lk_Core_UPP(t_edge *b, t_tree *tree, t_node *anc, t_node *d)
 	      	  For(i,tree->mod->nhotness)PhyML_Printf("h %d %lf\n",i,tree->mod->hotness[i]);
 	      	  For(i,12)PhyML_Printf("pi %d %lf %lf\n",i,tree->mod->base_freq[i],tree->mod->uns_base_freq[i]);
 	      }
-	      PhyML_Printf("\n. PRINTED ERROR TREE TO ERROR_TREE.TXT");
-	      FILE* treeout = Openfile("ERROR_TREE.txt", 1 );
+	      char* et = malloc(T_MAX_FILE*sizeof(char));
+	      strcpy(et,"ERROR_TREE_");
+	      strcat(et,tree->mod->rootname);
+	      strcat(et,".txt");
+	      PhyML_Printf("\n. PRINTED ERROR TREE TO %s",et);
+	      FILE* treeout = Openfile(et, 1 );
 	      Print_Tree(treeout,tree);
 	      Warn_And_Exit("\n");
 	    }
