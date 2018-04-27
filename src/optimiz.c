@@ -413,7 +413,7 @@ void Round_Optimize(option *io, int n_round_max){
 				Optimize_Br_Len_Serie(root,root->v[0],root->b[0],tree,tree->data);
 				//Lk(tree);
 				//printf("%d mod quiet\n",tree->mod->quiet);
-				if((tree->mod->s_opt->print) && (!tree->mod->quiet)) Print_Lk(tree,"[Branch lengths     ]");
+				//if((tree->mod->s_opt->print) && (!tree->mod->quiet)) Print_Lk(tree,"[Branch lengths     ]");
 			}
 			Lk_rep(io);
 			Print_Lk_rep(io,"[Branch lengths     ]");

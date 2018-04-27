@@ -25,6 +25,7 @@ the GNU public licence. See http://www.opensource.org for details.
 
 #include "lk.h"
 #include "stats.h"
+#include "io.h"
 extern int senseCodons[64];
 extern int indexSenseCodons[64];
 extern phydbl ecmK07freq[61];
@@ -2131,12 +2132,24 @@ phydbl Lk_Core_UPP(t_edge *b, t_tree *tree, t_node *anc, t_node *d)
 	  For(catg,tree->mod->n_catg) tree->log_site_lk_cat[catg][site] = LOG(tree->site_lk_cat[catg]) - (phydbl)LOG2 * fact_sum_scale;
 	  if(isinf(log_site_lk) || isnan(log_site_lk))
 	    {
+		  int i;
+		  PhyML_Printf("\n. model number = %d",tree->mod->num);
 	      PhyML_Printf("\n. site = %d",site);
 	      PhyML_Printf("\n. invar = %f",tree->data->invar[site]);
-	      PhyML_Printf("\n. scale_down = %d scale_upp = %d %lf",sum_scale_down[0],sum_scale_upp[0],fact_sum_scale);
+	      PhyML_Printf("\n. scale_down = %d scale_upp = %d fact_sum_scale = %lf max_sum_scale = %lf",sum_scale_down[0],sum_scale_upp[0],fact_sum_scale,max_sum_scale);
 	      PhyML_Printf("\n. Lk = %G LOG(Lk) = %f < %G",site_lk,log_site_lk,-BIG);
 	      PhyML_Printf("\n. Err in file %s at line %d\n\n",__FILE__,__LINE__);
 	      PhyML_Printf("\n. %d %d %d\n\n",b->num,d->num,anc->num);
+	      PhyML_Printf("\n. bl b: %lf",b->l);
+	      PhyML_Printf("\n. root id: %s",tree->mod->rootname);
+	      PhyML_Printf("\n. Params: %lf %lf",tree->mod->omega_part[0],tree->mod->kappa);
+	      if(tree->mod->modeltypeOpt==HLP17){
+	      	  For(i,tree->mod->nhotness)PhyML_Printf("h %d %lf\n",i,tree->mod->hotness[i]);
+	      	  For(i,12)PhyML_Printf("pi %d %lf %lf\n",i,tree->mod->base_freq[i],tree->mod->uns_base_freq[i]);
+	      }
+	      PhyML_Printf("\n. PRINTED ERROR TREE TO ERROR_TREE.TXT");
+	      FILE* treeout = Openfile("ERROR_TREE.txt", 1 );
+	      Print_Tree(treeout,tree);
 	      Warn_And_Exit("\n");
 	    }
 	  tree->cur_site_lk[site] = log_site_lk;
