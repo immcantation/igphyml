@@ -1896,9 +1896,9 @@ void Set_Genetic_Code(int gencode);
 #if defined MACOS
 #include <Accelerate/Accelerate.h>
 #else
-#include <atlas/cblas.h> //edited by Ken 12/1/2017
+#include <cblas.h> //edited by Ken 12/1/2017
 /*#include "atlas_aux.h"*/ //cut out by Ken 12/1
-#include <atlas/clapack.h> //edited by Ken 12/1/2017
+#include <clapack.h> //edited by Ken 12/1/2017
 #endif
 #endif
 

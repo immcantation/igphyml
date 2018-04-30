@@ -36,9 +36,8 @@ stats.c stats.h\
 nucle2codon.c nucle2codon.h\
 io.c io.h
 
-igphyml_LDADD =
-igphyml_LDFLAGS =  
-
+igphyml_LDADD = -L/usr/lib64/atlas -L/usr/lib/atlas-base/
+igphyml_LDFLAGS = -I/usr/include/atlas/ 
 
 if MACOS
 igphyml_LDFLAGS += -L $(MACLLVM)
@@ -49,34 +48,38 @@ OPT = BLAS
 if MACOS
 igphyml_LDFLAGS += -framework Accelerate
 else
-igphyml_LDADD += -llapack_atlas -llapack -lblas -latlas
-endif	#MACOS
+igphyml_LDFLAGS += -llapack_atlas -llapack -lblas -latlas
+endif   #MACOS
 else
 if WANT_OMP
 OPT = OMP
 if MACOS
 igphyml_LDFLAGS += -I $(MACOMP)
 else
-igphyml_LDADD += -lgomp
-endif	#MACOS
+igphyml_LDFLAGS += -lgomp
+endif   #MACOS
 else
 if WANT_BLAS_OMP
 OPT = BLAS_OMP
 if MACOS
 igphyml_LDFLAGS += -framework Accelerate -I $(MACOMP)
 else
-igphyml_LDADD += -lgomp -llapack_atlas -llapack -lblas -latlas
-endif	#MACOS
+if FEDORA
+igphyml_LDADD += -lgomp -llapack -lblas -lsatlas
+else
+igphyml_LDADD += -llapack_atlas -llapack -lblas -latlas
+endif
+endif   #MACOS
 else
 OPT=NBLAS
-endif	#WANT_BLAS_OMP
-endif 	#WANT_OMP
-endif	#WANT_BLAS
+endif   #WANT_BLAS_OMP
+endif   #WANT_OMP
+endif   #WANT_BLAS
 
 #added by Ken 16/5/2016
 #Includes directory for motifs tables.
 .c.o:
-	$(COMPILE) -D_GNU_SOURCE -DHTABLE='"$(CURDIR)/motifs/HTABLE_"' -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<
+	$(COMPILE) -D_GNU_SOURCE -DHTABLE='"$(CURDIR)/motifs/HTABLE_"' $(igphyml_LDFLAGS) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<
 	$(am__mv) $(DEPDIR)/$*.Tpo $(DEPDIR)/$*.Po
 	
 #added by Ken 16/5/2016

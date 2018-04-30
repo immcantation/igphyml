@@ -89,6 +89,14 @@ esac
 # -fomit-frame-pointer = Don't keep the frame pointer in a register for functions that don't need one. This avoids the instructions to save, set up and restore frame pointers; it also makes an extra register available in many functions. It also makes debugging impossible on some machines.
 # -funroll-loops       = Unroll loops whose number of iterations can be determined at compile time or upon entry to the loop. -funroll-loops implies -frerun-cse-after-loop. It also turns on complete loop peeling (i.e. complete removal of loops with small constant number of iterations). This option makes code larger, and may or may not make it run faster. 
 
+#AC_DEFINE([SATLAS], [True], [Defined in satlas should be used])
+#AC_CHECK_FILE(
+#  [/usr/lib64/atlas/libsatlas.so],
+#  [SATLAS=True],
+#  [SATLAS=False]
+#  )
+
+
 # Recommended settings
 CFLAGS="-O3 -fomit-frame-pointer -funroll-loops -fopenmp"
 dnl CFLAGS="-O3 -fomit-frame-pointer -funroll-loops -static"
@@ -127,6 +135,9 @@ AM_CONDITIONAL([WANT_TIMES], [test "$times" = yes])
 
 AC_ARG_ENABLE([part],[  --enable-part    Compile part],[part=yes])
 AM_CONDITIONAL([WANT_PART], [test "$part" = yes]) 
+
+AC_ARG_ENABLE([fedora],[  --enable-fedora    Compile Fedora],[fedora=yes])
+AM_CONDITIONAL([FEDORA], [test "$fedora" = yes]) 
 
 AC_CONFIG_FILES([Makefile src/Makefile])
 AC_OUTPUT
