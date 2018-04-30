@@ -383,6 +383,21 @@ phydbl Lk_rep(option *io){
 	phydbl replnL = 0.0;
 	//copy parameters to submodels
 	int i,j;
+	t_tree* tree = io->tree_s[0];
+	if(isnan(io->mod->omega_part[0])){
+		printf("\nPROPOSED PARAMETER SET IS INVALID\n");
+		 printf("\nomega %lf %lf %lf %lf %lf %lf",io->mod->omega_part[0],io->mod-> kappa,tree->c_lnL,io->mod->qmat_part[0][1],io->mod->hotness[0],io->mod->hotness[1]);
+			  int i;
+		#if defined OMP || defined BLAS_OMP
+		#pragma omp critical
+		#endif
+			  printf("\n");
+			  For(i,12)printf("\t%lf",io->mod->uns_base_freq[i]);
+			  printf("\n");
+			  For(i,12)printf("\t%lf",io->mod->base_freq[i]);
+			  printf("\n");
+			  exit(1);
+	}
 	For(i,io->ntrees){
 		model* mod=io->mod_s[i];
 		t_tree* tree=io->tree_s[i];
@@ -423,12 +438,17 @@ io->threads=0;
 		{
 			tree= io->tree_s[io->threads++];
 		}
+		//printf("\nbefore lk: omega %d %lf %lf %lf %lf %lf %lf",tree->both_sides,tree->mod->omega_part[0],tree->mod-> kappa,tree->c_lnL,tree->mod->qmat_part[0][1],tree->mod->hotness[0],tree->mod->hotness[1]);
+
 		Lk(tree);
 	}
 	For(i,io->ntrees){
 		replnL += io->tree_s[i]->c_lnL;
 	}
+	//printf("\nbefore prior: omega %d %lf %lf %lf %lf %lf %lf",tree->both_sides,tree->mod->omega_part[0],tree->mod-> kappa,tree->c_lnL,tree->mod->qmat_part[0][1],tree->mod->hotness[0],tree->mod->hotness[1]);
 	if(io->mod->prior)replnL+=prior(io->mod);
+	//printf("\nafter prior: omega %d %lf %lf %lf %lf %lf %lf",tree->both_sides,tree->mod->omega_part[0],tree->mod-> kappa,tree->c_lnL,tree->mod->qmat_part[0][1],tree->mod->hotness[0],tree->mod->hotness[1]);
+
 	io->replnL=replnL;
 	//printf("%lf\n",io->replnL);
 	//if(io->mod->optDebug)printf("\nreplikelihood %lf",replnL);
@@ -456,16 +476,20 @@ phydbl Lk(t_tree *tree)
   }
   
   n_patterns = tree->n_pattern;
+	//printf("\nbefore set params: omega %d %lf %lf %lf %lf %lf %lf",tree->both_sides,tree->mod->omega_part[0],tree->mod-> kappa,tree->c_lnL,tree->mod->qmat_part[0][1],tree->mod->hotness[0],tree->mod->hotness[1]);
   Set_Model_Parameters(tree->mod);
   #ifdef TIMES
   if((tree->rates) && (tree->rates->bl_from_rt)) RATES_Update_Cur_Bl(tree);
   if(tree->bl_from_node_stamps) TIMES_Bl_From_T(tree);
   #endif
- 
+
+ //printf("\nbefore pmat: omega %d %lf %lf %lf %lf %lf %lf",tree->both_sides,tree->mod->omega_part[0],tree->mod-> kappa,tree->c_lnL,tree->mod->qmat_part[0][1],tree->mod->hotness[0],tree->mod->hotness[1]);
+
   #if defined OMP || defined BLAS_OMP
   #pragma omp parallel for if(tree->mod->datatype==CODON && !tree->mod->splitByTree)
   #endif
   For(br,n_edges) Update_PMat_At_Given_Edge(tree->t_edges[br],tree);
+	//printf("\nafter pmat: omega %d %lf %lf %lf %lf %lf %lf",tree->both_sides,tree->mod->omega_part[0],tree->mod-> kappa,tree->c_lnL,tree->mod->qmat_part[0][1],tree->mod->hotness[0],tree->mod->hotness[1]);
 
  // For(br,2*tree->n_otu-3) printf("%lf\n",tree->t_edges[br]->l);
   //added and modified by Ken to start likelihood calculation at specified node
@@ -488,6 +512,7 @@ phydbl Lk(t_tree *tree)
 	tree->c_lnL             = .0;
 	tree->sum_min_sum_scale = .0;
 
+	//printf("\nbefore: omega %d %lf %lf %lf %lf %lf %lf",tree->both_sides,tree->mod->omega_part[0],tree->mod-> kappa,tree->c_lnL,tree->mod->qmat_part[0][1],tree->mod->hotness[0],tree->mod->hotness[1]);
   For(tree->curr_site,n_patterns){
 	  if(tree->data->wght[tree->curr_site] > SMALL && tree->mod->whichrealmodel==HLP17) Lk_Core_UPP(tree->noeud[startnode]->b[0],tree,tree->noeud[startnode],tree->noeud[startnode]->b[0]->des_node);
 	  else if(tree->data->wght[tree->curr_site] > SMALL) Lk_Core(tree->noeud[startnode]->b[0],tree);
@@ -502,7 +527,11 @@ phydbl Lk(t_tree *tree)
 #if defined OMP || defined BLAS_OMP
 #pragma omp critical
 #endif
-	  For(i,12)printf(" %lf",tree->mod->uns_base_freq[i]);
+	  printf("\n");
+	  For(i,12)printf("\t%lf",tree->mod->uns_base_freq[i]);
+	  printf("\n");
+	  For(i,12)printf("\t%lf",tree->mod->base_freq[i]);
+	  printf("\n");
   }
 
   return tree->c_lnL;
@@ -1915,6 +1944,8 @@ phydbl Lk_At_Given_Edge(t_edge *b_fcus, t_tree *tree)
 
 phydbl Lk_Core_UPP(t_edge *b, t_tree *tree, t_node *anc, t_node *d)
 {
+	  //printf("\nomega %d %lf %lf %lf %lf %lf %lf",tree->both_sides,tree->mod->omega_part[0],tree->mod-> kappa,tree->c_lnL,tree->mod->qmat_part[0][1],tree->mod->hotness[0],tree->mod->hotness[1]);
+
 	phydbl log_site_lk;
 	  phydbl site_lk_cat, site_lk;
 	  int fact_sum_scale;
@@ -2012,6 +2043,7 @@ phydbl Lk_Core_UPP(t_edge *b, t_tree *tree, t_node *anc, t_node *d)
 	                  For(l,ns){
 	                    	phydbl val = b->bPmat_part[tree->mod->partIndex[site]][catg*dim3+k*dim2+l]*p_lk[site*dim1+catg*dim2+l]*b->upp[site][k];//Modified by Ken 17/8/2016
 	                      sum+=val;
+	                      //printf("%lf\n",b->bPmat_part[tree->mod->partIndex[site]][catg*dim3+k*dim2+l]);
 	                    }
 	                  site_lk_cat+=sum;
 	                }
@@ -2039,12 +2071,13 @@ phydbl Lk_Core_UPP(t_edge *b, t_tree *tree, t_node *anc, t_node *d)
 	    	  PhyML_Printf("\n. Err in file %s at line %d\n\n",__FILE__,__LINE__);
 	    	  Warn_And_Exit("\n");
 	      }
+	      //printf("%lf\t%lf\n",tree->site_lk_cat[catg],sum);
 	      tmp = sum + (logbig - LOG(tree->site_lk_cat[catg]))/(phydbl)LOG2;
 	      if(tmp < max_sum_scale) max_sum_scale = tmp; /* min of the maxs */
 	    }
 
 	  fact_sum_scale = (int)(max_sum_scale / 2);
-
+	  //printf("1: %d\t%lf\n",fact_sum_scale,max_sum_scale);
 	  // Apply scaling factors
 	  For(catg,tree->mod->n_catg){
 	      exponent = -(sum_scale_down_cat[catg]+sum_scale_upp_cat[catg])+fact_sum_scale;
@@ -2098,13 +2131,13 @@ phydbl Lk_Core_UPP(t_edge *b, t_tree *tree, t_node *anc, t_node *d)
 	    else For(catg,tree->mod->n_catg) site_lk += tree->site_lk_cat[catg]*tree->mod->prob_omegas[catg];
 	  }
 
-	  /* The substitution model does include invariable sites */
-	   if(tree->mod->invar)
+	  // The substitution model does include invariable sites
+	   /*if(tree->mod->invar)
 	     {
-	       /* The site is invariant */
+	       // The site is invariant
 	       if(tree->data->invar[site] > -0.5)
 	         {
-	 	  /* Multiply P(D|r=0) by 2^(fact_sum_scale) */
+	 	  // Multiply P(D|r=0) by 2^(fact_sum_scale)
 
 	 	  inv_site_lk = tree->mod->pi[tree->data->invar[site]];
 	 	  exponent = fact_sum_scale;
@@ -2117,25 +2150,25 @@ phydbl Lk_Core_UPP(t_edge *b, t_tree *tree, t_node *anc, t_node *d)
 	 	    }
 	 	  while(exponent != 0);
 	 	  inv_site_lk *= tree->mod->pinvar;
-	 	  /* Update the value of site_lk */
+	 	  // Update the value of site_lk
 	 	  site_lk *= (1. - tree->mod->pinvar);
 	 	  site_lk += inv_site_lk;
 	         }
 	       else
 	         {
-	           /* Same formula as above with P(D | subs, rate = 0) = 0 */
+	           // Same formula as above with P(D | subs, rate = 0) = 0
 	 	  site_lk *= (1. - tree->mod->pinvar);
 	         }
-	     }
-
+	     }*/
+	 //printf("2: %d\t%lf\n",fact_sum_scale,max_sum_scale);
 	  log_site_lk = LOG(site_lk) - (phydbl)LOG2 * fact_sum_scale;
 	  For(catg,tree->mod->n_catg) tree->log_site_lk_cat[catg][site] = LOG(tree->site_lk_cat[catg]) - (phydbl)LOG2 * fact_sum_scale;
-	  if(isinf(log_site_lk) || isnan(log_site_lk))
-	    {
+	  if(isinf(log_site_lk) || isnan(log_site_lk)){
 		  int i;
+		  PhyML_Printf("\n. site lhood = %lf",tree->site_lk_cat[0]);
 		  PhyML_Printf("\n. model number = %d",tree->mod->num);
 	      PhyML_Printf("\n. site = %d",site);
-	      PhyML_Printf("\n. invar = %f",tree->data->invar[site]);
+	      //PhyML_Printf("\n. invar = %f",tree->data->invar[site]);
 	      PhyML_Printf("\n. scale_down = %d scale_upp = %d fact_sum_scale = %lf max_sum_scale = %lf",sum_scale_down[0],sum_scale_upp[0],fact_sum_scale,max_sum_scale);
 	      PhyML_Printf("\n. Lk = %G LOG(Lk) = %f < %G",site_lk,log_site_lk,-BIG);
 	      PhyML_Printf("\n. Err in file %s at line %d\n\n",__FILE__,__LINE__);
