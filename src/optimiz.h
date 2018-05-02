@@ -94,7 +94,7 @@ int       Pinvar_Brak(phydbl *ax, phydbl *bx, phydbl *cx,
 		      t_tree *tree);
 
 void Optimiz_Submodel_Params(option* io,int verbose); //Added by Ken 1/25/2018
-void Optimiz_All_Free_Param(option* io, int verbose);
+void Optimiz_All_Free_Param(option* io, int verbose, int recurse);
 void      Optimiz_RRparam_GTR(t_tree *tree, int num_param);
 phydbl    RRparam_GTR_Golden(phydbl ax, phydbl bx, phydbl cx, phydbl tol, 
 		   	     phydbl *xmin, t_tree *tree, calign *cdata, phydbl *param, int n_iter_max);

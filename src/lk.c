@@ -396,7 +396,8 @@ phydbl Lk_rep(option *io){
 			  printf("\n");
 			  For(i,12)printf("\t%lf",io->mod->base_freq[i]);
 			  printf("\n");
-			  exit(1);
+			  if(NAN != NAN)printf("NAN NOT EQUAL");
+			  return NAN;
 	}
 	For(i,io->ntrees){
 		model* mod=io->mod_s[i];

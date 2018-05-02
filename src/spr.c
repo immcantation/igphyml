@@ -730,7 +730,7 @@ void Speed_Spr_Loop(option *io){
 	  Print_Trace(tree);
   }*/
 
-  Optimiz_All_Free_Param(io,(io->mod->quiet)?(0):(io->mod->s_opt->print));
+  Optimiz_All_Free_Param(io,(io->mod->quiet)?(0):(io->mod->s_opt->print),0);
   For(i,io->ntrees)io->tree_s[i]->best_lnL = io->tree_s[i]->c_lnL; //changed by Ken
 
   /*if(tree->mod->print_trace){
@@ -808,7 +808,7 @@ void Speed_Spr_Loop(option *io){
       io->replnL=0.0;
       For(i,io->ntrees)io->replnL+=io->tree_s[i]->c_lnL; //CHANGE BACK - JUST USED FOR DEBUGGING
       if(improvements){ //if there were improvements after the loop, optimize parameters
-    	  Optimiz_All_Free_Param(io,(io->mod->quiet)?(0):(io->mod->s_opt->print));
+    	  Optimiz_All_Free_Param(io,(io->mod->quiet)?(0):(io->mod->s_opt->print),0);
       }
       io->replnL=0.0;
       For(i,io->ntrees)io->replnL+=io->tree_s[i]->c_lnL; //CHANGE BACK - JUST USED FOR DEBUGGING
@@ -845,7 +845,7 @@ void Speed_Spr_Loop(option *io){
       io->both_sides=1;
       io->replnL=0.0;
       For(i,io->ntrees)io->replnL+=io->tree_s[i]->c_lnL; //CHANGE BACK - JUST USED FOR DEBUGGING
-      Optimiz_All_Free_Param(io,(io->mod->quiet)?(0):(io->mod->s_opt->print));
+      Optimiz_All_Free_Param(io,(io->mod->quiet)?(0):(io->mod->s_opt->print),0);
       io->replnL=0.0;
       For(i,io->ntrees)io->replnL+=io->tree_s[i]->c_lnL; //CHANGE BACK - JUST USED FOR DEBUGGING
     }while(FABS(lk_old - io->replnL) > io->mod->s_opt->min_diff_lk_global);

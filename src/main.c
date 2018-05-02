@@ -385,7 +385,14 @@ int main(int argc, char **argv){
   Freq_to_UnsFreq(io->mod->base_freq+8, io->mod->uns_base_freq+8, 4, 1);
   if(io->mod->optDebug)For(j,12){printf("%lf\t%lf\t%lf\t%lf\n",io->mod->baseCounts[j],io->mod->base_freq[j],io->mod->uns_base_freq[j],io->mod_s[0]->base_freq[j]);}
 
-
+  int nparams=0;
+    int nmodparams=2+io->mod->nomega_part+io->mod->nhotness+12;
+    nparams += nmodparams*(io->ntrees+1);
+    For(j,io->ntrees){
+  	  nparams += 2*io->tree_s[j]->n_otu-3;
+    }
+  if(io->mod->optDebug)printf("\nNeed to store %d parameters",nparams);
+    io->paramStore=(phydbl*)mCalloc(nparams,sizeof(phydbl));
 
   io->t_beg=omp_get_wtime();
   if(io->mod->optDebug)printf("about to do stuff\n");
@@ -455,15 +462,6 @@ int main(int argc, char **argv){
 
 
   //Estimate confidence intervals using profile likelihood curves
-  int nparams=0;
-  int nmodparams=2+io->mod->nomega_part+io->mod->nhotness+12;
-  nparams += nmodparams*(io->ntrees+1);
-  For(j,io->ntrees){
-	  nparams += 2*io->tree_s[j]->n_otu-3;
-  }
-  if(io->mod->optDebug)printf("\nNeed to store %d parameters",nparams);
-  io->paramStore=(phydbl*)mCalloc(nparams,sizeof(phydbl));
-
   if(io->CIest>0){
   	char* CIf = (char*)malloc(T_MAX_FILE*sizeof(char));
   	strcpy(CIf,io->mod->in_align_file);

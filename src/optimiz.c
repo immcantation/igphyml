@@ -397,7 +397,7 @@ void Round_Optimize(option *io, int n_round_max){
       	if(!each){
 	  		each = 1;
 	  		if(io->mod->optDebug)printf("optimizing all free params\n");
-	  		Optimiz_All_Free_Param(io,(io->mod->quiet)?(0):(io->mod->s_opt->print));
+	  		Optimiz_All_Free_Param(io,(io->mod->quiet)?(0):(io->mod->s_opt->print),0);
 		}
 		if(io->mod->s_opt->opt_bl){ //do branch length optimization on all subtrees - should do in parallel!
 #if defined OMP || defined BLAS_OMP
@@ -442,7 +442,7 @@ void Round_Optimize(option *io, int n_round_max){
 		}
 		if(!each){
 	  		each = 1;
-	  		Optimiz_All_Free_Param(io,(io->mod->quiet)?(0):(io->mod->s_opt->print));
+	  		Optimiz_All_Free_Param(io,(io->mod->quiet)?(0):(io->mod->s_opt->print),0);
 		}
       }
       Lk_rep(io);
@@ -462,7 +462,7 @@ void Round_Optimize(option *io, int n_round_max){
       n_round++;
       each--;
    }
-  Optimiz_All_Free_Param(io,(io->mod->quiet)?(0):(io->mod->s_opt->print));
+  Optimiz_All_Free_Param(io,(io->mod->quiet)?(0):(io->mod->s_opt->print),0);
 }
 
 /*********************************************************/
@@ -699,7 +699,7 @@ void Optimiz_Submodel_Params(option* io,int verbose){
 #endif*/
 
 //Modified by Ken to update h
-void Optimiz_All_Free_Param(option* io, int verbose){
+void Optimiz_All_Free_Param(option* io, int verbose, int recurse){
 
   if(io->mod->datatype==CODON){ //!< Added by Marcelo.
     char s[100],r[100];
@@ -892,10 +892,26 @@ void Optimiz_All_Free_Param(option* io, int verbose){
       intf=fx=io->replnL;
       
     if(numParams>0){
+    	storeParams(io);
 		space = (phydbl *) mCalloc((20+5*numParams)*numParams, sizeof(phydbl));
 		if(io->mod->optDebug)printf("\ngemin in: %lf, numparams: %d",io->gemin,numParams);
-		BFGS_from_CODEML(&fx, io, x2min, x2minbound, space, io->gemin, numParams);
+		int result = BFGS_from_CODEML(&fx, io, x2min, x2minbound, space, io->gemin, numParams);
+		if(io->mod->optDebug)printf("\n\nRESULT: %d\n\n",result);
 		if(io->mod->optDebug)printf("\ngemin out: %lf",io->gemin);
+		//ADD recursive function to save parameter estimates if they fail
+		if(isnan(io->mod->omega_part[0])){
+			restoreParams(io);
+			For(i,io->mod->nomega_part){
+				phydbl r = (rand()*1.0)/RAND_MAX;
+				io->mod->omega_part[i]+=r;
+			}
+			printf("\nOptimization failed - jiggling omega and trying again %lf\n",io->mod->omega_part[0]);
+			if(recurse > 5){
+				printf("\\n\n\nCouldn't get BFGS to work - sorry :-(\n\n\n");
+				exit(EXIT_FAILURE);
+			}
+			Optimiz_All_Free_Param(io, verbose,++recurse);
+		}
 
 		newf=io->replnL;
 		io->gemin/=2;  if(FABS(newf-intf)<1) io->gemin/=2;
@@ -1985,6 +2001,7 @@ int BFGS_from_CODEML (phydbl *f, option* io, phydbl *x, phydbl xb[120][2], phydb
       ix[nfree++]=i;
    }
    f0=*f=LK_BFGS_from_CODEML(io,x,n);
+   if(f0 != f0)return NAN;
 
    xtoy(x,x0,n);
    io->SIZEp=99;
@@ -2017,6 +2034,7 @@ int BFGS_from_CODEML (phydbl *f, option* io, phydbl *x, phydbl xb[120][2], phydb
       h = max2(h,1e-5);   h = min2(h,am/5);
       *f = f0;
       alpha = LineSearch2(io,f,x0,p,h,am, min2(1e-3,e), tv,n); /* n or nfree? */
+      if(alpha != alpha)return NAN;
 
       if (alpha<=0) {
          if (fail) {
@@ -2106,6 +2124,7 @@ for(i=0; i<n; i++) fprintf(frst,"%9.2f", g[i]); FPN(frst);
 
    /* try to remove this after updating LineSearch2() */
    *f=LK_BFGS_from_CODEML(io,x,n);
+   if(*f != *f)return NAN;
 	//printf("optimiz global variables %lf\t%d\t%d\t%d\t%lf\t%lf\n",io->SIZEp,io->noisy,io->Iround,io->NFunCall,io->gemin,io->Small_Diff);
 
    if (io->Iround==maxround) {
@@ -2139,12 +2158,14 @@ int gradientB (int n, phydbl x[], phydbl f0, phydbl g[],
          For (j, n)  x0[j]=x1[j]=x[j];
          eh=pow(eh,.67);  x0[i]-=eh; x1[i]+=eh;
          g[i]=(LK_BFGS_from_CODEML(io,x1,n)-LK_BFGS_from_CODEML(io,x0,n))/(eh*2.0);
+         if(g[i] != g[i])return NAN;
       }
-      else  {                         /* forward or backward */
+      else  {/* forward or backward */
          For (j, n)  x1[j]=x[j];
          if (xmark[i]) eh*=-xmark[i];
          x1[i] += eh;
          g[i]=(LK_BFGS_from_CODEML(io,x1,n)-f0)/eh;
+         if(g[i] != g[i])return NAN;
       }
    }
    return(0);
@@ -2186,20 +2207,20 @@ phydbl LineSearch2 (option* io, phydbl *f, phydbl x0[],
 /* look for bracket (a1, a2, a3) with function values (f1, f2, f3)
    step length step given, and only in the direction a>=0
 */
-
   
    if (step<=0 || limit<small || step>=limit) {
-     
       return (0);
    }
    a0=a1=0; f1=f0=*f;
    a2=a0+step; f2=fun_LineSearch(a2, io,x0,p,x,n);
+   if(a2 != a2)return NAN;
    if (f2>f1) {  /* reduce step length so the algorithm is decreasing */
       for (; ;) {
          step/=factor;
          if (step<small) return (0);
          a3=a2;    f3=f2;
          a2=a0+step;  f2=fun_LineSearch(a2, io,x0,p,x,n);
+         if(f2 != f2)return NAN;
          if (f2<=f1) break;
         
       }
@@ -2209,6 +2230,7 @@ phydbl LineSearch2 (option* io, phydbl *f, phydbl x0[],
          step*=factor;
          if (step>limit) step=limit;
          a3=a0+step;  f3=fun_LineSearch(a3, io,x0,p,x,n);
+         if(f3 != f3)return NAN;
          if (f3>=f2) break;
 
         
@@ -2237,6 +2259,7 @@ phydbl LineSearch2 (option* io, phydbl *f, phydbl x0[],
             status='C';
       }
       f4 = fun_LineSearch(a4, io,x0,p,x,n);
+      if(f4 != f4)return NAN;
       
       if (fabs(f2-f4)<e*(1+fabs(f2))) {
          
@@ -2244,7 +2267,6 @@ phydbl LineSearch2 (option* io, phydbl *f, phydbl x0[],
       }
 
       /* possible multiple local optima during line search */
-      
       if (a4<=a2) {    /* fig 2.2.10 */
          if (a2-a4>smallgapa*(a2-a1)) {
             if (f4<=f2) { a3=a2; a2=a4;  f3=f2; f2=f4; }
@@ -2253,15 +2275,18 @@ phydbl LineSearch2 (option* io, phydbl *f, phydbl x0[],
          else {
             if (f4>f2) {
                a5=(a2+a3)/2; f5=fun_LineSearch(a5, io,x0,p,x,n);
+               if(f5 != f5)return NAN;
                if (f5>f2) { a1=a4; a3=a5;  f1=f4; f3=f5; }
                else       { a1=a2; a2=a5;  f1=f2; f2=f5; }
             }
             else {
                a5=(a1+a4)/2; f5=fun_LineSearch(a5, io,x0,p,x,n);
+               if(f5 != f5)return NAN;
                if (f5>=f4)
                   { a3=a2; a2=a4; a1=a5;  f3=f2; f2=f4; f1=f5; }
                else {
                   a6=(a1+a5)/2; f6=fun_LineSearch(a6, io,x0,p,x,n);
+                  if(f6 != f6)return NAN;
                   if (f6>f5)
                        { a1=a6; a2=a5; a3=a4;  f1=f6; f2=f5; f3=f4; }
                   else { a2=a6; a3=a5; f2=f6; f3=f5; }
@@ -2277,15 +2302,18 @@ phydbl LineSearch2 (option* io, phydbl *f, phydbl x0[],
          else {
             if (f4>f2) {
                a5=(a1+a2)/2; f5=fun_LineSearch(a5, io,x0,p,x,n);
+               if(f5 != f5)return NAN;
                if (f5>f2) { a1=a5; a3=a4;  f1=f5; f3=f4; }
                else       { a3=a2; a2=a5;  f3=f2; f2=f5; }
             }
             else {
                a5=(a3+a4)/2; f5=fun_LineSearch(a5, io,x0,p,x,n);
+               if(f5 != f5)return NAN;
                if (f5>=f4)
                   { a1=a2; a2=a4; a3=a5;  f1=f2; f2=f4; f3=f5; }
                else {
                   a6=(a3+a5)/2; f6=fun_LineSearch(a6, io,x0,p,x,n);
+                  if(f6 != f6)return NAN;
                   if (f6>f5)
                       { a1=a4; a2=a5; a3=a6;  f1=f4; f2=f5; f3=f6; }
                   else { a1=a5; a2=a6;  f1=f5; f2=f6; }

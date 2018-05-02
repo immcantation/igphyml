@@ -45,7 +45,7 @@ void Simu_Loop(option* io){
   
   //added by Ken 8/3/2017
   /* Optimise parameters and branch lengths */
-  Optimiz_All_Free_Param(io,(io->mod->quiet)?(0):(io->mod->s_opt->print));
+  Optimiz_All_Free_Param(io,(io->mod->quiet)?(0):(io->mod->s_opt->print),0);
   io->both_sides=1;
   	  //optimze branch lengths initially
 #if defined OMP || defined BLAS_OMP
@@ -82,7 +82,7 @@ void Simu_Loop(option* io){
   int first=0;
   do{
 	  lk_old = io->replnL;
-	  if(first != 0)Optimiz_All_Free_Param(io,(io->mod->quiet)?(0):(io->mod->s_opt->print));
+	  if(first != 0)Optimiz_All_Free_Param(io,(io->mod->quiet)?(0):(io->mod->s_opt->print),0);
 	  first++;
 	  io->threads=0;
 #if defined OMP || defined BLAS_OMP

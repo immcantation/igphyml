@@ -69,6 +69,8 @@ static inline int isinf_f  (float       x) { return isnan (x - x); }
 static inline int isinf_d  (double      x) { return isnan (x - x); }
 static inline int isinf_ld (long double x) { return isnan (x - x); }
 #endif
+
+#define NANLHOOD DBL_MAX
      
 #define N_MAX_NEX_COM   20
 #define T_MAX_NEX_COM   100
