@@ -129,7 +129,7 @@ struct option longopts[] =
 	{"outrep",		  required_argument,NULL,167},  //!<Added by Ken
 	{"cbmat",		  no_argument,NULL,168},  //!<Added by Ken
 	{"prior",		  no_argument,NULL,169},  //!<Added by Ken
-	{"mindiff",		  no_argument,NULL,170},  //!<Added by Ken
+	{"mindiff",		  required_argument,NULL,170},  //!<Added by Ken
     {0,0,0,0}
 };
 
@@ -2667,6 +2667,8 @@ int mainOptionSwitch(int opt, char * optarg, option * io)
         }
         case 170:{
         		io->min_diff_lk_global=atof(optarg);
+        		printf("new mindiff %lf\n",io->min_diff_lk_global);
+        		break;
         }
 
 
