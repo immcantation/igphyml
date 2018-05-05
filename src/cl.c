@@ -70,6 +70,7 @@ void Read_Command_Line( option *io, int argc, char **argv )
 	io->outrepspec=0;
 	io->CIest=0;
 	io->mod->prior=0;
+	io->min_diff_lk_global=1.E-3;
 
 	//new defaults, mostly for GY94 model
 	io->omegaOpt=DM0;

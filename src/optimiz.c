@@ -903,7 +903,7 @@ void Optimiz_All_Free_Param(option* io, int verbose, int recurse){
 			restoreParams(io);
 			For(i,io->mod->nomega_part){
 				phydbl r = (rand()*1.0)/RAND_MAX;
-				io->mod->omega_part[i]+=r;
+				io->mod->omega_part[i]+=r*0.5;
 			}
 			printf("\nOptimization failed - jiggling omega and trying again %lf\n",io->mod->omega_part[0]);
 			if(recurse > 5){

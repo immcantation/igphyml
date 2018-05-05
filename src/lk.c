@@ -385,8 +385,8 @@ phydbl Lk_rep(option *io){
 	int i,j;
 	t_tree* tree = io->tree_s[0];
 	if(isnan(io->mod->omega_part[0])){
-		printf("\nPROPOSED PARAMETER SET IS INVALID\n");
-		 printf("\nomega %lf %lf %lf %lf %lf %lf",io->mod->omega_part[0],io->mod-> kappa,tree->c_lnL,io->mod->qmat_part[0][1],io->mod->hotness[0],io->mod->hotness[1]);
+		printf("\nProposed parameter set is NAN..\n");
+		printf("\nomega %lf %lf %lf %lf %lf %lf",io->mod->omega_part[0],io->mod-> kappa,tree->c_lnL,io->mod->qmat_part[0][1],io->mod->hotness[0],io->mod->hotness[1]);
 			  int i;
 		#if defined OMP || defined BLAS_OMP
 		#pragma omp critical
@@ -396,7 +396,6 @@ phydbl Lk_rep(option *io){
 			  printf("\n");
 			  For(i,12)printf("\t%lf",io->mod->base_freq[i]);
 			  printf("\n");
-			  if(NAN != NAN)printf("NAN NOT EQUAL");
 			  return NAN;
 	}
 	For(i,io->ntrees){
