@@ -337,27 +337,32 @@ phydbl dbeta(phydbl x,phydbl alpha, phydbl beta){
 // Return prior probability of parameter set
 phydbl prior(model* mod){
 	int i;
-	phydbl p=log(Dgamma(mod->kappa,2.0,1.09));
-	p+=log(Dgamma(mod->omega_part[0],5,0.0978));
-	p+=log(Dgamma(mod->hotness[0]+1,7.0,0.58));
-	p+=log(Dgamma(mod->hotness[1]+1,7.0,0.91));
-	p+=log(Dgamma(mod->hotness[2]+1,7.0,0.58));
+	phydbl p=log(Dgamma(mod->kappa,2.0,0.4467));
+	if(mod->nomega_part == 1){
+		p+=log(Dgamma(mod->omega_part[0],5,0.0978));
+	}else{
+		p+=log(Dgamma(mod->omega_part[0],5,0.0837));
+		p+=log(Dgamma(mod->omega_part[1],5,0.1375));
+	}
+	p+=log(Dgamma(mod->hotness[0]+1,7.0,0.59));
+	p+=log(Dgamma(mod->hotness[1]+1,7.0,0.98));
+	p+=log(Dgamma(mod->hotness[2]+1,7.0,0.61));
 	p+=log(Dgamma(mod->hotness[3]+1,7.0,0.29));
-	p+=log(Dgamma(mod->hotness[4]+1,2.0,0.17));
-	p+=log(Dgamma(mod->hotness[5]+1,2.0,0.18));
+	p+=log(Dgamma(mod->hotness[4]+1,2.0,0.16));
+	p+=log(Dgamma(mod->hotness[5]+1,2.0,0.17));
 	phydbl betas[12];
-	betas[0]=19.49;
-	betas[1]=19.60;
-	betas[2]=10.92;
-	betas[3]=12.94;
-	betas[4]=13.27;
-	betas[5]=16.58;
-	betas[6]=13.71;
-	betas[7]=16.96;
-	betas[8]=14.34;
-	betas[9]=12.58;
-	betas[10]=17.88;
-	betas[11]=15.95;
+	betas[0] =19.60;
+	betas[1] =19.94;
+	betas[2] =10.99;
+	betas[3] =12.63;
+	betas[4] =13.31;
+	betas[5] =16.57;
+	betas[6] =13.70;
+	betas[7] =16.95;
+	betas[8] =14.75;
+	betas[9] =12.55;
+	betas[10]=18.00;
+	betas[11]=15.44;
 	//phydbl freqs[12];
 	Freq_to_UnsFreq(mod->base_freq,   mod->uns_base_freq,   4, 0);
 	Freq_to_UnsFreq(mod->base_freq+4, mod->uns_base_freq+4, 4, 0);

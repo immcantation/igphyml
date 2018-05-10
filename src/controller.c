@@ -517,9 +517,9 @@ void setUpHLP17(option* io, model *mod){
    		if(mod->nomega_part>1)cdr=1;
    		For(c,nsite){
    			int s =mod->imgt[c];
-   			if(s >= 26 && s < 38)mod->partIndex[c]=cdr;
-   			else if(s >= 55 && s < 65)mod->partIndex[c]=cdr;
-   			else if(s >= 105 && s < 116)mod->partIndex[c]=cdr;
+   			if(s >= 26 && s <= 38)mod->partIndex[c]=cdr;
+   			else if(s >= 56 && s <= 65)mod->partIndex[c]=cdr;
+   			else if(s >= 105 && s <= 118)mod->partIndex[c]=cdr;
    			else mod->partIndex[c]=0;
    		}
    	}
