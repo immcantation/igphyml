@@ -334,22 +334,30 @@ phydbl dbeta(phydbl x,phydbl alpha, phydbl beta){
 }
 
 /***********************************************************/
+// return probability under normal
+phydbl dnorm(phydbl x, phydbl mu, phydbl sd){
+	phydbl fact = 1/(2.506628*sd);
+	return fact * exp(-1*(x-mu)*(x-mu)/(2*sd*sd));
+}
+
+
+/***********************************************************/
 // Return prior probability of parameter set
 phydbl prior(model* mod){
 	int i;
-	phydbl p=log(Dgamma(mod->kappa,2.0,0.4467));
+	phydbl p=log(dnorm(mod->kappa,2.23,2));
 	if(mod->nomega_part == 1){
-		p+=log(Dgamma(mod->omega_part[0],5,0.0978));
+		p+=log(dnorm(mod->omega_part[0],0.5,0.4));
 	}else{
-		p+=log(Dgamma(mod->omega_part[0],5,0.0837));
-		p+=log(Dgamma(mod->omega_part[1],5,0.1375));
+		p+=log(dnorm(mod->omega_part[0],0.42,0.4));
+		p+=log(dnorm(mod->omega_part[1],0.69,0.4));
 	}
-	p+=log(Dgamma(mod->hotness[0]+1,7.0,0.59));
-	p+=log(Dgamma(mod->hotness[1]+1,7.0,0.98));
-	p+=log(Dgamma(mod->hotness[2]+1,7.0,0.61));
-	p+=log(Dgamma(mod->hotness[3]+1,7.0,0.29));
-	p+=log(Dgamma(mod->hotness[4]+1,2.0,0.16));
-	p+=log(Dgamma(mod->hotness[5]+1,2.0,0.17));
+	p+=log(dnorm(mod->hotness[0], 3.11,3));
+	p+=log(dnorm(mod->hotness[1], 5.85,3));
+	p+=log(dnorm(mod->hotness[2], 3.24,3));
+	p+=log(dnorm(mod->hotness[3], 1.05,3));
+	p+=log(dnorm(mod->hotness[4],-0.68,1));
+	p+=log(dnorm(mod->hotness[5],-0.65,1));
 	phydbl betas[12];
 	betas[0] =19.60;
 	betas[1] =19.94;
@@ -370,6 +378,11 @@ phydbl prior(model* mod){
 	For(i,12){
 		p+= log(dbeta(mod->base_freq[i],5,betas[i]));
 	}
+	/*int j;
+	For(j,10){
+		printf("%d\t%lf\n",j,dnorm(j/2.0,2,0.5));
+	}
+	exit(1);*/
 	//printf("kappa: %lf\t%lf\n",mod->kappa,p);
 	return p;
 }
