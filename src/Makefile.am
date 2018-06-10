@@ -36,21 +36,21 @@ stats.c stats.h\
 nucle2codon.c nucle2codon.h\
 io.c io.h
 
-igphyml_LDADD = -L/usr/lib64/atlas -L/usr/lib/atlas-base/
+igphyml_LDADD+= -L/usr/lib64/atlas -L/usr/lib/atlas-base/
 igphyml_LDFLAGS = -I/usr/include/atlas/ 
 
 if MACOS
 igphyml_LDFLAGS += -L $(MACLLVM)
 endif
 
-if WANT_BLAS
-OPT = BLAS
-if MACOS
-igphyml_LDFLAGS += -framework Accelerate
-else
-igphyml_LDFLAGS += -llapack_atlas -llapack -lblas -latlas
-endif   #MACOS
-else
+#if WANT_BLAS
+#OPT = BLAS
+#if MACOS
+#igphyml_LDFLAGS += -framework Accelerate
+#else
+##igphyml_LDFLAGS += -llapack_atlas -llapack -lblas -latlas
+#endif   #MACOS
+#else
 if WANT_OMP
 OPT = OMP
 if MACOS
@@ -65,16 +65,16 @@ if MACOS
 igphyml_LDFLAGS += -framework Accelerate -I $(MACOMP)
 else
 if FEDORA
-igphyml_LDADD += -lgomp -llapack -lblas -lsatlas
+#igphyml_LDADD += -lgomp -llapack -lblas -lsatlas
 else
-igphyml_LDADD += -llapack_atlas -llapack -lblas -latlas
+#igphyml_LDADD += -llapack_atlas -llapack -lblas -latlas
 endif
 endif   #MACOS
 else
 OPT=NBLAS
 endif   #WANT_BLAS_OMP
 endif   #WANT_OMP
-endif   #WANT_BLAS
+#endif   #WANT_BLAS
 
 #added by Ken 16/5/2016
 #Includes directory for motifs tables.
@@ -84,4 +84,4 @@ endif   #WANT_BLAS
 	
 #added by Ken 16/5/2016
 igphyml_LINK = $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(igphyml_LDFLAGS) \
-	$(LDFLAGS) -o igphyml
+	$(LDFLAGS) -o igphyml 

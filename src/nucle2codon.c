@@ -24,7 +24,7 @@ the GNU public licence. See http://www.opensource.org for details.
 */
 
 #include "nucle2codon.h"
-#include <utilities.h>
+#include "utilities.h"
 
 extern int     stopCodons[64];
 extern int   senseCodons[64];

@@ -176,7 +176,6 @@ phydbl binarySearchCI(phydbl* param,option* io,phydbl tol,phydbl delta,phydbl lo
 
 	//return midpoint between the two intervals
 	if(io->mod->optDebug)printf("\n%lf %lf %lf %lf %lf %lf",target,nl,*param,b1,b2,fabs(b1-b2));
-
 	//reset params
 	//*param=mle;
 	restoreParams(io);
