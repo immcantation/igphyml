@@ -107,8 +107,7 @@ then
   CFLAGS=-latlas
   AM_CFLAGS=''
   AC_MSG_CHECKING([whether CC supports -latlas])
-  AC_LINK_IFELSE([AC_LANG_SOURCE([[#include <cblas.h>
-   int main() { return 0; }]])],
+  AC_LINK_IFELSE([AC_LANG_SOURCE([[int main() { return 0; }]])],
     [AC_MSG_RESULT([yes])]
     [AM_CFLAGS=' -latlas'],
     [AC_MSG_RESULT([no])]) 
@@ -119,8 +118,7 @@ then
   CFLAGS=-lsatlas
   AM_CFLAGS=''
   AC_MSG_CHECKING([whether CC supports -lsatlas])
-  AC_LINK_IFELSE([AC_LANG_SOURCE([[#include <cblas.h>
-  int main() { return 0; }]])],
+  AC_LINK_IFELSE([AC_LANG_SOURCE([[int main() { return 0; }]])],
     [AC_MSG_RESULT([yes])]
     [AM_CFLAGS=' -lsatlas'],
     [AC_MSG_RESULT([no])]) 
