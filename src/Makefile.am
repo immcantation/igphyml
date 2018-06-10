@@ -35,8 +35,7 @@ spr.c spr.h\
 stats.c stats.h\
 nucle2codon.c nucle2codon.h\
 io.c io.h
-
-igphyml_LDADD+= -L/usr/lib64/atlas -L/usr/lib/atlas-base/
+CFLAGS+= -L/usr/lib64/atlas -L/usr/lib/atlas-base/
 igphyml_LDFLAGS = -I/usr/include/atlas/ 
 
 if MACOS
