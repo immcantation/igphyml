@@ -70,7 +70,7 @@ then
     #AC_DEFINE([TEST2], [1], [Define if TEST2 is used.])
     BLASFLAGS=''
   my_save_cflags="$CFLAGS"
-  CFLAGS=-llapack
+  CFLAGS='-L/usr/lib64/atlas/ -L/usr/lib/atlas-base/ -llapack'
   AM_CFLAGS=''
   AC_MSG_CHECKING([whether CC supports -llapack])
   AC_LINK_IFELSE([AC_LANG_SOURCE([[int main() { return 0; }]])],
@@ -81,7 +81,7 @@ then
   BLASFLAGS+="$AM_CFLAGS"
   
   my_save_cflags="$CFLAGS"
-  CFLAGS=-lblas
+  CFLAGS=' -L/usr/lib64/atlas/ -L/usr/lib/atlas-base/ -lblas'
   AM_CFLAGS=''
   AC_MSG_CHECKING([whether CC supports -lblas])
   AC_LINK_IFELSE([AC_LANG_SOURCE([[int main() { return 0; }]])],
@@ -92,7 +92,7 @@ then
   BLASFLAGS+="$AM_CFLAGS"
   
   my_save_cflags="$CFLAGS"
-  CFLAGS=-lcblas
+  CFLAGS='-L/usr/lib64/atlas/ -L/usr/lib/atlas-base/ -lcblas'
   AM_CFLAGS=''
   AC_MSG_CHECKING([whether CC supports -lcblas])
   AC_LINK_IFELSE([AC_LANG_SOURCE([[int main() { return 0; }]])],
@@ -104,7 +104,7 @@ then
   #CFLAGS+=$BLASFLAGS
 
   my_save_cflags="$CFLAGS"
-  CFLAGS=-latlas
+  CFLAGS=' -L/usr/lib64/atlas/ -L/usr/lib/atlas-base/ -latlas'
   AM_CFLAGS=''
   AC_MSG_CHECKING([whether CC supports -latlas])
   AC_LINK_IFELSE([AC_LANG_SOURCE([[int main() { return 0; }]])],
@@ -115,7 +115,7 @@ then
   BLASFLAGS+="$AM_CFLAGS"
   
   my_save_cflags="$CFLAGS"
-  CFLAGS=-lsatlas
+  CFLAGS=' -L/usr/lib64/atlas/ -L/usr/lib/atlas-base/ -lsatlas'
   AM_CFLAGS=''
   AC_MSG_CHECKING([whether CC supports -lsatlas])
   AC_LINK_IFELSE([AC_LANG_SOURCE([[int main() { return 0; }]])],
