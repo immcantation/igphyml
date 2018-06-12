@@ -104,7 +104,7 @@ phydbl binarySearchCI(phydbl* param,option* io,phydbl tol,phydbl delta,phydbl lo
 	fprintf(CI,"%s %lf %lf %lf %lf %lf %lf\n",ID,target,io->replnL,*param,0.0,0.0,0.0);
 
 	//!!!Record params and branch lengths
-	storeParams(io);
+	storeParams(io,1);
 	//find a point on the other side of CI
 	phydbl d1 = delta;
 	phydbl bound;
@@ -132,7 +132,7 @@ phydbl binarySearchCI(phydbl* param,option* io,phydbl tol,phydbl delta,phydbl lo
 		}
 		//if(io->mod->optDebug)
 		printf("\nLooking for boundary %lf %lf %lf %lf %lf",target,nl,mle,d1,*param);
-		restoreParams(io);
+		restoreParams(io,1);
 		//io->mod->update_eigen=1;
 		phydbl nl2=Lk_rep(io);
 		//if(io->mod->optDebug)
@@ -167,7 +167,7 @@ phydbl binarySearchCI(phydbl* param,option* io,phydbl tol,phydbl delta,phydbl lo
 		if(nl>=target)b1=*param;//want most conservative estimate of CI
 		else b2=*param;
 		//Reset parameter values and branch lengths if changed!
-		restoreParams(io);
+		restoreParams(io,1);
 		phydbl nl2=Lk_rep(io);
 		fabs(b1-b2);
 		//if(io->mod->optDebug)
@@ -178,13 +178,13 @@ phydbl binarySearchCI(phydbl* param,option* io,phydbl tol,phydbl delta,phydbl lo
 	if(io->mod->optDebug)printf("\n%lf %lf %lf %lf %lf %lf",target,nl,*param,b1,b2,fabs(b1-b2));
 	//reset params
 	//*param=mle;
-	restoreParams(io);
+	restoreParams(io,1);
 	Lk_rep(io);
 	return (b1+b2)/2;
 }
 
 /* Store parameters for optimization*/
-int storeParams(option* io){
+int storeParams(option* io, int reseto){
 	phydbl* ar=io->paramStore;
 	int c=0;
 	int i,j,k;
@@ -208,7 +208,8 @@ int storeParams(option* io){
 		 }
 	}
 	//assumes you want to reset optimization params
-		  io->SIZEp=0;
+	if(reseto){
+		io->SIZEp=0;
 		  io->noisy=0;
 		  io->Iround=0;
 		  io->NFunCall=0;
@@ -216,11 +217,12 @@ int storeParams(option* io){
 		  io->gemin=1e-6;
 		  io->Small_Diff=.5e-6;
 		  io->both_sides=1;
+	}
 	return c;
 }
 
 /*restore parameters after optimization*/
-int restoreParams(option* io){
+int restoreParams(option* io, int reseto){
 	phydbl* ar=io->paramStore;
 	int c=0;
 	int i,j,k;
@@ -245,6 +247,7 @@ int restoreParams(option* io){
 	}
 	io->mod->update_eigen=1;
 		//assumes you want to reset optimization params
+	if(reseto){
 	  io->SIZEp=0;
 	  io->noisy=0;
 	  io->Iround=0;
@@ -253,6 +256,7 @@ int restoreParams(option* io){
 	  io->gemin=1e-6;
 	  io->Small_Diff=.5e-6;
 	  io->both_sides=1;
+	}
 	return c;
 }
 
@@ -891,7 +895,7 @@ void Optimiz_All_Free_Param(option* io, int verbose, int recurse){
       intf=fx=io->replnL;
       
     if(numParams>0){
-    	storeParams(io);
+    	storeParams(io,0);
 		space = (phydbl *) mCalloc((20+5*numParams)*numParams, sizeof(phydbl));
 		if(io->mod->optDebug)printf("\ngemin in: %lf, numparams: %d",io->gemin,numParams);
 		int result = BFGS_from_CODEML(&fx, io, x2min, x2minbound, space, io->gemin, numParams);
@@ -899,7 +903,7 @@ void Optimiz_All_Free_Param(option* io, int verbose, int recurse){
 		if(io->mod->optDebug)printf("\ngemin out: %lf",io->gemin);
 		//ADD recursive function to save parameter estimates if they fail
 		if(isnan(io->mod->omega_part[0])){
-			restoreParams(io);
+			restoreParams(io,0);
 			For(i,io->mod->nomega_part){
 				phydbl r = (rand()*1.0)/RAND_MAX;
 				io->mod->omega_part[i]+=r*0.5;
