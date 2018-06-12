@@ -74,7 +74,7 @@ void Simu_Loop(option* io){
 	  if(tree->mod->print_trace){
 		 // Print_Trace(tree);
 	  }
-	  Print_Lk(tree,"[Branch lengths     ]");
+	  //Print_Lk(tree,"[Branch lengths     ]");
   }
 
   //Start NNI loop while optimizing substitution parameters

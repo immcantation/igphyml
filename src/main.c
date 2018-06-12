@@ -64,7 +64,7 @@ int main(int argc, char **argv){
   
   r_seed = abs(4*(int)time(NULL)*(int)time(NULL)+4*(int)time(NULL)+1); //!< Modified by Marcelo
   r_seed=1234;
-  srand(r_seed);
+  //srand(r_seed);
   SetSeed(r_seed);
   
   io = (option *)Get_Input(argc,argv); //!< Read the simulation options from interface or command line.
@@ -153,12 +153,25 @@ int main(int argc, char **argv){
     strcpy(mod->in_tree_file,io->treefs[num_data_set]); //copy input tree to model
     strcpy(mod->in_align_file,io->datafs[num_data_set]); //copy input data to model
     strcpy(mod->rootname,io->rootids[num_data_set]); //copy root name
-    if(io->mod->optDebug){
-    	//printf("\n. tree file: %s\t",mod->in_tree_file);
+    if(io->mod->optDebug){ //Check if sequence and tree files exist
+    	printf("\n. tree file: %s\t",mod->in_tree_file);
     	printf("align file: %s\t",mod->in_align_file);
-    	//printf("root name: %s",mod->rootname);
+    	printf("root name: %s",mod->rootname);
     }
-
+    if(!Filexists(mod->in_align_file)) {
+    	char* tmp = (char *) mCalloc (T_MAX_FILE, sizeof(char));
+        strcpy(tmp, "\n. The alignment file '");
+        strcat(tmp, mod->in_align_file);
+        strcat(tmp, "' does not exist.\n");
+        Warn_And_Exit(tmp);
+    }
+    if(strcmp(mod->in_tree_file,"N")!=0 && !Filexists(mod->in_tree_file)){
+    	 char* tmp = (char *) mCalloc (T_MAX_FILE, sizeof(char));
+    	 strcpy(tmp, "\n. The tree file '");
+    	 strcat(tmp, mod->in_tree_file);
+    	 strcat(tmp, "' does not exist.\n");
+    	 Warn_And_Exit(tmp);
+    }
     mod->fp_in_align = Openfile(mod->in_align_file,0);
 
     io->n_trees=1;
@@ -343,6 +356,32 @@ int main(int argc, char **argv){
     }
     //Free_Model_Complete(mod);
   } //For(num_data_sets
+
+  if(io->mod->motifstringopt==0 && io->mod->modeltypeOpt == HLP17){
+  	printf("\nDEFAULT: Estimating only symmetric WRC/GYW hotness."
+  		   "\n........ Use '--motifs FCH' to model all hot and coldspots (not recommended with small datasets)"
+    	   "\n........ Use '--motifs' and '--hotness' for more motif models.\n");
+  }
+  if(!io->mod->omega_opt_spec){
+      int Npart=0;
+      	For(i,io->ntrees){
+      		if(strcmp(io->partfs[i],"N")==0){
+      			Npart++;
+      		}
+      	}
+      	if(Npart == io->ntrees && io->mod->modeltypeOpt != GY){ //if no partition files specified, use single omega
+      		printf("\nDEFAULT: No partition file(s) specified so impossible to partition omega by FWR/CDRs.\n");
+      	}else if(io->mod->modeltypeOpt != GY){
+      		printf("\nDEFAULT: Partition file(s) specified so partitioning omega by FWR/CDRs."
+      				"\n........ Use '--omegaOpt e' if you just want one omega.\n");
+     }
+
+  }
+  if(io->threads > io->ntrees)printf("\nWarning: Number of threads (%d) exceeds number of lineages (%d).\n"
+		  "........ This will not speed up computations beyond %d threads.\n",io->threads,io->ntrees,io->ntrees);
+  if(io->threads==1 && io->ntrees > 1)printf("\nDEFAULT: Running multiple trees on one thread."
+		  "\n........ Use the '--threads' option to specify more (might speed things up).\n");
+
 
 
   //Set up equilibrium base freqs for the repertoire

@@ -72,6 +72,9 @@ void Read_Command_Line( option *io, int argc, char **argv )
 	io->mod->prior=0;
 	io->min_diff_lk_global=1.E-3;
 
+	//Default placeholder model
+	io->modeltypeOpt = 0;
+
 	//new defaults, mostly for GY94 model
 	io->omegaOpt=DM0;
 	io->mod->kappa                 = 1.0;

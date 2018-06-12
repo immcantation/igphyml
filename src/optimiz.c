@@ -438,7 +438,7 @@ void Round_Optimize(option *io, int n_round_max){
 				if(tree->mod->whichrealmodel == HLP17){Get_UPP(root, root->v[0], tree);}
 				Optimize_Br_Len_Serie(root,root->v[0],root->b[0],tree,tree->data);
 				//Lk(tree);
-				if((tree->mod->s_opt->print) && (!tree->mod->quiet)) Print_Lk(tree,"[Branch lengths     ]");
+				//if((tree->mod->s_opt->print) && (!tree->mod->quiet)) Print_Lk(tree,"[Branch lengths     ]");
 			}
 			Lk_rep(io);
 			Print_Lk_rep(io,"[Branch lengths     ]");

@@ -5681,8 +5681,8 @@ void Warn_And_Exit(char *s)
 #ifndef BATCH
   //  if (! tree->mod->quiet) {
   char c;
-  PhyML_Fprintf(stdout,"\n. Type enter to exit.\n");
-  if(!fscanf(stdin,"%c",&c)) Exit("");
+  //PhyML_Fprintf(stdout,"\n. Type enter to exit.\n");
+  //if(!fscanf(stdin,"%c",&c)) Exit("");
   //  }
 #endif
   Exit("\n");

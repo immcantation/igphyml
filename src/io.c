@@ -395,6 +395,17 @@ align **Get_Seq(option *io, model *mod)
     case FASTA:
     {
     	scanFasta(mod,mod->fp_in_align);
+    	if(mod->n_otu == 0 || mod->init_len == 0){
+    		char* tmp = (char *) mCalloc (T_MAX_FILE, sizeof(char));
+    		strcpy(tmp, "\n. The file '");
+    		strcat(tmp, mod->in_align_file);
+    		strcat(tmp, "' is not properly formatted. Has ");
+    		sprintf(tmp,"%d",mod->n_otu);
+    		strcat(tmp, "sequences of length ");
+    		sprintf(tmp,"%d",mod->init_len);
+    		strcat(tmp, "\n");
+    		Warn_And_Exit(tmp);
+    	}
     	mod->data=Read_Seq_Fasta(io,mod);
     	break;
     }
@@ -488,16 +499,16 @@ void scanFasta(model *mod, FILE* f){
 		  if(c == '>' || c == EOF){
 			  id=1;
 			  otu++;
-			  idpos=0;
 			  if(otu==1)firstseql=seql;
 			  if(firstseql != seql && otu > 0){
-				  printf("\nSome sequences in fasta file are not the same length! %d vs %d\n",firstseql,seql);
+				  printf("\n\nSome sequences in fasta file are not the same length! %d vs %d.\nFile: %s\n",firstseql,seql,mod->in_align_file);
 				  exit(EXIT_FAILURE);
 			  }
 			  if(idpos > T_MAX_NAME){
-				  printf("An ID is too long. Maximum sequence name is %d\n",T_MAX_NAME);
+				  printf("\n\nAn ID is too long. Maximum sequence name is %d.\nFile: %s\n",T_MAX_NAME,mod->in_align_file);
 				  exit(EXIT_FAILURE);
 			  }
+			  idpos=0;
 			  seql=0;
 		  }else if(c == '\n' && id){
 			  id=0;
@@ -508,7 +519,6 @@ void scanFasta(model *mod, FILE* f){
 			  if(c != '>') idpos++;
 		  }else if(c!='\n')seql++;
 	  }while(1);
-
 
 	/*
 
@@ -564,7 +574,6 @@ align **Read_Seq_Fasta(option *io, model *mod)
      data[i]->is_ambigu = NULL;
      data[i]->len = 0;
    }
-  //printf("here\n");
 
   int seq=0;
   int id=0;
@@ -585,12 +594,10 @@ align **Read_Seq_Fasta(option *io, model *mod)
 			  data[otu]->name[idpos]=c;
 			  idpos++;
 		  }
-	  }else if(c!='\n'){
+	  }else if(c!='\n' && otu >= 0){
 		  Uppercase(&c);
 		  data[otu]->state[data[otu]->len++]=c;
-		  //data[otu]->len++;
 	  }
-	  //printf(" %c%s %d\n",c,data[otu]->name,data[otu]->len);
   }while(1);
 
 

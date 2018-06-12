@@ -136,6 +136,10 @@ struct option longopts[] =
 
 void finishOptions(option * io)
 {
+	if(io->modeltypeOpt==0){
+		Warn_And_Exit("\n\nModel must be specified using -m\nSet to 'GY' or 'HLP17'.\n"
+				"Use GY for quick topologies.\nUse HLP17 for B cell specific features (SHM motifs, CDR/FWR omegas).\n");
+	}
     int i,j;
 	checkForRandStartTree(io);
     checkModelCombinations(io);
@@ -196,13 +200,29 @@ void finishOptions(option * io)
     //set up HLP17 model
     //Added by Ken 12/7/2016
     io->mod->primary=1;
+    int Npart=0;
+        	For(i,io->ntrees){
+        		if(strcmp(io->partfs[i],"N")==0){
+        			Npart++;
+        	  	}
+        	}
     if(!io->mod->omega_opt_spec){
-       	strcpy(io->mod->omega_opt_string,"e");
-       	/*if(io->mod->nomega_part>1){
-       		for(i=1;i<io->mod->nomega_part;i++){
-       			strcat(io->mod->omega_opt_string,",e");
-       		}
-      	}*/
+    	if(Npart == io->ntrees || io->mod->modeltypeOpt == GY){ //if no partition files specified, use single omega
+    		strcpy(io->mod->omega_opt_string,"e");
+    	}else{
+    		strcpy(io->mod->omega_opt_string,"e,e");
+    	}
+    }else{
+    	if(strcmp(io->mod->omega_opt_string,"e,e")==0){
+    		if(Npart==io->ntrees){
+    			printf("\nNo partition files specified so can't partition omega!\n");
+    			exit(1);
+    		}
+    		if(io->mod->modeltypeOpt==GY){
+    		    printf("\nIgPhyML can't partition omega with GY model.\n");
+    		    exit(1);
+    		}
+    	}
     }
     if(io->mod->optDebug)printf("\nmodel type opt %d\n",io->mod->modeltypeOpt);
     if(io->modeltypeOpt == HLP17){
@@ -297,9 +317,13 @@ void setUpHLP17(option* io, model *mod){
    	//Default values
    	if(io->mod->motifstringopt==0){
    		mod->motifstring = "WRC_2:0,GYW_0:0";
+   		//mod->motifstring = "WRC_2:0,GYW_0:1,WA_1:2,TW_0:3,SYC_2:4,GRS_0:5";
+   		/*if(mod->primary)printf("\nDEFAULT: Assuming FCH motif model. Bad call if you only have a few sequences."
+   				"\n........ Use '--motifs' and '--hotness' options to change this.\n\n");*/
    	}
    	if(io->mod->hotnessstringopt==0){
    	    mod->hotnessstring = "e";
+   	    //mod->hotnessstring = "e,e,e,e,e,e";
    	}
     if((strcmp(io->mod->motifstring,"FCH")==0)){
         mod->motifstring = "WRC_2:0,GYW_0:1,WA_1:2,TW_0:3,SYC_2:4,GRS_0:5";
@@ -432,15 +456,20 @@ void setUpHLP17(option* io, model *mod){
 
    	//partition model stuff
    	if(mod->partfilespec==1){
-   		int imgt=0;
+   	int imgt=0;
+   	if(!Filexists(mod->partfile)){
+   		printf("\nPartition file %s does not exist\n",mod->partfile);
+   		exit(1);
+   	}
     FILE *file = fopen(mod->partfile, "r");
     int npart;
-    int fscn =  fscanf(file, "%d",&mod->nparts);
+    int fscn1 =  fscanf(file, "%d",&mod->nparts);
        int nsite;
-       fscn = fscanf(file, " %d\n",&nsite);
-       //printf("reading part: %d\t%d\n",mod->nparts,nsite);
-       //mod->nomega_part=mod->nparts;
-      // printf("%d\t%d\n",mod->nparts,nsite);
+       int fscn2 = fscanf(file, " %d\n",&nsite);
+       if(fscn1 != 1 || fscn2 != 1){
+    	   printf("\nError in reading partition count and/or sequence lengths (first line): %s\n",mod->partfile);
+    	   exit(1);
+       }
        mod->partIndex = (int *)mCalloc(nsite,sizeof(int));
        mod->partNames = (char**)mCalloc(mod->nparts,sizeof(char*));
        mod->omega_part = (phydbl*)mCalloc(mod->nomega_part,sizeof(phydbl));
@@ -457,12 +486,24 @@ void setUpHLP17(option* io, model *mod){
    	int parti;
    	for(parti=0;parti<mod->nparts;parti++){
    		read = getline(&linepart,&len,file);
+   		if(read == -1){
+   			printf("\nError in reading  region definitions: %s\n",mod->partfile);
+   			exit(1);
+   		}
    		char* l1 = strsep(&linepart,":");
-   		if(mod->primary)printf("%s\t",l1);
+   		if(l1 == NULL){
+   			printf("\nError in reading  region definitions: %s\n",mod->partfile);
+   			exit(1);
+   		}
+   		if(mod->primary && mod->optDebug)printf("%s\t",l1);
    		mod->partNames[parti] = (char*)mCalloc(T_MAX_OPTION,sizeof(char));
    		strcpy(mod->partNames[parti],l1);
    		//io->mod->partNames[parti] = l1;
    		char* l2 = strsep(&linepart,"\n");
+   		if(l2 == NULL){
+   			printf("\nError in reading  region definitions: %s\n",mod->partfile);
+   			exit(1);
+   		}
    		//if(mod->primary)printf("%s\n",l2);
    		//printf("%s\n",l2);
    		if(strcmp(l2,"IMGT")!=0){
@@ -494,10 +535,18 @@ void setUpHLP17(option* io, model *mod){
    	mod->germlineV=mCalloc(T_MAX_OPTION,sizeof(char));
    	mod->germlineJ=mCalloc(T_MAX_OPTION,sizeof(char));
    	read = getline(&nline2,&len,file);
+   	if(read == -1){
+   	   printf("\nError in reading  V segment: %s\n",mod->partfile);
+   	   exit(1);
+   	 }
    	char* v=strsep(&nline2,"\n");
    	strcpy(mod->germlineV,v);
    	if(mod->optDebug)printf("\nGermlineV: %s",mod->germlineV);
    	read = getline(&nline3,&len,file);
+   	if(read == -1){
+   	   printf("\nError in reading  J segment: %s\n",mod->partfile);
+   	   exit(1);
+   	}
    	char* j=strsep(&nline3,"\n");
    	strcpy(mod->germlineJ,j);
    	if(mod->optDebug)	printf("\nGermlineJ: %s\n",mod->germlineJ);
@@ -505,10 +554,16 @@ void setUpHLP17(option* io, model *mod){
    	mod->imgt=mCalloc(nsite,sizeof(int));
    	len=0;
    	read = getline(&nline,&len,file);
-   	//printf("\nlinepart: %s",nline);
+   	if(read == -1){
+   	   printf("\nError in reading IMGT line: %s\n",mod->partfile);
+   	   exit(1);
+   	}
    	For(c,nsite){
    		char* l1 = strsep(&nline,",");
-   		//printf("\n%d\t%s",c,l1);
+   		if(l1 == NULL){
+   		   	printf("\nError in reading IMGT numbers: %s\n",mod->partfile);
+   		   	exit(1);
+   		}
    		mod->imgt[c]=atoi(l1);
    	}
 
@@ -525,6 +580,7 @@ void setUpHLP17(option* io, model *mod){
    	}
    	}
 
+   	if(io->mod->optDebug){
    	for(indexi=0;indexi<nsite;indexi++){
    		//printf("%d\n",indexi);
    	   	if(mod->partIndex[indexi] == -1){
@@ -534,6 +590,7 @@ void setUpHLP17(option* io, model *mod){
    	 if(mod->primary){
    		 printf("%d ",mod->partIndex[indexi]);
    	 }
+   	}
    	}
    	fclose(file);
    	if(mod->primary)printf("\n");
@@ -2375,6 +2432,7 @@ int mainOptionSwitch(int opt, char * optarg, option * io)
        	  		io->partfs[0] = mCalloc(T_MAX_FILE,sizeof(char));
             	strcpy(io->datafs[0],optarg);
             	strcpy(io->partfs[0],"N");
+            	strcpy(io->treefs[0],"N");
             	printf("trees: %d\n",io->ntrees);
 
                 strcpy(io->mod->in_align_file, optarg);
@@ -2548,12 +2606,13 @@ int mainOptionSwitch(int opt, char * optarg, option * io)
            	      strcat(tmp, optarg);
            	      strcat(tmp, "' is too long.\n");
            	      errorMsg = tmp;
-           	 } else if(!Filexists(optarg)) {
+           	 }else if(!Filexists(optarg)) {
            	      strcpy(tmp, "\n. The file '");
            	      strcat(tmp, optarg);
            	      strcat(tmp, "' does not exist.\n");
            	      errorMsg = tmp;
-           	} else {
+           	      Warn_And_Exit(tmp);
+           	 } else {
            	     //strcpy(io->in_align_file, optarg);
            	     //strcpy(io->out_tree_file, optarg);
            	     //strcat(io->out_tree_file, "_igphyml_tree.txt");
@@ -2574,7 +2633,7 @@ int mainOptionSwitch(int opt, char * optarg, option * io)
            	io->partfs = mCalloc(io->ntrees,sizeof(char*)); //partition files
            	io->tree_s = (t_tree**)mCalloc(io->ntrees,sizeof(t_tree*)); //tree pointers
            	io->mod_s = (model**)mCalloc(io->ntrees,sizeof(model*)); //model pointers
-           	printf("trees: %d\n",io->ntrees);
+           	printf("Trees in repfile: %d\n",io->ntrees);
            	io->mod->ntrees=io->ntrees;
            	int i;
            	For(i,io->ntrees){
@@ -2583,12 +2642,12 @@ int mainOptionSwitch(int opt, char * optarg, option * io)
            		io->rootids[i] = mCalloc(T_MAX_OPTION,sizeof(char));
            		io->partfs[i] = mCalloc(T_MAX_FILE,sizeof(char));
            		fscn = fscanf(file, "%s\t%s\t%s\t%s\n",io->datafs[i],io->treefs[i],io->rootids[i],io->partfs[i]); //number of omega parameters
-           		printf("%s\t%s\t%s\t%s\n",io->datafs[i],io->treefs[i],io->rootids[i],io->partfs[i]);
+           		if(fscn != 4){
+           			Warn_And_Exit("\n\nRepfile input improperly formatted!\nMust have four tab separated columns. See documentation.\n");
+           		}
+           		if(io->mod->optDebug)printf("%s\t%s\t%s\t%s\n",io->datafs[i],io->treefs[i],io->rootids[i],io->partfs[i]);
            	}
            	io->in_tree = 2;
-           // io->mod->s_opt->opt_topo        = 0;
-            /*io->mod->s_opt->opt_bl          = 1;
-            io->mod->s_opt->opt_subst_param = 1;*/
             break;
         }
 
