@@ -54,7 +54,7 @@ void Simu_Loop(option* io){
   For(i,io->ntrees){
 	  t_tree* tree=io->tree_s[i];
   	  int startnode = 0;
-	  if(tree->mod->whichrealmodel==HLP17){
+	  if(tree->mod->whichrealmodel<=HLP17){
 		  startnode=tree->mod->startnode;
 		  tree->both_sides = 1;
 		  Lk(tree);
@@ -68,7 +68,7 @@ void Simu_Loop(option* io){
 			tree->data);
 	  tree->both_sides = 1;
 	  Lk(tree);
-	  if(tree->mod->whichrealmodel==HLP17){
+	  if(tree->mod->whichrealmodel<=HLP17){
 		  Get_UPP(tree->noeud[startnode], tree->noeud[startnode]->v[0], tree);
 	  }
 	  if(tree->mod->print_trace){
@@ -206,7 +206,7 @@ int Simu(t_tree *tree, int n_step_max)
 /*       if(((tree->c_lnL > old_loglk) && (FABS(old_loglk-tree->c_lnL) < tree->mod->s_opt->min_diff_lk_global)) || (n_without_swap > it_lim_without_swap)) break; */
       if((FABS(old_loglk-tree->c_lnL) < tree->mod->s_opt->min_diff_lk_global) || (n_without_swap > it_lim_without_swap)) break;
 
-      if(tree->mod->whichrealmodel == HLP17){Get_UPP(tree->noeud[tree->mod->startnode], tree->noeud[tree->mod->startnode]->v[0], tree);}
+      if(tree->mod->whichrealmodel <= HLP17){Get_UPP(tree->noeud[tree->mod->startnode], tree->noeud[tree->mod->startnode]->v[0], tree);}
 
       Fill_Dir_Table(tree);
       Fix_All(tree);

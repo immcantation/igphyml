@@ -78,7 +78,7 @@ int main(int argc, char **argv){
 
   //io->r_seed = (io->r_seed<0)?r_seed:io->r_seed;
   io->r_seed=1234;
-  if(io->mod->whichrealmodel != HLP17 && io->mod->partfilespec != 0){
+  if(io->mod->whichrealmodel > HLP17 && io->mod->partfilespec != 0){
 	  printf("\n. Site-partitioned omega only available with HLP17 right now. Sorry.");
 	  printf("\n. This is mostly due to laziness, so feel free to complain to Ken about this.");
 	  printf("\n. In the meantime, try running -m HLP17 --hotness 0 instead of -m GY\n\n");
@@ -282,7 +282,7 @@ int main(int argc, char **argv){
 
 	  //added by Ken
 	  //Find location of root node if HLP17
-	  if(mod->whichrealmodel == HLP17){
+	  if(mod->whichrealmodel <= HLP17){
 		  if(io->mod->optDebug)printf("rootname %s\n",mod->rootname);
 	  	  mod->startnode = -1;
 	      int nodepos;
@@ -293,6 +293,12 @@ int main(int argc, char **argv){
 	      		//PhyML_Printf("\n. Start node found: %d %s\n",nodepos,mod->rootname);
 	      		Update_Ancestors_Edge(tree->noeud[nodepos],tree->noeud[nodepos]->v[0],tree->noeud[nodepos]->b[0],tree);
 	      		//PhyML_Printf("\n. Start node found: %d %s\n",nodepos,mod->rootname);
+	      		For(i,mod->nomega_part){
+	      			For(j,mod->ns){
+	      				tree->noeud[nodepos]->partfreqs[i][j]=mod->pi[j];
+	      				//printf("%d\t%lf\n",j,mod->pi[j]);
+	      			}
+	      		}
 	      	}
 	      }
 
@@ -325,7 +331,7 @@ int main(int argc, char **argv){
 	  if(io->mod->optDebug)printf("prepping tree for lhood\n");
 
 
-	  if(tree->mod->ambigprint && tree->mod->whichrealmodel == HLP17){
+	  if(tree->mod->ambigprint && tree->mod->whichrealmodel <= HLP17){
 		  FILE *ambigfile = fopen(tree->mod->ambigfile, "w");
 		  if (ambigfile == NULL){
 		      printf("Error opening ambig file!\n");
@@ -357,7 +363,7 @@ int main(int argc, char **argv){
     //Free_Model_Complete(mod);
   } //For(num_data_sets
 
-  if(io->mod->motifstringopt==0 && io->mod->modeltypeOpt == HLP17){
+  if(io->mod->motifstringopt==0 && io->mod->modeltypeOpt <= HLP17){
   	printf("\nDEFAULT: Estimating only symmetric WRC/GYW hotness."
   		   "\n........ Use '--motifs FCH' to model all hot and coldspots (not recommended with small datasets)"
     	   "\n........ Use '--motifs' and '--hotness' for more motif models.\n");
@@ -383,7 +389,7 @@ int main(int argc, char **argv){
 		  "\n........ Use the '--threads' option to specify more (might speed things up).\n");
 
 
-
+if(io->mod->freq_model != ROOT){
   //Set up equilibrium base freqs for the repertoire
   if(io->eq_freq_handling != USER){
   For(i,io->ntrees){
@@ -423,7 +429,7 @@ int main(int argc, char **argv){
   Freq_to_UnsFreq(io->mod->base_freq+4, io->mod->uns_base_freq+4, 4, 1);
   Freq_to_UnsFreq(io->mod->base_freq+8, io->mod->uns_base_freq+8, 4, 1);
   if(io->mod->optDebug)For(j,12){printf("%lf\t%lf\t%lf\t%lf\n",io->mod->baseCounts[j],io->mod->base_freq[j],io->mod->uns_base_freq[j],io->mod_s[0]->base_freq[j]);}
-
+}
   int nparams=0;
     int nmodparams=2+io->mod->nomega_part+io->mod->nhotness+12;
     nparams += nmodparams*(io->ntrees+1);
@@ -443,7 +449,7 @@ int main(int argc, char **argv){
   }else if(tree->mod->s_opt->opt_topo){
 	  if(tree->mod->s_opt->topo_search      == NNI_MOVE){
 		  if(io->mod->optDebug)printf("model type %d\n",io->mod->whichrealmodel);
-		  if(io->mod->whichrealmodel==HLP17){
+		  if(io->mod->whichrealmodel<=HLP17){
 			  if(io->mod->optDebug)printf("here0\n");
 			  For(i,io->ntrees){
 				  //Lk(io->tree_s[i]);
@@ -457,7 +463,7 @@ int main(int argc, char **argv){
   		  if(io->mod->optDebug)printf("about to do spr moves\n");
   		  io->mod->print_trace=0;
   		  io->mod_s[0]->print_trace=0;
-  		  if(io->mod->whichrealmodel==HLP17){
+  		  if(io->mod->whichrealmodel<=HLP17){
   			  For(i,io->ntrees){
   				 // Lk(io->tree_s[i]);
   				  Get_UPP(io->tree_s[i]->noeud[io->tree_s[i]->mod->startnode], io->tree_s[i]->noeud[io->tree_s[i]->mod->startnode]->v[0], io->tree_s[i]);
@@ -485,13 +491,14 @@ int main(int argc, char **argv){
   	  }
   }
 
+  if(io->mod->freq_model!=ROOT){
   //convert base frequencies back to properly output results
    if(io->mod->optDebug)For(j,12){printf("before %lf\t%lf\n",io->mod->baseCounts[j],io->mod->base_freq[j]);}
    Freq_to_UnsFreq(io->mod->base_freq,   io->mod->uns_base_freq,   4, 0);
    Freq_to_UnsFreq(io->mod->base_freq+4, io->mod->uns_base_freq+4, 4, 0);
    Freq_to_UnsFreq(io->mod->base_freq+8, io->mod->uns_base_freq+8, 4, 0);
    if(io->mod->optDebug)For(j,12){printf("after %lf\t%lf\t%lf\t%lf\n",io->mod->baseCounts[j],io->mod->base_freq[j],io->mod->uns_base_freq[j],io->mod_s[0]->base_freq[j]);}
-
+  }
   io->both_sides = 1;
   io->mod->update_eigen=1;
   Lk_rep(io);

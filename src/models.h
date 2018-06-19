@@ -74,7 +74,7 @@ void PMat_CODON_Pairwise(phydbl l, phydbl *Pij,  phydbl *U, phydbl *V, phydbl *R
 void PadeApprox(int n, int nn, phydbl *A, model *mod, phydbl *F, int pos, phydbl len, int m, int modeli); //!<Added by Marcelo. Updated by Ken 22/8
 
 // stefan:
-phydbl Update_Qmat_Codons(model *mod, int cat, int modeli);
+phydbl Update_Qmat_Codons(model *mod, int cat, int modeli, phydbl* freqs);
 void Update_Qmat_HLP17( phydbl *mat, phydbl *qmat, phydbl * freqs, int cat, model *mod,phydbl omega);
 void Update_Qmat_GY( phydbl *mat, phydbl *qmat, phydbl * freqs, int cat, model *mod);
 void Update_Qmat_MG( phydbl *mat, phydbl *qmat, phydbl * freqs, int cat, model *mod);

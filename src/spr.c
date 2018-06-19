@@ -70,7 +70,7 @@ int Spr(phydbl init_lnL, t_tree *tree)
 
   For(br,2*tree->n_otu-3){ //loop over all edges in tree
       b = tree->t_edges[br];
-      if(tree->mod->whichrealmodel==HLP17){
+      if(tree->mod->whichrealmodel<=HLP17){
     	    Update_Ancestors_Edge(tree->noeud[tree->mod->startnode],tree->noeud[tree->mod->startnode]->v[0],tree->noeud[tree->mod->startnode]->b[0],tree); //added by Ken 7/11
     	    Lk(tree);
     		Get_UPP(tree->noeud[tree->mod->startnode], tree->noeud[tree->mod->startnode]->v[0], tree);
@@ -222,7 +222,7 @@ int Test_All_Spr_Targets(t_edge *b_pulled, t_node *n_link, t_tree *tree)
   /* Pruning is meaningless otherwise */
   if(!(n_v1->tax && n_v2->tax) ){
       Prune_Subtree(n_link,n_opp_to_link,&b_target,&b_residual,tree);
-      if(tree->mod->whichrealmodel==HLP17){ //update ancestors on pruned tree
+      if(tree->mod->whichrealmodel<=HLP17){ //update ancestors on pruned tree
     	  Update_Ancestors_Edge(tree->noeud[tree->mod->startnode],tree->noeud[tree->mod->startnode]->v[0],tree->noeud[tree->mod->startnode]->b[0],tree);
     	  tree->both_sides=1;
     	  Lk(tree);
@@ -232,7 +232,7 @@ int Test_All_Spr_Targets(t_edge *b_pulled, t_node *n_link, t_tree *tree)
     	  Fast_Br_Len(b_target,tree,0);
 
       }
-      if(tree->mod->whichrealmodel==HLP17){ //update upper likelihoods on pruned tree
+      if(tree->mod->whichrealmodel<=HLP17){ //update upper likelihoods on pruned tree
     	  tree->both_sides=1;
     	  Lk(tree);
     	  Get_UPP(tree->noeud[tree->mod->startnode],tree->noeud[tree->mod->startnode]->v[0],tree);
@@ -283,7 +283,7 @@ int Test_All_Spr_Targets(t_edge *b_pulled, t_node *n_link, t_tree *tree)
       		  else                          Pre_Order_Pars(n_link,n_link->v[i],tree);
       	  }
       }
-      if(tree->mod->whichrealmodel==HLP17){ //update ancestors and upper likelihoods
+      if(tree->mod->whichrealmodel<=HLP17){ //update ancestors and upper likelihoods
     	  Update_Ancestors_Edge(tree->noeud[tree->mod->startnode],tree->noeud[tree->mod->startnode]->v[0],tree->noeud[tree->mod->startnode]->b[0],tree);
     	  Get_UPP(tree->noeud[tree->mod->startnode],tree->noeud[tree->mod->startnode]->v[0],tree);//update upper lhoods across tree
       }
@@ -467,14 +467,14 @@ int Evaluate_List_Of_Regraft_Pos_Triple(spr **spr_list, int list_size, t_tree *t
       upAllPmats(tree);
 	  Record_Br_Len(NULL,tree);
 	  /* Prune subtree */
-	  if(tree->mod->whichrealmodel==HLP17){//check to make sure subtree directio nis correct
+	  if(tree->mod->whichrealmodel<=HLP17){//check to make sure subtree directio nis correct
 		  if(move->n_link->anc->num == move->n_opp_to_link->num){
 			  printf("incorrect subtree direction %d %d\n",move->n_link->num,move->n_opp_to_link->num);
 		 	  exit(EXIT_FAILURE);
 		 }
       }
 	  Prune_Subtree(move->n_link,move->n_opp_to_link,&init_target,&b_residual,tree);//prune subtree from move
-	  if(tree->mod->whichrealmodel==HLP17){//update ancestors and upper likelihoods
+	  if(tree->mod->whichrealmodel<=HLP17){//update ancestors and upper likelihoods
 		  Update_Ancestors_Edge(tree->noeud[tree->mod->startnode],tree->noeud[tree->mod->startnode]->v[0],tree->noeud[tree->mod->startnode]->b[0],tree); //added by Ken 7/11
 		  Get_UPP(tree->noeud[tree->mod->startnode],tree->noeud[tree->mod->startnode]->v[0],tree);//update upper lhoods across tree
 		  tree->both_sides=1;
@@ -487,7 +487,7 @@ int Evaluate_List_Of_Regraft_Pos_Triple(spr **spr_list, int list_size, t_tree *t
        * same across all the elements of spr_list. It would not
        * be true in the general case */
 		  Fast_Br_Len(init_target,tree,0);
-		  if(tree->mod->whichrealmodel==HLP17){
+		  if(tree->mod->whichrealmodel<=HLP17){
 		  	  tree->both_sides=1;
 		  	  Lk(tree);
 		  }
@@ -566,7 +566,7 @@ int Evaluate_List_Of_Regraft_Pos_Triple(spr **spr_list, int list_size, t_tree *t
       move = spr_list[i];
       if(move->b_target){
 	  For(j,3) Update_PMat_At_Given_Edge(move->n_link->b[j],tree);
-	  if(tree->mod->whichrealmodel==HLP17){
+	  if(tree->mod->whichrealmodel<=HLP17){
 		  Update_Ancestors_Edge(tree->noeud[tree->mod->startnode],tree->noeud[tree->mod->startnode]->v[0],tree->noeud[tree->mod->startnode]->b[0],tree); //added by Ken 7/11
 	  }
 	  For(j,3) Update_P_Lk(tree,move->n_link->b[j],move->n_link);
@@ -580,7 +580,7 @@ int Evaluate_List_Of_Regraft_Pos_Triple(spr **spr_list, int list_size, t_tree *t
 		}
     }
   	//update ancestors and upper likelihoods
-    if(tree->mod->whichrealmodel==HLP17){ //update ancestors
+    if(tree->mod->whichrealmodel<=HLP17){ //update ancestors
       Update_Ancestors_Edge(tree->noeud[tree->mod->startnode],tree->noeud[tree->mod->startnode]->v[0],tree->noeud[tree->mod->startnode]->b[0],tree);
       Get_UPP(tree->noeud[tree->mod->startnode],tree->noeud[tree->mod->startnode]->v[0],tree);//update upper lhoods across tree
     }
@@ -658,7 +658,7 @@ int Try_One_Spr_Move_Triple(spr *move, t_tree *tree)
       tree->both_sides = 1;
       Lk(tree);
       Pars(tree);
-      if(tree->mod->whichrealmodel==HLP17){
+      if(tree->mod->whichrealmodel<=HLP17){
         Update_Ancestors_Edge(tree->noeud[tree->mod->startnode],tree->noeud[tree->mod->startnode]->v[0],tree->noeud[tree->mod->startnode]->b[0],tree);
         Get_UPP(tree->noeud[tree->mod->startnode],tree->noeud[tree->mod->startnode]->v[0],tree);//update upper lhoods across tree
       }
@@ -697,7 +697,7 @@ int Try_One_Spr_Move_Triple(spr *move, t_tree *tree)
   tree->both_sides = 1;
   Lk(tree);
   Pars(tree);
-  if(tree->mod->whichrealmodel==HLP17){
+  if(tree->mod->whichrealmodel<=HLP17){
     Update_Ancestors_Edge(tree->noeud[tree->mod->startnode],tree->noeud[tree->mod->startnode]->v[0],tree->noeud[tree->mod->startnode]->b[0],tree);
     Get_UPP(tree->noeud[tree->mod->startnode],tree->noeud[tree->mod->startnode]->v[0],tree);//update upper lhoods across tree
   }
@@ -745,7 +745,7 @@ void Speed_Spr_Loop(option *io){
   For(i,io->ntrees){
 	  t_tree* tree=io->tree_s[i];
 	  int startnode = 0;
-	  if(tree->mod->whichrealmodel==HLP17){
+	  if(tree->mod->whichrealmodel<=HLP17){
 		  startnode=tree->mod->startnode;
 		  tree->both_sides = 1;
 		  Lk(tree);
@@ -762,7 +762,7 @@ void Speed_Spr_Loop(option *io){
 	  /* Update partial likelihoods */
 	  tree->both_sides = 1;
 	  Lk(tree);
-	  if(tree->mod->whichrealmodel==HLP17){
+	  if(tree->mod->whichrealmodel<=HLP17){
 		  Get_UPP(tree->noeud[startnode], tree->noeud[startnode]->v[0], tree);
 	  }
 	  /*if(tree->mod->print_trace){
@@ -896,7 +896,7 @@ void Speed_Spr(t_tree *tree, int max_cycles)
   tree->both_sides = 1;
   Pars(tree);
   Lk(tree);
-  if(tree->mod->whichrealmodel==HLP17){
+  if(tree->mod->whichrealmodel<=HLP17){
 	  int startnode=tree->mod->startnode;
 	  Update_Ancestors_Edge(tree->noeud[tree->mod->startnode],tree->noeud[tree->mod->startnode]->v[0],tree->noeud[tree->mod->startnode]->b[0],tree); //added by Ken 7/11
 	  Get_UPP(tree->noeud[startnode], tree->noeud[startnode]->v[0], tree);
@@ -925,7 +925,7 @@ void Speed_Spr(t_tree *tree, int max_cycles)
 
 	  /* Optimise branch lengths */
     	  int startnode = 0;
-    	  if(tree->mod->whichrealmodel==HLP17){
+    	  if(tree->mod->whichrealmodel<=HLP17){
     		  startnode=tree->mod->startnode;
     		  tree->both_sides = 1;
     		  Lk(tree);
@@ -1132,7 +1132,7 @@ void Print_Trace(t_tree *tree){
 	//print header of stats file
 	if(tree->mod->tracecount == 0){
 		PhyML_Fprintf(tree->mod->fp_out_stats_trace,"Index\tTime\tLnL\tKappa");
-		if(tree->mod->whichrealmodel == HLP17){
+		if(tree->mod->whichrealmodel <= HLP17){
 			int omegai;
 			for(omegai=0;omegai<tree->mod->nomega_part;omegai++){
 				PhyML_Fprintf(tree->mod->fp_out_stats_trace,"\tOmega%d",omegai);
@@ -1151,7 +1151,7 @@ void Print_Trace(t_tree *tree){
 	//print out stats
 	PhyML_Fprintf(tree->mod->fp_out_stats_trace,"\t%d\t%f\t%f",tree->mod->tracecount,(omp_get_wtime()-tree->t_beg),tree->c_lnL);
 	PhyML_Fprintf(tree->mod->fp_out_stats_trace,"\t%f",tree->mod->kappa);
-	if(tree->mod->whichrealmodel ==HLP17){
+	if(tree->mod->whichrealmodel <=HLP17){
 		int omegai;
 		for(omegai=0;omegai<tree->mod->nomega_part;omegai++){
 			PhyML_Fprintf(tree->mod->fp_out_stats_trace,"\t%lf",tree->mod->omega_part[omegai]);

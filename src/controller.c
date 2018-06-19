@@ -225,7 +225,7 @@ void finishOptions(option * io)
     	}
     }
     if(io->mod->optDebug)printf("\nmodel type opt %d\n",io->mod->modeltypeOpt);
-    if(io->modeltypeOpt == HLP17){
+    if(io->modeltypeOpt <= HLP17){
     	setUpHLP17(io, io->mod);
     }
 
@@ -2173,7 +2173,7 @@ int mainOptionSwitch(int opt, char * optarg, option * io)
                 strcpy(io->nt_or_cd, "codons");
                 io->datatype              = CODON;       
                 io->modeltypeOpt          = PCM;
-            }else if(strcmp(optarg, "HLP17") == 0) { //set up HLP17 model with default params
+            }else if(strcmp(optarg, "HLP17") == 0 || strcmp(optarg, "HLP18") == 0) { //set up HLP17 model with default params
                 strcpy(io->nt_or_cd, "codons");      //Added by Ken
                 io->datatype              = CODON;
                 io->modeltypeOpt          = HLP17;
@@ -2186,6 +2186,15 @@ int mainOptionSwitch(int opt, char * optarg, option * io)
                 io->mod->freq_model       = CF3X4;
                 io->mod->whichmodel       = HLP17;
                 io->freqmodelOpt		  = CF3X4;
+                if( strcmp(optarg, "HLP18") == 0){
+                    io->modeltypeOpt          = HLP18;
+                    io->eq_freq_handling      = ROOT; // optimize eq freqs
+                    io->mod->freq_model       = ROOT;
+                    io->mod->whichmodel       = HLP18;
+                    io->freqmodelOpt		  = ROOT;
+                    io->mod->constB 		  = 1; //uniform freqs for HLP18
+                }
+
                 //Initialize Bmat
                 io->mod->Bmat = (phydbl *)mCalloc(3721,sizeof(phydbl));
 

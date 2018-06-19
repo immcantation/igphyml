@@ -38,6 +38,8 @@ the GNU public licence.  See http://www.opensource.org for details.
 
 void reconGermline(option *io, char* v, int site,FILE* f);
 phydbl logAdd(phydbl a, phydbl b);
+void Update_PMat_Recursive(t_edge *b_fcus, t_tree *tree);
+void Calculate_Flux_Freqs(t_edge* b_fcus, phydbl* ofreqs, phydbl* dfreqs,t_tree* tree, int modeli);
 
 void Init_Tips_At_One_Site_Nucleotides_Float(char state, int pos, phydbl *p_lk);
 void Init_Tips_At_One_Site_AA_Float(char aa, int pos, phydbl *p_lk);

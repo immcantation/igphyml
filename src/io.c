@@ -182,7 +182,7 @@ void Print_Settings(option *io, model* mod)
     if(mod->pcaModel) PhyML_Printf("\n. Number of PCs:\t\t\t\t %d", mod->npcs);
     PhyML_Printf("\n. Equilibrium frequencies model:\t\t %s %s", r,s);
 
-    if(io->modeltypeOpt == HLP17){
+    if(io->modeltypeOpt <= HLP17){
         PhyML_Printf("\n. Motifs:\t\t\t\t\t %s", mod->motifstring);
         PhyML_Printf("\n. h parameter(s):\t\t\t\t %s", mod->hotnessstring);
         PhyML_Printf("\n. Root ID:\t\t\t\t\t %s", mod->rootname);
@@ -1365,7 +1365,7 @@ char *Write_Tree(t_tree *tree)
   tree->e_root = NULL;
 #endif
 
-  if(tree->mod->whichrealmodel == HLP17){ //added by Ken 16/2/2017 to output as a tree ith rooted branch length of zero
+  if(tree->mod->whichrealmodel <= HLP17){ //added by Ken 16/2/2017 to output as a tree ith rooted branch length of zero
 	  t_node* r = Make_Node_Light(-1);
 	  tree->noeud[tree->mod->startnode]->v[1] = r;
 	  t_edge* blank = (t_edge *)mCalloc(1,sizeof(t_edge));
@@ -1655,7 +1655,7 @@ void Print_IgPhyML_Out(option* io){
 		   fprintf(f,"\n");
 		}
 
-	if(io->modeltypeOpt==HLP17){
+	if(io->modeltypeOpt<=HLP17){
 		fprintf(f,". Hotspot model\t\th_index\toptimized?\th_value\n");
 	      int mot;
 	      for(mot=0;mot<io->mod->nmotifs;mot++){
@@ -1968,7 +1968,7 @@ void Print_Fp_Out(FILE *fp_out, time_t t_beg, time_t t_end, t_tree *tree, option
         }
 
         currTkn = Emit_Out_Token(currTkn, "Model name", "name", SCALARTKN, TFSTRING, "%s %s", mod->modelname, t);
-        if(io->modeltypeOpt == HLP17){
+        if(io->modeltypeOpt <= HLP17){
           currTkn = Emit_Out_Token(currTkn, "Hotspots", "motifs", SCALARTKN, TFSTRING, "%s", mod->motifstring);
           currTkn = Emit_Out_Token(currTkn, "h optimization", "motifs", SCALARTKN, TFSTRING, "%s", mod->hotnessstring);
           currTkn = Emit_Out_Token(currTkn, "Partition file", "motifs", SCALARTKN, TFSTRING, "%s", mod->partfile);
@@ -2118,7 +2118,7 @@ void Print_Fp_Out(FILE *fp_out, time_t t_beg, time_t t_end, t_tree *tree, option
 
             //Prints out hotspot model information and h values
             //Modified by Ken 22/7/2016
-            if(io->modeltypeOpt==HLP17){
+            if(io->modeltypeOpt<=HLP17){
               int partsite=0;
               printf("\n");
               for(partsite=0;partsite<io->tree->n_pattern;partsite++){
@@ -2577,7 +2577,7 @@ void Print_Fp_Out(FILE *fp_out, time_t t_beg, time_t t_end, t_tree *tree, option
 	    currTkn = Emit_Out_Token(currTkn, "MLTreeSize", "MLTreeSize", SCALARTKN, TFNUMERIC, "%f", Get_Tree_Size(tree));
     }
 
-    if(io->modeltypeOpt == HLP17){ //Added by Ken 23/8
+    if(io->modeltypeOpt <= HLP17){ //Added by Ken 23/8
     	 char *info = mCalloc(tree->n_pattern*2+1,sizeof(char));
     	 int indexi;
     	for(indexi=0;indexi<tree->n_pattern;indexi++){

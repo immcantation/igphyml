@@ -540,9 +540,10 @@ void Init_Model(calign *data, model *mod, option *io)
         if((mod->freq_model != FUNDEFINED) && (mod->freq_model != FMODEL)) {
             if(mod->s_opt->user_state_freq) {
                 mod->s_opt->opt_state_freq = NO;
-                EqFrequencies(mod->freq_model, mod->pi, mod->user_b_freq, mod->ns);
+                if(mod->freq_model!=ROOT)EqFrequencies(mod->freq_model, mod->pi, mod->user_b_freq, mod->ns);
             } else {
-                EqFrequencies(mod->freq_model, mod->pi, mod->base_freq, mod->ns);
+            	//printf("here blah blah\n");
+                if(mod->freq_model!=ROOT)EqFrequencies(mod->freq_model, mod->pi, mod->base_freq, mod->ns);
                 switch(mod->freq_model) {
                     case F1X4: {
                         Scale_freqs(mod->base_freq, mod->num_base_freq);
@@ -562,12 +563,16 @@ void Init_Model(calign *data, model *mod, option *io)
                         
                         break;
                     }
+                    case ROOT:
+						break;
                     default:
                         break;
                 } 
             }
-            Scale_freqs(mod->pi, mod->ns);
-            Freq_to_UnsFreq(mod->pi, mod->pi_unscaled, mod->ns, 1);
+            if(mod->freq_model!=ROOT){
+            	Scale_freqs(mod->pi, mod->ns);
+            	Freq_to_UnsFreq(mod->pi, mod->pi_unscaled, mod->ns, 1);
+            }
         } else { 
             if((mod->initqrates == ECMUSR) && (mod->freq_model == FUNDEFINED || mod->freq_model == FMODEL)) {
                 For(i, mod->ns) mod->pi[i] = mod->userfreq[senseCodons[i]]; //was io-> mod->userfreq[senseCodons[i]]; Ken 9/1/2018
@@ -592,7 +597,7 @@ void Init_Model(calign *data, model *mod, option *io)
            (mod->s_opt->opt_kappa == NO) && 
            (mod->s_opt->opt_state_freq == NO)) {
         	if(mod->nomega_part > 1){printf("options not compatible with partitioned model error 8\n");exit(EXIT_FAILURE);}
-            mr = Update_Qmat_Codons(mod, 0, 0); //modified by Ken 19/8
+            mr = Update_Qmat_Codons(mod, 0, 0, mod->pi); //modified by Ken 19/8
             EigenQREV(mod->qmat, mod->pi, mod->ns, mod->eigen->e_val, mod->eigen->r_e_vect, mod->eigen->l_e_vect, mod->eigen->space);
             For(i, mod->ns) mod->eigen->e_val[i] /= mr; //was io-> mod->ns 9/1 Ken
             mod->update_eigen = NO;
@@ -933,6 +938,8 @@ void Set_Model_Parameters(model *mod) {
                     EqFrequencies(mod->freq_model, mod->pi, mod->base_freq, mod->ns);
                     break;
                 }
+                case ROOT:
+                	break;
                 default:
                     break;
             }
@@ -976,7 +983,7 @@ void Set_Model_Parameters(model *mod) {
                 int modeli;
                for(modeli=0;modeli<mod->nomega_part;modeli++){ //Ken 19/8
             	   //for(modeli=0;modeli<1;modeli++){ //Ken 19/8
-                mod->mr_w[0] = Update_Qmat_Codons(mod, 0, modeli); //Ken 19/8
+                mod->mr_w[0] = Update_Qmat_Codons(mod, 0, modeli,mod->pi); //Ken 19/8
 
 
                 if(mod->expm == EIGEN) {
@@ -1066,7 +1073,7 @@ void Set_Model_Parameters(model *mod) {
                         Freq_to_UnsFreq(mod->pkappa,   mod->unspkappa,  mod->nkappa, 0);
                         Scale_freqs(mod->pkappa, mod->nkappa);    
                     }
-                    mod->mr_w[i] = Update_Qmat_Codons(mod, i,0);
+                    mod->mr_w[i] = Update_Qmat_Codons(mod, i,0,mod->pi);
                 }
                 
                 //!<Scaling Qmat together
@@ -1397,10 +1404,10 @@ void EqFrequencies(int modfreq, phydbl *pi, phydbl *freq, int numSensecodons) //
     }
 }
 
-phydbl Update_Qmat_Codons(model *mod, int cat, int modeli) {
+phydbl Update_Qmat_Codons(model *mod, int cat, int modeli, phydbl* freqs) {
     int numSensecodons, i, j, allocFreqs;
     phydbl sum, mu;
-    phydbl *freqs, *qmat, *mat;
+    phydbl *qmat, *mat;
     
     //Added by Ken
     //incorporate equilibrium frequencies in case they have been updated
@@ -1423,9 +1430,12 @@ phydbl Update_Qmat_Codons(model *mod, int cat, int modeli) {
             EqFrequencies(mod->freq_model, mod->pi, mod->base_freq, mod->ns);
             break;
         }
+        case ROOT:
+        	break;
         default:
             break;
      }
+    //printf("in qmat\n");
     //printf("qmat pi %lf %lf\n",mod->pi[0],mod->pi[1]);
     //Added by Ken 17/8/2016
    // int modeli;
@@ -1490,12 +1500,13 @@ phydbl Update_Qmat_Codons(model *mod, int cat, int modeli) {
     } else {
         mat = (phydbl *) mCalloc(numSensecodons * numSensecodons, sizeof(phydbl));
         For(i, numSensecodons * numSensecodons) mat[i] = 1.0;
-        
-        freqs = (phydbl *) mCalloc(numSensecodons, sizeof(phydbl));
-        For(i, numSensecodons) freqs[i] = 1.0;
+        if(mod->freq_model != ROOT){
+        	freqs = (phydbl *) mCalloc(numSensecodons, sizeof(phydbl));
+        	For(i, numSensecodons) freqs[i] = 1.0;
+        }
     }
     // deal with frequency models
-    if((mod->freq_model != FMODEL && mod->freq_model != FUNDEFINED)) {
+    if((mod->freq_model != FMODEL && mod->freq_model != FUNDEFINED) && mod->freq_model != ROOT) {
         if((mod->initqrates == NOINITMAT && mod->pcaModel == NO) || mod->initqrates == SCHN05) {
             free(freqs);
             allocFreqs = NO;
@@ -1503,10 +1514,10 @@ phydbl Update_Qmat_Codons(model *mod, int cat, int modeli) {
         freqs = mod->pi;
     } else {
         for(i=0; i<numSensecodons; i++) {
-            mod->pi[i] = freqs[i];
+        	if(mod->freq_model != ROOT) mod->pi[i] = freqs[i];
         }
     }
-   // printf("qmat pi %lf %lf\n",mod->pi[0],mod->pi[1]);
+    //printf("qmat pi %lf %lf\n",mod->pi[0],mod->pi[1]);
     For(i, numSensecodons*numSensecodons) qmat[i] = 0.0;
     
     // calculate the actual Q matrix
@@ -1521,6 +1532,7 @@ phydbl Update_Qmat_Codons(model *mod, int cat, int modeli) {
             Update_Qmat_YAP(mat, qmat, freqs, cat, mod);
             break;
         case HLP17:
+        case HLP18:
             Update_Qmat_HLP17(mat, qmat, freqs, cat, mod,mod->omega_part[modeli]);
             break;
         default:
@@ -1542,7 +1554,7 @@ phydbl Update_Qmat_Codons(model *mod, int cat, int modeli) {
     }
 
     //Added by Ken - normalizes matrix here.
-    if(mod->whichrealmodel == HLP17){
+    if(mod->whichrealmodel <= HLP17){
       For(i, numSensecodons) {
         For(j, numSensecodons) {
     		qmat[numSensecodons*i+j] = qmat[numSensecodons*i+j]/mu;
@@ -1591,7 +1603,6 @@ void Update_Qmat_HLP17(phydbl *mat, phydbl *qmat, phydbl * freqs, int cat, model
 	 for(fi=0;fi<61;fi++){ //Fill in B matrix
     	for(ti=0;ti<61;ti++){
     		for(c=0;c< mod->nmotifs;c++)htotal[c]=0; //set htotal array to zero
-
     			omp_lock_t writelock;
     			omp_init_lock(&writelock);
     			omp_set_lock(&writelock);
@@ -1632,8 +1643,13 @@ void Update_Qmat_HLP17(phydbl *mat, phydbl *qmat, phydbl * freqs, int cat, model
         		}
 
             	value = mat[i*numSensecodons+j] * Kappa_Omega_Factor(i, j, mod, cat,omega);
+            if(mod->modeltypeOpt==HLP17){
               qmat[ i*numSensecodons+j ] = value * freqs[j]*(1+mod->Bmat[ i*numSensecodons+j ]);
               qmat[ j*numSensecodons+i ] = value * freqs[i]*(1+mod->Bmat[ j*numSensecodons+i ]);
+            }else{
+            	qmat[ i*numSensecodons+j ] = value * (1.0/61)*(1+mod->Bmat[ i*numSensecodons+j ]);
+            	qmat[ j*numSensecodons+i ] = value * (1.0/61)*(1+mod->Bmat[ j*numSensecodons+i ]);
+            }
             //	qmat[ i*numSensecodons+j ] = value * 0.016*(1+mod->Bmat[ i*numSensecodons+j ]);
             //	qmat[ j*numSensecodons+i ] = value * 0.016*(1+mod->Bmat[ j*numSensecodons+i ]);
         }

@@ -289,6 +289,7 @@ typedef struct __Node {
   int								lupdate;	//Added by Ken - update likelihood on ancestral edge?
   struct __Edge                     *anc_edge;  //Added by Ken - pointer to ancestral edge
 
+  phydbl**						partfreqs; //frequencies of each partition
 
   int                           *bip_size; /* Size of each of the three lists from bip_node */
   int                                 num; /* t_node number */
@@ -1732,6 +1733,8 @@ void Read_userRatesAndFreqsMG( phydbl *daa, phydbl *pi, phydbl *bfreqs, int nbfr
 int myFactorial(int n); //! Added by Marcelo.
 char findAA_Name(int n); //! Added by Marcelo.
 
+void Get_Root_Freqs(calign *cdata, align **data, char* root, phydbl* freqs, model* mod, int modeli);
+
 FILE * openOutputFile( char * outFile, char * appendString, char * suffix, option *io );
 
 extern char     aminoAcidmap[65]; //!< Added by Marcelo.
@@ -1766,6 +1769,7 @@ void Set_Genetic_Code(int gencode);
 #define YAP -3
 #define PCM -4
 #define HLP17 -100 //added by Ken
+#define HLP18 -101
 
 /*! Opt freq scheme */ //!
 #define NOFEQ     -1
@@ -1773,6 +1777,7 @@ void Set_Genetic_Code(int gencode);
 #define OPTIMIZE  2
 #define MODEL     1
 #define EMPIRICAL 0
+#define ROOT	  5
 
 /*! Parametric Models (GY, MG, YAP) */
 #define GYSIMP -1

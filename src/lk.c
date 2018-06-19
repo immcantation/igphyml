@@ -501,20 +501,24 @@ phydbl Lk(t_tree *tree)
   if(tree->bl_from_node_stamps) TIMES_Bl_From_T(tree);
   #endif
 
- //printf("\nbefore pmat: omega %d %lf %lf %lf %lf %lf %lf",tree->both_sides,tree->mod->omega_part[0],tree->mod-> kappa,tree->c_lnL,tree->mod->qmat_part[0][1],tree->mod->hotness[0],tree->mod->hotness[1]);
+  int startnode = 0;
+  if(tree->mod->whichrealmodel <= HLP17){
+	  startnode = tree->mod->startnode;
+  }
 
-  #if defined OMP || defined BLAS_OMP
-  #pragma omp parallel for if(tree->mod->datatype==CODON && !tree->mod->splitByTree)
-  #endif
-  For(br,n_edges) Update_PMat_At_Given_Edge(tree->t_edges[br],tree);
+  if(tree->mod->modeltypeOpt!=HLP18){
+  	  #if defined OMP || defined BLAS_OMP
+  	  #pragma omp parallel for if(tree->mod->datatype==CODON && !tree->mod->splitByTree)
+  	  #endif
+	  For(br,n_edges) Update_PMat_At_Given_Edge(tree->t_edges[br],tree);
+  }else{
+	  //printf("Doing things recursively!\n");
+	  Update_PMat_Recursive(tree->noeud[startnode]->b[0],tree);
+  }
 	//printf("\nafter pmat: omega %d %lf %lf %lf %lf %lf %lf",tree->both_sides,tree->mod->omega_part[0],tree->mod-> kappa,tree->c_lnL,tree->mod->qmat_part[0][1],tree->mod->hotness[0],tree->mod->hotness[1]);
 
  // For(br,2*tree->n_otu-3) printf("%lf\n",tree->t_edges[br]->l);
   //added and modified by Ken to start likelihood calculation at specified node
-  int startnode = 0;
-  if(tree->mod->whichrealmodel == HLP17){
-	  startnode = tree->mod->startnode;
-  }
   Post_Order_Lk(tree->noeud[startnode],tree->noeud[startnode]->v[0],tree);
 
   if(tree->both_sides)
@@ -523,7 +527,7 @@ phydbl Lk(t_tree *tree)
   tree->c_lnL             = .0;
   tree->sum_min_sum_scale = .0;
 
-  if(tree->mod->whichrealmodel==HLP17){
+  if(tree->mod->whichrealmodel<=HLP17){
 	  Fill_UPP_root(tree,tree->noeud[startnode]->b[0]);
   }
 
@@ -532,11 +536,11 @@ phydbl Lk(t_tree *tree)
 
 	//printf("\nbefore: omega %d %lf %lf %lf %lf %lf %lf",tree->both_sides,tree->mod->omega_part[0],tree->mod-> kappa,tree->c_lnL,tree->mod->qmat_part[0][1],tree->mod->hotness[0],tree->mod->hotness[1]);
   For(tree->curr_site,n_patterns){
-	  if(tree->data->wght[tree->curr_site] > SMALL && tree->mod->whichrealmodel==HLP17) Lk_Core_UPP(tree->noeud[startnode]->b[0],tree,tree->noeud[startnode],tree->noeud[startnode]->b[0]->des_node);
+	  if(tree->data->wght[tree->curr_site] > SMALL && tree->mod->whichrealmodel<=HLP17) Lk_Core_UPP(tree->noeud[startnode]->b[0],tree,tree->noeud[startnode],tree->noeud[startnode]->b[0]->des_node);
 	  else if(tree->data->wght[tree->curr_site] > SMALL) Lk_Core(tree->noeud[startnode]->b[0],tree);
   }
   Adjust_Min_Diff_Lk(tree);
-  if(tree->mod->optDebug && tree->mod->whichrealmodel==HLP17){
+  if(tree->mod->optDebug && tree->mod->whichrealmodel<=HLP17){
 #if defined OMP || defined BLAS_OMP
 #pragma omp critical
 #endif
@@ -545,11 +549,13 @@ phydbl Lk(t_tree *tree)
 #if defined OMP || defined BLAS_OMP
 #pragma omp critical
 #endif
+	  if(tree->mod->modeltypeOpt!=HLP18){
 	  printf("\n");
 	  For(i,12)printf("\t%lf",tree->mod->uns_base_freq[i]);
 	  printf("\n");
 	  For(i,12)printf("\t%lf",tree->mod->base_freq[i]);
 	  printf("\n");
+	  }
   }
 
   return tree->c_lnL;
@@ -1861,7 +1867,7 @@ phydbl ASR_At_Given_Edge(t_edge *b_fcus, t_tree *tree, int root)
 	   Warn_And_Exit("");
 	}
 
-	if(tree->mod->whichrealmodel == HLP17){//Added by Ken 3/8/2016
+	if(tree->mod->whichrealmodel <= HLP17){//Added by Ken 3/8/2016
 	  Update_PMat_At_Given_Edge(b_fcus,tree);
 
 	  if(tree->mod->s_opt->opt_topo){
@@ -1914,21 +1920,24 @@ phydbl Lk_At_Given_Edge(t_edge *b_fcus, t_tree *tree)
 	   Warn_And_Exit("");
 	}
 
-	if(tree->mod->whichrealmodel == HLP17){//Added by Ken 3/8/2016
-	  Update_PMat_At_Given_Edge(b_fcus,tree);
-
-	  if(tree->mod->s_opt->opt_topo){
-		  if(b_fcus->anc_node->num != tree->mod->startnode){
-			  Fill_UPP_single(tree,b_fcus);
-		  }else{
-			  Fill_UPP_root(tree,b_fcus);
+	if(tree->mod->whichrealmodel <= HLP17){//Added by Ken 3/8/2016
+	  if(tree->mod->whichrealmodel == HLP18){
+		  Lk(tree);
+	  }else{
+		  Update_PMat_At_Given_Edge(b_fcus,tree);
+		  if(tree->mod->s_opt->opt_topo){
+			  if(b_fcus->anc_node->num != tree->mod->startnode){
+			  	  Fill_UPP_single(tree,b_fcus);
+			  }else{
+				  Fill_UPP_root(tree,b_fcus);
+			  }
+		  }
+		  tree->c_lnL             = .0;
+		  tree->sum_min_sum_scale = .0;
+		  For(tree->curr_site,tree->n_pattern){
+			  Lk_Core_UPP(b_fcus,tree, b_fcus->anc_node, b_fcus->des_node);
 		  }
 	  }
-	  tree->c_lnL             = .0;
-	   tree->sum_min_sum_scale = .0;
-	   For(tree->curr_site,tree->n_pattern){
-	   	 Lk_Core_UPP(b_fcus,tree, b_fcus->anc_node, b_fcus->des_node);
-	   }
 	  return tree->c_lnL;
   }else{
 
@@ -2194,7 +2203,7 @@ phydbl Lk_Core_UPP(t_edge *b, t_tree *tree, t_node *anc, t_node *d)
 	      PhyML_Printf("\n. bl b: %lf",b->l);
 	      PhyML_Printf("\n. root id: %s",tree->mod->rootname);
 	      PhyML_Printf("\n. Params: %lf %lf",tree->mod->omega_part[0],tree->mod->kappa);
-	      if(tree->mod->modeltypeOpt==HLP17){
+	      if(tree->mod->modeltypeOpt<=HLP17){
 	      	  For(i,tree->mod->nhotness)PhyML_Printf("h %d %lf\n",i,tree->mod->hotness[i]);
 	      	  For(i,12)PhyML_Printf("pi %d %lf %lf\n",i,tree->mod->base_freq[i],tree->mod->uns_base_freq[i]);
 	      }
@@ -2737,7 +2746,7 @@ n_v1   n_v2
 	    }
 	}
     }
-  if(tree->mod->s_opt->opt_topo && tree->mod->whichrealmodel == HLP17){
+  if(tree->mod->s_opt->opt_topo && tree->mod->whichrealmodel <= HLP17){
 	  if(b->anc_node->num != tree->mod->startnode){
 		  Fill_UPP_single(tree,b);
 	  }else{
@@ -3035,6 +3044,62 @@ void Init_P_Lk_Tips_Int(t_tree *tree)
   if(tree->mod->m4mod) M4_Init_P_Lk_Tips_Int(tree);
   #endif
 }
+/*********************************************************/
+// Flux adjustment
+void Calculate_Flux_Freqs(t_edge* b_fcus, phydbl* ofreqs, phydbl* dfreqs,t_tree* tree, int modeli){
+	//Need to adjust to make partition model
+	int i,j;
+	int dim2 = tree->mod->ns;
+	int dim3 = tree->mod->ns * tree->mod->ns;
+	phydbl fluxs[61];
+	phydbl fsum=0;
+	For(i,61){
+		fluxs[i]=0;
+		For(j,61){
+			//printf("%d\t%d\t%lf\t%lf\t%lf\t%lf\n",i,j,ofreqs[i],b_fcus->bPmat_part[modeli][i*dim2+j],ofreqs[j],b_fcus->bPmat_part[modeli][j*dim2+i]);
+			phydbl fij = ofreqs[i]*b_fcus->bPmat_part[modeli][i*dim2+j];
+			phydbl fji = ofreqs[j]*b_fcus->bPmat_part[modeli][j*dim2+i];
+			fluxs[i] += 2*(fji-fij);
+		}
+		dfreqs[i] = (ofreqs[i]+fluxs[i]);
+		if(dfreqs[i]<= 0.0)dfreqs[i]=0.00001;
+		fsum += dfreqs[i];
+	}
+	For(i,61)dfreqs[i] = dfreqs[i]/fsum;
+}
+
+/*********************************************************/
+// Recursively update PMats
+void Update_PMat_Recursive(t_edge *b_fcus, t_tree *tree){
+	int modeli,i;
+	For(modeli,tree->mod->nomega_part){
+		Update_Qmat_Codons(tree->mod,0,modeli,b_fcus->anc_node->partfreqs[modeli]);
+	}
+	Update_PMat_At_Given_Edge(b_fcus,tree);
+
+	if(!b_fcus->des_node->tax){
+		For(modeli,tree->mod->nomega_part){
+			Calculate_Flux_Freqs(b_fcus,b_fcus->anc_node->partfreqs[modeli],b_fcus->des_node->partfreqs[modeli],tree,modeli);
+			//For(i,61)printf("\n%d\t%d\t%lf\t%lf",b_fcus->num,i,b_fcus->anc_node->freqs[i],b_fcus->des_node->freqs[i]);
+			//For(i,61)b_fcus->des_node->partfreqs[modeli][i] = b_fcus->anc_node->partfreqs[modeli][i];
+			if(tree->mod->optDebug){
+				printf("\nnode n: %s\t%s\t%lf",b_fcus->anc_node->name,b_fcus->des_node->name,b_fcus->l);
+				printf("\n%d\t%d\t%lf\t%lf",b_fcus->num,9, b_fcus->anc_node->partfreqs[0][9], b_fcus->des_node->partfreqs[0][9]);
+				printf("\n%d\t%d\t%lf\t%lf",b_fcus->num,11,b_fcus->anc_node->partfreqs[0][11],b_fcus->des_node->partfreqs[0][11]);
+				printf("\n%d\t%d\t%lf\t%lf",b_fcus->num,38,b_fcus->anc_node->partfreqs[0][38],b_fcus->des_node->partfreqs[0][38]);
+				printf("\n%d\t%d\t%lf\t%lf",b_fcus->num,42,b_fcus->anc_node->partfreqs[0][42],b_fcus->des_node->partfreqs[0][42]);
+			}
+		}
+	}
+	if(!b_fcus->des_node->tax){
+		For(i,3){
+			if(b_fcus->des_node->b[i]->num != b_fcus->num){
+				Update_PMat_Recursive(b_fcus->des_node->b[i],tree);
+			}
+		}
+	}
+}
+
 
 /*********************************************************/
 
@@ -3046,28 +3111,20 @@ void Update_PMat_At_Given_Edge(t_edge *b_fcus, t_tree *tree)
   if(b_fcus->l < BL_MIN)      b_fcus->l = BL_MIN;
   else if(b_fcus->l > BL_MAX) b_fcus->l = BL_MAX;
    
-  if(tree->mod->datatype==CODON) //!< Added by Marcelo.
-  {
-    if(b_fcus->has_zero_br_len) 
-    {
+  if(tree->mod->datatype==CODON){ //!< Added by Marcelo.
+    if(b_fcus->has_zero_br_len){
     	printf("zero branch length\nKen should have fixed this by now.\nPlease complain to him.\n");
     	exit(EXIT_FAILURE);
       For(k,tree->mod->n_w_catg) For(i,tree->mod->ns*tree->mod->ns) b_fcus->Pij_rr[i+k*tree->mod->ns*tree->mod->ns]=tree->mod->A0_part[0][i];//Ken 22/8 Need to fix
-    } 
-    else
-    {
-      if(tree->mod->n_catg>1 && tree->mod->n_w_catg==1)
-      {
-	For(i,tree->mod->n_catg)
-	{
-	  len = b_fcus->l*tree->mod->gamma_rr[i];	  
-	  if(len < BL_MIN)      len = BL_MIN;
-	  else if(len > BL_MAX) len = BL_MAX;
-	  PMat_CODON(len,tree->mod,0,b_fcus->Pij_rr+tree->mod->ns*tree->mod->ns*i);
-	}
-      }
-      else
-      {
+    }else{
+      if(tree->mod->n_catg>1 && tree->mod->n_w_catg==1){
+    	  For(i,tree->mod->n_catg){
+    		  len = b_fcus->l*tree->mod->gamma_rr[i];
+    		  if(len < BL_MIN)      len = BL_MIN;
+    		  else if(len > BL_MAX) len = BL_MAX;
+    		  PMat_CODON(len,tree->mod,0,b_fcus->Pij_rr+tree->mod->ns*tree->mod->ns*i);
+    	  }
+      }else{
     	  len = b_fcus->l;
     	  if(tree->mod->testcondition){len=BL_MIN;}
     	  int modeli;
@@ -3076,20 +3133,14 @@ void Update_PMat_At_Given_Edge(t_edge *b_fcus, t_tree *tree)
     	  }
       }
     }
-  }
-  else
-  {
-    
+  }else{
     len = -1.0;
-    
-    For(i,tree->mod->n_catg)
-    {
+    For(i,tree->mod->n_catg){
       if(b_fcus->has_zero_br_len) len = -1.0;
-      else
-      {
-	len = b_fcus->l*tree->mod->gamma_rr[i];	  
-	if(len < BL_MIN)      len = BL_MIN;
-	else if(len > BL_MAX) len = BL_MAX;
+      else{
+    	  len = b_fcus->l*tree->mod->gamma_rr[i];
+    	  if(len < BL_MIN)      len = BL_MIN;
+    	  else if(len > BL_MAX) len = BL_MAX;
       }
       PMat(len,tree->mod,tree->mod->ns*tree->mod->ns*i,b_fcus->Pij_rr);
     }
@@ -3442,7 +3493,7 @@ matrix *ML_CODONDist_Pairwise(calign *data, option *io, model *mod) //!<Added by
   if(mod->optDebug)printf("inited mat\n");
   //Added by Ken
   //Make Bmat array equivalent to GY94
-  if(mod->whichrealmodel == HLP17){ //was io-> mod
+  if(mod->whichrealmodel <= HLP17){ //was io-> mod
 	  /*int combinations = 3721;
 	  phydbl hot[combinations];
 	  //phydbl *tfr = ecmK07freq;
@@ -3477,7 +3528,7 @@ matrix *ML_CODONDist_Pairwise(calign *data, option *io, model *mod) //!<Added by
   }
   //printf("first pi %lf %lf\n",mod_tmp->pi[0],mod->pi[0]);
   if(io->mod->optDebug)printf("initqs %d %d %d\n",mod_tmp->initqrates,mod->initqrates,io->mod->initqrates);
-  mr = Update_Qmat_Codons(mod_tmp, 0,0);
+  mr = Update_Qmat_Codons(mod_tmp, 0,0,mod_tmp->pi);
   if(io->mod->optDebug)printf("first pi %lf %lf\n",mod_tmp->pi[0],mod->pi[0]);
 
   //printf("\n. FYI: Using single partitioned GY94 for initial tree.\n\n");

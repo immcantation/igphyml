@@ -348,6 +348,10 @@ t_node *Make_Node_Light(int num)
   n->l     = (phydbl *)mCalloc(3,sizeof(phydbl));
   n->score = (phydbl *)mCalloc(3,sizeof(phydbl));
   
+  n->partfreqs = mCalloc(2,sizeof(phydbl*));
+  n->partfreqs[0] = mCalloc(61,sizeof(phydbl));
+  n->partfreqs[1] = mCalloc(61,sizeof(phydbl));
+
   Init_Node_Light(n,num);
   
   n->name  = (char *)mCalloc(T_MAX_NAME,sizeof(char)); //!< Added by Marcelo.
@@ -590,6 +594,10 @@ calign *Compact_Data(align **data, option *io, model *mod)
         case CF3X4: Get_Base_Freqs_CODONS_FaXb(cdata_tmp, data, mod->freq_model, mod);                //!< Added by Marcelo. was io-> mod Ken 9/1/2018
           break;
         case FMODEL:
+          break;
+        case ROOT:
+          Get_Root_Freqs(cdata_tmp, data, mod->rootname, mod->pi, mod, i);
+          if(mod->optDebug)For(j,61)printf("%lf\n",mod->pi[j]);
           break;
         default:  
           PhyML_Printf("\n. Frequency model not implemented.\n",__FILE__,__LINE__);
@@ -1470,7 +1478,7 @@ void NNI(t_tree *tree, t_edge *b_fcus, int do_swap)
   	//      	  int n_edges=2*tree->n_otu-3;
   	//      	  For(br,n_edges) Update_PMat_At_Given_Edge(tree->t_edges[br],tree);
   	//      Get_UPP(tree->noeud[tree->mod->startnode], tree->noeud[tree->mod->startnode]->v[0], tree);
- /* if(tree->mod->whichrealmodel == HLP17){
+ /* if(tree->mod->whichrealmodel <= HLP17){
 	  if(b_fcus->anc_node->num != tree->mod->startnode){
  	  	  Fill_UPP_single(tree,b_fcus);
   	  }else{
@@ -1490,7 +1498,7 @@ void NNI(t_tree *tree, t_edge *b_fcus, int do_swap)
 	 //  int br;
 	//      	  int n_edges=2*tree->n_otu-3;
 	//      	  For(br,n_edges) Update_PMat_At_Given_Edge(tree->t_edges[br],tree);
-/*  if(tree->mod->whichrealmodel == HLP17){
+/*  if(tree->mod->whichrealmodel <= HLP17){
 	  if(b_fcus->anc_node->num != tree->mod->startnode){
 		  Fill_UPP_single(tree,b_fcus);
 	  }else{
@@ -1505,7 +1513,7 @@ void NNI(t_tree *tree, t_edge *b_fcus, int do_swap)
                        tree->mod->s_opt->quickdirty);
     Update_PMat_At_Given_Edge(b_fcus,tree);
 
- /*  if(tree->mod->whichrealmodel == HLP17){
+ /*  if(tree->mod->whichrealmodel <= HLP17){
     if(b_fcus->anc_node->num != tree->mod->startnode){
    	  Fill_UPP_single(tree,b_fcus);
     }else{
@@ -1533,7 +1541,7 @@ void NNI(t_tree *tree, t_edge *b_fcus, int do_swap)
   	 //     	  For(br,n_edges) Update_PMat_At_Given_Edge(tree->t_edges[br],tree);
   	 //     Get_UPP(tree->noeud[tree->mod->startnode], tree->noeud[tree->mod->startnode]->v[0], tree);
 
-  /*if(tree->mod->whichrealmodel == HLP17){
+  /*if(tree->mod->whichrealmodel <= HLP17){
 	  if(b_fcus->anc_node->num != tree->mod->startnode){
 		  Fill_UPP_single(tree,b_fcus);
 	  }else{
@@ -1562,7 +1570,7 @@ void NNI(t_tree *tree, t_edge *b_fcus, int do_swap)
                        tree->mod->s_opt->brent_it_max,
                        tree->mod->s_opt->quickdirty);
     Update_PMat_At_Given_Edge(b_fcus,tree);
-  /*  if(tree->mod->whichrealmodel == HLP17){
+  /*  if(tree->mod->whichrealmodel <= HLP17){
     	if(b_fcus->anc_node->num != tree->mod->startnode){
     		Fill_UPP_single(tree,b_fcus);
     	}else{
@@ -1596,7 +1604,7 @@ void NNI(t_tree *tree, t_edge *b_fcus, int do_swap)
  // n_edges=2*tree->n_otu-3;
   	//      	  For(br,n_edges) Update_PMat_At_Given_Edge(tree->t_edges[br],tree);
   	//      Get_UPP(tree->noeud[tree->mod->startnode], tree->noeud[tree->mod->startnode]->v[0], tree);
-  /*if(tree->mod->whichrealmodel == HLP17){
+  /*if(tree->mod->whichrealmodel <= HLP17){
 	  if(b_fcus->anc_node->num != tree->mod->startnode){
 		  Fill_UPP_single(tree,b_fcus);
 	  }else{
@@ -1649,7 +1657,7 @@ void NNI(t_tree *tree, t_edge *b_fcus, int do_swap)
 	    //  	  int n_edges=2*tree->n_otu-3;
 	   //   	  For(br,n_edges) Update_PMat_At_Given_Edge(tree->t_edges[br],tree);
 	   //   Get_UPP(tree->noeud[tree->mod->startnode], tree->noeud[tree->mod->startnode]->v[0], tree);
-	/*  if(tree->mod->whichrealmodel == HLP17){
+	/*  if(tree->mod->whichrealmodel <= HLP17){
 		  if(b_fcus->anc_node->num != tree->mod->startnode){
 	       	  Fill_UPP_single(tree,b_fcus);
 	      }else{
@@ -1664,7 +1672,7 @@ void NNI(t_tree *tree, t_edge *b_fcus, int do_swap)
                        tree->mod->s_opt->quickdirty);
     Update_PMat_At_Given_Edge(b_fcus,tree);
 
-    /*if(tree->mod->whichrealmodel == HLP17){
+    /*if(tree->mod->whichrealmodel <= HLP17){
     	if(b_fcus->anc_node->num != tree->mod->startnode){
     		Fill_UPP_single(tree,b_fcus);
     	}else{
@@ -1885,7 +1893,7 @@ void Swap(t_node *a, t_node *b, t_node *c, t_node *d, t_tree *tree)
     }
   }
   Update_Dirs(tree);
-  if(tree->mod->whichrealmodel == HLP17){
+  if(tree->mod->whichrealmodel <= HLP17){
 	  Update_Ancestors_Edge(tree->noeud[tree->mod->startnode],tree->noeud[tree->mod->startnode]->v[0],tree->noeud[tree->mod->startnode]->b[0],tree); //added by Ken 7/11
   }
  // printf("\n\n");
@@ -3183,7 +3191,7 @@ void Record_Partial_Model(model *ori, model *cpy)
     cpy->structTs_and_Tv  = (ts_and_tv *)mCalloc(64*64,sizeof(ts_and_tv));//!< Added by Marcelo. 64 possible codons ... will be initialized together with the model parameters in set model default.
     if(cpy->datatype==CODON) Make_Ts_and_Tv_Matrix(cpy->io,cpy);
 
-    if(ori->whichrealmodel==HLP17){
+    if(ori->whichrealmodel<=HLP17){
     	  cpy->Bmat = (phydbl *)mCalloc(3721,sizeof(phydbl));
     	  setUpHLP17(ori->io,cpy);
     }
@@ -4721,7 +4729,7 @@ void Prune_Subtree(t_node *a, t_node *d, t_edge **target, t_edge **residual, t_t
   }
 #endif
   
-  if(tree->mod->whichrealmodel==HLP17){ //added by Ken 17/11
+  if(tree->mod->whichrealmodel<= HLP17){ //added by Ken 17/11
  	  Update_Ancestors_Edge(tree->noeud[tree->mod->startnode],tree->noeud[tree->mod->startnode]->v[0],tree->noeud[tree->mod->startnode]->b[0],tree); //added by Ken 7/11
 	  if(tree->mod->slowSPR==1){
 	  	  tree->both_sides=1;
@@ -4852,7 +4860,7 @@ void Graft_Subtree(t_edge *target, t_node *link, t_edge *residual, t_tree *tree)
   Make_Edge_Dirs(residual,residual->left,residual->rght);
   Make_Edge_Dirs(b_up,b_up->left,b_up->rght);
 
-  if(tree->mod->whichrealmodel==HLP17){ //added by Ken 17/11
+  if(tree->mod->whichrealmodel<= HLP17){ //added by Ken 17/11
 	  Update_Ancestors_Edge(tree->noeud[tree->mod->startnode],tree->noeud[tree->mod->startnode]->v[0],tree->noeud[tree->mod->startnode]->b[0],tree); //added by Ken 7/11
 	  if(tree->mod->slowSPR==1){
 	  	  tree->both_sides=1;
@@ -5071,8 +5079,8 @@ void Fast_Br_Len(t_edge *b, t_tree *tree, int approx)
    if(b->l < BL_MIN)      b->l = BL_MIN;
    else if(b->l > BL_MAX) b->l = BL_MAX;
   }
-  if(!approx || tree->mod->whichmodel == HLP17){
-	 // if(!approx || tree->mod->whichmodel == HLP17){
+  if(!approx || tree->mod->whichmodel <= HLP17){
+	 // if(!approx || tree->mod->whichmodel <= HLP17){
 	  //includes lk_at_given_edge
     Br_Len_Brent(0.02*b->l,b->l,50.*b->l,
                  tree->mod->s_opt->min_diff_lk_local,
@@ -5165,7 +5173,7 @@ phydbl Triple_Dist(t_node *a, t_tree *tree, int approx)
   {
 	Update_PMat_At_Given_Edge(a->b[1],tree);
 	Update_PMat_At_Given_Edge(a->b[2],tree);
-	if(tree->mod->whichrealmodel==HLP17){
+	if(tree->mod->whichrealmodel<= HLP17){
 	  	t_edge* ance = a->anc_edge;
     	int dir1 = -1;
 		int dir2 = -1;
@@ -6795,6 +6803,44 @@ int Genetic_code_ns() //!< Added by Marcelo.
     default: Warn_And_Exit("\nGenetic code not implemented.\n");break;                                                  
   }
   return 64-number;
+}
+
+void Get_Root_Freqs(calign *cdata, align **data, char* root, phydbl* freqs, model* mod, int modeli){
+	 char curr_state;
+	  int i,j,k,l,m, counter;
+	  phydbl *freq,*codons,sum, sumf;
+      freq=(phydbl *)mCalloc(mod->ns,sizeof(phydbl));
+      codons=(phydbl *)mCalloc(mod->ns,sizeof(phydbl));
+      For(i,mod->ns) freq[i]=1.0/mod->ns;
+
+        For(i,mod->ns) codons[i]=0.0;
+        For(i,cdata->n_otu){
+          if(strcmp(data[i]->name,root)!=0)continue;
+          For(j,data[0]->len){
+            curr_state=data[i]->state[j];
+            if(curr_state>=(char)0 && curr_state<(char)64 ){
+              codons[ indexSenseCodons[(int)curr_state] ]++;
+            }else{
+              if(curr_state==(char) 88){
+                l=-1;
+                while(data[i]->alternativeCodons[j][++l]<64);
+                sumf=0;
+                For(m,l) sumf+=freq[indexSenseCodons[data[i]->alternativeCodons[j][m]]];
+                For(m,l) codons[indexSenseCodons[data[i]->alternativeCodons[j][m]]]+=freq[indexSenseCodons[data[i]->alternativeCodons[j][m]]]/sumf;
+              }
+            }
+          }
+        }
+        sum=0.0;
+        For(i,mod->ns) sum+=codons[i];
+        For(i,mod->ns) freqs[i]=codons[i]/sum;
+
+
+      For(i,mod->ns) cdata->b_frq[i]=freqs[i];
+      For(i,mod->num_base_freq) mod->base_freq[i]=cdata->b_frq[i];
+
+      free(freq);
+      free(codons);
 }
 
 /*********************************************************/

@@ -193,7 +193,7 @@ int storeParams(option* io, int reseto){
 	ar[c++]=io->mod->kappa;
 	For(i,io->mod->nomega_part)ar[c++]=io->mod->omega_part[i];
 	For(i,12)ar[c++]=io->mod->uns_base_freq[i];
-	if(io->mod->whichrealmodel==HLP17)For(i,io->mod->nhotness)ar[c++]=io->mod->hotness[i];
+	if(io->mod->whichrealmodel<=HLP17)For(i,io->mod->nhotness)ar[c++]=io->mod->hotness[i];
 	//store subtree model parameters and branch lengths
 	For(j,io->ntrees){
 		model* mod=io->mod_s[j];
@@ -202,7 +202,7 @@ int storeParams(option* io, int reseto){
 		ar[c++]=mod->kappa;
 		For(i,io->mod->nomega_part)ar[c++]=mod->omega_part[i];
 		For(i,12)ar[c++]=mod->uns_base_freq[i];
-		if(io->mod->whichrealmodel==HLP17)For(i,io->mod->nhotness)ar[c++]=mod->hotness[i];
+		if(io->mod->whichrealmodel<=HLP17)For(i,io->mod->nhotness)ar[c++]=mod->hotness[i];
 		For(k,2*tree->n_otu-3){
 			  ar[c++]=tree->t_edges[k]->l;
 		 }
@@ -231,7 +231,7 @@ int restoreParams(option* io, int reseto){
 	io->mod->kappa=ar[c++];
 	For(i,io->mod->nomega_part)io->mod->omega_part[i]=ar[c++];
 	For(i,12)io->mod->uns_base_freq[i]=ar[c++];
-	if(io->mod->whichrealmodel==HLP17)For(i,io->mod->nhotness)io->mod->hotness[i]=ar[c++];
+	if(io->mod->whichrealmodel<=HLP17)For(i,io->mod->nhotness)io->mod->hotness[i]=ar[c++];
 	//restore subtree model parameters and branch lengths
 	For(j,io->ntrees){
 		model* mod=io->mod_s[j];
@@ -240,7 +240,7 @@ int restoreParams(option* io, int reseto){
 		mod->kappa=ar[c++];
 		For(i,io->mod->nomega_part)mod->omega_part[i]=ar[c++];
 		For(i,12)mod->uns_base_freq[i]=ar[c++];
-		if(io->mod->whichrealmodel==HLP17)For(i,io->mod->nhotness)mod->hotness[i]=ar[c++];
+		if(io->mod->whichrealmodel<=HLP17)For(i,io->mod->nhotness)mod->hotness[i]=ar[c++];
 		For(k,2*tree->n_otu-3){
 			  tree->t_edges[k]->l=ar[c++];
 		 }
@@ -412,7 +412,7 @@ void Round_Optimize(option *io, int n_round_max){
 				t_node* root = tree->noeud[tree->mod->startnode];
 				if(tree->mod->whichrealmodel != HLP17)(!((n_roundt+2)%2))?(root=tree->noeud[0]):(root=tree->noeud[tree->n_otu-1]);
 				Lk(tree);
-				if(tree->mod->whichrealmodel == HLP17){Get_UPP(root, root->v[0], tree);}
+				if(tree->mod->whichrealmodel <= HLP17){Get_UPP(root, root->v[0], tree);}
 				Optimize_Br_Len_Serie(root,root->v[0],root->b[0],tree,tree->data);
 				//Lk(tree);
 				//printf("%d mod quiet\n",tree->mod->quiet);
@@ -435,7 +435,7 @@ void Round_Optimize(option *io, int n_round_max){
 				if(tree->mod->whichrealmodel != HLP17)(!((n_roundt+2)%2))?(root=tree->noeud[0]):(root=tree->noeud[tree->n_otu-1]);
 				tree->both_sides = 1;
 				Lk(tree);
-				if(tree->mod->whichrealmodel == HLP17){Get_UPP(root, root->v[0], tree);}
+				if(tree->mod->whichrealmodel <= HLP17){Get_UPP(root, root->v[0], tree);}
 				Optimize_Br_Len_Serie(root,root->v[0],root->b[0],tree,tree->data);
 				//Lk(tree);
 				//if((tree->mod->s_opt->print) && (!tree->mod->quiet)) Print_Lk(tree,"[Branch lengths     ]");
@@ -449,7 +449,7 @@ void Round_Optimize(option *io, int n_round_max){
 		}
       }
       Lk_rep(io);
-      if(io->mod->whichrealmodel == HLP17){
+      if(io->mod->whichrealmodel <= HLP17){
     	  //For(i,io->ntree){Get_UPP(root, root->v[0], tree)};
     	  //Get_Lhood(root,root->v[0],tree);
       }
@@ -506,7 +506,7 @@ void Optimize_Br_Len_Serie(t_node *a, t_node *d, t_edge *b_fcus, t_tree *tree, c
   	//Added to catch potential issues with branch optimization
   if(tree->mod->optDebug)printf("\n%d\t%lf\t%lf",b_fcus->num,b_fcus->l,tree->c_lnL);
 
-  if(tree->mod->whichrealmodel == HLP17){
+  if(tree->mod->whichrealmodel <= HLP17){
    if(tree->c_lnL < lk_init - tree->mod->s_opt->min_diff_lk_local){
 
 		  PhyML_Printf("\n. %f %f %f %f %d %d %d\n",l_infa,l_max,l_infb,b_fcus->l,b_fcus->num,a->num,d->num);
@@ -526,12 +526,12 @@ void Optimize_Br_Len_Serie(t_node *a, t_node *d, t_edge *b_fcus, t_tree *tree, c
   if(d->tax) return;
    else For(i,3) if(d->v[i] != a)
    {
-	   Update_P_Lk(tree,d->b[i],d);
+	   if(tree->mod->whichrealmodel!=HLP18)Update_P_Lk(tree,d->b[i],d);
 	   if(tree->mod->whichrealmodel == HLP17){Fill_UPP_single(tree,d->b[i]);}
 	   Optimize_Br_Len_Serie(d,d->v[i],d->b[i],tree,cdata);
    }
   
-  For(i,3) if((d->v[i] == a) && !(d->v[i]->tax)) Update_P_Lk(tree,d->b[i],d);
+  if(tree->mod->whichrealmodel!=HLP18)For(i,3) if((d->v[i] == a) && !(d->v[i]->tax)) Update_P_Lk(tree,d->b[i],d);
 }
 
 /*********************************************************/
@@ -577,7 +577,7 @@ void Optimiz_Ext_Br(t_tree *tree)
 	  b->nni->best_conf = 0;
 	  b->l              = l_init;
 
-	  if(tree->mod->whichrealmodel == HLP17){
+	  if(tree->mod->whichrealmodel <= HLP17){
 	  Update_PMat_At_Given_Edge(b,tree);
 
 	  }
@@ -633,7 +633,7 @@ void Optimiz_Submodel_Params(option* io,int verbose){
 				  }
 			 }
 		}
-		if(tree->mod->whichrealmodel==HLP17){ //added by Kenneth Hoehn
+		if(tree->mod->whichrealmodel<=HLP17){ //added by Kenneth Hoehn
 		  	 For(c,tree->mod->nhotness){
 		  		if(tree->mod->hoptindex[c] == 2){
 		  			//printf("\nOptimizing h %d %d %d %d",c,verbose,tree->mod->hoptindex[c],tree->mod->num);
@@ -663,7 +663,7 @@ void Optimiz_Submodel_Params(option* io,int verbose){
 					}
 				}
 			}
-			if(tree->mod->whichrealmodel==HLP17){ //added by Kenneth Hoehn
+			if(tree->mod->whichrealmodel<=HLP17){ //added by Kenneth Hoehn
 				//if(tree->mod->opthotness==2){
 				    int d;
 				    For(c,tree->mod->nmotifs){
@@ -817,7 +817,7 @@ void Optimiz_All_Free_Param(option* io, int verbose, int recurse){
 	  		x2minbound[numParams-1][1]   = TREEBOUNDHIGH;
 		}
     }
-    if(io->mod->whichrealmodel==HLP17){ //added by Kenneth Hoehn //changed from opthotness==1 on 31/1/2018
+    if(io->mod->whichrealmodel<=HLP17){ //added by Kenneth Hoehn //changed from opthotness==1 on 31/1/2018
   		int c;
   	  	for(c=0;c<io->mod->nhotness;c++){
   		if(io->mod->hoptindex[c] == 1  || (io->mod->optIter==0 && io->mod->hoptindex[c] == 2)){
