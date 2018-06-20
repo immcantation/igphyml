@@ -49,7 +49,7 @@ void findCIs(model* mod, option *io, FILE* CI){
 	  	  	  	  phydbl lower=binarySearchCI(&mod->omega_part[i],io,0.01,-0.2,0.0,100.0,CI,buf);
 	  	  	  	  printf("\n%lf %lf %lf",lower,mod->omega_part[i],upper);
 	  	  	  	  mod->omega_part_uci[i]=upper;
-	  	  	  	  mod->omega_part_lci[i]=lower;
+	  	  	  	  //mod->omega_part_lci[i]=lower;
 	  	  	  	  mod->omega_part_opt[i]=opt;
 	  		  }
 	  }
@@ -106,6 +106,7 @@ phydbl binarySearchCI(phydbl* param,option* io,phydbl tol,phydbl delta,phydbl lo
 
 	//!!!Record params and branch lengths
 	storeParams(io,1,paramStore);
+	//resetParams(io);
 	io->mod->quiet=1;
 	//printf("OMEGAS: %lf\n",io->mod->omega_part[0]);
 	//find a point on the other side of CI
@@ -135,13 +136,14 @@ phydbl binarySearchCI(phydbl* param,option* io,phydbl tol,phydbl delta,phydbl lo
 			exit(EXIT_FAILURE);
 		}
 		//if(io->mod->optDebug)
-		//printf("\nLooking for boundary %lf %lf %lf %lf %lf",target,nl,mle,d1,*param);
+		printf("\nLooking for boundary %lf %lf %lf %lf %lf",target,nl,mle,d1,*param);
 		restoreParams(io,1,paramStore);
+		resetSubstParams(io);
 		//printf("OMEGA: %lf\n",io->mod->omega_part[0]);
 		//io->mod->update_eigen=1;
 		phydbl nl2=Lk_rep(io);
 		//if(io->mod->optDebug)
-		//printf("\nLooking for boundarz %lf %lf %lf %lf %lf",target,nl2,mle,d1,*param);
+		printf("\nLooking for boundarz %lf %lf %lf %lf %lf",target,nl2,mle,d1,*param);
 		if(breaknext>0){
 			if(breaknext==1){
 				printf("Boundary at lower bound!\n");
@@ -167,19 +169,24 @@ phydbl binarySearchCI(phydbl* param,option* io,phydbl tol,phydbl delta,phydbl lo
 		Round_Optimize(io,ROUND_MAX*2);
 		nl=Lk_rep(io); //needs to be Round_Optimize
 		//if(io->mod->optDebug)
-		//printf("\n1st pass %lf %lf %lf %lf %lf %lf",target,nl,*param,b1,b2,fabs(b1-b2));
+		printf("\n1st pass %lf %lf %lf %lf %lf %lf",target,nl,*param,b1,b2,fabs(b1-b2));
 		fprintf(CI,"%s %lf %lf %lf %lf %lf %lf\n",ID,target,nl,*param,b1,b2,fabs(b1-b2));
 		if(nl>=target)b1=*param;//want most conservative estimate of CI
 		else b2=*param;
 		//Reset parameter values and branch lengths if changed!
 		restoreParams(io,1,paramStore);
+		resetSubstParams(io);
 		//printf("OMEGA: %lf\n",io->mod->omega_part[0]);
 		phydbl nl2=Lk_rep(io);
 		fabs(b1-b2);
 		//if(io->mod->optDebug)
-		//printf("\n2nd pass %lf %lf %lf %lf %lf %lf",target,nl2,*param,b1,b2,fabs(b1-b2));
+		printf("\n2nd pass %lf %lf %lf %lf %lf %lf",target,nl2,*param,b1,b2,fabs(b1-b2));
 	}while(fabs(b1-b2) >= tol);
 
+	phydbl cb = (b1+b2)/2;
+	*param=cb;
+	Round_Optimize(io,ROUND_MAX*2);
+	printf("\nFINAL %lf %lf %lf %lf %lf %lf",target,Lk_rep(io),*param,b1,b2,fabs(b1-b2));
 	//return midpoint between the two intervals
 	if(io->mod->optDebug)printf("\n%lf %lf %lf %lf %lf %lf",target,nl,*param,b1,b2,fabs(b1-b2));
 	//reset params
@@ -225,6 +232,59 @@ int storeParams(option* io, int reseto, phydbl* ar){
 		  io->Small_Diff=.5e-6;
 		  io->both_sides=1;
 	}
+	return c;
+}
+
+/* Set substitution parameters to defaults in HLP18*/
+int resetSubstParams(option* io){
+	//phydbl* ar=io->paramStore;
+	int c=0;
+	int i,j,k;
+	//store repertoire parameters
+	io->mod->kappa=1.0;
+	For(i,io->mod->nomega_part)io->mod->omega_part[i]=0.4;
+	if(io->mod->whichrealmodel<=HLP17)For(i,io->mod->nhotness)io->mod->hotness[i]=0.0;
+
+
+	if(io->mod->freq_model != ROOT){
+		printf("NOT HLP18\n");
+	  //Set up equilibrium base freqs for the repertoire
+	  if(io->eq_freq_handling != USER){
+	  io->mod->base_freq[0]= (io->mod->baseCounts[0]) /(io->mod->baseCounts[0]+io->mod->baseCounts[1]+io->mod->baseCounts[2]+io->mod->baseCounts[3]);
+	  io->mod->base_freq[1]= (io->mod->baseCounts[1]) /(io->mod->baseCounts[0]+io->mod->baseCounts[1]+io->mod->baseCounts[2]+io->mod->baseCounts[3]);
+	  io->mod->base_freq[2]= (io->mod->baseCounts[2]) /(io->mod->baseCounts[0]+io->mod->baseCounts[1]+io->mod->baseCounts[2]+io->mod->baseCounts[3]);
+	  io->mod->base_freq[3]= (io->mod->baseCounts[3]) /(io->mod->baseCounts[0]+io->mod->baseCounts[1]+io->mod->baseCounts[2]+io->mod->baseCounts[3]);
+	  io->mod->base_freq[4]= (io->mod->baseCounts[4]) /(io->mod->baseCounts[4]+io->mod->baseCounts[5]+io->mod->baseCounts[6]+io->mod->baseCounts[7]);
+	  io->mod->base_freq[5]= (io->mod->baseCounts[5]) /(io->mod->baseCounts[4]+io->mod->baseCounts[5]+io->mod->baseCounts[6]+io->mod->baseCounts[7]);
+	  io->mod->base_freq[6]= (io->mod->baseCounts[6]) /(io->mod->baseCounts[4]+io->mod->baseCounts[5]+io->mod->baseCounts[6]+io->mod->baseCounts[7]);
+	  io->mod->base_freq[7]= (io->mod->baseCounts[7]) /(io->mod->baseCounts[4]+io->mod->baseCounts[5]+io->mod->baseCounts[6]+io->mod->baseCounts[7]);
+	  io->mod->base_freq[8]= (io->mod->baseCounts[8]) /(io->mod->baseCounts[8]+io->mod->baseCounts[9]+io->mod->baseCounts[10]+io->mod->baseCounts[11]);
+	  io->mod->base_freq[9]= (io->mod->baseCounts[9]) /(io->mod->baseCounts[8]+io->mod->baseCounts[9]+io->mod->baseCounts[10]+io->mod->baseCounts[11]);
+	  io->mod->base_freq[10]=(io->mod->baseCounts[10])/(io->mod->baseCounts[8]+io->mod->baseCounts[9]+io->mod->baseCounts[10]+io->mod->baseCounts[11]);
+	  io->mod->base_freq[11]=(io->mod->baseCounts[11])/(io->mod->baseCounts[8]+io->mod->baseCounts[9]+io->mod->baseCounts[10]+io->mod->baseCounts[11]);
+	  For(j,12)io->mod->base_freq[j]=roundf(io->mod->base_freq[j]*10000.0f)/10000.0f; //round base freqs to 5 decimal places to help make comparisons to previous versions
+	  if(io->mod->optDebug)For(j,12){printf("%lf\t%lf\n",io->mod->baseCounts[j],io->mod->base_freq[j]);}
+	  CF3x4(io->mod->base_freq, io->mod->genetic_code);
+	  }else{
+		  //CF3x4(io->mod->base_freq, io->mod->genetic_code);
+		  For(i,12)io->mod->base_freq[i]=io->mod->user_b_freq[i];
+	  }
+	  if(io->mod->optDebug)printf("cf3x4\n");
+
+	  Freq_to_UnsFreq(io->mod->base_freq,   io->mod->uns_base_freq,   4, 1);
+	  Freq_to_UnsFreq(io->mod->base_freq+4, io->mod->uns_base_freq+4, 4, 1);
+	  Freq_to_UnsFreq(io->mod->base_freq+8, io->mod->uns_base_freq+8, 4, 1);
+	}
+
+	//store subtree model parameters and branch lengths
+	/*For(j,io->ntrees){
+		model* mod=io->mod_s[j];
+		t_tree* tree=io->tree_s[j];
+		mod->kappa=1.0;
+		For(i,io->mod->nomega_part)mod->omega_part[i]=0.4;
+		//For(i,12)ar[c++]=mod->uns_base_freq[i];
+		if(io->mod->whichrealmodel<=HLP17)For(i,io->mod->nhotness)mod->hotness[i]=0.0;
+	}*/
 	return c;
 }
 

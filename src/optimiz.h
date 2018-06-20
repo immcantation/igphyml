@@ -37,7 +37,7 @@ void findCIs(model*,option*,FILE*);
 phydbl binarySearchCI(phydbl* param,option* io,phydbl tol,phydbl delta,phydbl lowerb,phydbl upperb,FILE*,char*);
 int storeParams(option* io, int reseto, phydbl* ar);
 int restoreParams(option* io, int reseto, phydbl* ar);
-
+int resetSubstParams(option* io);
 
 
 void Set_Ancestors(t_node *a, t_node *d, t_tree *tree); //added by ken
