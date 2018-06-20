@@ -437,7 +437,8 @@ if(io->mod->freq_model != ROOT){
   	  nparams += 2*io->tree_s[j]->n_otu-3;
     }
   if(io->mod->optDebug)printf("\nNeed to store %d parameters",nparams);
-  io->paramStore=(phydbl*)mCalloc(nparams,sizeof(phydbl));
+  io->paramStore=mCalloc(nparams,sizeof(phydbl));
+  io->nparams=nparams;
   io->mod->s_opt->min_diff_lk_global = io->min_diff_lk_global;
 
   io->t_beg=omp_get_wtime();

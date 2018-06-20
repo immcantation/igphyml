@@ -1047,6 +1047,7 @@ typedef struct __Option {
   int						outrepspec;
   int							CIest;
   phydbl 			min_diff_lk_global;
+  int						nparams;
  }option;
 
 /*********************************************************/

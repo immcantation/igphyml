@@ -35,8 +35,8 @@ the GNU public licence.  See http://www.opensource.org for details.
 */
 void findCIs(model*,option*,FILE*);
 phydbl binarySearchCI(phydbl* param,option* io,phydbl tol,phydbl delta,phydbl lowerb,phydbl upperb,FILE*,char*);
-int storeParams(option* io, int reseto);
-int restoreParams(option* io, int reseto);
+int storeParams(option* io, int reseto, phydbl* ar);
+int restoreParams(option* io, int reseto, phydbl* ar);
 
 
 
