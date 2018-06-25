@@ -583,10 +583,9 @@ calign *Compact_Data(align **data, option *io, model *mod)
   {
     PhyML_Printf("\n. Err in file %s at line %d\n",__FILE__,__LINE__);
     Warn_And_Exit("");
-  }
-  else if(io->datatype == CODON)                                                                           //!< Added by Marcelo.
-  {
+  }else if(io->datatype == CODON){
     if(!(mod->s_opt->user_state_freq)) {  //was io-> mod Ken 9/1/2018
+    	printf("FREQ MODEL:\t%d\n",mod->freq_model);
       switch(mod->freq_model) {
         case F1XSENSECODONS:                                                                                 //!< Added by Marcelo.	
         case F1X4:
@@ -595,10 +594,15 @@ calign *Compact_Data(align **data, option *io, model *mod)
           break;
         case FMODEL:
           break;
-        case ROOT:
-          Get_Root_Freqs(cdata_tmp, data, mod->rootname, mod->pi, mod, i);
-          if(mod->optDebug)For(j,61)printf("%lf\n",mod->pi[j]);
+        case ROOT:{
+        	 int modeli;
+        	 For(modeli,mod->nomega_part){
+        		 Get_Root_Freqs(cdata_tmp, data, mod->rootname, mod->root_pi[modeli], mod, modeli);
+        		 if(mod->optDebug)For(j,61)printf("rootpi\t%lf\n",mod->root_pi[modeli][j]);
+        	 }
+
           break;
+        }
         default:  
           PhyML_Printf("\n. Frequency model not implemented.\n",__FILE__,__LINE__);
           Warn_And_Exit("");
@@ -6817,6 +6821,11 @@ void Get_Root_Freqs(calign *cdata, align **data, char* root, phydbl* freqs, mode
         For(i,cdata->n_otu){
           if(strcmp(data[i]->name,root)!=0)continue;
           For(j,data[0]->len){
+        	  	if(mod->nomega_part > 1){
+        	  		if(mod->partIndex[j] != modeli){
+        	  			continue;
+        	  		}
+        	  	}
             curr_state=data[i]->state[j];
             if(curr_state>=(char)0 && curr_state<(char)64 ){
               codons[ indexSenseCodons[(int)curr_state] ]++;

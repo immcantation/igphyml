@@ -124,8 +124,6 @@ int main(int argc, char **argv){
   	  io->indexSenseCodons=indexSenseCodons;
 
 
-
-
   Make_Model_Complete(io->mod);
 
   //previously global variables in Optimiz, now tree variables to ease in analyzing multiple data sets
@@ -211,6 +209,10 @@ int main(int argc, char **argv){
       }else{
     	  io->colalias = 0;//for now, don't compress sequences at all
       }
+      if(mod->freq_model == ROOT){
+    	  	  mod->root_pi = mCalloc(mod->nomega_part,sizeof(phydbl*));
+    	  	  For(i,io->mod->nomega_part)mod->root_pi[i]=mCalloc(61,sizeof(phydbl));
+      }
       if(io->mod->optDebug)printf("compacting data\n");
       cdata = Compact_Data(mod->data,io,mod);
       if(io->mod->optDebug)printf("compacted data\n");
@@ -295,13 +297,13 @@ int main(int argc, char **argv){
 	      		//PhyML_Printf("\n. Start node found: %d %s\n",nodepos,mod->rootname);
 	      		For(i,mod->nomega_part){
 	      			For(j,mod->ns){
-	      				tree->noeud[nodepos]->partfreqs[i][j]=mod->pi[j];
+	      				tree->noeud[nodepos]->partfreqs[i][j]=mod->root_pi[i][j];
+	      				if(i==0)mod->pi[j]=mod->root_pi[i][j];
 	      				//printf("%d\t%lf\n",j,mod->pi[j]);
 	      			}
 	      		}
 	      	}
 	      }
-
 	     if(mod->startnode==-1){
 	    	 PhyML_Printf("\n\nRoot sequence ID not found in data file! %s %s\n",mod->rootname,mod->in_align_file);
 	    	 exit(EXIT_FAILURE);

@@ -678,6 +678,8 @@ typedef struct __Model {
   int					nedges;
   int						rootpi;
 
+  phydbl**				root_pi;
+
   int					       optKappa;
   int						    optFreq;
   int*					 omega_part_opt;
@@ -864,6 +866,7 @@ typedef struct __Model {
  phydbl** 	cBmat;
  int		constB;
  int prior;
+
 }model;
 
 /*********************************************************/

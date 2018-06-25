@@ -3084,10 +3084,10 @@ void Update_PMat_Recursive(t_edge *b_fcus, t_tree *tree){
 			//For(i,61)b_fcus->des_node->partfreqs[modeli][i] = b_fcus->anc_node->partfreqs[modeli][i];
 			if(tree->mod->optDebug){
 				printf("\nnode n: %s\t%s\t%lf",b_fcus->anc_node->name,b_fcus->des_node->name,b_fcus->l);
-				printf("\n%d\t%d\t%lf\t%lf",b_fcus->num,9, b_fcus->anc_node->partfreqs[0][9], b_fcus->des_node->partfreqs[0][9]);
-				printf("\n%d\t%d\t%lf\t%lf",b_fcus->num,11,b_fcus->anc_node->partfreqs[0][11],b_fcus->des_node->partfreqs[0][11]);
-				printf("\n%d\t%d\t%lf\t%lf",b_fcus->num,38,b_fcus->anc_node->partfreqs[0][38],b_fcus->des_node->partfreqs[0][38]);
-				printf("\n%d\t%d\t%lf\t%lf",b_fcus->num,42,b_fcus->anc_node->partfreqs[0][42],b_fcus->des_node->partfreqs[0][42]);
+				printf("\n%d\t%d\t%lf\t%lf",b_fcus->num,9, b_fcus->anc_node->partfreqs[modeli][9], b_fcus->des_node->partfreqs[modeli][9]);
+				printf("\n%d\t%d\t%lf\t%lf",b_fcus->num,11,b_fcus->anc_node->partfreqs[modeli][11],b_fcus->des_node->partfreqs[modeli][11]);
+				printf("\n%d\t%d\t%lf\t%lf",b_fcus->num,38,b_fcus->anc_node->partfreqs[modeli][38],b_fcus->des_node->partfreqs[modeli][38]);
+				printf("\n%d\t%d\t%lf\t%lf",b_fcus->num,42,b_fcus->anc_node->partfreqs[modeli][42],b_fcus->des_node->partfreqs[modeli][42]);
 			}
 		}
 	}

@@ -49,7 +49,7 @@ void findCIs(model* mod, option *io, FILE* CI){
 	  	  	  	  phydbl lower=binarySearchCI(&mod->omega_part[i],io,0.01,-0.2,0.0,100.0,CI,buf);
 	  	  	  	  printf("\n%lf %lf %lf",lower,mod->omega_part[i],upper);
 	  	  	  	  mod->omega_part_uci[i]=upper;
-	  	  	  	  //mod->omega_part_lci[i]=lower;
+	  	  	  	  mod->omega_part_lci[i]=lower;
 	  	  	  	  mod->omega_part_opt[i]=opt;
 	  		  }
 	  }
@@ -147,11 +147,13 @@ phydbl binarySearchCI(phydbl* param,option* io,phydbl tol,phydbl delta,phydbl lo
 		if(breaknext>0){
 			if(breaknext==1){
 				printf("Boundary at lower bound!\n");
-				if(nl<=target)return lowerb;
+				restoreParams(io,1,paramStore);
+				if(nl>=target)return lowerb;
 				else break;
 			}else{
 				printf("Boundary at lower bound!\n");
-				if(nl<=target)return upperb;
+				restoreParams(io,1,paramStore);
+				if(nl>=target)return upperb;
 				else break;
 			}
 		}
