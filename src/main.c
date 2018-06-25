@@ -295,7 +295,7 @@ int main(int argc, char **argv){
 	      		//PhyML_Printf("\n. Start node found: %d %s\n",nodepos,mod->rootname);
 	      		Update_Ancestors_Edge(tree->noeud[nodepos],tree->noeud[nodepos]->v[0],tree->noeud[nodepos]->b[0],tree);
 	      		//PhyML_Printf("\n. Start node found: %d %s\n",nodepos,mod->rootname);
-	      		For(i,mod->nomega_part){
+	      		For(i,mod->nomega_part && mod->freq_model==ROOT){
 	      			For(j,mod->ns){
 	      				tree->noeud[nodepos]->partfreqs[i][j]=mod->root_pi[i][j];
 	      				if(i==0)mod->pi[j]=mod->root_pi[i][j];

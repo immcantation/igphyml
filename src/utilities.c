@@ -585,7 +585,6 @@ calign *Compact_Data(align **data, option *io, model *mod)
     Warn_And_Exit("");
   }else if(io->datatype == CODON){
     if(!(mod->s_opt->user_state_freq)) {  //was io-> mod Ken 9/1/2018
-    	printf("FREQ MODEL:\t%d\n",mod->freq_model);
       switch(mod->freq_model) {
         case F1XSENSECODONS:                                                                                 //!< Added by Marcelo.	
         case F1X4:
