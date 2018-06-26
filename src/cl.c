@@ -81,6 +81,7 @@ void Read_Command_Line( option *io, int argc, char **argv )
 	io->mod->s_opt->opt_kappa      = 1;
 	io->userWantsKappa             = YES;
 	io->mod->optKappa=1;//added by Ken 25/1/2018
+	io->mod->freqsTo=1;
 
     io->mod->rootname = mCalloc(T_MAX_OPTION,sizeof(char));
     io->mod->hotnessstring = mCalloc(T_MAX_OPTION,sizeof(char));

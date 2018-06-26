@@ -1644,8 +1644,15 @@ void Update_Qmat_HLP17(phydbl *mat, phydbl *qmat, phydbl * freqs, int cat, model
 
             	value = mat[i*numSensecodons+j] * Kappa_Omega_Factor(i, j, mod, cat,omega);
             if(mod->modeltypeOpt==HLP17){
-              qmat[ i*numSensecodons+j ] = value * freqs[j]*(1+mod->Bmat[ i*numSensecodons+j ]);
-              qmat[ j*numSensecodons+i ] = value * freqs[i]*(1+mod->Bmat[ j*numSensecodons+i ]);
+              if(mod->freqsTo){
+            	  qmat[ i*numSensecodons+j ] = value * freqs[j]*(1+mod->Bmat[ i*numSensecodons+j ]);
+            	  qmat[ j*numSensecodons+i ] = value * freqs[i]*(1+mod->Bmat[ j*numSensecodons+i ]);
+              }else{
+            	qmat[ i*numSensecodons+j ] = value * (1.0/61)*(1+mod->Bmat[ i*numSensecodons+j ]);
+            	qmat[ j*numSensecodons+i ] = value * (1.0/61)*(1+mod->Bmat[ j*numSensecodons+i ]);
+            }
+          	//qmat[ i*numSensecodons+j ] = value * (1.0/61)*(1+mod->Bmat[ i*numSensecodons+j ]);
+          	//qmat[ j*numSensecodons+i ] = value * (1.0/61)*(1+mod->Bmat[ j*numSensecodons+i ]);
             }else{
             	qmat[ i*numSensecodons+j ] = value * (1.0/61)*(1+mod->Bmat[ i*numSensecodons+j ]);
             	qmat[ j*numSensecodons+i ] = value * (1.0/61)*(1+mod->Bmat[ j*numSensecodons+i ]);

@@ -3445,7 +3445,8 @@ matrix *ML_CODONDist_Pairwise(calign *data, option *io, model *mod) //!<Added by
    mod_tmp->quiet=mod->quiet;
    mod_tmp->optParam=mod->optParam;
    mod_tmp->prior=mod->prior;
-	  mod_tmp->nomega_part=mod->nomega_part;
+   mod_tmp->nomega_part=mod->nomega_part;
+   mod_tmp->freqsTo=mod->freqsTo;
 
    /*mod_tmp->opt_heuristic_manuel=mod->io->opt_heuristic_manuel;
    mod_tmp->opt_heuristic_manuel=mod->io->opt_heuristic_manuel;

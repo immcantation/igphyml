@@ -866,6 +866,7 @@ typedef struct __Model {
  phydbl** 	cBmat;
  int		constB;
  int prior;
+ int		freqsTo;
 
 }model;
 

@@ -2985,6 +2985,7 @@ model *Copy_Partial_Model(model *ori, int num){
   cpy->motifstring = mCalloc(T_MAX_FILE,sizeof(char));
   cpy->ambigfile = mCalloc(T_MAX_FILE,sizeof(char));
   cpy->prior=ori->prior;
+  cpy->freqsTo=ori->freqsTo;
 
   cpy->in_tree_file = (char *)mCalloc(T_MAX_FILE,sizeof(char)); //input tree file
   cpy->in_align_file = (char *)mCalloc(T_MAX_FILE,sizeof(char)); //!< Name of input aligned sequences file.

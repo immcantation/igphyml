@@ -130,6 +130,7 @@ struct option longopts[] =
 	{"cbmat",		  no_argument,NULL,168},  //!<Added by Ken
 	{"prior",		  no_argument,NULL,169},  //!<Added by Ken
 	{"mindiff",		  required_argument,NULL,170},  //!<Added by Ken
+	{"freqsTo",		  no_argument,NULL,171},  //!<Added by Ken
     {0,0,0,0}
 };
 
@@ -2738,7 +2739,11 @@ int mainOptionSwitch(int opt, char * optarg, option * io)
         		printf("new mindiff %lf\n",io->min_diff_lk_global);
         		break;
         }
-
+        case 171:{
+            io->mod->freqsTo=0;
+            printf("\nOnly using frequencies for scaling!\n");
+          	break;
+         }
 
 
             //////////////////////////////////////////////////////////////////////////////////////
