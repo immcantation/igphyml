@@ -6809,6 +6809,7 @@ int Genetic_code_ns() //!< Added by Marcelo.
   return 64-number;
 }
 
+/*********************************************************/
 void Get_Root_Freqs(calign *cdata, align **data, char* root, phydbl* freqs, model* mod, int modeli){
 	 char curr_state;
 	  int i,j,k,l,m, counter;
