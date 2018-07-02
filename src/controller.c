@@ -2193,7 +2193,7 @@ int mainOptionSwitch(int opt, char * optarg, option * io)
                     io->mod->freq_model       = ROOT;
                     io->mod->whichmodel       = HLP18;
                     io->freqmodelOpt		  = ROOT;
-                    io->mod->constB 		  = 1; //uniform freqs for HLP18
+                    //io->mod->constB 		  = 1; //uniform freqs for HLP18
                 }
 
                 //Initialize Bmat

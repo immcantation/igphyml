@@ -2561,6 +2561,8 @@ n_v1   n_v2
   n_v1 = d->v[dir1];
   n_v2 = d->v[dir2];
 
+  //printf("\n%d\t%lf\t%lf\t%lf\t%lf",b->num,b->l, b->bPmat_part[0][38*61+39],b->bPmat_part[0][38*61+40],b->bPmat_part[0][38*61+41]);
+
   /* Get the partial likelihood vectors on edge b and the two pendant
      edges (i.e., the two other edges connected to d) */
   if(d == b->left)
@@ -3057,9 +3059,11 @@ void Calculate_Flux_Freqs(t_edge* b_fcus, phydbl* ofreqs, phydbl* dfreqs,t_tree*
 		fluxs[i]=0;
 		For(j,61){
 			//printf("%d\t%d\t%lf\t%lf\t%lf\t%lf\n",i,j,ofreqs[i],b_fcus->bPmat_part[modeli][i*dim2+j],ofreqs[j],b_fcus->bPmat_part[modeli][j*dim2+i]);
-			phydbl fij = ofreqs[i]*b_fcus->bPmat_part[modeli][i*dim2+j];
-			phydbl fji = ofreqs[j]*b_fcus->bPmat_part[modeli][j*dim2+i];
-			fluxs[i] += (fji-fij);
+			//if(j!=i){
+				phydbl fij = ofreqs[i]*b_fcus->bPmat_part[modeli][i*dim2+j];
+				phydbl fji = ofreqs[j]*b_fcus->bPmat_part[modeli][j*dim2+i];
+				fluxs[i] += (fji-fij);
+			//}
 		}
 		dfreqs[i] = (ofreqs[i]+fluxs[i]);
 		if(dfreqs[i]<= 0.0)dfreqs[i]=0.00001;
@@ -3077,7 +3081,7 @@ void Update_PMat_Recursive(t_edge *b_fcus, t_tree *tree){
 	}
 	Update_PMat_At_Given_Edge(b_fcus,tree);
 
-	if(!b_fcus->des_node->tax){
+	//if(!b_fcus->des_node->tax){
 		For(modeli,tree->mod->nomega_part){
 			Calculate_Flux_Freqs(b_fcus,b_fcus->anc_node->partfreqs[modeli],b_fcus->des_node->partfreqs[modeli],tree,modeli);
 			//For(i,61)printf("\n%d\t%d\t%lf\t%lf",b_fcus->num,i,b_fcus->anc_node->freqs[i],b_fcus->des_node->freqs[i]);
@@ -3090,7 +3094,7 @@ void Update_PMat_Recursive(t_edge *b_fcus, t_tree *tree){
 				printf("\n%d\t%d\t%lf\t%lf",b_fcus->num,42,b_fcus->anc_node->partfreqs[modeli][42],b_fcus->des_node->partfreqs[modeli][42]);
 			}
 		}
-	}
+	//}
 	if(!b_fcus->des_node->tax){
 		For(i,3){
 			if(b_fcus->des_node->b[i]->num != b_fcus->num){
