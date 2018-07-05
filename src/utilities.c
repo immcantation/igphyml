@@ -6334,7 +6334,8 @@ option *Get_Input(int argc, char **argv)
   {
     case 1:
     {
-    	printf("\n. Interface isn't implemented in IgPhyML yet. Please use command line."); //Added by Ken 4/1/2017
+    	//printf("\n. Interface isn't implemented in IgPhyML yet. Please use command line."); //Added by Ken 4/1/2017
+    	Usage();
     	exit(EXIT_FAILURE);
 //      Launch_Interface(io);//!< Read user defined options from interface.
       break;
