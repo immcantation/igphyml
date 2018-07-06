@@ -177,7 +177,8 @@ void finishOptions(option * io)
 #else
            	if(io->threads > 1){
            		printf("\n. Can't specify number of threads unless compiled with OMP!\n");
-           		exit(EXIT_FAILURE);
+           		//exit(EXIT_FAILURE);
+           		io->threads=1;
            	}
 #endif
 
