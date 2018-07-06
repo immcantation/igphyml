@@ -1018,8 +1018,8 @@ typedef struct __Option {
   int					   both_sides;
   phydbl					   replnL;
 
-  int						t_current;
-  int							t_beg;
+  time_t						t_current;
+  time_t							t_beg;
 
   phydbl								SIZEp; //replacing previously defined global variables in optimiz
   int 									noisy;

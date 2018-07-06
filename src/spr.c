@@ -1149,7 +1149,13 @@ void Print_Trace(t_tree *tree){
 	}
 
 	//print out stats
+#if defined OMP || defined BLAS_OMP
 	PhyML_Fprintf(tree->mod->fp_out_stats_trace,"\t%d\t%f\t%f",tree->mod->tracecount,(omp_get_wtime()-tree->t_beg),tree->c_lnL);
+#else
+	time(&tree->io->t_current);
+	PhyML_Fprintf(tree->mod->fp_out_stats_trace,"\t%d\t%f\t%f",tree->mod->tracecount,(tree->io->t_current-tree->t_beg),tree->c_lnL);
+#endif
+
 	PhyML_Fprintf(tree->mod->fp_out_stats_trace,"\t%f",tree->mod->kappa);
 	if(tree->mod->whichrealmodel <=HLP17){
 		int omegai;

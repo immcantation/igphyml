@@ -5604,13 +5604,9 @@ void Print_Lk(t_tree *tree, char *string)
 void Print_Lk_rep(option* io, char *string)
 {
 #if defined OMP || defined BLAS_OMP
-
   io->t_current=omp_get_wtime();
-
 #else
-
   time(&(io->t_current));
-
 #endif
   PhyML_Printf("\n. (%5d sec) [R %15.4f] %s",(int)(io->t_current-io->t_beg),io->replnL,string);
 #ifndef QUIET

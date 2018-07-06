@@ -1697,7 +1697,7 @@ void Print_IgPhyML_Out(option* io){
 	 div_t min  = div((int)(io->t_current-io->t_beg),60  );
 	 min.quot -= hour.quot*60;
 	 fprintf(f,". Time used:\t%dh%dm%ds\n",hour.quot,min.quot,(int)(io->t_current-io->t_beg)%60);
-	 fprintf(f,". Seconds:\t%d\n",io->t_current-io->t_beg);
+	 fprintf(f,". Seconds:\t%d\n",(int)io->t_current-(int)io->t_beg);
 
 
 	 fprintf(f,"oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo\n");

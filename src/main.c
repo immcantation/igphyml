@@ -443,7 +443,12 @@ if(io->mod->freq_model != ROOT){
   io->nparams=nparams;
   io->mod->s_opt->min_diff_lk_global = io->min_diff_lk_global;
 
+#if defined OMP || defined BLAS_OMP
   io->t_beg=omp_get_wtime();
+#else
+  time(&io->t_beg);
+#endif
+
   if(io->mod->optDebug)printf("about to do stuff\n");
   if(io->testInitTree){ //!< Added by Marcelo.
   	    //!< Do nothing!

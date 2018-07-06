@@ -1603,9 +1603,11 @@ void Update_Qmat_HLP17(phydbl *mat, phydbl *qmat, phydbl * freqs, int cat, model
 	 for(fi=0;fi<61;fi++){ //Fill in B matrix
     	for(ti=0;ti<61;ti++){
     		for(c=0;c< mod->nmotifs;c++)htotal[c]=0; //set htotal array to zero
+#if defined OMP || BLAS_OMP
     			omp_lock_t writelock;
     			omp_init_lock(&writelock);
     			omp_set_lock(&writelock);
+#endif
     			for(li=0;li<61;li++){
     				for(ri=0;ri<61;ri++){//should drastically cut down on RAM usage by using a single copy of all hotspot tables at the upper level
     					for(c=0;c< mod->nmotifs;c++){ //tally up expected number of each type of hotspot mutation
@@ -1613,8 +1615,10 @@ void Update_Qmat_HLP17(phydbl *mat, phydbl *qmat, phydbl * freqs, int cat, model
     					}
     				}
     			}
+#if defined OMP || BLAS_OMP
     			omp_unset_lock(&writelock);
     			omp_destroy_lock(&writelock);
+#endif
     			 double hot = 0;
     			           	for(c=0;c<mod->nmotifs;c++)hot += htotal[c]*mod->hotness[mod->motif_hotness[c]];//additive interaction function
     			            if(hot < -1)hot=-1; //constrain total modification to never go below -1

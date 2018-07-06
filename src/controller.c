@@ -174,10 +174,12 @@ void finishOptions(option * io)
            	/*if(threads==1)io->nthreads=threads;
            	else io->nthreads=threads-1;*/
 
-			#else
-           	printf("\n. Can't specify number of threads unless compiled with OMP!\n");
-           	exit(EXIT_FAILURE);
-			#endif
+#else
+           	if(io->threads > 1){
+           		printf("\n. Can't specify number of threads unless compiled with OMP!\n");
+           		exit(EXIT_FAILURE);
+           	}
+#endif
 
 
     Set_Model_Name(io->mod);
