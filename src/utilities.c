@@ -213,18 +213,13 @@ void Make_Edge_Dirs(t_edge *b, t_node *a, t_node *d)
 void Make_Edge_Pars(t_edge *b, t_tree *tree)
 {
   /*   int site; */
-  
-  b->pars_l = (int *)mCalloc(tree->data->crunch_len,sizeof(int));
-  b->pars_r = (int *)mCalloc(tree->data->crunch_len,sizeof(int));
-  
-  
-  b->ui_l = (unsigned int *)mCalloc(tree->data->crunch_len,sizeof(unsigned int));
-  b->ui_r = (unsigned int *)mCalloc(tree->data->crunch_len,sizeof(unsigned int));
-  
-  
-  b->p_pars_l = (int *)mCalloc(tree->data->crunch_len*tree->mod->ns,sizeof(int ));
-  b->p_pars_r = (int *)mCalloc(tree->data->crunch_len*tree->mod->ns,sizeof(int ));
-  
+	 b->pars_l = (int *)mCalloc(tree->data->crunch_len,sizeof(int));
+  	 b->pars_r = (int *)mCalloc(tree->data->crunch_len,sizeof(int));
+  	 b->ui_l = (unsigned int *)mCalloc(tree->data->crunch_len,sizeof(unsigned int));
+  	 b->ui_r = (unsigned int *)mCalloc(tree->data->crunch_len,sizeof(unsigned int));
+  	 b->p_pars_l = (int *)mCalloc(tree->data->crunch_len*tree->mod->ns,sizeof(int ));
+  	 b->p_pars_r = (int *)mCalloc(tree->data->crunch_len*tree->mod->ns,sizeof(int ));
+
 }
 
 /*********************************************************/
@@ -6086,7 +6081,7 @@ char *Bootstrap_From_String(char *s_tree, calign *cdata, model *mod, option *io)
   if(tree->mod->s_opt->random_input_tree) Random_Tree(tree);
   Fill_Dir_Table(tree);
   Update_Dirs(tree);
-  Make_Tree_4_Pars(tree,cdata,cdata->init_len);
+  Make_Tree_4_Pars(tree,cdata->init_len);
   Make_Tree_4_Lk(tree,cdata,cdata->init_len);
   tree->triplet_struct = Make_Triplet_Struct(mod);
   //Br_Len_Not_Involving_Invar(tree);
@@ -6136,7 +6131,7 @@ char *aLRT_From_String(char *s_tree, calign *cdata, model *mod, option *io)
   if(tree->mod->s_opt->random_input_tree) Random_Tree(tree);
   Fill_Dir_Table(tree);
   Update_Dirs(tree);
-  Make_Tree_4_Pars(tree,cdata,cdata->init_len);
+  Make_Tree_4_Pars(tree,cdata->init_len);
   Make_Tree_4_Lk(tree,cdata,cdata->init_len);
   tree->triplet_struct = Make_Triplet_Struct(mod);
   Make_Spr_List(tree);
@@ -6168,7 +6163,7 @@ void Prepare_Tree_For_Lk(t_tree *tree)
   Order_Tree_CSeq(tree,tree->data);
   Fill_Dir_Table(tree);
   Update_Dirs(tree);
-  Make_Tree_4_Pars(tree,tree->data,tree->data->init_len);
+  Make_Tree_4_Pars(tree,tree->data->init_len);
   Make_Tree_4_Lk(tree,tree->data,tree->data->init_len);
   tree->triplet_struct = Make_Triplet_Struct(tree->mod);
   Br_Len_Not_Involving_Invar(tree);

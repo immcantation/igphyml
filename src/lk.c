@@ -544,7 +544,7 @@ phydbl Lk(t_tree *tree)
 #if defined OMP || defined BLAS_OMP
 #pragma omp critical
 #endif
-	  printf("\nomega %d %lf %lf %lf %lf %lf %lf",tree->both_sides,tree->mod->omega_part[0],tree->mod-> kappa,tree->c_lnL,tree->mod->qmat_part[0][1],tree->mod->hotness[0],tree->mod->hotness[1]);
+	  printf("\nomega %d %lf %lf %lf %lf %lf",tree->both_sides,tree->mod->omega_part[0],tree->mod-> kappa,tree->c_lnL,tree->mod->qmat_part[0][1],tree->mod->hotness[0]);
 	  int i;
 #if defined OMP || defined BLAS_OMP
 #pragma omp critical

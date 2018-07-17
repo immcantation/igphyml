@@ -308,6 +308,19 @@ typedef struct __Node {
   phydbl                       y_rank_min;
   phydbl                       y_rank_max;
 
+  //precon features
+  int* pl;
+  int* pr;
+  int* s;
+  int* sroot;
+  int* lmin;
+  int* rmin;
+  int* prc;
+  int* plc;
+  int* llock;
+  int* rlock;
+  int pstate;
+
 }t_node;
 
 
@@ -475,6 +488,8 @@ typedef struct __Arbre {
   phydbl                  logLk_correction_gaps_approx; /*!< correction factor (with gaps) loglikelihood according to Seo Kishino 2009. */
   int                       br_len_invar_set; /* is Br_Len_Involving_Invar already done? */
 
+  int 							nstate; //number of states in pmatrix
+  char**						chars;
 }t_tree;
 
 /*********************************************************/
@@ -1052,6 +1067,10 @@ typedef struct __Option {
   int							CIest;
   phydbl 			min_diff_lk_global;
   int						nparams;
+
+
+  //Options for recon
+  int					precon;
  }option;
 
 /*********************************************************/

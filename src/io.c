@@ -1368,6 +1368,7 @@ char *Write_Tree(t_tree *tree)
   if(tree->mod->whichrealmodel <= HLP17){ //added by Ken 16/2/2017 to output as a tree ith rooted branch length of zero
 	  t_node* r = Make_Node_Light(-1);
 	  tree->noeud[tree->mod->startnode]->v[1] = r;
+	  r->pstate=tree->noeud[tree->mod->startnode]->pstate;
 	  t_edge* blank = (t_edge *)mCalloc(1,sizeof(t_edge));
 	  blank->l=0.00001;
 	  blank->left=tree->noeud[tree->mod->startnode];
@@ -1446,6 +1447,9 @@ void R_wtree(t_node *pere, t_node *fils, int *available, char **s_tree, int *pos
 	      //printf("%d\t%lf\th\n",fils->b[0]->num,fils->b[0]->l);
 	      }else{
 	    	  (*pos) += sprintf(*s_tree+*pos,"#%d_labels",fils->b[0]->n_labels);
+	      }
+	      if(tree->io->precon==2 || tree->io->precon==-2){
+	    	  (*pos) += sprintf(*s_tree+*pos,"[&state=%s,Num=0]",tree->chars[fils->pstate]);
 	      }
 	    }
 
@@ -1545,6 +1549,9 @@ void R_wtree(t_node *pere, t_node *fils, int *available, char **s_tree, int *pos
         {
           (*pos) += sprintf(*s_tree+*pos,"#%d_labels",fils->b[p]->n_labels);
         }
+	      if(tree->io->precon==2|| tree->io->precon==-2){
+	    	  (*pos) += sprintf(*s_tree+*pos,"[&state=%s,Num=0]",tree->chars[fils->pstate]);
+	      }
 	    }
 
       strcat(*s_tree,":");

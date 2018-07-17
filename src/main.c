@@ -63,9 +63,9 @@ int main(int argc, char **argv){
   tree_size        = -1.0;
   
   r_seed = abs(4*(int)time(NULL)*(int)time(NULL)+4*(int)time(NULL)+1); //!< Modified by Marcelo
-  r_seed=1234;
-  //srand(r_seed);
-  SetSeed(r_seed);
+ // r_seed=1234;
+  srand(r_seed);
+  //SetSeed(r_seed);
   
   io = (option *)Get_Input(argc,argv); //!< Read the simulation options from interface or command line.
 
@@ -186,7 +186,7 @@ int main(int argc, char **argv){
         		io->ntrees=num_data_set;
         		continue;
         	}
-        }
+    }
 
     if(io->threshold_exp) {if(num_data_set<io->dataset-1) {Free_Seq(mod->data,mod->n_otu);continue;}}//!< Added by Marcelo. Run arbitrary data set.
 
@@ -383,13 +383,11 @@ int main(int argc, char **argv){
       		printf("\nDEFAULT: Partition file(s) specified so partitioning omega by FWR/CDRs."
       				"\n........ Use '--omegaOpt e' if you just want one omega.\n");
      }
-
   }
   if(io->threads > io->ntrees)printf("\nWarning: Number of threads (%d) exceeds number of lineages (%d).\n"
 		  "........ This will not speed up computations beyond %d threads.\n",io->threads,io->ntrees,io->ntrees);
   if(io->threads==1 && io->ntrees > 1)printf("\nDEFAULT: Running multiple trees on one thread."
 		  "\n........ Use the '--threads' option to specify more (might speed things up).\n");
-
 
 if(io->mod->freq_model != ROOT){
   //Set up equilibrium base freqs for the repertoire
@@ -552,12 +550,65 @@ if(io->mod->freq_model != ROOT){
   	  		  else ASR_At_Given_Edge(tree->noeud[tree->mod->startnode]->b[0],tree,1);
   	  		  //printf("\n%s\n",mod->mlCodon[i]);
   	  	  }
-  		  //printf("\n%lf\t%lf\t%lf\t%lf\n",mod->qmat_part[0][0],mod->qmat_part[0][8],mod->qmat_part[0][8*61],mod->qmat_part[0][8*61+8]);
-  		  /*phydbl sumttt=0;
-  		  phydbl sumtat=0;
-  		  for(i=0;i<61;i++)if(mod->qmat_part[0][0+i]!=0 && i !=0)sumttt+=mod->pi[i];
-  		  for(i=0;i<61;i++)if(mod->qmat_part[0][8*61+i]!=0&& i !=8)sumtat+=mod->pi[i];
-  		  printf("\n%lf\t%lf\n",sumttt,sumtat);*/
+	  }
+  }
+  if(io->precon){
+	  io->precon *= 2;
+	  int maxtrees=1000;
+	  t_tree** trees = mCalloc(maxtrees,sizeof(t_tree*));
+	  trees[0]=io->tree_s[0];
+	  t_node* r = tree->noeud[tree->mod->startnode];
+	  Init_Class_Tips(io->tree_s[0]);
+	  int pars = Fill_Sankoff(r,tree,1);
+	  printf("\n Maximum parsimony score: %d\n",pars);
+	  Set_Pars_Counters(r,tree,1);
+	  Get_First_Path(r,0,tree,1);
+	  //printTreeState(r,tree,1);
+	  //		  printf("\n");
+	  //		  exit(EXIT_FAILURE);
+	  int npars = Get_All_Paths(r,0,tree,trees,1,maxtrees,0)+1;
+	  printf("Found %d max pars trees\n",npars);
+	  //int npars=maxtrees;
+	  if(npars>=maxtrees){
+		  printf("Gave up exhaustive search. Sampling %d trees instead\n",maxtrees);
+		  for(i=1;i<maxtrees;i++){
+			  Free_Tree(trees[i]);
+		  }
+		  Init_Class_Tips(io->tree_s[0]);
+		  int pars = Fill_Sankoff(r,tree,1);
+		  Get_Rand_Path(r,0,tree,1);
+		  for(i=1;i<maxtrees;i++){ //sample trees from parsimony scores
+		  	  t_tree* tree2;
+		  	  tree2 = Read_User_Tree(tree->data,io->mod_s[0],io);
+		  	  tree2->mod=tree->mod;
+		  	  t_node* r2 = tree2->noeud[tree->mod->startnode];
+		  	  tree2->io=io;
+		  	  Update_Ancestors_Edge(r2,r2->v[0],r2->b[0],tree);
+		  	  Copy_Sankoff_Tree(tree,tree2);
+		  	  Get_Rand_Path(r2,0,tree2,1);
+		  	  Clean_Tree(tree2);
+		  	  trees[i]=tree2;
+		  }
+	  }
+	  char fout[T_MAX_FILE];
+	  strcpy(fout,io->datafs[0]);
+	  strcat(fout,"_igphyml_jointpars");
+	  if(io->append_run_ID){
+	  	 strcat(fout, "_");
+	  	 strcat(fout, io->run_id_string);
+	  }
+	  strcat(fout,".txt");
+
+	  FILE* treeout = Openfile(fout, 1 );
+	  For(i,npars){
+		  //printTreeState(trees[i]->noeud[tree->mod->startnode],trees[i],1);
+		  //printf("\n");
+		  char* ts = Write_Tree(trees[i]);
+		  ts[strlen(ts)-1] = 0;
+		  strcat(ts,"[&state=");
+		  strcat(ts,trees[i]->chars[trees[i]->noeud[tree->mod->startnode]->pstate]);
+		  strcat(ts,",Num=0]:0;");
+		  fprintf(treeout,"%s\n",ts);
 	  }
   }
 

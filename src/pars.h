@@ -32,7 +32,7 @@ the GNU public licence.  See http://www.opensource.org for details.
 #include "models.h"
 #include "free.h"
 
-void Make_Tree_4_Pars(t_tree *tree, calign *cdata, int n_site);
+void Make_Tree_4_Pars(t_tree *tree, int n_site);
 int  Pars(t_tree *tree);
 void Post_Order_Pars(t_node *a, t_node *d, t_tree *tree);
 void Pre_Order_Pars(t_node *a, t_node *d, t_tree *tree);
@@ -47,5 +47,14 @@ void Init_P_Pars_Tips(t_tree *tree);
 void Get_Step_Mat(t_tree *tree);
 int Pars_Core(t_edge *b, t_tree *tree);
 int One_Pars_Step(t_edge *b,t_tree *tree);
-
+void Init_Class_Tips(t_tree* tree);
+int Fill_Sankoff(t_node* d,t_tree* tree, int root);
+void Fill_Sankoff_Root(t_tree* tree, int root);
+void Get_First_Path(t_node* d,int index,t_tree* tree, int root);
+void Get_Rand_Path(t_node* d,int index,t_tree* tree, int root);
+void printTreeState(t_node *d, t_tree* tree, int root);
+void Clean_Tree(t_tree* tree);
+void Set_Pars_Counters(t_node *d, t_tree *tree,int root);
+void Copy_Sankoff_Tree(t_tree* tree1,t_tree* tree2);
+int Get_All_Paths(t_node *d, int index, t_tree *tree, t_tree** btrees, int root,int maxtrees,int treeindex);
 #endif

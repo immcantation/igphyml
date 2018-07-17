@@ -131,6 +131,7 @@ struct option longopts[] =
 	{"prior",		  no_argument,NULL,169},  //!<Added by Ken
 	{"mindiff",		  required_argument,NULL,170},  //!<Added by Ken
 	{"freqsTo",		  no_argument,NULL,171},  //!<Added by Ken
+	{"recon",		  required_argument,NULL,172},  //!<Added by Ken
     {0,0,0,0}
 };
 
@@ -2747,7 +2748,11 @@ int mainOptionSwitch(int opt, char * optarg, option * io)
             printf("\nOnly using frequencies for scaling!\n");
           	break;
          }
-
+        case 172:{
+            io->precon=atoi(optarg);
+            printf("\nDoing pars recon\n");
+           	break;
+        }
 
             //////////////////////////////////////////////////////////////////////////////////////
             // --multiple
