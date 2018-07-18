@@ -1606,7 +1606,6 @@ void Check_Dirs(t_tree *tree);
 void Warn_And_Exit(char *s);
 void Print_Data_Set_Number(option *input, FILE *fp);
 phydbl Compare_Bip_On_Existing_Edges(phydbl thresh_len, t_tree *tree1, t_tree *tree2);
-void NNI_Pars(t_tree *tree, t_edge *b_fcus, int do_swap);
 void Evaluate_One_Regraft_Pos_Triple(spr *move, t_tree *tree);
 int Get_State_From_Ui(int ui, int datatype);
 void Read_Qmat(phydbl *daa, phydbl *pi, FILE *fp);

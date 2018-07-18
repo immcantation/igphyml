@@ -552,85 +552,128 @@ if(io->mod->freq_model != ROOT){
   	  	  }
 	  }
   }
-  if(io->precon){
-	  io->precon *= 2;
-	  int maxtrees=1000;
-	  t_tree** trees = mCalloc(maxtrees,sizeof(t_tree*));
-	  trees[0]=io->tree_s[0];
-	  t_node* r = tree->noeud[tree->mod->startnode];
-	  Init_Class_Tips(io->tree_s[0]);
-	  int pars = Fill_Sankoff(r,tree,1);
-	  printf("\n Maximum parsimony score: %d\n",pars);
-	  Set_Pars_Counters(r,tree,1);
-	  Get_First_Path(r,0,tree,1);
-	  //printTreeState(r,tree,1);
-	  //		  printf("\n");
-	  //		  exit(EXIT_FAILURE);
-	  int npars = Get_All_Paths(r,0,tree,trees,1,maxtrees,0)+1;
-	  printf("Found %d max pars trees\n",npars);
-	  //int npars=maxtrees;
-	  if(npars>=maxtrees){
-		  printf("Gave up exhaustive search. Sampling %d trees instead\n",maxtrees);
-		  for(i=1;i<maxtrees;i++){
-			  Free_Tree(trees[i]);
-		  }
-		  Init_Class_Tips(io->tree_s[0]);
-		  int pars = Fill_Sankoff(r,tree,1);
-		  Get_Rand_Path(r,0,tree,1);
-		  for(i=1;i<maxtrees;i++){ //sample trees from parsimony scores
-		  	  t_tree* tree2;
-		  	  tree2 = Read_User_Tree(tree->data,io->mod_s[0],io);
-		  	  tree2->mod=tree->mod;
-		  	  t_node* r2 = tree2->noeud[tree->mod->startnode];
-		  	  tree2->io=io;
-		  	  Update_Ancestors_Edge(r2,r2->v[0],r2->b[0],tree);
-		  	  Copy_Sankoff_Tree(tree,tree2);
-		  	  Get_Rand_Path(r2,0,tree2,1);
-		  	  Clean_Tree(tree2);
-		  	  trees[i]=tree2;
-		  }
-	  }
-	  char fout[T_MAX_FILE];
-	  strcpy(fout,io->datafs[0]);
-	  strcat(fout,"_igphyml_jointpars");
-	  if(io->append_run_ID){
-	  	 strcat(fout, "_");
-	  	 strcat(fout, io->run_id_string);
-	  }
-	  strcat(fout,".txt");
-
-	  FILE* treeout = Openfile(fout, 1 );
-	  For(i,npars){
-		  //printTreeState(trees[i]->noeud[tree->mod->startnode],trees[i],1);
-		  //printf("\n");
-		  char* ts = Write_Tree(trees[i]);
-		  ts[strlen(ts)-1] = 0;
-		  strcat(ts,"[&state=");
-		  strcat(ts,trees[i]->chars[trees[i]->noeud[tree->mod->startnode]->pstate]);
-		  strcat(ts,",Num=0]:0;");
-		  fprintf(treeout,"%s\n",ts);
+  if(io->precon==2 || io->precon==-2){
+	  printf("\n");
+	  For(i,io->ntrees){
+		  t_tree* tree = io->tree_s[i];
+	  	  t_node* r = tree->noeud[tree->mod->startnode];
+	  	  Init_Class_Tips(tree);
+	  	  int pars1 = Fill_Sankoff(r,tree,1);
+	  	  //printf("\n\n. %d Initial maximum parsimony score: %d",i,pars0);
+	  	  Set_Pars_Counters(r,tree,1);
+	  	  Get_First_Path(r,0,tree,1);
+	  	  //printf("\n. Resolving polytomies using isotype information");
+	  	  int pars2 = Resolve_Polytomies_Pars(tree,0.001);
+	  	  printf("\n. %d Initial/resolved maximum parsimony score: %d %d",i,pars1,pars2);
 	  }
   }
 
-  	  #if defined OMP || defined BLAS_OMP
+  #if defined OMP || defined BLAS_OMP
+  t_end=omp_get_wtime();
+  #else
+  time(&t_end);
+  #endif
 
-  	  t_end=omp_get_wtime();
+  Print_IgPhyML_Out(io);
+  //exit(EXIT_FAILURE);
 
-  	  #else
+  if(tree->io->print_site_lnl) Print_Site_Lk(tree,io->fp_out_lk);
 
-  	  time(&t_end);
+  if(io->precon){
+  	io->precon *= 5;
+  	int maxtrees=1000;
+  	char foutp[T_MAX_FILE];
+  	printf("here\n");
+  	strcpy(foutp,io->mod->in_align_file);
+  	strcat(foutp,"_igphyml_parstats");
+  	if(io->append_run_ID){
+  		strcat(foutp, "_");
+  		strcat(foutp, io->run_id_string);
+  	}
+  	strcat(foutp,".txt");
+  	//printf("here %s\n",foutp);
 
-  	  #endif
+  	FILE* pstatf = Openfile(foutp,1);
+  	For(j,io->ntrees){
+  		  //set up basic tree stuff
+  		  t_tree* tree = Read_User_Tree(io->tree_s[j]->data,io->mod_s[j],io);
+  		  model* mod = io->mod_s[j];
+  		  tree->mod=mod;
+  		  tree->io=io;
+  		  tree->data = io->tree_s[j]->data;
+  		  io->tree_s[j] = tree;
+  		  mod->startnode = -1;
+  		  int nodepos;
+  		  For(nodepos,((tree->n_otu-1)*2)){
+  			 if(strcmp(tree->noeud[nodepos]->name,mod->rootname)==0){
+  			      mod->startnode=nodepos;
+  			      Update_Ancestors_Edge(tree->noeud[nodepos],tree->noeud[nodepos]->v[0],tree->noeud[nodepos]->b[0],tree);
+  			  }
+  		  }
+  		  if(mod->startnode==-1){
+  			 PhyML_Printf("\n\nRoot sequence ID not found in data file! %s %s\n",mod->rootname,mod->in_align_file);
+  			 exit(EXIT_FAILURE);
+  		  }
+  		  t_tree** trees = mCalloc(maxtrees,sizeof(t_tree*));
+  		  trees[0]=tree;
+  		  t_node* r = tree->noeud[tree->mod->startnode];
+  		  Init_Class_Tips(tree);
+  		  int pars = Fill_Sankoff(r,tree,1);
+  		  printf("\n. %d Maximum parsimony score: %d",j,pars);
+  		  Set_Pars_Counters(r,tree,1);
+  		  //Get_First_Path(r,0,tree,1);
+  		  int npars = Get_All_Paths(r,0,tree,trees,1,maxtrees,0,j)+1;
+  		  printf("\n. %d Found %d maximum parsimony trees",j,npars);
+  		  if(npars>=maxtrees){
+  			  printf(". Gave up exhaustive search. Sampling %d trees instead.",maxtrees);
+  			  for(i=1;i<maxtrees;i++){
+  				  Free_Tree(trees[i]);
+  			  }
+  			  Init_Class_Tips(tree);
+  			  int pars = Fill_Sankoff(r,tree,1);
+  			  Get_Rand_Path(r,0,tree,1);
+  			  for(i=1;i<maxtrees;i++){ //sample trees from parsimony scores
+  			  	  t_tree* tree2;
+  			  	  tree2 = Read_User_Tree(tree->data,mod,io);
+  			  	  tree2->mod=tree->mod;
+  			  	  t_node* r2 = tree2->noeud[tree->mod->startnode];
+  			  	  tree2->io=io;
+  			  	  Update_Ancestors_Edge(r2,r2->v[0],r2->b[0],tree);
+  			  	  Copy_Sankoff_Tree(tree,tree2);
+  			  	  Get_Rand_Path(r2,0,tree2,1);
+  			  	  Clean_Tree(tree2);
+  			  	  trees[i]=tree2;
+  			  }
+  		  }
+  		  Get_Pars_Stats(trees,npars,j,pstatf);
+  		  char fout[T_MAX_FILE];
+  		  strcpy(fout,io->datafs[j]);
+  		  strcat(fout,"_igphyml_jointpars");
+  		  if(io->append_run_ID){
+  		  	 strcat(fout, "_");
+  		  	 strcat(fout, io->run_id_string);
+  		  }
+  		  strcat(fout,".txt");
+  		 // exit(EXIT_FAILURE);
+
+  		  FILE* treeout = Openfile(fout, 1 );
+  		  For(i,npars){
+  			  //printTreeState(trees[i]->noeud[tree->mod->startnode],trees[i],1);
+  			  //printf("\n");
+  			  char* ts = Write_Tree(trees[i]);
+  			  ts[strlen(ts)-1] = 0;
+  			  strcat(ts,"[&state=");
+  			  strcat(ts,trees[i]->chars[trees[i]->noeud[tree->mod->startnode]->pstate]);
+  			  strcat(ts,",Num=0]:0;");
+  			  fprintf(treeout,"%s\n",ts);
+  			  if(i>0)Free_Tree(trees[i]);
+  		  }
+
+  		  //free(trees);
+  	}
+  }
 
 
-  	  //Print_Lk_rep(io,"Final likelihood");
-  	  Print_IgPhyML_Out(io);
-  	  /*Print_Fp_Out(io->fp_out_stats,t_beg,t_end,tree,
-  	   io,num_data_set+1,
-  	   (tree->mod->s_opt->n_rand_starts > 1)?
-  	   (num_rand_tree):(num_tree));*/
-
-  	  if(tree->io->print_site_lnl) Print_Site_Lk(tree,io->fp_out_lk);
 
   	  /* Start from BioNJ tree */
   	  if((num_rand_tree == io->mod->s_opt->n_rand_starts-1) && (tree->mod->s_opt->random_input_tree)){
