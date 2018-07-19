@@ -167,8 +167,9 @@ int Resolve_Polytomies_Pars(t_tree* tree,phydbl minbl){
 	int i;
 	phydbl thresh=0.001;
 	int nni=1;
-	int pars0;
+	int pars0 = Fill_Sankoff(tree->noeud[tree->mod->startnode],tree,1);
 	while(nni){
+		nni=0;
 		For(i,(tree->n_otu-1)*2){ //if no taxa on either side of edge and length is below threshold, search for NNIs
 			if(!tree->noeud[i]->tax && !tree->noeud[i]->anc->tax && tree->noeud[i]->anc_edge->l < thresh){
 				pars0 = Fill_Sankoff(tree->noeud[tree->mod->startnode],tree,1);
@@ -291,7 +292,7 @@ int NNI_ParsSwaps(t_node *a, t_node *b, t_node *c, t_node *d, t_tree *tree){
 }
 
 
-/*********************************************************/
+/*********************************************************
 int NNI_Pars_Edge(t_tree *tree, t_edge *b_fcus, int do_swap){
 	int l_r, r_l, l_v1, l_v2, r_v3, r_v4;
 	int pars0,pars1,pars2;
@@ -345,7 +346,6 @@ int NNI_Pars_Edge(t_tree *tree, t_edge *b_fcus, int do_swap){
 	  Get_First_Path(tree->noeud[tree->mod->startnode],0,tree,1);
 	  printTreeState(tree->noeud[tree->mod->startnode],tree,1);printf(" 2\n");
 	  Swap(v4,b_fcus->left,b_fcus->rght,v2,tree);
-	  /***********/
 
 	  printf("%d\t%d\n",pars1,pars2);
 
@@ -639,7 +639,7 @@ void Get_Pars_Stats(t_tree** trees, int ntrees, int index, FILE* pstatf){
 			tswitch+=switches[i*trees[0]->nstate+j];
 		}
 	}
-	printf("done %lf\n",tswitch);
+	printf(". Switches: %lf\n",tswitch);
 	free(switches);
 	free(classl);
 }

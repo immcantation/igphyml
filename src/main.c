@@ -564,7 +564,7 @@ if(io->mod->freq_model != ROOT){
 	  	  Get_First_Path(r,0,tree,1);
 	  	  //printf("\n. Resolving polytomies using isotype information");
 	  	  int pars2 = Resolve_Polytomies_Pars(tree,0.001);
-	  	  printf("\n. %d Initial/resolved maximum parsimony score: %d %d",i,pars1,pars2);
+	  	  printf("\n. %d Initial/resolved maximum parsimony score: %d %d %s",i,pars1,pars2,tree->mod->rootname);
 	  }
   }
 
@@ -573,7 +573,6 @@ if(io->mod->freq_model != ROOT){
   #else
   time(&t_end);
   #endif
-
   Print_IgPhyML_Out(io);
   //exit(EXIT_FAILURE);
 
@@ -583,7 +582,6 @@ if(io->mod->freq_model != ROOT){
   	io->precon *= 5;
   	int maxtrees=1000;
   	char foutp[T_MAX_FILE];
-  	printf("here\n");
   	strcpy(foutp,io->mod->in_align_file);
   	strcat(foutp,"_igphyml_parstats");
   	if(io->append_run_ID){
