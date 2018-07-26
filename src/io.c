@@ -1448,7 +1448,7 @@ void R_wtree(t_node *pere, t_node *fils, int *available, char **s_tree, int *pos
 	      }else{
 	    	  (*pos) += sprintf(*s_tree+*pos,"#%d_labels",fils->b[0]->n_labels);
 	      }
-	      if(tree->io->precon && tree->io->precon%5==0){
+	      if(tree->io->precon && tree->io->precon%10==0){
 	    	  (*pos) += sprintf(*s_tree+*pos,"[&state=%s,Num=0]",tree->chars[fils->pstate]);
 	      }
 	    }
@@ -1549,7 +1549,7 @@ void R_wtree(t_node *pere, t_node *fils, int *available, char **s_tree, int *pos
         {
           (*pos) += sprintf(*s_tree+*pos,"#%d_labels",fils->b[p]->n_labels);
         }
-	      if(tree->io->precon && tree->io->precon%5==0){
+	      if(tree->io->precon && tree->io->precon%10==0){
 	    	  (*pos) += sprintf(*s_tree+*pos,"[&state=%s,Num=0]",tree->chars[fils->pstate]);
 	      }
 	    }

@@ -62,6 +62,7 @@ int NNI_ParsSwaps(t_node *a, t_node *b, t_node *c, t_node *d, t_tree *tree);
 int NNI_Pars_Search(t_node *c, t_node *d,t_edge* c_fcus,t_edge* d_fcus, int pars0, phydbl thresh,t_tree* tree);
 void Get_Pars_Stats(t_tree** trees, int ntrees, int index, FILE* out);
 void Fill_Pars_Stats(t_node* d,t_tree* tree, phydbl* switches, phydbl* classl, int root);
+void parsReconstructions(option* io);
 #endif
 
 

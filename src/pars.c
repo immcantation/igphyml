@@ -25,6 +25,8 @@ the GNU public licence.  See http://www.opensource.org for details.
 
 
 #include "pars.h"
+#include "io.h"
+
 extern int     stopCodons[64];
 extern int   senseCodons[64];
 extern char aminoAcidmap[65];
@@ -34,19 +36,158 @@ extern int indexSenseCodons[64];
 
 
 /*********************************************************/
+void parsReconstructions(option* io){
+	int j,i;
+  	int maxtrees=1000;
+  	char foutp[T_MAX_FILE];
+  	strcpy(foutp,io->mod->in_align_file);
+  	strcat(foutp,"_igphyml_parstats");
+  	if(io->append_run_ID){
+  		strcat(foutp, "_");
+  		strcat(foutp, io->run_id_string);
+  	}
+  	strcat(foutp,".txt");
+
+  	FILE* pstatf = Openfile(foutp,1);
+  	For(j,io->ntrees){
+  		  //set up basic tree stuff
+  	      int maxotu=1000;
+  		  t_tree* tree = Read_User_Tree(io->tree_s[j]->data,io->mod_s[j],io);
+  		  model* mod = io->mod_s[j];
+  		  tree->mod=mod;
+  		  tree->io=io;
+  		  tree->data = io->tree_s[j]->data;
+  		  io->tree_s[j] = tree;
+  		  mod->startnode = -1;
+  		  int nodepos;
+  		  For(nodepos,((tree->n_otu-1)*2)){
+  			 if(strcmp(tree->noeud[nodepos]->name,mod->rootname)==0){
+  			      mod->startnode=nodepos;
+  			      Update_Ancestors_Edge(tree->noeud[nodepos],tree->noeud[nodepos]->v[0],tree->noeud[nodepos]->b[0],tree);
+  			  }
+  		  }
+  		  if(mod->startnode==-1){
+  			 PhyML_Printf("\n\nRoot sequence ID not found in data file! %s %s\n",mod->rootname,mod->in_align_file);
+  			 exit(EXIT_FAILURE);
+  		  }
+  		  char fout[T_MAX_FILE];
+  		  strcpy(fout,io->datafs[j]);
+  		  strcat(fout,"_igphyml_jointpars");
+  		  if(io->append_run_ID){
+  		  	 strcat(fout, "_");
+  		   	 strcat(fout, io->run_id_string);
+  		  }
+  		  strcat(fout,".txt");
+
+  		  t_tree** trees = mCalloc(maxtrees,sizeof(t_tree*));
+  		  trees[0]=tree;
+  		  t_node* r = tree->noeud[tree->mod->startnode];
+  		  Init_Class_Tips(tree);
+  		  int pars = Fill_Sankoff(r,tree,1);
+  		  printf("\n. %d Maximum parsimony score: %d",j,pars);
+  		  Set_Pars_Counters(r,tree,1);
+
+  	      phydbl* switches = mCalloc(tree->nstate*tree->nstate,sizeof(phydbl));
+  	      phydbl* classl = mCalloc(tree->nstate,sizeof(phydbl));
+
+  		  //Get_First_Path(r,0,tree,1);
+  	      io->precon *= 10;
+  		  int npars = maxtrees;
+  		  if(tree->n_otu < maxotu){
+  		  	  npars = Get_All_Paths(r,0,tree,trees,1,maxtrees,0,j)+1;
+  		  	  printf("\n. %d Found %d maximum parsimony trees",j,npars);
+  		  	  if(npars < maxtrees){
+  		  	  	  FILE* treeout = Openfile(fout, 1 );
+  		  	  	  For(i,npars){
+  		  	  		  Fill_Pars_Stats(r,trees[i], switches,classl,1);
+  		  	  		  //printTreeState(trees[i]->noeud[tree->mod->startnode],trees[i],1);
+  		  	  		  //printf("\n");
+  		  	  		  char* ts = Write_Tree(trees[i]);
+  		  	  		  ts[strlen(ts)-1] = 0;
+  		  	  		  strcat(ts,"[&state=");
+  		  	  		  strcat(ts,trees[i]->chars[trees[i]->noeud[tree->mod->startnode]->pstate]);
+  		  	  		  strcat(ts,",Num=0]:0;");
+  		  	  		  fprintf(treeout,"%s\n",ts);
+  		  	  		  //if(i>0)Free_Tree(trees[i]);
+  		  	  	  }
+  		  	  }
+  		  }else{
+  			printf("\n. Too many sequences for exhaustive parsimony search!");
+  		  }
+  		  if(npars>=maxtrees){
+  	  		  FILE* treeout1 = Openfile(fout, 1 );
+  			  printf(". Sampling %d trees instead.",maxtrees);
+  			  for(i=1;i<maxtrees;i++){
+  				  if(tree->n_otu < maxotu)Free_Tree(trees[i]);
+  			  }
+
+  			  Init_Class_Tips(tree);
+  			  int pars = Fill_Sankoff(r,tree,1);
+  			  For(i,maxtrees){
+  			  	  Get_Rand_Path(r,0,tree,1);
+  			  	  Fill_Pars_Stats(r,tree, switches,classl,1);
+  			  	  char* ts = Write_Tree(tree);
+  			  	  ts[strlen(ts)-1] = 0;
+  			  	  strcat(ts,"[&state=");
+  			  	  strcat(ts,tree->chars[tree->noeud[tree->mod->startnode]->pstate]);
+  			  	  strcat(ts,",Num=0]:0;");
+  			  	  fprintf(treeout1,"%s\n",ts);
+  			  	  //free(ts);
+  			  }
+  		  }
+  		 int tposi, tposj;
+  		 For(tposi,tree->nstate){
+  		 	classl[tposi] = classl[tposi]/(npars*1.0);
+  		 	For(tposj,tree->nstate){
+  		 		switches[tposi*tree->nstate+tposj]=switches[tposi*tree->nstate+tposj]/(npars*1.0);
+  		 	}
+  		 }
+  		  phydbl tswitch, tlen;
+  		  tswitch=tlen=0;
+  		 For(tposi,tree->nstate){
+  		 	fprintf(pstatf,"%d\t%s\tN\t%lf\n",j,tree->chars[tposi],classl[tposi]);
+  		 	tlen+=classl[tposi];
+  		 }
+  		 	For(tposi,tree->nstate){
+  		 		For(tposj,trees[0]->nstate){
+  		 			fprintf(pstatf,"%d\t%s\t%s\t%lf\n",j,tree->chars[tposi],tree->chars[tposj],switches[tposi*tree->nstate+tposj]);
+  		 				tswitch+=switches[tposi*tree->nstate+tposj];
+  		 			}
+  		 		}
+  		  printf("\n. Switches: %lf. Length: %lf\n",tswitch,tlen);
+  		  io->precon /= 10;
+  	}
+}
+
+
 void Init_Class_Tips(t_tree* tree){
 	 int i,j;
 	 char* mtemp;
-	 tree->nstate=7;
-	 tree->chars = mCalloc(tree->nstate,sizeof(char*));
-	 For(i,tree->nstate)tree->chars[i]=mCalloc(10,sizeof(char));
-	 strcpy(tree->chars[0],"M");
-	 strcpy(tree->chars[1],"D");
-	 strcpy(tree->chars[2],"G31");
-	 strcpy(tree->chars[3],"A1");
-	 strcpy(tree->chars[4],"G24");
-	 strcpy(tree->chars[5],"E");
-	 strcpy(tree->chars[6],"A2");
+	 if(tree->io->precon < 3 && tree->io->precon > -3){
+		 tree->nstate=7;
+		 tree->chars = mCalloc(tree->nstate,sizeof(char*));
+		 For(i,tree->nstate)tree->chars[i]=mCalloc(10,sizeof(char));
+		 strcpy(tree->chars[0],"M");
+		 strcpy(tree->chars[1],"D");
+		 strcpy(tree->chars[2],"G31");
+		 strcpy(tree->chars[3],"A1");
+		 strcpy(tree->chars[4],"G24");
+		 strcpy(tree->chars[5],"E");
+		 strcpy(tree->chars[6],"A2");
+	 }else{
+		 tree->nstate=9;
+		 tree->chars = mCalloc(tree->nstate,sizeof(char*));
+		 For(i,tree->nstate)tree->chars[i]=mCalloc(10,sizeof(char));
+		 strcpy(tree->chars[0],"M");
+		 strcpy(tree->chars[1],"D");
+		 strcpy(tree->chars[2],"G3");
+		 strcpy(tree->chars[3],"G1");
+		 strcpy(tree->chars[4],"A1");
+		 strcpy(tree->chars[5],"G2");
+		 strcpy(tree->chars[6],"G4");
+		 strcpy(tree->chars[7],"E");
+		 strcpy(tree->chars[8],"A2");
+	 }
 	 For(i,(tree->n_otu-1)*2){
 		// printf("%d\n",i);
 	 	tree->noeud[i]->pl = (int *)mCalloc(tree->nstate*tree->nstate,sizeof(int ));
@@ -87,16 +228,34 @@ void Init_Class_Tips(t_tree* tree){
 			 strcpy(state,strsep(&minfo2, "_"));
 		 }
 		 if(tree->mod->optDebug)printf("\n%s\t%s",tree->noeud[i]->name,state);
-		 if(strcmp(state,"M")==0)tree->noeud[i]->s[0]=0;
-		 if(strcmp(state,"D")==0)tree->noeud[i]->s[1]=0;
-		 if(strcmp(state,"G3")==0||strcmp(state,"G1")==0)tree->noeud[i]->s[2]=0;
-		 if(strcmp(state,"A1")==0)tree->noeud[i]->s[3]=0;
-		 if(strcmp(state,"G2")==0||strcmp(state,"G4")==0)tree->noeud[i]->s[4]=0;
-		 if(strcmp(state,"E")==0)tree->noeud[i]->s[5]=0;
-		 if(strcmp(state,"A2")==0)tree->noeud[i]->s[6]=0;
-		 if(strcmp(state,"G")==0){
-			 tree->noeud[i]->s[2]=0;
-			 tree->noeud[i]->s[4]=0;
+		 if(tree->io->precon < 3 && tree->io->precon > -3){
+		 	 if(strcmp(state,"M")==0)tree->noeud[i]->s[0]=0;
+		 	 if(strcmp(state,"D")==0)tree->noeud[i]->s[1]=0;
+		 	 if(strcmp(state,"G3")==0||strcmp(state,"G1")==0)tree->noeud[i]->s[2]=0;
+		 	 if(strcmp(state,"A1")==0)tree->noeud[i]->s[3]=0;
+		 	 if(strcmp(state,"G2")==0||strcmp(state,"G4")==0)tree->noeud[i]->s[4]=0;
+		 	 if(strcmp(state,"E")==0)tree->noeud[i]->s[5]=0;
+		 	 if(strcmp(state,"A2")==0)tree->noeud[i]->s[6]=0;
+		 	 if(strcmp(state,"G")==0){
+		 		 tree->noeud[i]->s[2]=0;
+		 		 tree->noeud[i]->s[4]=0;
+		 	 }
+		 }else{
+			 if(strcmp(state,"M")==0)tree->noeud[i]->s[0]=0;
+			 if(strcmp(state,"D")==0)tree->noeud[i]->s[1]=0;
+			 if(strcmp(state,"G3")==0)tree->noeud[i]->s[2]=0;
+			 if(strcmp(state,"G1")==0)tree->noeud[i]->s[3]=0;
+			 if(strcmp(state,"A1")==0)tree->noeud[i]->s[4]=0;
+			 if(strcmp(state,"G2")==0)tree->noeud[i]->s[5]=0;
+			 if(strcmp(state,"G4")==0)tree->noeud[i]->s[6]=0;
+			 if(strcmp(state,"E")==0)tree->noeud[i]->s[7]=0;
+			 if(strcmp(state,"A2")==0)tree->noeud[i]->s[8]=0;
+			 if(strcmp(state,"G")==0){
+			 	 tree->noeud[i]->s[2]=0;
+			 	 tree->noeud[i]->s[3]=0;
+			 	 tree->noeud[i]->s[5]=0;
+			 	 tree->noeud[i]->s[6]=0;
+			  }
 		 }
 		 For(j,tree->nstate){
 			 if(tree->mod->optDebug)printf(" %d",tree->noeud[i]->s[j]);
@@ -167,21 +326,25 @@ int Resolve_Polytomies_Pars(t_tree* tree,phydbl minbl){
 	int i;
 	phydbl thresh=0.001;
 	int nni=1;
+	int nnifound=1;
 	int pars0 = Fill_Sankoff(tree->noeud[tree->mod->startnode],tree,1);
-	while(nni){
-		nni=0;
+	int iters = 0;
+	while(nnifound){
+		nnifound=0;
 		For(i,(tree->n_otu-1)*2){ //if no taxa on either side of edge and length is below threshold, search for NNIs
 			if(!tree->noeud[i]->tax && !tree->noeud[i]->anc->tax && tree->noeud[i]->anc_edge->l < thresh){
 				pars0 = Fill_Sankoff(tree->noeud[tree->mod->startnode],tree,1);
-				//printf("pars0: %d\n",pars0);
+				//printf("%d %d pars0: %d\n",iters,i,pars0);
 				t_edge* b = tree->noeud[i]->anc_edge;
 				//printf("edge: %d\n",b->num);
 				nni = NNI_Pars_Search(tree->noeud[i],tree->noeud[i]->anc,tree->noeud[i]->anc_edge,tree->noeud[i]->anc_edge,pars0,thresh,tree);
 				//printf("1 %d\n",nni);
 				if(!nni)nni = NNI_Pars_Search(tree->noeud[i]->anc,tree->noeud[i],tree->noeud[i]->anc_edge,tree->noeud[i]->anc_edge,pars0,thresh,tree);
 				//printf("2 %d\n",nni);
+				nnifound+=nni;
 			}
 		}
+		iters++;
 	}
 	return pars0;
 }
@@ -289,80 +452,6 @@ int NNI_ParsSwaps(t_node *a, t_node *b, t_node *c, t_node *d, t_tree *tree){
 	  //printTreeState(tree->noeud[tree->mod->startnode],tree,1);printf(" 11\n");
 
 	  return pars1;
-}
-
-
-/*********************************************************
-int NNI_Pars_Edge(t_tree *tree, t_edge *b_fcus, int do_swap){
-	int l_r, r_l, l_v1, l_v2, r_v3, r_v4;
-	int pars0,pars1,pars2;
-	  t_node *v1,*v2,*v3,*v4;
-
-	  v1 = v2 = v3 = v4      = NULL;
-
-	  l_r = r_l = l_v1 = l_v2 = r_v3 = r_v4 = -1;
-
-	  l_r                    = b_fcus->l_r;
-	  r_l                    = b_fcus->r_l;
-
-	  v1                     = b_fcus->left->v[b_fcus->l_v1];
-	  v2                     = b_fcus->left->v[b_fcus->l_v2];
-	  v3                     = b_fcus->rght->v[b_fcus->r_v1];
-	  v4                     = b_fcus->rght->v[b_fcus->r_v2];
-
-	  if(v1->num < v2->num){
-	    PhyML_Printf("\n. Err in file %s at line %d\n",__FILE__,__LINE__);
-	    Warn_And_Exit("");
-	  }
-	  if(v3->num < v4->num){
-	    PhyML_Printf("\n. Err in file %s at line %d\n",__FILE__,__LINE__);
-	    Warn_And_Exit("");
-	  }
-
-	  pars1 =  NNI_ParsSwaps(v2,b_fcus->left,b_fcus->rght,v3,tree);
-	  pars2 =  NNI_ParsSwaps(v2,b_fcus->left,b_fcus->rght,v4,tree);
-
-	  exit(EXIT_FAILURE);
-	  //Init_Class_Tips(tree);
-	  /*pars0 = Fill_Sankoff(tree->noeud[tree->mod->startnode],tree,1);
-	  Set_Pars_Counters(tree->noeud[tree->mod->startnode],tree,1);
-	  Get_First_Path(tree->noeud[tree->mod->startnode],0,tree,1);
-	  printTreeState(tree->noeud[tree->mod->startnode],tree,1);printf(" 01\n");
-
-	  Swap(v2,b_fcus->left,b_fcus->rght,v3,tree);
-	  //Init_Class_Tips(tree);
-	  pars1 = Fill_Sankoff(tree->noeud[tree->mod->startnode],tree,1);
-	  printf("pars1: %d\n",pars1);
-	  Set_Pars_Counters(tree->noeud[tree->mod->startnode],tree,1);
-	  Get_First_Path(tree->noeud[tree->mod->startnode],0,tree,1);
-	  printTreeState(tree->noeud[tree->mod->startnode],tree,1);printf(" 1\n");
-	  Swap(v3,b_fcus->left,b_fcus->rght,v2,tree);
-
-	  Swap(v2,b_fcus->left,b_fcus->rght,v4,tree);
-	  //Init_Class_Tips(tree);
-	  pars2 = Fill_Sankoff(tree->noeud[tree->mod->startnode],tree,1);
-	  printf("pars2: %d\n",pars2);
-	  Set_Pars_Counters(tree->noeud[tree->mod->startnode],tree,1);
-	  Get_First_Path(tree->noeud[tree->mod->startnode],0,tree,1);
-	  printTreeState(tree->noeud[tree->mod->startnode],tree,1);printf(" 2\n");
-	  Swap(v4,b_fcus->left,b_fcus->rght,v2,tree);
-
-	  printf("%d\t%d\n",pars1,pars2);
-
-	  if(pars1 <= 0 && pars2 <=0){
-		  return 0;
-	  }else if(pars1 > pars2 && pars1 > 0){
-		  printf("Swapping!\n");
-		  Swap(v2,b_fcus->left,b_fcus->rght,v3,tree);
-		  return 1;
-	  }else if(pars2 > pars1 && pars2 > 0){
-		  printf("Swapping!\n");
-		  Swap(v2,b_fcus->left,b_fcus->rght,v4,tree);
-		  return 1;
-	  }else{
-		printf("Something weird happened\n");
-	    exit(EXIT_FAILURE);
-	  }
 }
 
 
@@ -654,8 +743,8 @@ void Fill_Pars_Stats(t_node* d,t_tree* tree, phydbl* switches, phydbl* classl, i
 		//printf("%d\t%d\n",d->anc->pstate,d->pstate);
 		if(d->pstate != d->anc->pstate){
 			switches[d->anc->pstate*tree->nstate+d->pstate]++;
-			classl[d->pstate] += d->anc_edge->l/0.5;
-			classl[d->anc->pstate] += d->anc_edge->l/0.5;
+			classl[d->pstate] += d->anc_edge->l*0.5;
+			classl[d->anc->pstate] += d->anc_edge->l*0.5;
 		}else{
 			classl[d->pstate] += d->anc_edge->l;
 		}
