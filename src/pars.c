@@ -86,7 +86,7 @@ void parsReconstructions(option* io){
   		  t_tree** trees = mCalloc(maxtrees,sizeof(t_tree*));
   		  trees[0]=tree;
   		  t_node* r = tree->noeud[tree->mod->startnode];
-  		  Init_Class_Tips(tree);
+  		  Init_Class_Tips(tree,io->precon);
 
   		  int pars = Fill_Sankoff(r,tree,1);
   		  printf("\n. %d Maximum parsimony score: %d",j,pars);
@@ -168,10 +168,10 @@ void parsReconstructions(option* io){
 }
 
 
-void Init_Class_Tips(t_tree* tree){
+void Init_Class_Tips(t_tree* tree, int precon){
 	 int i,j;
 	 char* mtemp;
-	 if(tree->io->precon < 3 && tree->io->precon > -3){
+	 if(precon < 3 && precon > -3){
 		 tree->nstate=7;
 		 tree->chars = mCalloc(tree->nstate,sizeof(char*));
 		 For(i,tree->nstate)tree->chars[i]=mCalloc(10,sizeof(char));
@@ -219,7 +219,7 @@ void Init_Class_Tips(t_tree* tree){
 	 tree->step_mat = mCalloc(tree->nstate*tree->nstate,sizeof(int));
 	 For(i,tree->nstate){ //set up step mat
 	 	 For(j,tree->nstate){
-	 			 if(i < j && tree->io->precon>0)tree->step_mat[j*tree->nstate+i]=10000; //if precon is negative, no costraint
+	 			 if(i < j && precon>0)tree->step_mat[j*tree->nstate+i]=10000; //if precon is negative, no costraint
 	 			 else if(i == j)tree->step_mat[j*tree->nstate+i]=0;
 	 			 else tree->step_mat[j*tree->nstate+i] =1;
 	 	 }
@@ -236,7 +236,7 @@ void Init_Class_Tips(t_tree* tree){
 			 strcpy(state,strsep(&minfo2, "_"));
 		 }
 		 if(tree->mod->optDebug)printf("\n%s\t%s",tree->noeud[i]->name,state);
-		 if(tree->io->precon < 3 && tree->io->precon > -3){
+		 if(precon < 3 && precon > -3){
 		 	 if(strcmp(state,"M")==0)tree->noeud[i]->s[0]=0;
 		 	 if(strcmp(state,"D")==0)tree->noeud[i]->s[1]=0;
 		 	 if(strcmp(state,"G3")==0||strcmp(state,"G1")==0)tree->noeud[i]->s[2]=0;

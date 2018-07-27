@@ -63,7 +63,7 @@ int main(int argc, char **argv){
   tree_size        = -1.0;
   
   r_seed = abs(4*(int)time(NULL)*(int)time(NULL)+4*(int)time(NULL)+1); //!< Modified by Marcelo
- // r_seed=1234;
+  //r_seed=1234;
   srand(r_seed);
   //SetSeed(r_seed);
   
@@ -559,17 +559,34 @@ if(io->mod->freq_model != ROOT){
   }
   if(io->precon==2 || io->precon==-2 || io->precon==4 || io->precon==-4){
 	  printf("\n");
-	  For(i,io->ntrees){
-		  t_tree* tree = io->tree_s[i];
+	  int precon = io->precon;
+
+io->threads=0;
+#if defined OMP || defined BLAS_OMP
+#pragma omp parallel for if(io->splitByTree)
+#endif
+	For(i,io->ntrees){ //do likelihood calculations in parallel
+		t_tree* tree;
+#if defined OMP || defined BLAS_OMP
+#pragma omp critical
+#endif
+		{
+			tree= io->tree_s[io->threads++];
+		}
 	  	  t_node* r = tree->noeud[tree->mod->startnode];
-	  	  Init_Class_Tips(tree);
-	  	  int pars1 = Fill_Sankoff(r,tree,1);
-	  	  printf("\n\n. %d Initial maximum parsimony score: %d",i,pars1);
-	  	  Set_Pars_Counters(r,tree,1);
-	  	  Get_First_Path(r,0,tree,1);
-	  	  printf("\n. Resolving polytomies using isotype information");
+	  	  Init_Class_Tips(tree,precon); //no io
+	  	  int pars1 = Fill_Sankoff(r,tree,1); //no io
+	  	  //printf("\n\n. %d Initial maximum parsimony score: %d",i,pars1);
+	  	  Set_Pars_Counters(r,tree,1); //no io
+	  	  //Get_First_Path(r,0,tree,1);
+	  	  //printf("\n. Resolving polytomies using isotype information");
 	  	  int pars2 = Resolve_Polytomies_Pars(tree,0.001);
-	  	  printf("\n. %d Initial/resolved maximum parsimony score: %d %d %s",i,pars1,pars2,tree->mod->rootname);
+	  	  #if defined OMP || defined BLAS_OMP
+		  #pragma omp critical
+		  #endif
+	  	  {
+	  		  printf("\n. %d Initial/resolved maximum parsimony score: %d %d %s",i,pars1,pars2,tree->mod->rootname);
+	  	  }
 	  }
   }
 
