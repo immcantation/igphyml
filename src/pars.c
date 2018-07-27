@@ -110,6 +110,7 @@ void parsReconstructions(option* io){
   		  	  		  fprintf(treeout,"%s\n",ts);
   		  	  		  //if(i>0)Free_Tree(trees[i]);
   		  	  	  }
+  		  	  	  fclose(treeout);
   		  	  }
   		  }else{
   			printf("\n. Too many sequences for exhaustive parsimony search!");
@@ -134,6 +135,7 @@ void parsReconstructions(option* io){
   			  	  fprintf(treeout1,"%s\n",ts);
   			  	  //free(ts);
   			  }
+  			  fclose(treeout1);
   		  }
   		 int tposi, tposj;
   		 For(tposi,tree->nstate){
