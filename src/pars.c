@@ -39,6 +39,9 @@ extern int indexSenseCodons[64];
 void parsReconstructions(option* io){
 	int j,i;
   	int maxtrees=1000;
+  	int maxotu=1000;
+
+  	//Set up stats file
   	char foutp[T_MAX_FILE];
   	strcpy(foutp,io->mod->in_align_file);
   	strcat(foutp,"_igphyml_parstats");
@@ -47,11 +50,10 @@ void parsReconstructions(option* io){
   		strcat(foutp, io->run_id_string);
   	}
   	strcat(foutp,".txt");
-
   	FILE* pstatf = Openfile(foutp,1);
+
   	For(j,io->ntrees){
   		  //set up basic tree stuff
-  	      int maxotu=1000;
   		  t_tree* tree = Read_User_Tree(io->tree_s[j]->data,io->mod_s[j],io);
   		  model* mod = io->mod_s[j];
   		  tree->mod=mod;
@@ -70,6 +72,8 @@ void parsReconstructions(option* io){
   			 PhyML_Printf("\n\nRoot sequence ID not found in data file! %s %s\n",mod->rootname,mod->in_align_file);
   			 exit(EXIT_FAILURE);
   		  }
+
+  		  //setup joint trees file
   		  char fout[T_MAX_FILE];
   		  strcpy(fout,io->datafs[j]);
   		  strcat(fout,"_igphyml_jointpars");
@@ -83,15 +87,14 @@ void parsReconstructions(option* io){
   		  trees[0]=tree;
   		  t_node* r = tree->noeud[tree->mod->startnode];
   		  Init_Class_Tips(tree);
+
   		  int pars = Fill_Sankoff(r,tree,1);
   		  printf("\n. %d Maximum parsimony score: %d",j,pars);
   		  Set_Pars_Counters(r,tree,1);
-
   	      phydbl* switches = mCalloc(tree->nstate*tree->nstate,sizeof(phydbl));
   	      phydbl* classl = mCalloc(tree->nstate,sizeof(phydbl));
 
   		  //Get_First_Path(r,0,tree,1);
-  	      io->precon *= 10;
   		  int npars = maxtrees;
   		  if(tree->n_otu < maxotu){
   		  	  npars = Get_All_Paths(r,0,tree,trees,1,maxtrees,0,j)+1;
@@ -102,7 +105,9 @@ void parsReconstructions(option* io){
   		  	  		  Fill_Pars_Stats(r,trees[i], switches,classl,1);
   		  	  		  //printTreeState(trees[i]->noeud[tree->mod->startnode],trees[i],1);
   		  	  		  //printf("\n");
+ 		    		  io->precon *= 10;
   		  	  		  char* ts = Write_Tree(trees[i]);
+  		    		  io->precon /= 10;
   		  	  		  ts[strlen(ts)-1] = 0;
   		  	  		  strcat(ts,"[&state=");
   		  	  		  strcat(ts,trees[i]->chars[trees[i]->noeud[tree->mod->startnode]->pstate]);
@@ -122,12 +127,14 @@ void parsReconstructions(option* io){
   				  if(tree->n_otu < maxotu)Free_Tree(trees[i]);
   			  }
 
-  			  Init_Class_Tips(tree);
-  			  int pars = Fill_Sankoff(r,tree,1);
+  			  //Init_Class_Tips(tree);
+  			  //int pars = Fill_Sankoff(r,tree,1);
   			  For(i,maxtrees){
   			  	  Get_Rand_Path(r,0,tree,1);
   			  	  Fill_Pars_Stats(r,tree, switches,classl,1);
+  			  	  io->precon *= 10;
   			  	  char* ts = Write_Tree(tree);
+  			  	  io->precon /= 10;
   			  	  ts[strlen(ts)-1] = 0;
   			  	  strcat(ts,"[&state=");
   			  	  strcat(ts,tree->chars[tree->noeud[tree->mod->startnode]->pstate]);
@@ -157,7 +164,6 @@ void parsReconstructions(option* io){
   		 			}
   		 		}
   		  printf("\n. Switches: %lf. Length: %lf\n",tswitch,tlen);
-  		  io->precon /= 10;
   	}
 }
 
