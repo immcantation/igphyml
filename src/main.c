@@ -537,7 +537,6 @@ if(io->mod->freq_model != ROOT){
   }
   if(io->mod->ASR){
 	  For(j,io->ntrees){
-		  //printf("ASR for model %d\n",j);
 		  t_tree* tree=io->tree_s[j];
 		  model* mod = io->mod_s[j];
 		  Get_UPP(tree->noeud[tree->mod->startnode],tree->noeud[tree->mod->startnode]->v[0],tree);
@@ -585,7 +584,7 @@ io->threads=0;
 		  #pragma omp critical
 		  #endif
 	  	  {
-	  		  printf("\n. %d Initial/resolved maximum parsimony score: %d %d %s",i,pars1,pars2,tree->mod->rootname);
+	  		  printf("\n. %d Initial/resolved maximum parsimony score: %d %d %s",tree->mod->num,pars1,pars2,tree->mod->rootname);
 	  	  }
 	  }
   }
