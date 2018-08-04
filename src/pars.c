@@ -96,17 +96,22 @@ void parsReconstructions(option* io){
 
   		  //Get_First_Path(r,0,tree,1);
   		  int npars = maxtrees;
+  		int minroots=0;
+  		int minroot=-1;
   		  if(tree->n_otu < maxotu){
   			  npars=0;
   			  For(i,tree->nstate){
   				 // printf("root state: %d\t%d\n",r->sroot[i],pars);
   				if(r->sroot[i] == pars){
+  					minroots++;
+  					minroot=i;
   					npars += Get_All_Paths(r,i,tree,trees,1,maxtrees,0,j,i)+1;
   					//printf("npars! %d\n",npars);
   				}
   				if(pars >= maxtrees)break;
   			  }
   		  	  printf("\n. %d Found %d maximum parsimony trees",j,npars);
+
   		  	  if(npars < maxtrees){
   		  	  	  FILE* treeout = Openfile(fout, 1 );
   		  	  	  For(i,npars){
@@ -129,8 +134,10 @@ void parsReconstructions(option* io){
   			printf("\n. Too many sequences for exhaustive parsimony search!");
   		  }
   		  if(npars>=maxtrees){
-  			  printf("NEED TO FIX RAND PATH TO WORK WITH AMBIGUOUS ROOTS\n");
-  			  exit(EXIT_FAILURE);
+  			  if(minroots != 1){
+  				  printf("NEED TO FIX RAND PATH TO WORK WITH AMBIGUOUS ROOTS %d %d\n",minroots,minroot);
+  			  	  exit(EXIT_FAILURE);
+  			  }
   	  		  FILE* treeout1 = Openfile(fout, 1 );
   			  printf(". Sampling %d trees instead.",maxtrees);
   			  for(i=1;i<maxtrees;i++){
@@ -140,7 +147,7 @@ void parsReconstructions(option* io){
   			  //Init_Class_Tips(tree);
   			  //int pars = Fill_Sankoff(r,tree,1);
   			  For(i,maxtrees){
-  			  	  Get_Rand_Path(r,0,tree,1);
+  			  	  Get_Rand_Path(r,minroot,tree,1);
   			  	  Fill_Pars_Stats(r,tree, switches,classl,1);
   			  	  io->precon *= 10;
   			  	  char* ts = Write_Tree(tree);
