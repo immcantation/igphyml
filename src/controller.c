@@ -428,7 +428,7 @@ void setUpHLP17(option* io, model *mod){
    	    hot = (phydbl *)mCalloc(combinations,sizeof(phydbl));//checked 15/7/2016
    	    int i=0;
    	    double num;
-   	    while(i < combinations) {
+   	    while(i < combinations && io->precon > -5) {
    	        int fscn = fscanf(file, "%lf\n",&num);
    	        hot[i] = num;
    	        i++;

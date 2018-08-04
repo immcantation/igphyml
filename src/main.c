@@ -556,7 +556,7 @@ if(io->mod->freq_model != ROOT){
   	  	  }
 	  }
   }
-  if(io->precon==2 || io->precon==-2 || io->precon==4 || io->precon==-4){
+  if(io->precon==2 || io->precon==-2 || io->precon==4 || io->precon==-4 || io->precon==-6){
 	  printf("\n");
 	  int precon = io->precon;
 

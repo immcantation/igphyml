@@ -55,7 +55,7 @@ void printTreeState(t_node *d, t_tree* tree, int root);
 void Clean_Tree(t_tree* tree);
 void Set_Pars_Counters(t_node *d, t_tree *tree,int root);
 void Copy_Sankoff_Tree(t_tree* tree1,t_tree* tree2);
-int Get_All_Paths(t_node *d, int index, t_tree *tree, t_tree** btrees, int root,int maxtrees,int treeindex,int repindex);
+int Get_All_Paths(t_node *d, int index, t_tree *tree, t_tree** btrees, int root,int maxtrees,int treeindex,int repindex, int rootstate);
 int Resolve_Polytomies_Pars(t_tree* tree,phydbl minbl);
 int NNI_ParsSwaps(t_node *a, t_node *b, t_node *c, t_node *d, t_tree *tree);
 int NNI_Pars_Search(t_node *c, t_node *d,t_edge* c_fcus,t_edge* d_fcus, int pars0, phydbl thresh,t_tree* tree);

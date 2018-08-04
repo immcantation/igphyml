@@ -89,7 +89,7 @@ void parsReconstructions(option* io){
   		  Init_Class_Tips(tree,io->precon);
 
   		  int pars = Fill_Sankoff(r,tree,1);
-  		  printf("\n. %d Maximum parsimony score: %d",j,pars);
+  		  printf("\n. %d Maximum parsimony score: %d\n",j,pars);
   		  Set_Pars_Counters(r,tree,1);
   	      phydbl* switches = mCalloc(tree->nstate*tree->nstate,sizeof(phydbl));
   	      phydbl* classl = mCalloc(tree->nstate,sizeof(phydbl));
@@ -97,7 +97,15 @@ void parsReconstructions(option* io){
   		  //Get_First_Path(r,0,tree,1);
   		  int npars = maxtrees;
   		  if(tree->n_otu < maxotu){
-  		  	  npars = Get_All_Paths(r,0,tree,trees,1,maxtrees,0,j)+1;
+  			  npars=0;
+  			  For(i,tree->nstate){
+  				 // printf("root state: %d\t%d\n",r->sroot[i],pars);
+  				if(r->sroot[i] == pars){
+  					npars += Get_All_Paths(r,i,tree,trees,1,maxtrees,0,j,i)+1;
+  					//printf("npars! %d\n",npars);
+  				}
+  				if(pars >= maxtrees)break;
+  			  }
   		  	  printf("\n. %d Found %d maximum parsimony trees",j,npars);
   		  	  if(npars < maxtrees){
   		  	  	  FILE* treeout = Openfile(fout, 1 );
@@ -121,6 +129,8 @@ void parsReconstructions(option* io){
   			printf("\n. Too many sequences for exhaustive parsimony search!");
   		  }
   		  if(npars>=maxtrees){
+  			  printf("NEED TO FIX RAND PATH TO WORK WITH AMBIGUOUS ROOTS\n");
+  			  exit(EXIT_FAILURE);
   	  		  FILE* treeout1 = Openfile(fout, 1 );
   			  printf(". Sampling %d trees instead.",maxtrees);
   			  for(i=1;i<maxtrees;i++){
@@ -171,7 +181,16 @@ void parsReconstructions(option* io){
 void Init_Class_Tips(t_tree* tree, int precon){
 	 int i,j;
 	 char* mtemp;
-	 if(precon < 3 && precon > -3){
+	 if(precon <= -5){
+		 tree->nstate=5;
+		 tree->chars = mCalloc(tree->nstate,sizeof(char*));
+		 For(i,tree->nstate)tree->chars[i]=mCalloc(10,sizeof(char));
+		 strcpy(tree->chars[0],"Naive");
+		 strcpy(tree->chars[1],"GC");
+		 strcpy(tree->chars[2],"UnMem");
+		 strcpy(tree->chars[3],"MemHi");
+		 strcpy(tree->chars[4],"MemLo");
+	 }else if(precon < 3 && precon > -3){
 		 tree->nstate=7;
 		 tree->chars = mCalloc(tree->nstate,sizeof(char*));
 		 For(i,tree->nstate)tree->chars[i]=mCalloc(10,sizeof(char));
@@ -236,6 +255,13 @@ void Init_Class_Tips(t_tree* tree, int precon){
 			 strcpy(state,strsep(&minfo2, "_"));
 		 }
 		 if(tree->mod->optDebug)printf("\n%s\t%s",tree->noeud[i]->name,state);
+		  if(precon <= -5){
+		 	 if(strcmp(state,"Naive")==0||strcmp(state,"GERM")==0)tree->noeud[i]->s[0]=0;
+		 	 if(strcmp(state,"GC")==0)   tree->noeud[i]->s[1]=0;
+		 	 if(strcmp(state,"UnMem")==0)tree->noeud[i]->s[2]=0;
+		 	 if(strcmp(state,"MemHi")==0)tree->noeud[i]->s[3]=0;
+		 	 if(strcmp(state,"MemLo")==0)tree->noeud[i]->s[4]=0;
+		 }
 		 if(precon < 3 && precon > -3){
 		 	 if(strcmp(state,"M")==0)tree->noeud[i]->s[0]=0;
 		 	 if(strcmp(state,"D")==0)tree->noeud[i]->s[1]=0;
@@ -621,7 +647,7 @@ void Set_Pars_Counters(t_node *d, t_tree *tree,int root){
 
 /*********************************************************/
 
-int Get_All_Paths(t_node *d, int index, t_tree *tree, t_tree** btrees, int root,int maxtrees,int treeindex, int repindex){
+int Get_All_Paths(t_node *d, int index, t_tree *tree, t_tree** btrees, int root,int maxtrees,int treeindex, int repindex, int rootstate){
 	int i,j,dir1,dir2;
 	int lfound=0;
 	int rfound=0;
@@ -643,7 +669,7 @@ int Get_All_Paths(t_node *d, int index, t_tree *tree, t_tree** btrees, int root,
 		//printf("Left treeb! %s\t%d\t%d\t%d\n",tree->chars[lc],treeindex,d->llock[index],d->plc[index]);
 		//exit(EXIT_FAILURE);
 		if(d->llock[index]){ //left node
-			treeindex=Get_All_Paths(d->v[dir1],d->plc[index],tree,btrees,0,maxtrees,treeindex,repindex);
+			treeindex=Get_All_Paths(d->v[dir1],d->plc[index],tree,btrees,0,maxtrees,treeindex,repindex,rootstate);
 		}else{
 			For(i,tree->nstate){
 				if(d->pl[index*tree->nstate+i] == d->lmin[index]){
@@ -661,19 +687,19 @@ int Get_All_Paths(t_node *d, int index, t_tree *tree, t_tree** btrees, int root,
 						Copy_Sankoff_Tree(tree,tree2);
 						treeindex++;
 						btrees[treeindex]=tree2;
-						treeindex = Get_All_Paths(r2,0,tree2,btrees,1,maxtrees,treeindex,repindex);
+						treeindex = Get_All_Paths(r2,rootstate,tree2,btrees,1,maxtrees,treeindex,repindex,rootstate);
 					}
 					lfound++;
 				}
 			}
 			d->plc[index]=lc;//continue down original tree
 			d->llock[index]=1; //with path through node fixed
-			treeindex=Get_All_Paths(d->v[dir1],d->plc[index],tree,btrees,0,maxtrees,treeindex,repindex);
+			treeindex=Get_All_Paths(d->v[dir1],d->plc[index],tree,btrees,0,maxtrees,treeindex,repindex,rootstate);
 		}
 		if(!root){
 			//printf("Right treeb! %s\t%d\t%d\t%d\n",tree->chars[rc],treeindex,d->rlock[index],d->prc[index]);
 			if(d->rlock[index]){ //right node
-				treeindex=Get_All_Paths(d->v[dir2],d->prc[index],tree,btrees,0,maxtrees,treeindex,repindex);
+				treeindex=Get_All_Paths(d->v[dir2],d->prc[index],tree,btrees,0,maxtrees,treeindex,repindex,rootstate);
 			}else{
 				For(i,tree->nstate){
 					if(d->pr[index*tree->nstate+i] == d->rmin[index]){
@@ -691,14 +717,14 @@ int Get_All_Paths(t_node *d, int index, t_tree *tree, t_tree** btrees, int root,
 							Copy_Sankoff_Tree(tree,tree2);
 							treeindex++;
 							btrees[treeindex]=tree2;
-							treeindex = Get_All_Paths(r2,0,tree2,btrees,1,maxtrees,treeindex,repindex);
+							treeindex = Get_All_Paths(r2,rootstate,tree2,btrees,1,maxtrees,treeindex,repindex,rootstate);
 						}
 						rfound++;
 					}
 				}
 				d->prc[index]=rc;//continue down original tree
 				d->rlock[index]=1; //with path through node fixed
-				treeindex=Get_All_Paths(d->v[dir2],d->prc[index],tree,btrees,0,maxtrees,treeindex,repindex);
+				treeindex=Get_All_Paths(d->v[dir2],d->prc[index],tree,btrees,0,maxtrees,treeindex,repindex,rootstate);
 			}
 		}
 	}else{
