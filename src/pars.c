@@ -98,13 +98,15 @@ void parsReconstructions(option* io){
   		  int npars = maxtrees;
   		int minroots=0;
   		int minroot=-1;
+  		For(i,tree->nstate){
+  			minroots++;
+  			minroot=i;
+  		}
   		  if(tree->n_otu < maxotu){
   			  npars=0;
   			  For(i,tree->nstate){
   				 // printf("root state: %d\t%d\n",r->sroot[i],pars);
   				if(r->sroot[i] == pars){
-  					minroots++;
-  					minroot=i;
   					npars += Get_All_Paths(r,i,tree,trees,1,maxtrees,0,j,i)+1;
   					//printf("npars! %d\n",npars);
   				}
