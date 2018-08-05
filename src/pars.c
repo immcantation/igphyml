@@ -99,8 +99,10 @@ void parsReconstructions(option* io){
   		int minroots=0;
   		int minroot=-1;
   		For(i,tree->nstate){
-  			minroots++;
-  			minroot=i;
+  			if(r->sroot[i] == pars){
+  				minroots++;
+  				minroot=i;
+  			}
   		}
   		  if(tree->n_otu < maxotu){
   			  npars=0;
