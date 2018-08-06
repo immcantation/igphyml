@@ -3060,9 +3060,9 @@ void Calculate_Flux_Freqs(t_edge* b_fcus, phydbl* ofreqs, phydbl* dfreqs,t_tree*
 		For(j,61){
 			//printf("%d\t%d\t%lf\t%lf\t%lf\t%lf\n",i,j,ofreqs[i],b_fcus->bPmat_part[modeli][i*dim2+j],ofreqs[j],b_fcus->bPmat_part[modeli][j*dim2+i]);
 			//if(j!=i){
-				phydbl fij = ofreqs[i]*b_fcus->bPmat_part[modeli][i*dim2+j];
+				//phydbl fij = ofreqs[i]*b_fcus->bPmat_part[modeli][i*dim2+j];
 				phydbl fji = ofreqs[j]*b_fcus->bPmat_part[modeli][j*dim2+i];
-				fluxs[i] += (fji-fij);
+				fluxs[i] += fji;//(fji-fij);
 			//}
 		}
 		dfreqs[i] = (ofreqs[i]+fluxs[i]);
