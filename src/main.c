@@ -594,7 +594,9 @@ io->threads=0;
   #else
   time(&t_end);
   #endif
+  printf("about to output\n");
   Print_IgPhyML_Out(io);
+  printf("outputted\n");
   //exit(EXIT_FAILURE);
 
   if(tree->io->print_site_lnl) Print_Site_Lk(tree,io->fp_out_lk);

@@ -6035,7 +6035,9 @@ t_tree *Read_User_Tree(calign *cdata, model *mod, option *io)
   
   
   if(!mod->quiet)PhyML_Printf("\n. Reading user tree...\n"); fflush(NULL);
+  //printf("reqinding\n");
   if(io->n_trees == 1) rewind(mod->fp_in_tree);
+  //printf("reqounding\n");
   tree = Read_Tree_File_Phylip(mod->fp_in_tree);
   if(!tree) Exit("\n. Input tree not found...\n");
   /* Add branch lengths if necessary */

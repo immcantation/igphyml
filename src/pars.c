@@ -42,6 +42,7 @@ void parsReconstructions(option* io){
   	int maxotu=1000;
 
   	//Set up stats file
+  	//printf("starting pars\n");
   	char foutp[T_MAX_FILE];
   	strcpy(foutp,io->mod->in_align_file);
   	strcat(foutp,"_igphyml_parstats");
@@ -54,8 +55,23 @@ void parsReconstructions(option* io){
 
   	For(j,io->ntrees){
   		  //set up basic tree stuff
+  		//printf("tree %d\n",j);
+  		char foutt[T_MAX_FILE];
+		 strcpy(foutt,io->datafs[j]);
+		 if(io->mod->ASR)strcat(foutt,"_igphyml_figtree");
+		 else strcat(foutt,"_igphyml_tree");
+		 if(io->append_run_ID){
+			 strcat(foutt, "_");
+			 strcat(foutt, io->run_id_string);
+		 }
+		 strcat(foutt,".txt");
+		 //printf("FOUT %s\n",foutt);
+  		  io->mod_s[j]->fp_in_tree = Openfile(foutt,0);
+  		  //printf("read in tree\n");
   		  t_tree* tree = Read_User_Tree(io->tree_s[j]->data,io->mod_s[j],io);
+  		 //printf("read in tree\n");
   		  model* mod = io->mod_s[j];
+  		  //fclose(mod->fp_in_tree);
   		  tree->mod=mod;
   		  tree->io=io;
   		  tree->data = io->tree_s[j]->data;
@@ -104,6 +120,7 @@ void parsReconstructions(option* io){
   				minroot=i;
   			}
   		}
+  		//printf("here\n");
   		  if(tree->n_otu < maxotu){
   			  npars=0;
   			  For(i,tree->nstate){
@@ -185,6 +202,7 @@ void parsReconstructions(option* io){
   		 			}
   		 		}
   		  printf("\n. Switches: %lf. Length: %lf\n",tswitch,tlen);
+  		  fclose(io->mod_s[j]->fp_in_tree);
   	}
 }
 
@@ -687,7 +705,10 @@ int Get_All_Paths(t_node *d, int index, t_tree *tree, t_tree** btrees, int root,
 					if(lfound>0 && treeindex+1 < maxtrees){ //if alternate left path found
 						//printf("Left tree!\n");
 						t_tree* tree2;
+						//printf("reading tree1\n");
 						tree2 = Read_User_Tree(tree->io->tree_s[repindex]->data,tree->io->mod_s[repindex],tree->io);
+						//printf("reading tree2\n");
+						//printf("reading tree3\n");
 						tree2->mod=tree->mod;
 						tree2->mod->startnode = tree->mod->startnode;
 						t_node* r2 = tree2->noeud[tree->mod->startnode];
@@ -717,7 +738,10 @@ int Get_All_Paths(t_node *d, int index, t_tree *tree, t_tree** btrees, int root,
 						if(rfound>0 && treeindex+1 < maxtrees){ //if alternate left path found
 							//printf("Right tree! %s\t%s\t%s\n",tree->chars[index],tree->chars[rc],tree->chars[i]);
 							t_tree* tree2;
+							//printf("reading tree1\n");
 							tree2 = Read_User_Tree(tree->io->tree_s[repindex]->data,tree->io->mod_s[repindex],tree->io);
+							//printf("reading tree2\n");
+							//printf("reading tree3\n");
 							tree2->mod=tree->mod;
 							tree2->mod->startnode = tree->mod->startnode;
 							t_node* r2 = tree2->noeud[tree2->mod->startnode];
