@@ -540,10 +540,10 @@ void Init_Model(calign *data, model *mod, option *io)
         if((mod->freq_model != FUNDEFINED) && (mod->freq_model != FMODEL)) {
             if(mod->s_opt->user_state_freq) {
                 mod->s_opt->opt_state_freq = NO;
-                if(mod->freq_model!=ROOT)EqFrequencies(mod->freq_model, mod->pi, mod->user_b_freq, mod->ns);
+                if(mod->freq_model<ROOT)EqFrequencies(mod->freq_model, mod->pi, mod->user_b_freq, mod->ns);
             } else {
             	//printf("here blah blah\n");
-                if(mod->freq_model!=ROOT)EqFrequencies(mod->freq_model, mod->pi, mod->base_freq, mod->ns);
+                if(mod->freq_model<ROOT)EqFrequencies(mod->freq_model, mod->pi, mod->base_freq, mod->ns);
                 switch(mod->freq_model) {
                     case F1X4: {
                         Scale_freqs(mod->base_freq, mod->num_base_freq);
@@ -563,13 +563,13 @@ void Init_Model(calign *data, model *mod, option *io)
                         
                         break;
                     }
-                    case ROOT:
+                    case ROOT: case MROOT:
 						break;
                     default:
                         break;
                 } 
             }
-            if(mod->freq_model!=ROOT){
+            if(mod->freq_model<ROOT){
             	Scale_freqs(mod->pi, mod->ns);
             	Freq_to_UnsFreq(mod->pi, mod->pi_unscaled, mod->ns, 1);
             }
@@ -938,7 +938,7 @@ void Set_Model_Parameters(model *mod) {
                     EqFrequencies(mod->freq_model, mod->pi, mod->base_freq, mod->ns);
                     break;
                 }
-                case ROOT:
+                case ROOT: case MROOT:
                 	break;
                 default:
                     break;
@@ -1432,6 +1432,9 @@ phydbl Update_Qmat_Codons(model *mod, int cat, int modeli, phydbl* freqs) {
         }
         case ROOT:
         	break;
+        case MROOT:
+        	if(mod->tree_loaded)Update_Midpoint_Freqs(mod->tree, modeli);
+        	break;
         default:
             break;
      }
@@ -1500,13 +1503,13 @@ phydbl Update_Qmat_Codons(model *mod, int cat, int modeli, phydbl* freqs) {
     } else {
         mat = (phydbl *) mCalloc(numSensecodons * numSensecodons, sizeof(phydbl));
         For(i, numSensecodons * numSensecodons) mat[i] = 1.0;
-        if(mod->freq_model != ROOT){
+        if(mod->freq_model < ROOT){
         	freqs = (phydbl *) mCalloc(numSensecodons, sizeof(phydbl));
         	For(i, numSensecodons) freqs[i] = 1.0;
         }
     }
     // deal with frequency models
-    if((mod->freq_model != FMODEL && mod->freq_model != FUNDEFINED) && mod->freq_model != ROOT) {
+    if((mod->freq_model != FMODEL && mod->freq_model != FUNDEFINED) && mod->freq_model < ROOT) {
         if((mod->initqrates == NOINITMAT && mod->pcaModel == NO) || mod->initqrates == SCHN05) {
             free(freqs);
             allocFreqs = NO;
@@ -1514,7 +1517,7 @@ phydbl Update_Qmat_Codons(model *mod, int cat, int modeli, phydbl* freqs) {
         freqs = mod->pi;
     } else {
         for(i=0; i<numSensecodons; i++) {
-        	if(mod->freq_model != ROOT) mod->pi[i] = freqs[i];
+        	if(mod->freq_model < ROOT) mod->pi[i] = freqs[i];
         }
     }
     //printf("qmat pi %lf %lf\n",mod->pi[0],mod->pi[1]);

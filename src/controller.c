@@ -132,6 +132,7 @@ struct option longopts[] =
 	{"mindiff",		  required_argument,NULL,170},  //!<Added by Ken
 	{"freqsTo",		  no_argument,NULL,171},  //!<Added by Ken
 	{"recon",		  required_argument,NULL,172},  //!<Added by Ken
+	{"flux",		  no_argument,NULL,173},  //!<Added by Ken
     {0,0,0,0}
 };
 
@@ -229,6 +230,13 @@ void finishOptions(option * io)
     		}
     	}
     }
+    if(io->flux){
+    	io->eq_freq_handling      = ROOT; // optimize eq freqs
+        io->mod->freq_model       = ROOT;
+        io->freqmodelOpt		  = ROOT;
+    }
+
+
     if(io->mod->optDebug)printf("\nmodel type opt %d\n",io->mod->modeltypeOpt);
     if(io->modeltypeOpt <= HLP17){
     	setUpHLP17(io, io->mod);
@@ -809,10 +817,7 @@ void setupFreqs(option * io)
             break;
         }
     }
-    
-    
 
-    
     // check for user defined frequencies
     if(io->userFreqs[0] != 0) {
         phydbl sum;
@@ -2193,10 +2198,10 @@ int mainOptionSwitch(int opt, char * optarg, option * io)
                 io->freqmodelOpt		  = CF3X4;
                 if( strcmp(optarg, "HLP18") == 0){
                     io->modeltypeOpt          = HLP18;
-                    io->eq_freq_handling      = ROOT; // optimize eq freqs
-                    io->mod->freq_model       = ROOT;
+                    io->eq_freq_handling      = MROOT; // optimize eq freqs
+                    io->mod->freq_model       = MROOT;
                     io->mod->whichmodel       = HLP18;
-                    io->freqmodelOpt		  = ROOT;
+                    io->freqmodelOpt		  = MROOT;
                     //io->mod->constB 		  = 1; //uniform freqs for HLP18
                 }
 
@@ -2751,6 +2756,11 @@ int mainOptionSwitch(int opt, char * optarg, option * io)
         case 172:{
             io->precon=atoi(optarg);
             printf("\nDoing pars recon\n");
+           	break;
+        }
+        case 173:{
+        	printf("Doing full flux adjustment. Might take a while with branch length optimization!\n");
+            io->flux=1;
            	break;
         }
 

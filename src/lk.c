@@ -504,15 +504,16 @@ phydbl Lk(t_tree *tree)
   int startnode = 0;
   if(tree->mod->whichrealmodel <= HLP17){
 	  startnode = tree->mod->startnode;
+
   }
 
-  if(tree->mod->modeltypeOpt!=HLP18){
+  if(tree->mod->freq_model != ROOT){
+	 // printf("Not doing things recursively!\n");
   	  #if defined OMP || defined BLAS_OMP
   	  #pragma omp parallel for if(tree->mod->datatype==CODON && !tree->mod->splitByTree)
   	  #endif
 	  For(br,n_edges) Update_PMat_At_Given_Edge(tree->t_edges[br],tree);
   }else{
-	  //printf("Doing things recursively!\n");
 	  Update_PMat_Recursive(tree->noeud[startnode]->b[0],tree);
   }
 	//printf("\nafter pmat: omega %d %lf %lf %lf %lf %lf %lf",tree->both_sides,tree->mod->omega_part[0],tree->mod-> kappa,tree->c_lnL,tree->mod->qmat_part[0][1],tree->mod->hotness[0],tree->mod->hotness[1]);
@@ -1921,7 +1922,7 @@ phydbl Lk_At_Given_Edge(t_edge *b_fcus, t_tree *tree)
 	}
 
 	if(tree->mod->whichrealmodel <= HLP17){//Added by Ken 3/8/2016
-	  if(tree->mod->whichrealmodel == HLP18){
+	  if(tree->mod->freq_model == ROOT){
 		  Lk(tree);
 	  }else{
 		  Update_PMat_At_Given_Edge(b_fcus,tree);
@@ -3102,6 +3103,44 @@ void Update_PMat_Recursive(t_edge *b_fcus, t_tree *tree){
 			}
 		}
 	}
+}
+
+/*********************************************************/
+
+void Update_Midpoint_Freqs(t_tree* tree, int modeli){
+	int i;
+	t_edge* b = tree->noeud[tree->mod->startnode]->b[0];
+	phydbl ol = b->l;
+	//printf("here\n");
+	if(tree->mod->optDebug)printf("tl %lf %d %lf\n",tree->mod->midpoint_div,tree->n_otu,ol);
+	b->l=tree->mod->midpoint_div; //set edge to mean divergence
+	//Update_Qmat_Codons(tree->mod,0,modeli,b->anc_node->partfreqs[modeli]);
+	Update_PMat_At_Given_Edge(b,tree);
+	Calculate_Flux_Freqs(b,b->anc_node->partfreqs[modeli],tree->mod->pi,tree,modeli);
+	if(tree->mod->optDebug)
+	For(i,61){
+		printf("%d\t%lf\t%lf\n",i,b->anc_node->partfreqs[modeli][i],tree->mod->pi[i]);
+	}
+	b->l=ol;
+}
+
+/*********************************************************/
+
+phydbl Get_Total_Divergence(t_node *a, t_node *d, t_edge *e, phydbl div, t_tree *tree){
+	int i;
+	d->dist_to_root = a->dist_to_root+e->l;
+	//e->olen=e->l;
+	if(d->tax){
+		//printf("%s %lf %lf\n",d->name,d->dist_to_root,div);
+		div += d->dist_to_root;
+		return div;
+	}
+    For(i,3){
+    	if(d->v[i] != d->anc){
+    		div = Get_Total_Divergence(d,d->v[i],d->b[i],div,tree);
+    	}
+    }
+    return div;
 }
 
 

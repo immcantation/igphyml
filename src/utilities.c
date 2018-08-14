@@ -588,7 +588,7 @@ calign *Compact_Data(align **data, option *io, model *mod)
           break;
         case FMODEL:
           break;
-        case ROOT:{
+        case ROOT: case MROOT:{
         	 int modeli;
         	 For(modeli,mod->nomega_part){
         		 Get_Root_Freqs(cdata_tmp, data, mod->rootname, mod->root_pi[modeli], mod, modeli);
@@ -2716,6 +2716,8 @@ void Make_Model_Complete(model *mod)
   //printf("%d\t%d\t%d\n",mod->ns,mod->n_w_catg,mod->nomega_part);
   //printf("%lf\n",mod->qmat_part[0][0]);
   mod->qmat_part[0][0]=1.0;
+  mod->tree_loaded=0;
+  mod->midpoint_div=SMALL;
   //if(mod->optDebug)printf("just tried2");
 }
 

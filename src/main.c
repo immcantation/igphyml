@@ -209,7 +209,7 @@ int main(int argc, char **argv){
       }else{
     	  io->colalias = 0;//for now, don't compress sequences at all
       }
-      if(mod->freq_model == ROOT){
+      if(mod->freq_model >= ROOT){
     	  	  mod->root_pi = mCalloc(mod->nomega_part,sizeof(phydbl*));
     	  	  For(i,io->mod->nomega_part)mod->root_pi[i]=mCalloc(61,sizeof(phydbl));
       }
@@ -279,7 +279,7 @@ int main(int argc, char **argv){
 	  tree->data        = cdata;
 	  tree->both_sides  = 1;
 	  tree->n_pattern   = tree->data->crunch_len;
-
+	  mod->tree         = tree;
 	  //mod->quiet=NO; //turn back on alerts
 
 	  //added by Ken
@@ -295,11 +295,13 @@ int main(int argc, char **argv){
 	      		//PhyML_Printf("\n. Start node found: %d %s\n",nodepos,mod->rootname);
 	      		Update_Ancestors_Edge(tree->noeud[nodepos],tree->noeud[nodepos]->v[0],tree->noeud[nodepos]->b[0],tree);
 	      		//PhyML_Printf("\n. Start node found: %d %s\n",nodepos,mod->rootname);
-	      		For(i,mod->nomega_part && mod->freq_model==ROOT){
-	      			For(j,mod->ns){
-	      				tree->noeud[nodepos]->partfreqs[i][j]=mod->root_pi[i][j];
-	      				if(i==0)mod->pi[j]=mod->root_pi[i][j];
-	      				//printf("%d\t%lf\n",j,mod->pi[j]);
+	      		if(mod->freq_model>=ROOT){
+	      			For(i,mod->nomega_part){
+	      				For(j,mod->ns){
+	      					tree->noeud[nodepos]->partfreqs[i][j]=mod->root_pi[i][j];
+	      					if(i==0)mod->pi[j]=mod->root_pi[i][j];
+	      					//printf("%d\t%lf\n",j,mod->pi[j]);
+	      				}
 	      			}
 	      		}
 	      	}
@@ -391,47 +393,53 @@ int main(int argc, char **argv){
   if(io->threads==1 && io->ntrees > 1)printf("\nDEFAULT: Running multiple trees on one thread."
 		  "\n........ Use the '--threads' option to specify more (might speed things up).\n");
 
-if(io->mod->freq_model != ROOT){
-  //Set up equilibrium base freqs for the repertoire
-  if(io->eq_freq_handling != USER){
-  For(i,io->ntrees){
-	  For(j,12){
-		  io->mod->baseCounts[j]+=io->mod_s[i]->baseCounts[j];
-		  if(io->mod->optDebug)printf("%d\t%lf\n",j,io->mod->baseCounts[j]);
+  if(io->mod->freq_model < ROOT){
+	  //Set up equilibrium base freqs for the repertoire
+	  if(io->eq_freq_handling != USER){
+	  For(i,io->ntrees){
+		  For(j,12){
+			  io->mod->baseCounts[j]+=io->mod_s[i]->baseCounts[j];
+			  if(io->mod->optDebug)printf("%d\t%lf\n",j,io->mod->baseCounts[j]);
+		  }
 	  }
-  }
-  io->mod->base_freq[0]= (io->mod->baseCounts[0]) /(io->mod->baseCounts[0]+io->mod->baseCounts[1]+io->mod->baseCounts[2]+io->mod->baseCounts[3]);
-  io->mod->base_freq[1]= (io->mod->baseCounts[1]) /(io->mod->baseCounts[0]+io->mod->baseCounts[1]+io->mod->baseCounts[2]+io->mod->baseCounts[3]);
-  io->mod->base_freq[2]= (io->mod->baseCounts[2]) /(io->mod->baseCounts[0]+io->mod->baseCounts[1]+io->mod->baseCounts[2]+io->mod->baseCounts[3]);
-  io->mod->base_freq[3]= (io->mod->baseCounts[3]) /(io->mod->baseCounts[0]+io->mod->baseCounts[1]+io->mod->baseCounts[2]+io->mod->baseCounts[3]);
-  io->mod->base_freq[4]= (io->mod->baseCounts[4]) /(io->mod->baseCounts[4]+io->mod->baseCounts[5]+io->mod->baseCounts[6]+io->mod->baseCounts[7]);
-  io->mod->base_freq[5]= (io->mod->baseCounts[5]) /(io->mod->baseCounts[4]+io->mod->baseCounts[5]+io->mod->baseCounts[6]+io->mod->baseCounts[7]);
-  io->mod->base_freq[6]= (io->mod->baseCounts[6]) /(io->mod->baseCounts[4]+io->mod->baseCounts[5]+io->mod->baseCounts[6]+io->mod->baseCounts[7]);
-  io->mod->base_freq[7]= (io->mod->baseCounts[7]) /(io->mod->baseCounts[4]+io->mod->baseCounts[5]+io->mod->baseCounts[6]+io->mod->baseCounts[7]);
-  io->mod->base_freq[8]= (io->mod->baseCounts[8]) /(io->mod->baseCounts[8]+io->mod->baseCounts[9]+io->mod->baseCounts[10]+io->mod->baseCounts[11]);
-  io->mod->base_freq[9]= (io->mod->baseCounts[9]) /(io->mod->baseCounts[8]+io->mod->baseCounts[9]+io->mod->baseCounts[10]+io->mod->baseCounts[11]);
-  io->mod->base_freq[10]=(io->mod->baseCounts[10])/(io->mod->baseCounts[8]+io->mod->baseCounts[9]+io->mod->baseCounts[10]+io->mod->baseCounts[11]);
-  io->mod->base_freq[11]=(io->mod->baseCounts[11])/(io->mod->baseCounts[8]+io->mod->baseCounts[9]+io->mod->baseCounts[10]+io->mod->baseCounts[11]);
-  For(j,12)io->mod->base_freq[j]=roundf(io->mod->base_freq[j]*10000.0f)/10000.0f; //round base freqs to 5 decimal places to help make comparisons to previous versions
-  if(io->mod->optDebug)For(j,12){printf("%lf\t%lf\n",io->mod->baseCounts[j],io->mod->base_freq[j]);}
-  CF3x4(io->mod->base_freq, io->mod->genetic_code);
-  }else{
-	  //CF3x4(io->mod->base_freq, io->mod->genetic_code);
-	  For(i,12)io->mod->base_freq[i]=io->mod->user_b_freq[i];
-  }
-  if(io->mod->optDebug)printf("cf3x4\n");
+	  io->mod->base_freq[0]= (io->mod->baseCounts[0]) /(io->mod->baseCounts[0]+io->mod->baseCounts[1]+io->mod->baseCounts[2]+io->mod->baseCounts[3]);
+	  io->mod->base_freq[1]= (io->mod->baseCounts[1]) /(io->mod->baseCounts[0]+io->mod->baseCounts[1]+io->mod->baseCounts[2]+io->mod->baseCounts[3]);
+	  io->mod->base_freq[2]= (io->mod->baseCounts[2]) /(io->mod->baseCounts[0]+io->mod->baseCounts[1]+io->mod->baseCounts[2]+io->mod->baseCounts[3]);
+	  io->mod->base_freq[3]= (io->mod->baseCounts[3]) /(io->mod->baseCounts[0]+io->mod->baseCounts[1]+io->mod->baseCounts[2]+io->mod->baseCounts[3]);
+	  io->mod->base_freq[4]= (io->mod->baseCounts[4]) /(io->mod->baseCounts[4]+io->mod->baseCounts[5]+io->mod->baseCounts[6]+io->mod->baseCounts[7]);
+	  io->mod->base_freq[5]= (io->mod->baseCounts[5]) /(io->mod->baseCounts[4]+io->mod->baseCounts[5]+io->mod->baseCounts[6]+io->mod->baseCounts[7]);
+	  io->mod->base_freq[6]= (io->mod->baseCounts[6]) /(io->mod->baseCounts[4]+io->mod->baseCounts[5]+io->mod->baseCounts[6]+io->mod->baseCounts[7]);
+	  io->mod->base_freq[7]= (io->mod->baseCounts[7]) /(io->mod->baseCounts[4]+io->mod->baseCounts[5]+io->mod->baseCounts[6]+io->mod->baseCounts[7]);
+	  io->mod->base_freq[8]= (io->mod->baseCounts[8]) /(io->mod->baseCounts[8]+io->mod->baseCounts[9]+io->mod->baseCounts[10]+io->mod->baseCounts[11]);
+	  io->mod->base_freq[9]= (io->mod->baseCounts[9]) /(io->mod->baseCounts[8]+io->mod->baseCounts[9]+io->mod->baseCounts[10]+io->mod->baseCounts[11]);
+	  io->mod->base_freq[10]=(io->mod->baseCounts[10])/(io->mod->baseCounts[8]+io->mod->baseCounts[9]+io->mod->baseCounts[10]+io->mod->baseCounts[11]);
+	  io->mod->base_freq[11]=(io->mod->baseCounts[11])/(io->mod->baseCounts[8]+io->mod->baseCounts[9]+io->mod->baseCounts[10]+io->mod->baseCounts[11]);
+  	  For(j,12)io->mod->base_freq[j]=roundf(io->mod->base_freq[j]*10000.0f)/10000.0f; //round base freqs to 5 decimal places to help make comparisons to previous versions
+  	  if(io->mod->optDebug)For(j,12){printf("%lf\t%lf\n",io->mod->baseCounts[j],io->mod->base_freq[j]);}
+  	  CF3x4(io->mod->base_freq, io->mod->genetic_code);
+  	  }else{
+	  	  //CF3x4(io->mod->base_freq, io->mod->genetic_code);
+	  	  For(i,12)io->mod->base_freq[i]=io->mod->user_b_freq[i];
+  	  }
+  	  if(io->mod->optDebug)printf("cf3x4\n");
 
 
-  //JUST TO ELIMINATE SOME VARIABLES
-  /*For(j,12)io->mod->base_freq[j]=io->mod_s[0]->base_freq[j];
-  For(j,12)io->mod->uns_base_freq[j]=io->mod_s[0]->uns_base_freq[j];*/
+  	  //JU	ST TO ELIMINATE SOME VARIABLES
+  	  /*For(j,12)io->mod->base_freq[j]=io->mod_s[0]->base_freq[j];
+  	  For(j,12)io->mod->uns_base_freq[j]=io->mod_s[0]->uns_base_freq[j];*/
 
-  if(io->mod->optDebug)For(j,12){printf("%lf\t%lf\n",io->mod->baseCounts[j],io->mod->base_freq[j]);}
-  Freq_to_UnsFreq(io->mod->base_freq,   io->mod->uns_base_freq,   4, 1);
-  Freq_to_UnsFreq(io->mod->base_freq+4, io->mod->uns_base_freq+4, 4, 1);
-  Freq_to_UnsFreq(io->mod->base_freq+8, io->mod->uns_base_freq+8, 4, 1);
-  if(io->mod->optDebug)For(j,12){printf("%lf\t%lf\t%lf\t%lf\n",io->mod->baseCounts[j],io->mod->base_freq[j],io->mod->uns_base_freq[j],io->mod_s[0]->base_freq[j]);}
-}
+  	  if(io->mod->optDebug)For(j,12){printf("%lf\t%lf\n",io->mod->baseCounts[j],io->mod->base_freq[j]);}
+  	  Freq_to_UnsFreq(io->mod->base_freq,   io->mod->uns_base_freq,   4, 1);
+  	  Freq_to_UnsFreq(io->mod->base_freq+4, io->mod->uns_base_freq+4, 4, 1);
+  	  Freq_to_UnsFreq(io->mod->base_freq+8, io->mod->uns_base_freq+8, 4, 1);
+  	  if(io->mod->optDebug)For(j,12){printf("%lf\t%lf\t%lf\t%lf\n",io->mod->baseCounts[j],io->mod->base_freq[j],io->mod->uns_base_freq[j],io->mod_s[0]->base_freq[j]);}
+	}else{
+		t_tree* tree = io->tree_s[0];
+		phydbl tl = Get_Total_Divergence(tree->noeud[tree->mod->startnode], tree->noeud[tree->mod->startnode]->v[0],
+			tree->noeud[tree->mod->startnode]->b[0],0.0, tree);
+		tree->mod->midpoint_div = tl/(tree->n_otu*2);
+	}
+
   int nparams=0;
     int nmodparams=2+io->mod->nomega_part+io->mod->nhotness+12;
     nparams += nmodparams*(io->ntrees+1);
@@ -486,12 +494,24 @@ if(io->mod->freq_model != ROOT){
   	  }
   }else{
   	  if(io->mod->s_opt->opt_subst_param || io->mod->s_opt->opt_bl){
-  	    	Round_Optimize(io,ROUND_MAX*2); //! *2 Added by Marcelo to match codeml values.
+  		  io->mod->update_eigen=1;
+  	    io->both_sides=1;
+  		   For(i,io->ntrees){
+  			    Get_UPP(io->tree_s[i]->noeud[io->tree_s[i]->mod->startnode], io->tree_s[i]->noeud[io->tree_s[i]->mod->startnode]->v[0], io->tree_s[i]);
+  		   }
+  		   Lk_rep(io);
+  		   For(i,io->ntrees)io->mod_s[i]->tree_loaded = 1;
+  		   //Lk_rep(io);
+  		   Print_Lk_rep(io,"Repertoire likelihood!");
+  	       Round_Optimize(io,ROUND_MAX*2); //! *2 Added by Marcelo to match codeml values.
   	  }else{
   		if(io->mod->optDebug)printf("doing lhood\n");
   	    io->mod->update_eigen=1;
   	    io->both_sides=1;
   	    if(!io->precon){
+  	    	Lk_rep(io);
+  	    	Print_Lk_rep(io,"Repertoire likelihood!");
+  	    	For(i,io->ntrees)io->mod_s[i]->tree_loaded = 1;
   	    	Lk_rep(io);
   	    	Print_Lk_rep(io,"Repertoire likelihood!");
   	    	For(i,io->ntrees){
@@ -501,7 +521,7 @@ if(io->mod->freq_model != ROOT){
   	  }
   }
 
-  if(io->mod->freq_model!=ROOT){
+  if(io->mod->freq_model<ROOT){
   //convert base frequencies back to properly output results
    if(io->mod->optDebug)For(j,12){printf("before %lf\t%lf\n",io->mod->baseCounts[j],io->mod->base_freq[j]);}
    Freq_to_UnsFreq(io->mod->base_freq,   io->mod->uns_base_freq,   4, 0);

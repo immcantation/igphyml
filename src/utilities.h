@@ -658,6 +658,7 @@ typedef struct __Model {
   struct __Option      *io;
   struct __Align              **data;/*!< pointer to the uncompressed sequences. MOVED FROM OPTION 1/9/2018 */
   struct __Calign             *cdata;/*!< pointer to the compressed sequences. MOVED FROM OPTION*/
+  struct __Arbre               *tree;
   int                          n_otu; /*!< number of taxa. MOVED FROM OPTION */
   int                       init_len; /*!< sequence length. MOVED FROM OPTION*/
   ts_and_tv          *structTs_and_Tv; /*!< Counts for transitions and transversions in codon models. MOVED FROM OPTION*/ //!<Added by Marcelo.
@@ -882,7 +883,8 @@ typedef struct __Model {
  int		constB;
  int prior;
  int		freqsTo;
-
+ phydbl		midpoint_div;
+ int		tree_loaded;
 }model;
 
 /*********************************************************/
@@ -1071,6 +1073,7 @@ typedef struct __Option {
 
   //Options for recon
   int					precon;
+  int 					flux; //do full flux adjustment?
  }option;
 
 /*********************************************************/
@@ -1801,6 +1804,7 @@ void Set_Genetic_Code(int gencode);
 #define MODEL     1
 #define EMPIRICAL 0
 #define ROOT	  5
+#define MROOT	  6
 
 /*! Parametric Models (GY, MG, YAP) */
 #define GYSIMP -1

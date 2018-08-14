@@ -248,8 +248,7 @@ int resetSubstParams(option* io){
 	if(io->mod->whichrealmodel<=HLP17)For(i,io->mod->nhotness)io->mod->hotness[i]=0.0;
 
 
-	if(io->mod->freq_model != ROOT){
-		printf("NOT HLP18\n");
+	if(io->mod->freq_model < ROOT){
 	  //Set up equilibrium base freqs for the repertoire
 	  if(io->eq_freq_handling != USER){
 	  io->mod->base_freq[0]= (io->mod->baseCounts[0]) /(io->mod->baseCounts[0]+io->mod->baseCounts[1]+io->mod->baseCounts[2]+io->mod->baseCounts[3]);
@@ -479,9 +478,10 @@ void Round_Optimize(option *io, int n_round_max){
 				int n_roundt=n_round;
 				t_tree* tree = io->tree_s[i];
 				t_node* root = tree->noeud[tree->mod->startnode];
-				if(tree->mod->whichrealmodel != HLP17)(!((n_roundt+2)%2))?(root=tree->noeud[0]):(root=tree->noeud[tree->n_otu-1]);
+				if(tree->mod->whichrealmodel > HLP17)(!((n_roundt+2)%2))?(root=tree->noeud[0]):(root=tree->noeud[tree->n_otu-1]);
 				Lk(tree);
 				if(tree->mod->whichrealmodel <= HLP17){Get_UPP(root, root->v[0], tree);}
+				//printf("startnode %d %d\n",root->num, root->v[0]->num);
 				Optimize_Br_Len_Serie(root,root->v[0],root->b[0],tree,tree->data);
 				//Lk(tree);
 				//printf("%d mod quiet\n",tree->mod->quiet);
@@ -501,7 +501,7 @@ void Round_Optimize(option *io, int n_round_max){
 				int n_roundt=n_round;
 				t_tree* tree = io->tree_s[i];
 				t_node* root = tree->noeud[tree->mod->startnode];
-				if(tree->mod->whichrealmodel != HLP17)(!((n_roundt+2)%2))?(root=tree->noeud[0]):(root=tree->noeud[tree->n_otu-1]);
+				if(tree->mod->whichrealmodel > HLP17)(!((n_roundt+2)%2))?(root=tree->noeud[0]):(root=tree->noeud[tree->n_otu-1]);
 				tree->both_sides = 1;
 				Lk(tree);
 				if(tree->mod->whichrealmodel <= HLP17){Get_UPP(root, root->v[0], tree);}
@@ -588,19 +588,25 @@ void Optimize_Br_Len_Serie(t_node *a, t_node *d, t_edge *b_fcus, t_tree *tree, c
   if(a->num == tree->mod->startnode){
 	//   printf("doing root adjustment7\n");
 	//   Update_P_Lk(tree,d->anc_edge,d);
-	  if(tree->mod->whichrealmodel == HLP17){Fill_UPP_root(tree,d->anc_edge);}
+	  if(tree->mod->whichrealmodel <= HLP17){Fill_UPP_root(tree,d->anc_edge);}
   }
   //printf("did root adjustment\n");
 
   if(d->tax) return;
    else For(i,3) if(d->v[i] != a)
    {
-	   if(tree->mod->whichrealmodel!=HLP18)Update_P_Lk(tree,d->b[i],d);
-	   if(tree->mod->whichrealmodel == HLP17){Fill_UPP_single(tree,d->b[i]);}
+	   if(tree->mod->freq_model!=ROOT){
+		   Update_P_Lk(tree,d->b[i],d);
+		   if(tree->mod->whichrealmodel <= HLP17){
+			 //  printf("filling upp1 %d %d ",d->num,d->b[i]->num);
+			   Fill_UPP_single(tree,d->b[i]);
+			  // printf("filling upp2\n");
+		   }
+	   }
 	   Optimize_Br_Len_Serie(d,d->v[i],d->b[i],tree,cdata);
    }
   
-  if(tree->mod->whichrealmodel!=HLP18)For(i,3) if((d->v[i] == a) && !(d->v[i]->tax)) Update_P_Lk(tree,d->b[i],d);
+  if(tree->mod->freq_model!=ROOT)For(i,3) if((d->v[i] == a) && !(d->v[i]->tax)) Update_P_Lk(tree,d->b[i],d);
 }
 
 /*********************************************************/

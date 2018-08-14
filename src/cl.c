@@ -71,6 +71,7 @@ void Read_Command_Line( option *io, int argc, char **argv )
 	io->CIest=0;
 	io->mod->prior=0;
 	io->min_diff_lk_global=1.E-3;
+	io->flux=0;
 
 	//Default placeholder model
 	io->modeltypeOpt = 0;
