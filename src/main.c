@@ -500,8 +500,11 @@ int main(int argc, char **argv){
   			    Get_UPP(io->tree_s[i]->noeud[io->tree_s[i]->mod->startnode], io->tree_s[i]->noeud[io->tree_s[i]->mod->startnode]->v[0], io->tree_s[i]);
   		   }
   		   Lk_rep(io);
-  		   For(i,io->ntrees)io->mod_s[i]->tree_loaded = 1;
-  		   //Lk_rep(io);
+  		   For(i,io->ntrees){
+  			   io->mod_s[i]->tree_loaded = 1;
+  			   Setup_CBmat(io->mod_s[i],0);
+  		   }
+  		   Lk_rep(io);
   		   Print_Lk_rep(io,"Repertoire likelihood!");
   	       Round_Optimize(io,ROUND_MAX*2); //! *2 Added by Marcelo to match codeml values.
   	  }else{

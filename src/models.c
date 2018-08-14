@@ -1403,6 +1403,7 @@ void EqFrequencies(int modfreq, phydbl *pi, phydbl *freq, int numSensecodons) //
         }
     }
 }
+/**************************************************************/
 
 phydbl Update_Qmat_Codons(model *mod, int cat, int modeli, phydbl* freqs) {
     int numSensecodons, i, j, allocFreqs;
@@ -1583,7 +1584,7 @@ phydbl Update_Qmat_Codons(model *mod, int cat, int modeli, phydbl* freqs) {
    // mu=1.0;
     return mu;
 }
-
+/**************************************************************/
 void Update_Qmat_GY(phydbl *mat, phydbl *qmat, phydbl * freqs, int cat, model *mod) {
     int i, j, numSensecodons;
     phydbl value;
@@ -1596,7 +1597,7 @@ void Update_Qmat_GY(phydbl *mat, phydbl *qmat, phydbl * freqs, int cat, model *m
         }
     }
 }
-
+/**************************************************************/
 //Modified GY94 by Ken
 //Modified to be omega*kappa*pi*(1+b*h) on 12/Jun/2016
 void Update_Qmat_HLP17(phydbl *mat, phydbl *qmat, phydbl * freqs, int cat, model *mod,phydbl omega) {
@@ -1672,6 +1673,32 @@ void Update_Qmat_HLP17(phydbl *mat, phydbl *qmat, phydbl * freqs, int cat, model
 }
 
 
+/**************************************************************/
+//set up constant Bmat if desired
+void Setup_CBmat(model* mod, int uniform){
+	mod->cBmat=(phydbl **)mCalloc(3721,sizeof(phydbl*));
+  	int fi,ti,li,ri,hot,c;
+  	double htotal[mod->nmotifs];
+  	for(fi=0;fi<61;fi++){ //Fill in B matrix
+  	  	for(ti=0;ti<61;ti++){
+  	  		mod->cBmat[fi*61+ti]=mCalloc(mod->nmotifs,sizeof(phydbl));
+  	   		for(c=0;c< mod->nmotifs;c++)htotal[c]=0; //set htotal array to zero
+  	   			for(li=0;li<61;li++){
+  		    		for(ri=0;ri<61;ri++){
+  		    			for(c=0;c< mod->nmotifs;c++){
+  		    					if(uniform)htotal[c] += (1.0/61)*(1.0/61)*mod->io->mod->hotspotcmps[c][fi*61*61*61+ti*61*61+li*61+ri];
+  		    					else htotal[c] += mod->pi[li]*mod->pi[ri]*mod->io->mod->hotspotcmps[c][fi*61*61*61+ti*61*61+li*61+ri];
+
+  			 	   		}
+  		    		}
+  			   }
+  		   for(c=0;c<mod->nmotifs;c++)mod->cBmat[fi*61+ti][c]=htotal[c];
+  	  	}
+  	}
+}
+
+/**************************************************************/
+
 void Update_Qmat_MG(phydbl *mat, phydbl *qmat, phydbl * freqs, int cat, model *mod) {
     int diff, codoni, codonj, numSensecodons, i, j, k, m;
     int icodon[3], jcodon[3], targetNTi[3], targetNTj[3], posTargetNT[3];
@@ -1731,6 +1758,7 @@ void Update_Qmat_MG(phydbl *mat, phydbl *qmat, phydbl * freqs, int cat, model *m
         }
     }
 }
+/**************************************************************/
 
 void Update_Qmat_YAP(phydbl *mat, phydbl *qmat, phydbl * freqs, int cat, model *mod) {
     int diff, codoni, codonj, numSensecodons, i, j, k, m, n, TC, h, g;
