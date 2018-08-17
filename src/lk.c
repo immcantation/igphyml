@@ -457,7 +457,6 @@ io->threads=0;
 			tree= io->tree_s[io->threads++];
 		}
 		//printf("\nbefore lk: omega %d %lf %lf %lf %lf %lf %lf",tree->both_sides,tree->mod->omega_part[0],tree->mod-> kappa,tree->c_lnL,tree->mod->qmat_part[0][1],tree->mod->hotness[0],tree->mod->hotness[1]);
-
 		Lk(tree);
 	}
 	For(i,io->ntrees){
@@ -3059,7 +3058,7 @@ void Calculate_Flux_Freqs(t_edge* b_fcus, phydbl* ofreqs, phydbl* dfreqs,t_tree*
 	For(i,61){
 		fluxs[i]=0;
 		For(j,61){
-			//printf("%d\t%d\t%lf\t%lf\t%lf\t%lf\n",i,j,ofreqs[i],b_fcus->bPmat_part[modeli][i*dim2+j],ofreqs[j],b_fcus->bPmat_part[modeli][j*dim2+i]);
+			if(i==2)printf("\n%d\t%d\t%lf\t%lf\t%lf\t%lf\t%lf",i,j,ofreqs[i],b_fcus->l,b_fcus->bPmat_part[modeli][i*dim2+j],ofreqs[j],tree->mod->qmat_part[modeli][i*dim2+j]);
 			//if(j!=i){
 				//phydbl fij = ofreqs[i]*b_fcus->bPmat_part[modeli][i*dim2+j];
 				phydbl fji = ofreqs[j]*b_fcus->bPmat_part[modeli][j*dim2+i];
@@ -3072,6 +3071,59 @@ void Calculate_Flux_Freqs(t_edge* b_fcus, phydbl* ofreqs, phydbl* dfreqs,t_tree*
 	}
 	For(i,61)dfreqs[i] = dfreqs[i]/fsum;
 }
+
+/*********************************************************/
+// Set up midpoint flux model before doing anything else with them
+void Setup_Midpoint_Flux(option* io){
+	int i,j;
+	io->mod->update_eigen=1;
+	io->both_sides=1;
+	Lk_rep(io);
+	Print_Lk_rep(io,"Repertoire likelihood!");
+	printf("\n-1 %d %d %lf\n",i,j,io->tree_s[0]->mod->qmat_part[0][2*61+2]);
+	For(i,io->ntrees){
+		io->mod_s[i]->tree_loaded = 1;
+	//	Setup_CBmat(io->mod_s[i],1,io->mod_s[i]->root_pi[0]);
+	//	Update_Midpoint_Freqs(io->tree_s[i]);
+	}
+	//printf("%lf %lf\n",io->mod_s[0]->root_pi[0][0],io->mod_s[0]->mid_pi[0][0]);
+
+  	//printf("\n");
+  	//For(i,61)printf("%lf ",io->tree_s[0]->mod->mid_pi[0][i]);
+  	//Lk_rep(io);
+  	//printf("\n");
+  	//For(i,61)printf("%lf ",io->tree_s[0]->mod->root_pi[0][i]);
+	Lk_rep(io);
+  	Print_Lk_rep(io," 0 Repertoire likelihood!");
+	//For(i,61)For(j,61)printf("0 %d %d %lf\n",i,j,io->tree_s[0]->mod->qmat_part[0][i*61+j]);
+  	printf("\n0 %d %d %lf\n",i,j,io->tree_s[0]->mod->qmat_part[0][2*61+2]);
+
+  	printf("\n");
+  	For(i,61)printf("%lf ",io->tree_s[0]->mod->mid_pi[0][i]);
+  	//printf("\n");
+  	//For(i,61)printf("%lf ",io->tree_s[0]->mod->root_pi[0][i]);
+  	//printf("%lf %lf\n",io->mod_s[0]->root_pi[0][0],io->mod_s[0]->mid_pi[0][0]);
+  	    	//printf("%lf %lf\n",io->mod_s[0]->root_pi[0][0],io->mod_s[0]->pi[0]);
+  	    //For(i,io->ntrees)Setup_CBmat(io->mod_s[i],0,io->mod_s[i]->root_pi[0]);
+  	    	Lk_rep(io);
+  	    	Print_Lk_rep(io," 1 Repertoire likelihood!");
+  	    	//For(i,61)For(j,61)printf("1 %d %d %lf\n",i,j,io->tree_s[0]->mod->qmat_part[0][i*61+j]);
+  	    	printf("\n1 %d %d %lf\n",i,j,io->tree_s[0]->mod->qmat_part[0][2*61+2]);
+  	    	//printf("\n");
+  	    	//For(i,61)printf("%lf ",io->tree_s[0]->mod->mid_pi[0][i]);
+  	    //	printf("\n");
+  	//For(i,61)printf("%lf ",io->tree_s[0]->mod->root_pi[0][i]);
+  	    	//printf("%lf %lf\n",io->mod_s[0]->root_pi[0][0],io->mod_s[0]->mid_pi[0][0]);
+  	    	Lk_rep(io);
+  	    	Print_Lk_rep(io," 2 Repertoire likelihood!");
+  	    	printf("\n2 %d %d %lf\n",i,j,io->tree_s[0]->mod->qmat_part[0][2*61+2]);
+  	    	//printf("%lf %lf\n",io->mod_s[0]->root_pi[0][0],io->mod_s[0]->mid_pi[0][0]);
+  	    	//printf("\n");
+  	  // For(i,61)printf("%lf ",io->tree_s[0]->mod->mid_pi[0][i]);
+  	    	//printf("\n");
+  	//For(i,61)printf("%lf ",io->tree_s[0]->mod->root_pi[0][i]);
+}
+
 
 /*********************************************************/
 // Recursively update PMats
@@ -3107,21 +3159,35 @@ void Update_PMat_Recursive(t_edge *b_fcus, t_tree *tree){
 
 /*********************************************************/
 
-void Update_Midpoint_Freqs(t_tree* tree, int modeli){
-	int i;
+void Update_Midpoint_Freqs(t_tree* tree){
+	int i,modeli,j;
 	t_edge* b = tree->noeud[tree->mod->startnode]->b[0];
 	phydbl ol = b->l;
-	//printf("here\n");
 	if(tree->mod->optDebug)printf("tl %lf %d %lf\n",tree->mod->midpoint_div,tree->n_otu,ol);
-	b->l=tree->mod->midpoint_div; //set edge to mean divergence
-	//Update_Qmat_Codons(tree->mod,0,modeli,b->anc_node->partfreqs[modeli]);
-	Update_PMat_At_Given_Edge(b,tree);
-	Calculate_Flux_Freqs(b,b->anc_node->partfreqs[modeli],tree->mod->pi,tree,modeli);
-	if(tree->mod->optDebug)
-	For(i,61){
-		printf("%d\t%lf\t%lf\n",i,b->anc_node->partfreqs[modeli][i],tree->mod->pi[i]);
+	//For(i,61)printf("\n0 %lf",tree->mod->root_pi[0][i]);
+	For(modeli,tree->mod->nomega_part){ //scale Q mat to root pis
+		Update_Qmat_Codons(tree->mod,0,modeli,tree->mod->root_pi[modeli]);
 	}
+	//For(i,61)For(j,61)printf("0 %d %d %lf\n",i,j,tree->mod->qmat_part[0][i*61+j]);
+	//For(i,61)printf("\n1 %lf",tree->mod->root_pi[0][i]);
+	b->l=tree->mod->midpoint_div; //set edge to mean divergence
+	Update_PMat_At_Given_Edge(b,tree); //midpoint length * rootpi scaled matrix
+	//upAllPmats(tree);
+	For(modeli,tree->mod->nomega_part){ //update midpoint pis as "flux" along this branch
+		Calculate_Flux_Freqs(b,tree->mod->root_pi[modeli],tree->mod->mid_pi[modeli],tree,modeli);
+	}
+	For(modeli,tree->mod->nomega_part){
+		Update_Qmat_Codons(tree->mod,0,modeli,tree->mod->mid_pi[modeli]);
+	}
+	//Update_PMat_At_Given_Edge(b,tree);
+	//Calculate_Flux_Freqs(b,tree->mod->root_pi[0],tree->mod->mid_pi[0],tree,0);
+		//For(i,61)printf("%lf\n",tree->mod->pi[i]);
+		//printf("%lf\n",b->bPmat_part[0][10*61+2]);
+
+		//exit(EXIT_FAILURE);
+	//if(tree->mod->optDebug)For(i,61)printf("%d\t%lf\t%lf\n",i,b->anc_node->partfreqs[modeli][i],tree->mod->pi[i]);
 	b->l=ol;
+	//Update_PMat_At_Given_Edge(b,tree);
 }
 
 /*********************************************************/

@@ -879,12 +879,14 @@ typedef struct __Model {
  char*		germlineV;
  char*		germlineJ;
  int*		imgt;
- phydbl** 	cBmat;
+ phydbl*** 	cBmat;
  int		constB;
  int prior;
  int		freqsTo;
  phydbl		midpoint_div;
  int		tree_loaded;
+ phydbl** 	mid_pi;//midpoint pi
+
 }model;
 
 /*********************************************************/

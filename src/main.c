@@ -283,7 +283,7 @@ int main(int argc, char **argv){
 	  //mod->quiet=NO; //turn back on alerts
 
 	  //added by Ken
-	  //Find location of root node if HLP17
+	  //Find location of root node if HLP172
 	  if(mod->whichrealmodel <= HLP17){
 		  if(io->mod->optDebug)printf("rootname %s\n",mod->rootname);
 	  	  mod->startnode = -1;
@@ -299,6 +299,7 @@ int main(int argc, char **argv){
 	      			For(i,mod->nomega_part){
 	      				For(j,mod->ns){
 	      					tree->noeud[nodepos]->partfreqs[i][j]=mod->root_pi[i][j];
+	      					mod->mid_pi[i][j] = mod->root_pi[i][j];
 	      					if(i==0)mod->pi[j]=mod->root_pi[i][j];
 	      					//printf("%d\t%lf\n",j,mod->pi[j]);
 	      				}
@@ -393,8 +394,7 @@ int main(int argc, char **argv){
   if(io->threads==1 && io->ntrees > 1)printf("\nDEFAULT: Running multiple trees on one thread."
 		  "\n........ Use the '--threads' option to specify more (might speed things up).\n");
 
-  if(io->mod->freq_model < ROOT){
-	  //Set up equilibrium base freqs for the repertoire
+  if(io->mod->freq_model < ROOT){//Set up equilibrium base freqs for the repertoire
 	  if(io->eq_freq_handling != USER){
 	  For(i,io->ntrees){
 		  For(j,12){
@@ -424,7 +424,7 @@ int main(int argc, char **argv){
   	  if(io->mod->optDebug)printf("cf3x4\n");
 
 
-  	  //JU	ST TO ELIMINATE SOME VARIABLES
+  	  //JUST TO ELIMINATE SOME VARIABLES
   	  /*For(j,12)io->mod->base_freq[j]=io->mod_s[0]->base_freq[j];
   	  For(j,12)io->mod->uns_base_freq[j]=io->mod_s[0]->uns_base_freq[j];*/
 
@@ -437,15 +437,15 @@ int main(int argc, char **argv){
 		t_tree* tree = io->tree_s[0];
 		phydbl tl = Get_Total_Divergence(tree->noeud[tree->mod->startnode], tree->noeud[tree->mod->startnode]->v[0],
 			tree->noeud[tree->mod->startnode]->b[0],0.0, tree);
-		tree->mod->midpoint_div = tl/(tree->n_otu*2);
+		tree->mod->midpoint_div = tl/(tree->n_otu*2.0);
 	}
 
   int nparams=0;
-    int nmodparams=2+io->mod->nomega_part+io->mod->nhotness+12;
-    nparams += nmodparams*(io->ntrees+1);
-    For(j,io->ntrees){
-  	  nparams += 2*io->tree_s[j]->n_otu-3;
-    }
+  int nmodparams=2+io->mod->nomega_part+io->mod->nhotness+12;
+  nparams += nmodparams*(io->ntrees+1);
+  For(j,io->ntrees){
+   nparams += 2*io->tree_s[j]->n_otu-3;
+  }
   if(io->mod->optDebug)printf("\nNeed to store %d parameters",nparams);
   io->paramStore=mCalloc(nparams,sizeof(phydbl));
   io->nparams=nparams;
@@ -466,9 +466,10 @@ int main(int argc, char **argv){
 	  if(tree->mod->s_opt->topo_search      == NNI_MOVE){
 		  if(io->mod->optDebug)printf("model type %d\n",io->mod->whichrealmodel);
 		  if(io->mod->whichrealmodel<=HLP17){
+			   if(io->mod->freq_model == MROOT)Setup_Midpoint_Flux(io);
+			  // else Lk_rep(io);
 			  if(io->mod->optDebug)printf("here0\n");
 			  For(i,io->ntrees){
-				  //Lk(io->tree_s[i]);
 				  Get_UPP(io->tree_s[i]->noeud[io->tree_s[i]->mod->startnode], io->tree_s[i]->noeud[io->tree_s[i]->mod->startnode]->v[0], io->tree_s[i]);
 			  }
 		  }
@@ -480,8 +481,10 @@ int main(int argc, char **argv){
   		  io->mod->print_trace=0;
   		  io->mod_s[0]->print_trace=0;
   		  if(io->mod->whichrealmodel<=HLP17){
+  			  if(io->mod->freq_model == MROOT)Setup_Midpoint_Flux(io);
+  			  //else Lk_rep(io);
   			  For(i,io->ntrees){
-  				 // Lk(io->tree_s[i]);
+  				 io->mod_s[i]->tree_loaded = 1;
   				  Get_UPP(io->tree_s[i]->noeud[io->tree_s[i]->mod->startnode], io->tree_s[i]->noeud[io->tree_s[i]->mod->startnode]->v[0], io->tree_s[i]);
   				 // exit(EXIT_FAILURE);
   			  }
@@ -499,29 +502,15 @@ int main(int argc, char **argv){
   		   For(i,io->ntrees){
   			    Get_UPP(io->tree_s[i]->noeud[io->tree_s[i]->mod->startnode], io->tree_s[i]->noeud[io->tree_s[i]->mod->startnode]->v[0], io->tree_s[i]);
   		   }
-  		   Lk_rep(io);
-  		   For(i,io->ntrees){
-  			   io->mod_s[i]->tree_loaded = 1;
-  			   Setup_CBmat(io->mod_s[i],0);
-  		   }
-  		   Lk_rep(io);
-  		   Print_Lk_rep(io,"Repertoire likelihood!");
+  	       if(io->mod->freq_model == MROOT)Setup_Midpoint_Flux(io);
   	       Round_Optimize(io,ROUND_MAX*2); //! *2 Added by Marcelo to match codeml values.
   	  }else{
   		if(io->mod->optDebug)printf("doing lhood\n");
   	    io->mod->update_eigen=1;
   	    io->both_sides=1;
-  	    if(!io->precon){
-  	    	Lk_rep(io);
-  	    	Print_Lk_rep(io,"Repertoire likelihood!");
-  	    	For(i,io->ntrees)io->mod_s[i]->tree_loaded = 1;
-  	    	Lk_rep(io);
-  	    	Print_Lk_rep(io,"Repertoire likelihood!");
-  	    	For(i,io->ntrees){
-  	    		Print_Lk(io->tree_s[i],"Subtree");
-  	    	}
-  	    }
-  	  }
+  	    Setup_Midpoint_Flux(io);
+  	    Lk_rep(io);
+  	 }
   }
 
   if(io->mod->freq_model<ROOT){
@@ -617,10 +606,7 @@ io->threads=0;
   #else
   time(&t_end);
   #endif
-  printf("about to output\n");
   Print_IgPhyML_Out(io);
-  printf("outputted\n");
-  //exit(EXIT_FAILURE);
 
   if(tree->io->print_site_lnl) Print_Site_Lk(tree,io->fp_out_lk);
 

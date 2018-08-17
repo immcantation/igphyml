@@ -447,9 +447,7 @@ void setUpHLP17(option* io, model *mod){
    	}
 
 
-  	Setup_CBmat(mod,1);
-
-   	//partition model stuff
+  	//partition model stuff
    	if(mod->partfilespec==1){
    	int imgt=0;
    	if(!Filexists(mod->partfile)){
@@ -590,11 +588,25 @@ void setUpHLP17(option* io, model *mod){
    	fclose(file);
    	if(mod->primary)printf("\n");
    	//if(mod->primary)printf("\nDone!\n");
+
+   	//set up midpoint pi frequencies
+   	if(mod->freq_model==MROOT){
+		mod->mid_pi = mCalloc(mod->nomega_part,sizeof(phydbl*));
+		For(indexi,mod->nomega_part){
+			mod->mid_pi[indexi] = mCalloc(mod->ns,sizeof(phydbl));
+		}
+   	}
     }else{
    	 mod->nparts=1;
    	 mod->nomega_part=mod->nparts;
    	 mod->omega_part[0]=0.4;
+   	 if(mod->freq_model==MROOT){
+		 mod->mid_pi = mCalloc(mod->nomega_part,sizeof(phydbl*));
+		 mod->mid_pi[0] = mCalloc(mod->ns,sizeof(phydbl));
+   	 }
     }//partfilespec==1
+   	if(io->mod->constB)Setup_CBmat(mod,1,mod->pi);
+   	//printf("set up\n");
 }
 
 

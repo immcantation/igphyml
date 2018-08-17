@@ -963,7 +963,11 @@ void Set_Model_Parameters(model *mod) {
             
             Scale_freqs(mod->pi, mod->ns);
         }
-
+         if(mod->freq_model == MROOT){
+        	 if(mod->tree_loaded){
+        		 Update_Midpoint_Freqs(mod->tree);
+        	 }
+         }
 
 
         if(mod->update_eigen) {
@@ -983,8 +987,8 @@ void Set_Model_Parameters(model *mod) {
                 int modeli;
                for(modeli=0;modeli<mod->nomega_part;modeli++){ //Ken 19/8
             	   //for(modeli=0;modeli<1;modeli++){ //Ken 19/8
-                mod->mr_w[0] = Update_Qmat_Codons(mod, 0, modeli,mod->pi); //Ken 19/8
-
+            	   if(mod->freq_model != MROOT)mod->mr_w[0] = Update_Qmat_Codons(mod, 0, modeli,mod->pi); //Ken 19/8
+            	   else mod->mr_w[0] = Update_Qmat_Codons(mod, 0, modeli,mod->mid_pi[modeli]); //Ken 19/8
 
                 if(mod->expm == EIGEN) {
                 	if(mod->nomega_part > 1){printf("Options not supported with partitioned models error 13\n");exit(EXIT_FAILURE);}
@@ -1073,7 +1077,8 @@ void Set_Model_Parameters(model *mod) {
                         Freq_to_UnsFreq(mod->pkappa,   mod->unspkappa,  mod->nkappa, 0);
                         Scale_freqs(mod->pkappa, mod->nkappa);    
                     }
-                    mod->mr_w[i] = Update_Qmat_Codons(mod, i,0,mod->pi);
+                    if(mod->freq_model != MROOT)mod->mr_w[i] = Update_Qmat_Codons(mod, i,0,mod->pi);
+                    else mod->mr_w[i] = Update_Qmat_Codons(mod, i,0,mod->mid_pi[i]);
                 }
                 
                 //!<Scaling Qmat together
@@ -1434,7 +1439,7 @@ phydbl Update_Qmat_Codons(model *mod, int cat, int modeli, phydbl* freqs) {
         case ROOT:
         	break;
         case MROOT:
-        	if(mod->tree_loaded)Update_Midpoint_Freqs(mod->tree, modeli);
+        	//if(mod->tree_loaded)Update_Midpoint_Freqs(mod->tree, modeli);
         	break;
         default:
             break;
@@ -1537,7 +1542,7 @@ phydbl Update_Qmat_Codons(model *mod, int cat, int modeli, phydbl* freqs) {
             break;
         case HLP17:
         case HLP18:
-            Update_Qmat_HLP17(mat, qmat, freqs, cat, mod,mod->omega_part[modeli]);
+            Update_Qmat_HLP17(mat, qmat, freqs, cat, mod,mod->omega_part[modeli],modeli);
             break;
         default:
             break;
@@ -1600,7 +1605,7 @@ void Update_Qmat_GY(phydbl *mat, phydbl *qmat, phydbl * freqs, int cat, model *m
 /**************************************************************/
 //Modified GY94 by Ken
 //Modified to be omega*kappa*pi*(1+b*h) on 12/Jun/2016
-void Update_Qmat_HLP17(phydbl *mat, phydbl *qmat, phydbl * freqs, int cat, model *mod,phydbl omega) {
+void Update_Qmat_HLP17(phydbl *mat, phydbl *qmat, phydbl * freqs, int cat, model *mod,phydbl omega,int modeli) {
 	 int fi,ti,li,ri,hot,c;
 	 double htotal[mod->nmotifs];
 	 if(!mod->constB){//if B matrix is updated with changing frequencies
@@ -1643,8 +1648,8 @@ void Update_Qmat_HLP17(phydbl *mat, phydbl *qmat, phydbl * freqs, int cat, model
         			mod->Bmat[i*numSensecodons+j]=0.0;
         			mod->Bmat[j*numSensecodons+i]=0.0;
         			for(c=0;c<mod->nmotifs;c++){
-        				mod->Bmat[i*numSensecodons+j] += mod->cBmat[i*61+j][c]*mod->hotness[mod->motif_hotness[c]];
-        				mod->Bmat[j*numSensecodons+i] += mod->cBmat[j*61+i][c]*mod->hotness[mod->motif_hotness[c]];
+        				mod->Bmat[i*numSensecodons+j] += mod->cBmat[modeli][i*61+j][c]*mod->hotness[mod->motif_hotness[c]];
+        				mod->Bmat[j*numSensecodons+i] += mod->cBmat[modeli][j*61+i][c]*mod->hotness[mod->motif_hotness[c]];
         			}
         			if(mod->Bmat[i*numSensecodons+j] < -1)mod->Bmat[i*numSensecodons+j]=-1;
         			if(mod->Bmat[j*numSensecodons+i] < -1)mod->Bmat[j*numSensecodons+i]=-1;
@@ -1675,26 +1680,33 @@ void Update_Qmat_HLP17(phydbl *mat, phydbl *qmat, phydbl * freqs, int cat, model
 
 /**************************************************************/
 //set up constant Bmat if desired
-void Setup_CBmat(model* mod, int uniform){
-	mod->cBmat=(phydbl **)mCalloc(3721,sizeof(phydbl*));
-  	int fi,ti,li,ri,hot,c;
-  	double htotal[mod->nmotifs];
-  	for(fi=0;fi<61;fi++){ //Fill in B matrix
-  	  	for(ti=0;ti<61;ti++){
-  	  		mod->cBmat[fi*61+ti]=mCalloc(mod->nmotifs,sizeof(phydbl));
-  	   		for(c=0;c< mod->nmotifs;c++)htotal[c]=0; //set htotal array to zero
-  	   			for(li=0;li<61;li++){
-  		    		for(ri=0;ri<61;ri++){
-  		    			for(c=0;c< mod->nmotifs;c++){
-  		    					if(uniform)htotal[c] += (1.0/61)*(1.0/61)*mod->io->mod->hotspotcmps[c][fi*61*61*61+ti*61*61+li*61+ri];
-  		    					else htotal[c] += mod->pi[li]*mod->pi[ri]*mod->io->mod->hotspotcmps[c][fi*61*61*61+ti*61*61+li*61+ri];
+void Setup_CBmat(model* mod, int uniform, phydbl* pis){
+	//printf("\n setting up %d",uniform);
+  int modeli,fi,ti,li,ri,hot,c;
+  printf("nomega %d\n",mod->nomega_part);
+  mod->cBmat=(phydbl ***)mCalloc(mod->nomega_part,sizeof(phydbl**));
+  For(modeli,mod->nomega_part){
+		mod->cBmat[modeli]=(phydbl **)mCalloc(3721,sizeof(phydbl*));
+		double htotal[mod->nmotifs];
+		for(fi=0;fi<61;fi++){ //Fill in B matrix
+			for(ti=0;ti<61;ti++){
+				mod->cBmat[modeli][fi*61+ti]=mCalloc(mod->nmotifs,sizeof(phydbl));
+				for(c=0;c< mod->nmotifs;c++)htotal[c]=0; //set htotal array to zero
+					for(li=0;li<61;li++){
+						for(ri=0;ri<61;ri++){
+							for(c=0;c< mod->nmotifs;c++){
+									if(uniform==1) htotal[c] += (1.0/61)*(1.0/61)*mod->io->mod->hotspotcmps[c][fi*61*61*61+ti*61*61+li*61+ri];
+									else if(uniform==-1)htotal[c] += mod->root_pi[modeli][li]*mod->root_pi[modeli][ri]*mod->io->mod->hotspotcmps[c][fi*61*61*61+ti*61*61+li*61+ri];
+									else htotal[c] += pis[li]*pis[ri]*mod->io->mod->hotspotcmps[c][fi*61*61*61+ti*61*61+li*61+ri];
 
-  			 	   		}
-  		    		}
-  			   }
-  		   for(c=0;c<mod->nmotifs;c++)mod->cBmat[fi*61+ti][c]=htotal[c];
-  	  	}
-  	}
+							}
+						}
+				   }
+			   for(c=0;c<mod->nmotifs;c++)mod->cBmat[modeli][fi*61+ti][c]=htotal[c];
+			}
+		}
+  }
+  printf("finished\n");
 }
 
 /**************************************************************/
@@ -2629,7 +2641,7 @@ void PadeApprox(int n, int nn, phydbl *A, model *mod, phydbl *F, int pos, phydbl
             
 #endif
             
-            
+            break;
         }
         default:break;
     }
