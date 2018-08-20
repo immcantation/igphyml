@@ -291,21 +291,24 @@ int main(int argc, char **argv){
 	      for(nodepos=0;nodepos<((tree->n_otu-1)*2);nodepos++){
 	      	if(strcmp(tree->noeud[nodepos]->name,mod->rootname)==0){
 	      		mod->startnode=nodepos;
-	      		//update ancestors of tree, now that root node is found
-	      		//PhyML_Printf("\n. Start node found: %d %s\n",nodepos,mod->rootname);
 	      		Update_Ancestors_Edge(tree->noeud[nodepos],tree->noeud[nodepos]->v[0],tree->noeud[nodepos]->b[0],tree);
-	      		//PhyML_Printf("\n. Start node found: %d %s\n",nodepos,mod->rootname);
 	      		if(mod->freq_model>=ROOT){
+	      			mod->freq_node=nodepos;
 	      			For(i,mod->nomega_part){
 	      				For(j,mod->ns){
 	      					tree->noeud[nodepos]->partfreqs[i][j]=mod->root_pi[i][j];
-	      					mod->mid_pi[i][j] = mod->root_pi[i][j];
+	      					if(mod->freq_model==MROOT)mod->mid_pi[i][j] = mod->root_pi[i][j];
 	      					if(i==0)mod->pi[j]=mod->root_pi[i][j];
 	      					//printf("%d\t%lf\n",j,mod->pi[j]);
 	      				}
+	      				if(io->mod->constB)Setup_CBmat(mod,-1,mod->root_pi[i]);
+	      			}
+	      		}else{
+	      			For(i,mod->nomega_part){
+	      				if(io->mod->constB)Setup_CBmat(mod,1,mod->root_pi[i]);
 	      			}
 	      		}
-	      	}
+	      	 }
 	      }
 	     if(mod->startnode==-1){
 	    	 PhyML_Printf("\n\nRoot sequence ID not found in data file! %s %s\n",mod->rootname,mod->in_align_file);
@@ -457,6 +460,8 @@ int main(int argc, char **argv){
   time(&io->t_beg);
 #endif
 
+  if(io->mod->freq_model==MROOT)Setup_Midpoint_Flux(io);
+
   if(io->mod->optDebug)printf("about to do stuff\n");
   if(io->testInitTree){ //!< Added by Marcelo.
   	    //!< Do nothing!
@@ -508,8 +513,8 @@ int main(int argc, char **argv){
   		if(io->mod->optDebug)printf("doing lhood\n");
   	    io->mod->update_eigen=1;
   	    io->both_sides=1;
-  	    Setup_Midpoint_Flux(io);
   	    Lk_rep(io);
+  	    Print_Lk_rep(io,"Repertoire likelihood");
   	 }
   }
 

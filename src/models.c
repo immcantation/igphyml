@@ -963,12 +963,6 @@ void Set_Model_Parameters(model *mod) {
             
             Scale_freqs(mod->pi, mod->ns);
         }
-         if(mod->freq_model == MROOT){
-        	 if(mod->tree_loaded){
-        		 Update_Midpoint_Freqs(mod->tree);
-        	 }
-         }
-
 
         if(mod->update_eigen) {
 
@@ -1437,9 +1431,18 @@ phydbl Update_Qmat_Codons(model *mod, int cat, int modeli, phydbl* freqs) {
             break;
         }
         case ROOT:
+        	//printf("tree loaded: %d\n",mod->tree_loaded);
+        	if(mod->tree_loaded) freqs=mod->tree->noeud[mod->freq_node]->partfreqs[modeli];
+        	else freqs = mod->root_pi[modeli];
+        	//printf("here %lf\n",freqs[10]);
         	break;
         case MROOT:
-        	//if(mod->tree_loaded)Update_Midpoint_Freqs(mod->tree, modeli);
+        	if(mod->tree_loaded>=1){
+        		if(mod->tree_loaded==1)Update_Midpoint_Freqs(mod->tree);
+        		freqs=mod->mid_pi[modeli];
+        	}else{
+        		freqs=mod->root_pi[modeli];
+        	}
         	break;
         default:
             break;
@@ -1526,7 +1529,7 @@ phydbl Update_Qmat_Codons(model *mod, int cat, int modeli, phydbl* freqs) {
         	if(mod->freq_model < ROOT) mod->pi[i] = freqs[i];
         }
     }
-    //printf("qmat pi %lf %lf\n",mod->pi[0],mod->pi[1]);
+   // printf("qmat pi %lf %lf\n",mod->pi[0],mod->pi[1]);
     For(i, numSensecodons*numSensecodons) qmat[i] = 0.0;
     
     // calculate the actual Q matrix
@@ -1547,7 +1550,7 @@ phydbl Update_Qmat_Codons(model *mod, int cat, int modeli, phydbl* freqs) {
         default:
             break;
     }
-
+    //printf("here\n");
 
     /*! Calculate the diagonal element which is the negative of the sum of the other elements in a row.*/
     For(i, numSensecodons) {

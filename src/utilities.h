@@ -885,8 +885,8 @@ typedef struct __Model {
  int		freqsTo;
  phydbl		midpoint_div;
  int		tree_loaded;
+ int		freq_node;
  phydbl** 	mid_pi;//midpoint pi
-
 }model;
 
 /*********************************************************/
