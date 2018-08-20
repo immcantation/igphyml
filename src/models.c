@@ -1686,7 +1686,7 @@ void Update_Qmat_HLP17(phydbl *mat, phydbl *qmat, phydbl * freqs, int cat, model
 void Setup_CBmat(model* mod, int uniform, phydbl* pis){
 	//printf("\n setting up %d",uniform);
   int modeli,fi,ti,li,ri,hot,c;
-  printf("nomega %d\n",mod->nomega_part);
+  //printf("nomega %d\n",mod->nomega_part);
   mod->cBmat=(phydbl ***)mCalloc(mod->nomega_part,sizeof(phydbl**));
   For(modeli,mod->nomega_part){
 		mod->cBmat[modeli]=(phydbl **)mCalloc(3721,sizeof(phydbl*));
@@ -1709,7 +1709,7 @@ void Setup_CBmat(model* mod, int uniform, phydbl* pis){
 			}
 		}
   }
-  printf("finished\n");
+  //printf("finished\n");
 }
 
 /**************************************************************/

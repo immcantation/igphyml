@@ -3148,7 +3148,6 @@ void Update_Midpoint_Freqs(t_tree* tree){
 	Set_Model_Parameters(tree->mod);
 	Update_PMat_At_Given_Edge(b,tree);
 	tree->mod->tree_loaded=1;
-
 	//Update_PMat_At_Given_Edge(b,tree);
 }
 

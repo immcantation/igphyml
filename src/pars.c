@@ -211,7 +211,7 @@ void Init_Class_Tips(t_tree* tree, int precon){
 	 int i,j;
 	 char* mtemp;
 	 if(precon <= -5){
-		 tree->nstate=5;
+		 tree->nstate=6;
 		 tree->chars = mCalloc(tree->nstate,sizeof(char*));
 		 For(i,tree->nstate)tree->chars[i]=mCalloc(10,sizeof(char));
 		 strcpy(tree->chars[0],"Naive");
@@ -219,6 +219,7 @@ void Init_Class_Tips(t_tree* tree, int precon){
 		 strcpy(tree->chars[2],"UnMem");
 		 strcpy(tree->chars[3],"MemHi");
 		 strcpy(tree->chars[4],"MemLo");
+		 strcpy(tree->chars[5],"Bmem");
 	 }else if(precon < 3 && precon > -3){
 		 tree->nstate=7;
 		 tree->chars = mCalloc(tree->nstate,sizeof(char*));
@@ -290,6 +291,7 @@ void Init_Class_Tips(t_tree* tree, int precon){
 		 	 if(strcmp(state,"UnMem")==0)tree->noeud[i]->s[2]=0;
 		 	 if(strcmp(state,"MemHi")==0)tree->noeud[i]->s[3]=0;
 		 	 if(strcmp(state,"MemLo")==0)tree->noeud[i]->s[4]=0;
+		 	 if(strcmp(state,"Bmem")==0)tree->noeud[i]->s[5]=0;
 		 }
 		 if(precon < 3 && precon > -3){
 		 	 if(strcmp(state,"M")==0)tree->noeud[i]->s[0]=0;
