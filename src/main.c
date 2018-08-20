@@ -513,8 +513,8 @@ int main(int argc, char **argv){
   		if(io->mod->optDebug)printf("doing lhood\n");
   	    io->mod->update_eigen=1;
   	    io->both_sides=1;
-  	    Lk_rep(io);
-  	    Print_Lk_rep(io,"Repertoire likelihood");
+  	    //Lk_rep(io);
+  	    //Print_Lk_rep(io,"Repertoire likelihood");
   	 }
   }
 
