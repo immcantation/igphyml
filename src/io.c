@@ -1824,15 +1824,12 @@ void Print_IgPhyML_Out(option* io){
 	 fprintf(f,"#\tSurvey of branch support methods demonstrates accuracy, power, and robustness of fast likelihood-based approximation schemes. Syst Biol 60:685-699\n");
 
 
-	 //printf("\nPRINTING TREES TO FILES\n");
 	 FILE* orep;
 	 if(io->outrepspec){
 		 orep=Openfile(io->outrep, 1 );
 		 fprintf(orep,"%d\n",io->ntrees);
 	 }
 	 For(i,io->ntrees){
-		 printf(" opening %d\n",i);
-		 printf("here\n");
 		 t_tree* tree=io->tree_s[i];
 		 char fout[T_MAX_FILE];
 		 strcpy(fout,io->datafs[i]);
@@ -1843,12 +1840,8 @@ void Print_IgPhyML_Out(option* io){
 			 strcat(fout, io->run_id_string);
 		 }
 		 strcat(fout,".txt");
-		 printf("%s\n",fout);
-		 printf("%s\n",fout);
 		 //potentially output new repertoire file
 		 if(io->outrepspec)fprintf(orep,"%s\t%s\t%s\t%s\n",io->datafs[i],fout,io->rootids[i],io->partfs[i]);
-
-		 //printf("\nPRINTING TREES TO FILES %s\n",fout);
 		 FILE* treeout = Openfile(fout, 1 );
 		 if(io->mod->ASR){
 			 fprintf(treeout,"#NEXUS\nBegin taxa;\n");
@@ -1870,14 +1863,11 @@ void Print_IgPhyML_Out(option* io){
 			 fprintf(treeout,"begin figtree;\nset nodeLabels.colorAttribute=\"User selection\";\nset nodeLabels.displayAttribute=\"Num\";\nset nodeLabels.fontName=\"sansserif\";\nset nodeLabels.fontSize=9;\nset nodeLabels.fontStyle=0;\nset nodeLabels.isShown=true;\nset nodeLabels.significantDigits=4;\nset trees.order=true;\nset trees.orderType=\"increasing\";\nend;");
 		 }
 		 fclose(treeout);
-		 printf("outputted trees1\n");
 		 if(io->precon){
 			 //free(io->mod_s[0]->fp_in_tree);
 			//io->mod_s[i]->fp_in_tree = Openfile(fout,0);
 		 }
-		 printf("outputted trees2\n");
 	 }
-	 printf("outputted trees3\n");
 }
 
 

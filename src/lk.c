@@ -903,8 +903,16 @@ n_v1   n_v2
 		    	if(state_anc==i){state=1;}
 			     b->upp[site][i] = state; // Ken 17/8/2016
 		    }else{
-		    	if(!tree->mod->rootpi) b->upp[site][i] = anc->b[0]->p_lk_tip_r[site*tree->mod->ns+i];//Changed 12/Feb/2018 by Ken
-		    	else b->upp[site][i]=tree->mod->pi[i];
+		    	/*if(tree->mod->freq_model>=ROOT){ //KEEP?!
+		    		if(tree->mod->partIndex[site] == 1){
+		    			b->upp[site][i]=tree->mod->cdr[i];
+		    		}else{
+		    			b->upp[site][i]=tree->mod->fwr[i];
+		    		}
+		    	}else{*/
+		    		if(!tree->mod->rootpi) b->upp[site][i] = anc->b[0]->p_lk_tip_r[site*tree->mod->ns+i];//Changed 12/Feb/2018 by Ken
+		    		else b->upp[site][i]=tree->mod->pi[i];
+		    	//}
 		    	//char* s1=mCalloc(4,sizeof(char));
 		    	//Sprint_codon(s1,senseCodons[i]);
 		    	// printf("\nUPP %d\t%d\t%s\t%lf",site,i,s1,b->upp[site][i]);
@@ -3065,7 +3073,7 @@ void Calculate_Flux_Freqs(t_edge* b_fcus, phydbl* ofreqs, phydbl* dfreqs,t_tree*
 				fluxs[i] += fji;//(fji-fij);
 			//}
 		}
-		dfreqs[i] = (ofreqs[i]+fluxs[i]);
+		dfreqs[i] = (fluxs[i]);
 		if(dfreqs[i]<= 0.0)dfreqs[i]=0.00001;
 		fsum += dfreqs[i];
 	}
@@ -3086,17 +3094,17 @@ void Setup_Midpoint_Flux(option* io){
 
 	Lk_rep(io);
   	/*Print_Lk_rep(io," 0 Repertoire likelihood!");
-
-  	    	Lk_rep(io);
-  	    	Print_Lk_rep(io," 1 Repertoire likelihood!");
-  	    	Lk_rep(io);
-  	    	Print_Lk_rep(io," 2 Repertoire likelihood!");*/
+  	Lk_rep(io);
+  	Print_Lk_rep(io," 1 Repertoire likelihood!");
+  	Lk_rep(io);
+  	Print_Lk_rep(io," 2 Repertoire likelihood!");*/
 
 }
 
 
 /*********************************************************/
 // Recursively update PMats
+
 void Update_PMat_Recursive(t_edge *b_fcus, t_tree *tree){
 	int modeli,i;
 	For(modeli,tree->mod->nomega_part){
@@ -3641,7 +3649,7 @@ matrix *ML_CODONDist_Pairwise(calign *data, option *io, model *mod) //!<Added by
       //PhyML_Printf("\n. Computing pairwise distances...");
     }
   }
-  if(!io->quiet) PhyML_Printf("\n");
+  //if(!io->quiet) PhyML_Printf("\n");
   #if defined OMP || defined BLAS_OMP
 
   tend= omp_get_wtime();

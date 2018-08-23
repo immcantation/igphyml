@@ -5975,8 +5975,8 @@ t_tree *Dist_And_BioNJ(calign *cdata, model *mod, option *io)
   matrix *mat;
   // matrix *mat2;
   // int i,j;
-  if(!io->quiet) PhyML_Printf("\n");
-  if(!io->quiet) PhyML_Printf(". Computing pairwise distances...");
+  //if(!io->quiet) PhyML_Printf("\n");
+  //if(!io->quiet) PhyML_Printf(". Computing pairwise distances...");
   mod->calculate_init_tree = 1; //!< Added by Marcelo. Used in the calculation of the probability transition matrix.
   if((io->datatype==CODON)&&(io->init_DistanceTreeCD!=NUCLEO)) //!< Added by Marcelo. 
   {
@@ -5991,7 +5991,7 @@ t_tree *Dist_And_BioNJ(calign *cdata, model *mod, option *io)
     
   }
   mod->calculate_init_tree = 0; //!< Added by Marcelo. 
-  if(!io->quiet) PhyML_Printf("\n. Building BioNJ tree...\n");
+  //if(!io->quiet) PhyML_Printf("\n. Building BioNJ tree...\n");
   mat->tree = Make_Tree_From_Scratch(cdata->n_otu,cdata);
   Bionj(mat);
   tree      = mat->tree;

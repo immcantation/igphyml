@@ -301,11 +301,11 @@ int main(int argc, char **argv){
 	      					if(i==0)mod->pi[j]=mod->root_pi[i][j];
 	      					//printf("%d\t%lf\n",j,mod->pi[j]);
 	      				}
-	      				if(io->mod->constB)Setup_CBmat(mod,-1,mod->root_pi[i]);
+	      				if(io->mod->constB && io->mod->freq_model>=ROOT)Setup_CBmat(mod,-1,mod->root_pi[i]);
 	      			}
 	      		}else{
 	      			For(i,mod->nomega_part){
-	      				if(io->mod->constB)Setup_CBmat(mod,1,mod->root_pi[i]);
+	      				if(io->mod->constB)Setup_CBmat(mod,0,mod->pi);
 	      			}
 	      		}
 	      	 }

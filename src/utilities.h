@@ -357,6 +357,7 @@ typedef struct __Edge {
   int								up_upp;
   int                                 num; /* branch number */
   phydbl                                l; /* branch length */
+  phydbl 								ol; /* original branch length*/
   phydbl                           best_l; /* best branch length found so far */
   phydbl                            l_old; /* old branch length */
 
@@ -887,6 +888,8 @@ typedef struct __Model {
  int		tree_loaded;
  int		freq_node;
  phydbl** 	mid_pi;//midpoint pi
+ phydbl* cdr;
+ phydbl* fwr;
 }model;
 
 /*********************************************************/

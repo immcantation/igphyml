@@ -24,6 +24,7 @@ void finishOptions(option * io);
 
 int mainOptionSwitch(int opt, char * optarg, option * io);
 void setUpHLP17(option *io, model* mod);
+void setupRootFreqs(model* mod);
 void checkForRandStartTree(option * io);
 void checkModelCombinations(option * io);
 void adaptForM4(option * io);
