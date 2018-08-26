@@ -314,6 +314,8 @@ int main(int argc, char **argv){
 	    	 PhyML_Printf("\n\nRoot sequence ID not found in data file! %s %s\n",mod->rootname,mod->in_align_file);
 	    	 exit(EXIT_FAILURE);
 	     }
+	     int n_edges=2*tree->n_otu-3;
+	     For(nodepos,n_edges)tree->t_edges[nodepos]->ol=tree->t_edges[nodepos]->l;
 	  }
 	  if(io->mod->optDebug)printf("setting up partition model\n");
 	  //Set up default partition model if necessary

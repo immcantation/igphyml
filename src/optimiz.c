@@ -106,7 +106,6 @@ phydbl binarySearchCI(phydbl* param,option* io,phydbl tol,phydbl delta,phydbl lo
 
 	//!!!Record params and branch lengths
 	storeParams(io,1,paramStore);
-	//resetParams(io);
 	io->mod->quiet=1;
 	//printf("OMEGAS: %lf\n",io->mod->omega_part[0]);
 	//find a point on the other side of CI
@@ -114,6 +113,7 @@ phydbl binarySearchCI(phydbl* param,option* io,phydbl tol,phydbl delta,phydbl lo
 	phydbl bound;
 	int breaknext=0;
 	int iter=1;
+	resetSubstParams(io);
 	do{//need to include lower boundary condition!
 		*param=mle+d1;
 		if(*param <= lowerb){
@@ -135,24 +135,21 @@ phydbl binarySearchCI(phydbl* param,option* io,phydbl tol,phydbl delta,phydbl lo
 			printf("%lf\t%lf\n",nl,ol);
 			exit(EXIT_FAILURE);
 		}
-		//if(io->mod->optDebug)
 		printf("\nLooking for boundary %lf %lf %lf %lf %lf",target,nl,mle,d1,*param);
-		restoreParams(io,1,paramStore);
 		resetSubstParams(io);
-		//printf("OMEGA: %lf\n",io->mod->omega_part[0]);
-		//io->mod->update_eigen=1;
 		phydbl nl2=Lk_rep(io);
-		//if(io->mod->optDebug)
 		printf("\nLooking for boundarz %lf %lf %lf %lf %lf",target,nl2,mle,d1,*param);
 		if(breaknext>0){
 			if(breaknext==1){
 				printf("Boundary at lower bound!\n");
-				restoreParams(io,1,paramStore);
+				resetSubstParams(io);
+				//restoreParams(io,1,paramStore);
 				if(nl>=target)return lowerb;
 				else break;
 			}else{
 				printf("Boundary at lower bound!\n");
-				restoreParams(io,1,paramStore);
+				//restoreParams(io,1,paramStore);
+				resetSubstParams(io);
 				if(nl>=target)return upperb;
 				else break;
 			}
@@ -170,13 +167,12 @@ phydbl binarySearchCI(phydbl* param,option* io,phydbl tol,phydbl delta,phydbl lo
 		//else *param=(b1-b2)/2;
 		Round_Optimize(io,ROUND_MAX*2);
 		nl=Lk_rep(io); //needs to be Round_Optimize
-		//if(io->mod->optDebug)
 		printf("\n1st pass %lf %lf %lf %lf %lf %lf",target,nl,*param,b1,b2,fabs(b1-b2));
 		fprintf(CI,"%s %lf %lf %lf %lf %lf %lf\n",ID,target,nl,*param,b1,b2,fabs(b1-b2));
 		if(nl>=target)b1=*param;//want most conservative estimate of CI
 		else b2=*param;
 		//Reset parameter values and branch lengths if changed!
-		restoreParams(io,1,paramStore);
+		//restoreParams(io,1,paramStore);
 		resetSubstParams(io);
 		//printf("OMEGA: %lf\n",io->mod->omega_part[0]);
 		phydbl nl2=Lk_rep(io);
@@ -271,6 +267,12 @@ int resetSubstParams(option* io){
 		  For(i,12)io->mod->base_freq[i]=io->mod->user_b_freq[i];
 	  }
 	  if(io->mod->optDebug)printf("cf3x4\n");
+
+	  For(i,io->ntrees){
+		  t_tree* tree = io->tree_s[i];
+		  int n_edges=2*tree->n_otu-3;
+		  For(j,n_edges)tree->t_edges[j]->l=tree->t_edges[j]->ol;
+	  }
 
 	  Freq_to_UnsFreq(io->mod->base_freq,   io->mod->uns_base_freq,   4, 1);
 	  Freq_to_UnsFreq(io->mod->base_freq+4, io->mod->uns_base_freq+4, 4, 1);

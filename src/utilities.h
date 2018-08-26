@@ -358,6 +358,7 @@ typedef struct __Edge {
   int                                 num; /* branch number */
   phydbl                                l; /* branch length */
   phydbl 								ol; /* original branch length*/
+  phydbl 								ml; /* ML branch length*/
   phydbl                           best_l; /* best branch length found so far */
   phydbl                            l_old; /* old branch length */
 
