@@ -127,7 +127,6 @@ int main(int argc, char **argv){
   Make_Model_Complete(io->mod);
 
   //previously global variables in Optimiz, now tree variables to ease in analyzing multiple data sets
-
   io->SIZEp=0;
   io->noisy=0;
   io->Iround=0;
@@ -187,7 +186,6 @@ int main(int argc, char **argv){
         		continue;
         	}
     }
-
     if(io->threshold_exp) {if(num_data_set<io->dataset-1) {Free_Seq(mod->data,mod->n_otu);continue;}}//!< Added by Marcelo. Run arbitrary data set.
 
 
@@ -197,7 +195,6 @@ int main(int argc, char **argv){
 
     mod->nedges=2*mod->n_otu-3;
 
-    //Print_Settings(io,mod);
 
     //mod = io->mod;
     if(mod->data){
@@ -252,13 +249,7 @@ int main(int argc, char **argv){
 	  	  mod->fp_in_tree = Openfile(mod->in_tree_file,0);
 	  	  tree = Read_User_Tree(cdata,mod,io);
 	  }
-	  /*switch(io->in_tree){
-	    case 0 : case 1 : { tree = Dist_And_BioNJ(cdata,mod,io); break; }
-	    case 2 :          { tree = Read_User_Tree(cdata,mod,io); break; }
-	  }*/
 	  if(io->mod->optDebug)printf("read tree\n");
-	 /* int bri=0;
-	  For(bri,2*tree->n_otu-3) printf("in main: %lf\n",tree->t_edges[bri]->l);*/
 	  if(!tree) continue;
 	    
 	  #if defined OMP || defined BLAS_OMP
@@ -273,7 +264,6 @@ int main(int argc, char **argv){
 	   
 	  #endif
 
-	  //io->tree          = tree;  //will need to change this
 	  tree->mod         = mod;
 	  tree->io          = io;
 	  tree->data        = cdata;
@@ -333,16 +323,12 @@ int main(int argc, char **argv){
 	  }
 
 	  if(mod->s_opt->random_input_tree) Random_Tree(tree);
-	    
-	  //if((!num_data_set) && (!num_tree) && (!num_rand_tree)) Check_Memory_Amount(tree);
-	  //For(bri,2*tree->n_otu-3) printf("in main2: %lf\n",tree->t_edges[bri]->l);
+
 	  if(io->mod->optDebug)printf("prepping tree for lhood\n");
 	  if(io->mod->s_opt->opt_subst_param || io->mod->s_opt->opt_bl || !io->precon){
 		  Prepare_Tree_For_Lk(tree);
 	  }
 	  if(io->mod->optDebug)printf("prepping tree for lhood\n");
-
-
 	  if(tree->mod->ambigprint && tree->mod->whichrealmodel <= HLP17){
 		  FILE *ambigfile = fopen(tree->mod->ambigfile, "w");
 		  if (ambigfile == NULL){
@@ -358,13 +344,9 @@ int main(int argc, char **argv){
 
 	  io->mod_s[num_data_set]=mod;
 	  io->tree_s[num_data_set]=tree;
-	  //For(i,12)io->mod->base_freq[i]=mod->base_freq[i];
-	  //For(i,12)io->mod->uns_base_freq[i]=mod->uns_base_freq[i];
      }
 
       }//for(num_tree=(io->n_trees == 1)?(0):(num_data_set);num_tree < io->n_trees;num_tree++)
-
-   /*   Free_Cseq(cdata);*/
 
       fclose(mod->fp_in_align);
     }else{
@@ -428,11 +410,6 @@ int main(int argc, char **argv){
   	  }
   	  if(io->mod->optDebug)printf("cf3x4\n");
 
-
-  	  //JUST TO ELIMINATE SOME VARIABLES
-  	  /*For(j,12)io->mod->base_freq[j]=io->mod_s[0]->base_freq[j];
-  	  For(j,12)io->mod->uns_base_freq[j]=io->mod_s[0]->uns_base_freq[j];*/
-
   	  if(io->mod->optDebug)For(j,12){printf("%lf\t%lf\n",io->mod->baseCounts[j],io->mod->base_freq[j]);}
   	  Freq_to_UnsFreq(io->mod->base_freq,   io->mod->uns_base_freq,   4, 1);
   	  Freq_to_UnsFreq(io->mod->base_freq+4, io->mod->uns_base_freq+4, 4, 1);
@@ -462,7 +439,7 @@ int main(int argc, char **argv){
   time(&io->t_beg);
 #endif
 
-  if(io->mod->freq_model==MROOT)Setup_Midpoint_Flux(io);
+  if(io->mod->freq_model==MROOT && !io->precon)Setup_Midpoint_Flux(io);
 
   if(io->mod->optDebug)printf("about to do stuff\n");
   if(io->testInitTree){ //!< Added by Marcelo.
@@ -489,15 +466,12 @@ int main(int argc, char **argv){
   		  io->mod_s[0]->print_trace=0;
   		  if(io->mod->whichrealmodel<=HLP17){
   			  if(io->mod->freq_model == MROOT)Setup_Midpoint_Flux(io);
-  			  //else Lk_rep(io);
   			  For(i,io->ntrees){
   				 io->mod_s[i]->tree_loaded = 1;
   				  Get_UPP(io->tree_s[i]->noeud[io->tree_s[i]->mod->startnode], io->tree_s[i]->noeud[io->tree_s[i]->mod->startnode]->v[0], io->tree_s[i]);
-  				 // exit(EXIT_FAILURE);
   			  }
   		  }
   	  	  Speed_Spr_Loop(io);
-  		  //Speed_Spr_Loop(io->tree_s[0]);
   	  }else{
   		  Lazy_Exit("Best of NNI and SPR",__FILE__,__LINE__);
   	    //Best_Of_NNI_And_SPR(tree);
@@ -515,8 +489,6 @@ int main(int argc, char **argv){
   		if(io->mod->optDebug)printf("doing lhood\n");
   	    io->mod->update_eigen=1;
   	    io->both_sides=1;
-  	    //Lk_rep(io);
-  	    //Print_Lk_rep(io,"Repertoire likelihood");
   	 }
   }
 
@@ -567,23 +539,19 @@ int main(int argc, char **argv){
   	  		  mod->probASR[i]=mCalloc(mod->init_len/3,sizeof(phydbl));
   			  mod->mlCodon[i]=mCalloc(mod->init_len,sizeof(char));
 
-  	  		  //printf("LK ON EDGE %d\n",i);
-  	  		  //tree->mod->num=-1;
   	  		  if(i<mod->nedges)ASR_At_Given_Edge(tree->t_edges[i],tree,0);
   	  		  else ASR_At_Given_Edge(tree->noeud[tree->mod->startnode]->b[0],tree,1);
-  	  		  //printf("\n%s\n",mod->mlCodon[i]);
   	  	  }
 	  }
   }
   if(io->precon==2 || io->precon==-2 || io->precon==4 || io->precon==-4 || io->precon==-6){
-	  printf("\n");
 	  int precon = io->precon;
 
 io->threads=0;
 #if defined OMP || defined BLAS_OMP
 #pragma omp parallel for if(io->splitByTree)
 #endif
-	For(i,io->ntrees){ //do likelihood calculations in parallel
+	For(i,io->ntrees){ //do parsimony-based rearrangements in parallel
 		t_tree* tree;
 #if defined OMP || defined BLAS_OMP
 #pragma omp critical
@@ -592,12 +560,11 @@ io->threads=0;
 			tree= io->tree_s[io->threads++];
 		}
 	  	  t_node* r = tree->noeud[tree->mod->startnode];
-	  	  Init_Class_Tips(tree,precon); //no io
-	  	  int pars1 = Fill_Sankoff(r,tree,1); //no io
-	  	  //printf("\n\n. %d Initial maximum parsimony score: %d",i,pars1);
-	  	  Set_Pars_Counters(r,tree,1); //no io
-	  	  //Get_First_Path(r,0,tree,1);
-	  	  //printf("\n. Resolving polytomies using isotype information");
+	  	  Init_Class_Tips(tree,precon);
+	  	  int pars1 = Fill_Sankoff(r,tree,1); //fill Sankoff matrixes
+	  	  if(tree->mod->optDebug)printf("\n\n. %d Initial maximum parsimony score: %d",i,pars1);
+	  	  Set_Pars_Counters(r,tree,1); //set initial parsimony counters
+	  	  if(tree->mod->optDebug)printf("\n. Resolving polytomies using isotype information");
 	  	  int pars2 = Resolve_Polytomies_Pars(tree,0.001);
 	  	  #if defined OMP || defined BLAS_OMP
 		  #pragma omp critical
@@ -620,8 +587,6 @@ io->threads=0;
   if(io->precon){
 	  parsReconstructions(io);
   }
-
-
 
   	  /* Start from BioNJ tree */
   	  if((num_rand_tree == io->mod->s_opt->n_rand_starts-1) && (tree->mod->s_opt->random_input_tree)){

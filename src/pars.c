@@ -42,7 +42,6 @@ void parsReconstructions(option* io){
   	int maxotu=1000;
 
   	//Set up stats file
-  	//printf("starting pars\n");
   	char foutp[T_MAX_FILE];
   	strcpy(foutp,io->mod->in_align_file);
   	strcat(foutp,"_igphyml_parstats");
@@ -54,9 +53,10 @@ void parsReconstructions(option* io){
   	FILE* pstatf = Openfile(foutp,1);
 
   	For(j,io->ntrees){
-  		  //set up basic tree stuff
-  		//printf("tree %d\n",j);
-  		char foutt[T_MAX_FILE];
+  		 //set up basic tree stuff
+  		 //read in final tree topology sent to outfile
+  		 //set up root placement, etc
+  		 char foutt[T_MAX_FILE];
 		 strcpy(foutt,io->datafs[j]);
 		 if(io->mod->ASR)strcat(foutt,"_igphyml_figtree");
 		 else strcat(foutt,"_igphyml_tree");
@@ -65,13 +65,9 @@ void parsReconstructions(option* io){
 			 strcat(foutt, io->run_id_string);
 		 }
 		 strcat(foutt,".txt");
-		 //printf("FOUT %s\n",foutt);
   		  io->mod_s[j]->fp_in_tree = Openfile(foutt,0);
-  		  //printf("read in tree\n");
   		  t_tree* tree = Read_User_Tree(io->tree_s[j]->data,io->mod_s[j],io);
-  		 //printf("read in tree\n");
   		  model* mod = io->mod_s[j];
-  		  //fclose(mod->fp_in_tree);
   		  tree->mod=mod;
   		  tree->io=io;
   		  tree->data = io->tree_s[j]->data;
@@ -88,7 +84,6 @@ void parsReconstructions(option* io){
   			 PhyML_Printf("\n\nRoot sequence ID not found in data file! %s %s\n",mod->rootname,mod->in_align_file);
   			 exit(EXIT_FAILURE);
   		  }
-
   		  //setup joint trees file
   		  char fout[T_MAX_FILE];
   		  strcpy(fout,io->datafs[j]);
@@ -99,46 +94,43 @@ void parsReconstructions(option* io){
   		  }
   		  strcat(fout,".txt");
 
+  		  //array of all possible reconstructions
   		  t_tree** trees = mCalloc(maxtrees,sizeof(t_tree*));
   		  trees[0]=tree;
-  		  t_node* r = tree->noeud[tree->mod->startnode];
-  		  Init_Class_Tips(tree,io->precon);
-
-  		  int pars = Fill_Sankoff(r,tree,1);
+  		  t_node* r = tree->noeud[tree->mod->startnode]; //root node
+  		  Init_Class_Tips(tree,io->precon); //initialize tip states and data structures
+  		  int pars = Fill_Sankoff(r,tree,1); //max parsimony score
   		  printf("\n. %d Maximum parsimony score: %d\n",j,pars);
-  		  Set_Pars_Counters(r,tree,1);
+  		  Set_Pars_Counters(r,tree,1); //set counters to their first minimum position
+  		  //Get_First_Path(r,0,tree,1);
+
+  		  //Data structures for counting the number of type switches and branch lengths in each state
   	      phydbl* switches = mCalloc(tree->nstate*tree->nstate,sizeof(phydbl));
   	      phydbl* classl = mCalloc(tree->nstate,sizeof(phydbl));
 
-  		  //Get_First_Path(r,0,tree,1);
   		  int npars = maxtrees;
-  		int minroots=0;
-  		int minroot=-1;
-  		For(i,tree->nstate){
+  		  int minroots=0;
+  		  int minroot=-1;
+  		  For(i,tree->nstate){
   			if(r->sroot[i] == pars){
   				minroots++;
   				minroot=i;
   			}
-  		}
-  		//printf("here\n");
-  		  if(tree->n_otu < maxotu){
+  		  }
+  		  if(tree->n_otu < maxotu){ //if too many taxa, don't bother trying to solve for all reconstructions
   			  npars=0;
   			  For(i,tree->nstate){
-  				 // printf("root state: %d\t%d\n",r->sroot[i],pars);
-  				if(r->sroot[i] == pars){
+  				if(r->sroot[i] == pars){ //recursively solve for all maximum parsimony paths
   					npars += Get_All_Paths(r,i,tree,trees,1,maxtrees,0,j,i)+1;
-  					//printf("npars! %d\n",npars);
   				}
-  				if(pars >= maxtrees)break;
+  				if(pars >= maxtrees)break; //unless you get too many trees, then just sample
   			  }
   		  	  printf("\n. %d Found %d maximum parsimony trees",j,npars);
 
-  		  	  if(npars < maxtrees){
+  		  	  if(npars < maxtrees){ //if not too many trees found, record stats
   		  	  	  FILE* treeout = Openfile(fout, 1 );
   		  	  	  For(i,npars){
-  		  	  		  Fill_Pars_Stats(r,trees[i], switches,classl,1);
-  		  	  		  //printTreeState(trees[i]->noeud[tree->mod->startnode],trees[i],1);
-  		  	  		  //printf("\n");
+  		  	  		  Fill_Pars_Stats(r,trees[i], switches,classl,1); //summarize statistics of the reconstruction
  		    		  io->precon *= 10;
   		  	  		  char* ts = Write_Tree(trees[i]);
   		    		  io->precon /= 10;
@@ -147,26 +139,22 @@ void parsReconstructions(option* io){
   		  	  		  strcat(ts,trees[i]->chars[trees[i]->noeud[tree->mod->startnode]->pstate]);
   		  	  		  strcat(ts,",Num=0]:0;");
   		  	  		  fprintf(treeout,"%s\n",ts);
-  		  	  		  //if(i>0)Free_Tree(trees[i]);
   		  	  	  }
   		  	  	  fclose(treeout);
   		  	  }
   		  }else{
   			printf("\n. Too many sequences for exhaustive parsimony search!");
   		  }
-  		  if(npars>=maxtrees){
+  		  if(npars>=maxtrees){ //if too many trees found, sample!
   			  if(minroots != 1){
   				  printf("NEED TO FIX RAND PATH TO WORK WITH AMBIGUOUS ROOTS %d %d\n",minroots,minroot);
   			  	  exit(EXIT_FAILURE);
   			  }
   	  		  FILE* treeout1 = Openfile(fout, 1 );
   			  printf(". Sampling %d trees instead.",maxtrees);
-  			  for(i=1;i<maxtrees;i++){
+  			  for(i=1;i<maxtrees;i++){ //free trees from attempt to solve for all
   				  if(tree->n_otu < maxotu)Free_Tree(trees[i]);
   			  }
-
-  			  //Init_Class_Tips(tree);
-  			  //int pars = Fill_Sankoff(r,tree,1);
   			  For(i,maxtrees){
   			  	  Get_Rand_Path(r,minroot,tree,1);
   			  	  Fill_Pars_Stats(r,tree, switches,classl,1);
@@ -189,8 +177,8 @@ void parsReconstructions(option* io){
   		 		switches[tposi*tree->nstate+tposj]=switches[tposi*tree->nstate+tposj]/(npars*1.0);
   		 	}
   		 }
-  		  phydbl tswitch, tlen;
-  		  tswitch=tlen=0;
+  		 phydbl tswitch, tlen;
+  		 tswitch=tlen=0;
   		 For(tposi,tree->nstate){
   		 	fprintf(pstatf,"%d\t%s\tN\t%lf\n",j,tree->chars[tposi],classl[tposi]);
   		 	tlen+=classl[tposi];
@@ -206,11 +194,16 @@ void parsReconstructions(option* io){
   	}
 }
 
-
+/*********************************************************
+ * Initialize Sankoff dynamic programming tables at the tips of the tree
+ * -6, -5 : GC/Mem model.
+ * 1- 4: Isotype models
+ * -1 - -4: Unconstrained isotype models
+ */
 void Init_Class_Tips(t_tree* tree, int precon){
 	 int i,j;
 	 char* mtemp;
-	 if(precon <= -5){
+	 if(precon <= -5){ //create model
 		 tree->nstate=6;
 		 tree->chars = mCalloc(tree->nstate,sizeof(char*));
 		 For(i,tree->nstate)tree->chars[i]=mCalloc(10,sizeof(char));
@@ -245,17 +238,16 @@ void Init_Class_Tips(t_tree* tree, int precon){
 		 strcpy(tree->chars[7],"E");
 		 strcpy(tree->chars[8],"A2");
 	 }
-	 For(i,(tree->n_otu-1)*2){
-		// printf("%d\n",i);
-	 	tree->noeud[i]->pl = (int *)mCalloc(tree->nstate*tree->nstate,sizeof(int ));
-	 	tree->noeud[i]->pr = (int *)mCalloc(tree->nstate*tree->nstate,sizeof(int ));
-	 	tree->noeud[i]->s = (int *)mCalloc(tree->nstate,sizeof(int));
-	 	tree->noeud[i]->sroot = (int *)mCalloc(tree->nstate,sizeof(int));
-	 	tree->noeud[i]->lmin = (int *)mCalloc(tree->nstate,sizeof(int));
-	 	tree->noeud[i]->rmin = (int *)mCalloc(tree->nstate,sizeof(int));
-	 	tree->noeud[i]->prc = (int *)mCalloc(tree->nstate,sizeof(int));
-	 	tree->noeud[i]->plc = (int *)mCalloc(tree->nstate,sizeof(int));
-	 	tree->noeud[i]->llock = (int *)mCalloc(tree->nstate,sizeof(int));
+	 For(i,(tree->n_otu-1)*2){ //initialize data structures for each node
+	 	tree->noeud[i]->pl = (int *)mCalloc(tree->nstate*tree->nstate,sizeof(int ));//all possible pointer scores, left
+	 	tree->noeud[i]->pr = (int *)mCalloc(tree->nstate*tree->nstate,sizeof(int ));//all possible pointer scores, right
+	 	tree->noeud[i]->s = (int *)mCalloc(tree->nstate,sizeof(int)); //minimum score of subtrees given each state
+	 	tree->noeud[i]->sroot = (int *)mCalloc(tree->nstate,sizeof(int)); //s but for root
+	 	tree->noeud[i]->lmin = (int *)mCalloc(tree->nstate,sizeof(int)); //minimum score on left given state at node
+	 	tree->noeud[i]->rmin = (int *)mCalloc(tree->nstate,sizeof(int)); //minimum score on right given state at node
+	 	tree->noeud[i]->prc = (int *)mCalloc(tree->nstate,sizeof(int));//pointer to the left given state at the current node
+	 	tree->noeud[i]->plc = (int *)mCalloc(tree->nstate,sizeof(int));//pointer to the right given state at the current node
+	 	tree->noeud[i]->llock = (int *)mCalloc(tree->nstate,sizeof(int));//whether or not pointers on l or r are locked
 	 	tree->noeud[i]->rlock = (int *)mCalloc(tree->nstate,sizeof(int));
 	 	For(j,tree->nstate){
 	 		tree->noeud[i]->s[j]=1000;
@@ -263,19 +255,15 @@ void Init_Class_Tips(t_tree* tree, int precon){
 	 		tree->noeud[i]->rmin[j]=MAX_PARS;
 	 	}
 	 }
-	 //printf("here\n");
-	 //free(tree->step_mat);
 	 tree->step_mat = mCalloc(tree->nstate*tree->nstate,sizeof(int));
 	 For(i,tree->nstate){ //set up step mat
 	 	 For(j,tree->nstate){
 	 			 if(i < j && precon>0)tree->step_mat[j*tree->nstate+i]=10000; //if precon is negative, no costraint
-	 			 else if(i == j)tree->step_mat[j*tree->nstate+i]=0;
-	 			 else tree->step_mat[j*tree->nstate+i] =1;
+	 			 else if(i == j)tree->step_mat[j*tree->nstate+i]=0; //no same state, no penalty
+	 			 else tree->step_mat[j*tree->nstate+i] =1; //otherwise penalty of 1
 	 	 }
 	 }
-	 //printf("here\n");
-	 For(i,tree->n_otu){
-		// tree->noeud[i]->b[0]->ui_r[0] = 0;
+	 For(i,tree->n_otu){//read in information from the ends of the sequence names
 		 int nelements=0;
 		 char* state = mCalloc(T_MAX_OPTION,sizeof(char));
 		 char* minfo1 = strdup(tree->noeud[i]->name);
@@ -329,8 +317,9 @@ void Init_Class_Tips(t_tree* tree, int precon){
 	 }
 }
 
-/*********************************************************/
-//Free extraneous data structures
+/*********************************************************
+* Free extraneous data structures
+*/
 void Clean_Tree(t_tree* tree){
 	int i,j;
     For(i,(tree->n_otu-1)*2){
@@ -345,17 +334,16 @@ void Clean_Tree(t_tree* tree){
 			 free(tree->noeud[i]->llock);
 			 free(tree->noeud[i]->rlock);
 	 }
-	 //free(tree->step_mat);
 }
 
 
-/*********************************************************/
-//Free extraneous data structures
+/*********************************************************
+* Copy all tree structures and values to a new trees
+*/
 void Copy_Sankoff_Tree(t_tree* tree1,t_tree* tree2){
 	int i,j,k;
 	tree2->nstate=tree1->nstate;
     For(i,(tree1->n_otu-1)*2){
-    	//printf("here\n");
     	tree2->noeud[i]->pl = (int *)mCalloc(tree2->nstate*tree2->nstate,sizeof(int ));
     	tree2->noeud[i]->pr = (int *)mCalloc(tree2->nstate*tree2->nstate,sizeof(int ));
     	tree2->noeud[i]->s = (int *)mCalloc(tree2->nstate,sizeof(int));
@@ -367,7 +355,6 @@ void Copy_Sankoff_Tree(t_tree* tree1,t_tree* tree2){
     	tree2->noeud[i]->llock = (int *)mCalloc(tree2->nstate,sizeof(int));
     	tree2->noeud[i]->rlock = (int *)mCalloc(tree2->nstate,sizeof(int));
     	For(j,tree2->nstate){
-    		//printf("here\n");
     		 tree2->noeud[i]->s[j]=tree1->noeud[i]->s[j];
     		 tree2->noeud[i]->plc[j]=tree1->noeud[i]->plc[j];
     		 tree2->noeud[i]->prc[j]=tree1->noeud[i]->prc[j];
@@ -387,25 +374,20 @@ void Copy_Sankoff_Tree(t_tree* tree1,t_tree* tree2){
 }
 /*********************************************************/
 // Resolve polytomies based on parsimony score
-int Resolve_Polytomies_Pars(t_tree* tree,phydbl minbl){
+int Resolve_Polytomies_Pars(t_tree* tree,phydbl thresh){
 	int i;
-	phydbl thresh=0.001;
 	int nni=1;
-	int nnifound=1;
+	int nnifound=1; //initial parsimony score
 	int pars0 = Fill_Sankoff(tree->noeud[tree->mod->startnode],tree,1);
 	int iters = 0;
-	while(nnifound){
+	while(nnifound){ //execute if a rearrangement is found in a tree
 		nnifound=0;
 		For(i,(tree->n_otu-1)*2){ //if no taxa on either side of edge and length is below threshold, search for NNIs
 			if(!tree->noeud[i]->tax && !tree->noeud[i]->anc->tax && tree->noeud[i]->anc_edge->l < thresh){
 				pars0 = Fill_Sankoff(tree->noeud[tree->mod->startnode],tree,1);
-				//printf("%d %d pars0: %d\n",iters,i,pars0);
 				t_edge* b = tree->noeud[i]->anc_edge;
-				//printf("edge: %d\n",b->num);
 				nni = NNI_Pars_Search(tree->noeud[i],tree->noeud[i]->anc,tree->noeud[i]->anc_edge,tree->noeud[i]->anc_edge,pars0,thresh,tree);
-				//printf("1 %d\n",nni);
 				if(!nni)nni = NNI_Pars_Search(tree->noeud[i]->anc,tree->noeud[i],tree->noeud[i]->anc_edge,tree->noeud[i]->anc_edge,pars0,thresh,tree);
-				//printf("2 %d\n",nni);
 				nnifound+=nni;
 			}
 		}
@@ -414,22 +396,23 @@ int Resolve_Polytomies_Pars(t_tree* tree,phydbl minbl){
 	return pars0;
 }
 
-/*********************************************************/
+/*********************************************************
+ * Starting from an intitial small length branch, check for NNI moves that would increase parsimony score, then recursively search across
+ * all adjacent branches (spreading c and d f) connected with at most thresh length
+ * \b           /e
+ *  \ c_fcus   /
+ *   \c_...__ /d
+ *   /  d_fcus\
+ *  /          \
+ * /a           \f
+ *
+ * d_fcus does not necessarily connect d and c. c_fcus is not necessarily d_fcus */
 int NNI_Pars_Search(t_node *c, t_node *d,t_edge* c_fcus,t_edge* d_fcus, int pars0, phydbl thresh,t_tree* tree){
-	  /* \b           /e
-	   *  \ c_fcus   /
-	   *   \c_...__ /d
-	   *   /  d_fcus\
-	   *  /          \
-	   * /a           \f
-	   *
-	   * d_fcus does not necessarily connect d and c. c_fcus is not necessarily d_fcus
-	   */
+
 	int dir1,dir2,dir3,dir4,i;
 	dir1=dir2=dir3=dir4-1;
 	For(i,3) if(d->b[i]->num != d_fcus->num) (dir1<0)?(dir1=i):(dir2=i);
 	For(i,3) if(c->b[i]->num != c_fcus->num) (dir3<0)?(dir3=i):(dir4=i);
-	//printf("here\n");
 	t_node* e = d->v[dir1];
 	t_node* f = d->v[dir2];
 	t_edge* ee = d->b[dir1];
@@ -441,38 +424,31 @@ int NNI_Pars_Search(t_node *c, t_node *d,t_edge* c_fcus,t_edge* d_fcus, int pars
 	int pars1 = NNI_ParsSwaps(a,c,d,e,tree);
 	int pars2 = NNI_ParsSwaps(b,c,d,e,tree);
 
-	//printf("%d\t%d\t%d\n",pars0,pars1,pars2);
-	if(pars0 <= MIN(pars1,pars2)){
-		//printf("Not swapping!\n");
+	if(tree->mod->optDebug)printf("%d\t%d\t%d\n",pars0,pars1,pars2);
+	if(pars0 <= MIN(pars1,pars2)){//Nothing!
+		if(tree->mod->optDebug)printf("Not swapping!\n");
 	}else if(pars1 < MIN(pars2,pars0)){
-	  //printf("Swapping!\n");
+	  if(tree->mod->optDebug)printf("0 Swapping!\n");
 	  Swap(a,c,d,e,tree);
-	  Fill_Sankoff(tree->noeud[tree->mod->startnode],tree,1);
-	  Set_Pars_Counters(tree->noeud[tree->mod->startnode],tree,1);
 	  return 1;
 	}else if(pars2 < MIN(pars0,pars1)){
-	  //printf("Swapping!\n");
+	  if(tree->mod->optDebug)printf("1 Swapping!\n");
 	  Swap(b,c,d,e,tree);
-	  Fill_Sankoff(tree->noeud[tree->mod->startnode],tree,1);
-	  Set_Pars_Counters(tree->noeud[tree->mod->startnode],tree,1);
 	  return 1;
-	}else if(pars1 == pars2){
-		//printf("Swapping!\n");
+	}else if(pars1 == pars2){//if both options are equally better than the original, do the first
+		if(tree->mod->optDebug)printf("2 Swapping!\n");
 		Swap(a,c,d,e,tree);
-		//printf("Swapped\n");
-		Fill_Sankoff(tree->noeud[tree->mod->startnode],tree,1);
-		Set_Pars_Counters(tree->noeud[tree->mod->startnode],tree,1);
 		return 1;
 	}else{
-		printf("SOMETHIGN WEIRD\n");
+		printf("SOMETHING WEIRD\n");
 	}
-	if(!e->tax){
+	if(!e->tax){ //search along edge between d and e
 		if(ee->l<thresh){
 			int pt = NNI_Pars_Search(c,e,c_fcus,ee,pars0,thresh,tree);
 			if(pt)return pt;
 		}
 	}
-	if(!f->tax){
+	if(!f->tax){ //search along edge between d and f
 		if(fe->l<thresh){
 			int pt = NNI_Pars_Search(c,f,c_fcus,fe,pars0,thresh,tree);
 			if(pt)return pt;
@@ -481,46 +457,49 @@ int NNI_Pars_Search(t_node *c, t_node *d,t_edge* c_fcus,t_edge* d_fcus, int pars
 	return 0;
 }
 
-/*********************************************************/
+/********************************************************
+  *Swap specified nodes, swap back, and return parsimony score of the swap
+  * \             /d      \             /a
+  *  \           /         \           /
+  *   \b__...__c/    ->     \b__...__c/
+  *   /         \	   		 /		   \
+  *  /           \	        /	        \
+  * /a            \  	   /d            \
+  *
+  * nodes b and c are not necessarily on the same branch */
 int NNI_ParsSwaps(t_node *a, t_node *b, t_node *c, t_node *d, t_tree *tree){
-	  /* \             /d      \             /a
-	   *  \           /         \           /
-	   *   \b__...__c/    ->     \b__...__c/
-	   *   /         \	   		 /		   \
-	   *  /           \	        /	        \
-	   * /a            \  	   /d            \
-	   *
-	   * nodes b and c are not necessarily on the same branch
-	   */
 	int l_r, r_l, l_v1, l_v2, r_v3, r_v4;
 	int pars0,pars1,pars2;
 
-	  //Init_Class_Tips(tree);
-	  /*pars0 = Fill_Sankoff(tree->noeud[tree->mod->startnode],tree,1);
-	  Set_Pars_Counters(tree->noeud[tree->mod->startnode],tree,1);
-	  Get_First_Path(tree->noeud[tree->mod->startnode],0,tree,1);
-	  printTreeState(tree->noeud[tree->mod->startnode],tree,1);printf(" 01\n");
-	  /******First swap*****/
+	  pars0 = Fill_Sankoff(tree->noeud[tree->mod->startnode],tree,1);
+	  if(tree->mod->optDebug){
+	  	  Get_First_Path(tree->noeud[tree->mod->startnode],0,tree,1);
+	  	  printTreeState(tree->noeud[tree->mod->startnode],tree,1);printf(" 0\n");
+	  }
 	  Swap(a,b,c,d,tree);
-	  //Init_Class_Tips(tree);
 	  pars1 = Fill_Sankoff(tree->noeud[tree->mod->startnode],tree,1);
-	 // printf("pars1: %d\n",pars1);
-	  Set_Pars_Counters(tree->noeud[tree->mod->startnode],tree,1);
-	  Get_First_Path(tree->noeud[tree->mod->startnode],0,tree,1);
-	  //printTreeState(tree->noeud[tree->mod->startnode],tree,1);printf(" 1\n");
-	  Swap(d,b,c,a,tree);
-	  //printf("%d\t%d\n",pars0,pars1);
-	  pars1 = Fill_Sankoff(tree->noeud[tree->mod->startnode],tree,1);
-	  //printf("pars11: %d\n",pars1);
-	  Set_Pars_Counters(tree->noeud[tree->mod->startnode],tree,1);
-	  Get_First_Path(tree->noeud[tree->mod->startnode],0,tree,1);
-	  //printTreeState(tree->noeud[tree->mod->startnode],tree,1);printf(" 11\n");
-
+	  if(tree->mod->optDebug){
+		  Get_First_Path(tree->noeud[tree->mod->startnode],0,tree,1);
+		  printTreeState(tree->noeud[tree->mod->startnode],tree,1);printf(" 1\n");
+	  }
+	  Swap(d,b,c,a,tree); //swap nodes
+	  pars2 = Fill_Sankoff(tree->noeud[tree->mod->startnode],tree,1);
+	  if(tree->mod->optDebug){
+	  	  Get_First_Path(tree->noeud[tree->mod->startnode],0,tree,1);
+	  	  printTreeState(tree->noeud[tree->mod->startnode],tree,1);printf(" 2\n");
+	  }
+	  //printf("pars score %d\t%d\t%d\n",pars0,pars1,pars2);
+	  if(pars0 != pars2){
+		  printf("pars score %d\t%d\t%d\n",pars0,pars1,pars2);
+		  printf("\n.\tParsimony reconstruction swap inconsistent!\n");
+		  exit(EXIT_FAILURE);
+	  }
 	  return pars1;
 }
 
-
-/*********************************************************/
+/*********************************************************
+ * Fill in dynamic programming tables of the Sankoff algorithm
+ * */
 int Fill_Sankoff(t_node *d, t_tree *tree, int root){
   int i,j,k,dir1,dir2; //Recurse to a tip!
   if(!d->tax || root){
@@ -531,19 +510,18 @@ int Fill_Sankoff(t_node *d, t_tree *tree, int root){
 	  }else{
 		  dir1=0;
 	  }
-	  if(!root){
-		  For(j,tree->nstate){
-		  	 	d->s[j]=1000;
-		  	 	d->lmin[j]=MAX_PARS;
-		  	 	d->rmin[j]=MAX_PARS;
-		  }
+	  For(j,tree->nstate){
+		  if(!root)d->s[j]=1000;
+		  else d->sroot[j]=1000;
+		  d->lmin[j]=MAX_PARS;
+		  d->rmin[j]=MAX_PARS;
 	  }
-	  //if(!root)printf("%d\t%d\t%d\n",d->num,d->v[dir1]->num,d->v[dir2]->num);
+	  if(!root && tree->mod->optDebug)printf("%d\t%d\t%d\n",d->num,d->v[dir1]->num,d->v[dir2]->num);
       Fill_Sankoff(d->v[dir1],tree,0); //left = 1, right = 2
       if(!root)Fill_Sankoff(d->v[dir2],tree,0);
-      //Fill in arrays
+      //fill in pointers and minimums of dynamic programming table
       For(i,tree->nstate){
-    		For(j,tree->nstate){//fill in pointers and minimums
+    		For(j,tree->nstate){
     			if(root){
     				d->pl[i*tree->nstate+j]=d->s[i]+tree->step_mat[i*tree->nstate+j]+d->v[dir1]->s[j];
     				if(d->pl[i*tree->nstate+j] < d->lmin[i])d->lmin[i]=d->pl[i*tree->nstate+j];
@@ -562,7 +540,6 @@ int Fill_Sankoff(t_node *d, t_tree *tree, int root){
   }
   int min=MAX_PARS;
   For(i,tree->nstate){
-
 	  if(!root){
 		  if(d->s[i]<min)min=d->s[i];
 	  }else{
@@ -571,7 +548,10 @@ int Fill_Sankoff(t_node *d, t_tree *tree, int root){
   }
   return min;
 }
-/*********************************************************/
+
+/********************************************************
+ * Get "leftmost" maximally parsimonious labeling of tree
+ * */
 void Get_First_Path(t_node *d, int index, t_tree *tree,int root){
 	int i,j,dir1,dir2;
 	int rfound,lfound=0;
@@ -587,19 +567,12 @@ void Get_First_Path(t_node *d, int index, t_tree *tree,int root){
 		}
 		Get_First_Path(d->v[dir1],d->plc[index],tree,0);
 		if(!root)Get_First_Path(d->v[dir2],d->prc[index],tree,0);
-		/*For(i,tree->nstate){
-			if(d->pl[index*tree->nstate+i] == d->lmin[index] && !lfound){
-				Get_First_Path(d->v[dir1],i,tree,0);
-				lfound=1;
-			}
-			if(d->pr[index*tree->nstate+i] == d->rmin[index] && !root && !rfound){
-				Get_First_Path(d->v[dir2],i,tree,0);
-				rfound=1;
-			}
-		}*/
 	}
 }
-/*********************************************************/
+
+/********************************************************
+ * Recurse down tree, randomly choosing ambiguous pointers
+ * */
 void Get_Rand_Path(t_node *d, int index, t_tree *tree,int root){
 	int i,j,dir1,dir2;
 	int ldraw=0;
@@ -638,8 +611,9 @@ void Get_Rand_Path(t_node *d, int index, t_tree *tree,int root){
 	}
 }
 
-/*********************************************************/
-//set counters
+/********************************************************
+ * Set counters to "left most" option
+ * */
 void Set_Pars_Counters(t_node *d, t_tree *tree,int root){
 	int i,j,k,dir1,dir2; //Recurse to a tip!
 	if(!d->tax || root){
@@ -676,14 +650,14 @@ void Set_Pars_Counters(t_node *d, t_tree *tree,int root){
 	}
 }
 
-/*********************************************************/
-
+/********************************************************
+ * Get all possible maximum parsimony labels of internal nodes
+ * */
 int Get_All_Paths(t_node *d, int index, t_tree *tree, t_tree** btrees, int root,int maxtrees,int treeindex, int repindex, int rootstate){
 	int i,j,dir1,dir2;
 	int lfound=0;
 	int rfound=0;
 	d->pstate=index;
-	//printf("%s\t%d\t%d\n",tree->chars[index],index,treeindex);
 	if(!d->tax || root){
 		if(!root){
 			t_node* a = d->anc;
@@ -692,58 +666,50 @@ int Get_All_Paths(t_node *d, int index, t_tree *tree, t_tree** btrees, int root,
 		}else{
 			dir1=0;
 		}
-		int lm = d->lmin[index];
+		int lm = d->lmin[index]; //store original minimums and pointers
 		int rm = d->rmin[index];
 		int lc = d->plc[index];
 		int rc = d->prc[index];
 
-		//printf("Left treeb! %s\t%d\t%d\t%d\n",tree->chars[lc],treeindex,d->llock[index],d->plc[index]);
+		//printf("Left tree! %s\t%d\t%d\t%d\n",tree->chars[lc],treeindex,d->llock[index],d->plc[index]);
 		//exit(EXIT_FAILURE);
-		if(d->llock[index]){ //left node
+		if(d->llock[index]){ //if left node pointer is locked, move down with that assignment
 			treeindex=Get_All_Paths(d->v[dir1],d->plc[index],tree,btrees,0,maxtrees,treeindex,repindex,rootstate);
 		}else{
 			For(i,tree->nstate){
 				if(d->pl[index*tree->nstate+i] == d->lmin[index]){
 					if(lfound>0 && treeindex+1 < maxtrees){ //if alternate left path found
-						//printf("Left tree!\n");
-						t_tree* tree2;
-						//printf("reading tree1\n");
+						t_tree* tree2; //read in copy of that tree
 						tree2 = Read_User_Tree(tree->io->tree_s[repindex]->data,tree->io->mod_s[repindex],tree->io);
-						//printf("reading tree2\n");
-						//printf("reading tree3\n");
 						tree2->mod=tree->mod;
 						tree2->mod->startnode = tree->mod->startnode;
 						t_node* r2 = tree2->noeud[tree->mod->startnode];
 						tree2->io=tree->io;
 						Update_Ancestors_Edge(r2,r2->v[0],r2->b[0],tree);
 						d->plc[index]=i;
-						d->llock[index]=1;
+						d->llock[index]=1; //copy all data structures to new tree, but with this node locked and set to the new pointer
 						Copy_Sankoff_Tree(tree,tree2);
 						treeindex++;
-						btrees[treeindex]=tree2;
+						btrees[treeindex]=tree2; //start recursion over at the root with this selection locked
 						treeindex = Get_All_Paths(r2,rootstate,tree2,btrees,1,maxtrees,treeindex,repindex,rootstate);
 					}
 					lfound++;
 				}
 			}
-			d->plc[index]=lc;//continue down original tree
+			d->plc[index]=lc;//continue down with original pointer
 			d->llock[index]=1; //with path through node fixed
 			treeindex=Get_All_Paths(d->v[dir1],d->plc[index],tree,btrees,0,maxtrees,treeindex,repindex,rootstate);
 		}
 		if(!root){
-			//printf("Right treeb! %s\t%d\t%d\t%d\n",tree->chars[rc],treeindex,d->rlock[index],d->prc[index]);
+			//printf("Right tree! %s\t%d\t%d\t%d\n",tree->chars[rc],treeindex,d->rlock[index],d->prc[index]);
 			if(d->rlock[index]){ //right node
 				treeindex=Get_All_Paths(d->v[dir2],d->prc[index],tree,btrees,0,maxtrees,treeindex,repindex,rootstate);
 			}else{
 				For(i,tree->nstate){
 					if(d->pr[index*tree->nstate+i] == d->rmin[index]){
 						if(rfound>0 && treeindex+1 < maxtrees){ //if alternate left path found
-							//printf("Right tree! %s\t%s\t%s\n",tree->chars[index],tree->chars[rc],tree->chars[i]);
 							t_tree* tree2;
-							//printf("reading tree1\n");
 							tree2 = Read_User_Tree(tree->io->tree_s[repindex]->data,tree->io->mod_s[repindex],tree->io);
-							//printf("reading tree2\n");
-							//printf("reading tree3\n");
 							tree2->mod=tree->mod;
 							tree2->mod->startnode = tree->mod->startnode;
 							t_node* r2 = tree2->noeud[tree2->mod->startnode];
@@ -769,21 +735,17 @@ int Get_All_Paths(t_node *d, int index, t_tree *tree, t_tree** btrees, int root,
 	}
 	return treeindex;
 }
-/*********************************************************/
+/*********************************************************
 void Get_Pars_Stats(t_tree** trees, int ntrees, int index, FILE* pstatf){
 	int i,j;
 	phydbl* switches = mCalloc(trees[0]->nstate*trees[0]->nstate,sizeof(phydbl));
 	phydbl* classl = mCalloc(trees[0]->nstate,sizeof(phydbl));
-	//printf("here\n");
 	For(i,ntrees){
 		t_tree* tree = trees[i];
 		tree->nstate=trees[0]->nstate;
-		//printf("statenode %d %s\n",trees[0]->mod->startnode,tree->noeud[trees[0]->mod->startnode]->name);
 		Fill_Pars_Stats(tree->noeud[trees[0]->mod->startnode],tree,switches,classl,1);
-		//printf("statenode2\n");
 	}
 	For(i,trees[0]->nstate){
-		//printf("%lf\n",classl[i]);
 		classl[i] = classl[i]/(ntrees*1.0);
 		For(j,trees[0]->nstate){
 			switches[i*trees[0]->nstate+j]=switches[i*trees[0]->nstate+j]/(ntrees*1.0);
@@ -804,24 +766,22 @@ void Get_Pars_Stats(t_tree** trees, int ntrees, int index, FILE* pstatf){
 	free(classl);
 }
 
-/*********************************************************/
+/********************************************************
+ * Recursively add values to switch and length matrices for each type
+ * */
 void Fill_Pars_Stats(t_node* d,t_tree* tree, phydbl* switches, phydbl* classl, int root){
 	int i,j,dir1,dir2;
 	dir1=dir2=-1;
 	if(!root){
-		//printf("here0\n");
-		//printf("%d\n",d->num);
-		//printf("%d\t%d\n",d->anc->pstate,d->pstate);
 		if(d->pstate != d->anc->pstate){
 			switches[d->anc->pstate*tree->nstate+d->pstate]++;
-			classl[d->pstate] += d->anc_edge->l*0.5;
+			classl[d->pstate] += d->anc_edge->l*0.5; //split switched branch lengths
 			classl[d->anc->pstate] += d->anc_edge->l*0.5;
 		}else{
 			classl[d->pstate] += d->anc_edge->l;
 		}
 	}
 	if(!d->tax){
-		//printf("here\n");
 		t_node* a = d->anc;
 		For(i,3) if(d->v[i]->num != a->num) (dir1<0)?(dir1=i):(dir2=i);
 	}else{
@@ -829,15 +789,15 @@ void Fill_Pars_Stats(t_node* d,t_tree* tree, phydbl* switches, phydbl* classl, i
 	}
 
 	if(!d->tax||root){
-		//printf("here2\n");
 		Fill_Pars_Stats(d->v[dir1],tree,switches,classl,0);
 		if(!root)Fill_Pars_Stats(d->v[dir2],tree,switches,classl,0);
 	}
 }
 
 
-/*********************************************************/
-
+/********************************************************
+ * Print summary of states at each node. Used for debugging
+ * */
 void printTreeState(t_node *d, t_tree* tree, int root){
 	printf("%s,",tree->chars[d->pstate]);
 	int dir1,dir2,i;
