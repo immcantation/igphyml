@@ -189,7 +189,7 @@ void parsReconstructions(option* io){
   		 				tswitch+=switches[tposi*tree->nstate+tposj];
   		 			}
   		 		}
-  		  printf("\n. Switches: %lf. Length: %lf\n",tswitch,tlen);
+  		 // printf("\n. Switches: %lf. Length: %lf\n",tswitch,tlen);
   		  fclose(io->mod_s[j]->fp_in_tree);
   	}
 }
