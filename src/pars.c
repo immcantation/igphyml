@@ -100,7 +100,7 @@ void parsReconstructions(option* io){
   		  t_node* r = tree->noeud[tree->mod->startnode]; //root node
   		  Init_Class_Tips(tree,io->precon); //initialize tip states and data structures
   		  int pars = Fill_Sankoff(r,tree,1); //max parsimony score
-  		  printf("\n. %d Maximum parsimony score: %d\n",j,pars);
+  		  //printf("\n. %d Maximum parsimony score: %d\n",j,pars);
   		  Set_Pars_Counters(r,tree,1); //set counters to their first minimum position
   		  //Get_First_Path(r,0,tree,1);
 
@@ -125,7 +125,7 @@ void parsReconstructions(option* io){
   				}
   				if(pars >= maxtrees)break; //unless you get too many trees, then just sample
   			  }
-  		  	  printf("\n. %d Found %d maximum parsimony trees",j,npars);
+  		  	 // printf("\n. %d Found %d maximum parsimony trees",j,npars);
 
   		  	  if(npars < maxtrees){ //if not too many trees found, record stats
   		  	  	  FILE* treeout = Openfile(fout, 1 );

@@ -570,7 +570,7 @@ io->threads=0;
 		  #pragma omp critical
 		  #endif
 	  	  {
-	  		  printf("\n. %d Initial/resolved maximum parsimony score: %d %d %s",tree->mod->num,pars1,pars2,tree->mod->rootname);
+	  	//	  printf("\n. %d Initial/resolved maximum parsimony score: %d %d %s",tree->mod->num,pars1,pars2,tree->mod->rootname);
 	  	  }
 	  }
   }
