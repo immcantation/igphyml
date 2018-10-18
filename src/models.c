@@ -604,7 +604,7 @@ void Init_Model(calign *data, model *mod, option *io)
         } else {
         	if(mod->optDebug)printf("here3.3\n");
             mod->update_eigen = YES;
-            Set_Model_Parameters(mod);
+            Set_Model_Parameters(mod,mod->mid_pi);
             mod->update_eigen = NO;
             if(mod->optDebug)printf("here3.4\n");
         }
@@ -705,7 +705,7 @@ void Init_Model(calign *data, model *mod, option *io)
             {
                 mod->pi[i] = mod->user_b_freq[i];
             }
-            if(!mod->use_m4mod) Set_Model_Parameters(mod);      
+            if(!mod->use_m4mod) Set_Model_Parameters(mod,mod->mid_pi);
             if((mod->whichmodel != GTR)    && 
                (mod->whichmodel != CUSTOM) && 
                (mod->whichmodel != HKY85)) mod->update_eigen = 0;
@@ -894,7 +894,7 @@ void Translate_Custom_Mod_String(model *mod)
 }
 
 /*********************************************************/
-void Set_Model_Parameters(model *mod) {
+void Set_Model_Parameters(model *mod, phydbl** part_freqs) {
     if(mod->datatype == CODON) { //!Added by Marcelo.
         phydbl mr;
         int i, j, k, n, nn, n_termsTaylor;
@@ -967,45 +967,33 @@ void Set_Model_Parameters(model *mod) {
 
 
         if(mod->update_eigen) {
-
             if(mod->whichrealmodel == PCM) Update_Rate_Matrix_PCAModel(mod);
-
-            
             if(mod->n_w_catg == 1) {
-
-
-
-                if(mod->kappaECM==kap5)
-                {
-                    Freq_to_UnsFreq(mod->pkappa,   mod->unspkappa,  mod->nkappa, 0);
-                    Scale_freqs(mod->pkappa, mod->nkappa);      
-                }
-                int modeli;
+               if(mod->kappaECM==kap5){
+                   Freq_to_UnsFreq(mod->pkappa,   mod->unspkappa,  mod->nkappa, 0);
+                   Scale_freqs(mod->pkappa, mod->nkappa);
+               }
+               int modeli;
                for(modeli=0;modeli<mod->nomega_part;modeli++){ //Ken 19/8
-            	   //for(modeli=0;modeli<1;modeli++){ //Ken 19/8
-                mod->mr_w[0] = Update_Qmat_Codons(mod, 0, modeli,mod->pi); //Ken 19/8
-
+                if(mod->freq_model < ROOT || mod->tree_freqs==0)mod->mr_w[0] = Update_Qmat_Codons(mod, 0, modeli,mod->pi); //Ken 19/8
+                else{
+                	printf("updating\n");
+                	mod->mr_w[0] = Update_Qmat_Codons(mod, 0, modeli,part_freqs[modeli]); //Ken 19/8
+                }
 
                 if(mod->expm == EIGEN) {
                 	if(mod->nomega_part > 1){printf("Options not supported with partitioned models error 13\n");exit(EXIT_FAILURE);}
                     EigenQREV(mod->qmat_part[0], mod->pi, mod->ns, mod->eigen->e_val, mod->eigen->r_e_vect, mod->eigen->l_e_vect, mod->eigen->space);
                     For(i,mod->ns) mod->eigen->e_val[i]/=mod->mr_w[0];
-                } else if(mod->expm == TAYLOR) {
+                }else if(mod->expm == TAYLOR){
                 	if(mod->nomega_part > 1){printf("Options not supported with partitioned models error 14\n");exit(EXIT_FAILURE);}
-
                     int nn=mod->ns*mod->ns, n=mod->ns, l;
-                    
                     For(i,nn) mod->qmat[i]/=mod->mr_w[0];
-                    
                     For(i,nn) mod->A2_part[modeli][0*nn+i]=mod->A0_part[modeli][i];
-                    
                     For(i,nn) mod->A2_part[modeli][nn+i]=mod->qmat_part[modeli][i];
-                    
-                    for(l=2;l<mod->n_termsTaylor;l++) {
+                    for(l=2;l<mod->n_termsTaylor;l++){
 #if defined BLAS || defined BLAS_OMP
-                        
                         cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans, n, n, n, 1.0, mod->A2_part[modeli]+(nn*(l-1)), n, mod->A2_part[modeli]+nn,  n, 0.0, mod->A2_part[modeli]+nn*l, n);
-                        
 #else
                         
                         For(i,nn) mod->A2_part[modeli][nn*l+i]=0.0;
@@ -1014,17 +1002,13 @@ void Set_Model_Parameters(model *mod) {
                         
 #endif
                     }
-                } else if(mod->expm == SSPADE) {
-
+                }else if(mod->expm == SSPADE){
                 	//Modified by Ken 17/8/2016
                     n=mod->ns;
                     nn=n*n;
                     For(i,nn) mod->qmat_part[modeli][i]/=mod->mr_w[0];
 
-
-                    
 #if defined BLAS || defined BLAS_OMP
-
 
                     cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans, n, n, n, 1.0, mod->qmat_part[modeli], n, mod->qmat_part[modeli],  n, 0.0, mod->A2_part[modeli], n);
                     cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans, n, n, n, 1.0, mod->A2_part[modeli],   n, mod->A2_part[modeli],    n, 0.0, mod->A4_part[modeli], n);
@@ -1036,7 +1020,6 @@ void Set_Model_Parameters(model *mod) {
                     cblas_dcopy(nn,mod->A6_part[modeli], 1, mod->Apowers_part[modeli]+3*nn,1);
                     cblas_dcopy(nn,mod->A8_part[modeli], 1, mod->Apowers_part[modeli]+4*nn,1);
                     
-
 #else
                     
                     For(i,nn) mod->A2_part[modeli][i]=0.0;

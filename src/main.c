@@ -210,8 +210,8 @@ int main(int argc, char **argv){
     	  io->colalias = 0;//for now, don't compress sequences at all
       }
       if(mod->freq_model == ROOT){
-    	  	  mod->root_pi = mCalloc(mod->nomega_part,sizeof(phydbl*));
-    	  	  For(i,io->mod->nomega_part)mod->root_pi[i]=mCalloc(61,sizeof(phydbl));
+    	  mod->root_pi = mCalloc(mod->nomega_part,sizeof(phydbl*));
+    	  For(i,io->mod->nomega_part)mod->root_pi[i]=mCalloc(61,sizeof(phydbl));
       }
       if(io->mod->optDebug)printf("compacting data\n");
       cdata = Compact_Data(mod->data,io,mod);
@@ -248,7 +248,7 @@ int main(int argc, char **argv){
 
 	  if(io->in_tree<=1 || strcmp(mod->in_tree_file,"N")==0){
 	  	  tree = Dist_And_BioNJ(cdata,mod,io);
-	   }else{
+	  }else{
 	  	  mod->fp_in_tree = Openfile(mod->in_tree_file,0);
 	  	  tree = Read_User_Tree(cdata,mod,io);
 	  }
@@ -279,6 +279,8 @@ int main(int argc, char **argv){
 	  tree->data        = cdata;
 	  tree->both_sides  = 1;
 	  tree->n_pattern   = tree->data->crunch_len;
+	  mod->tree			= tree;
+	  //if(mod->freq_model>=ROOT) mod->tree_freqs=1;
 
 	  //mod->quiet=NO; //turn back on alerts
 
@@ -295,12 +297,14 @@ int main(int argc, char **argv){
 	      		//PhyML_Printf("\n. Start node found: %d %s\n",nodepos,mod->rootname);
 	      		Update_Ancestors_Edge(tree->noeud[nodepos],tree->noeud[nodepos]->v[0],tree->noeud[nodepos]->b[0],tree);
 	      		//PhyML_Printf("\n. Start node found: %d %s\n",nodepos,mod->rootname);
-	      		For(i,mod->nomega_part && mod->freq_model==ROOT){
+	      		if(mod->freq_model>=ROOT){
+	      		For(i,mod->nomega_part){
 	      			For(j,mod->ns){
 	      				tree->noeud[nodepos]->partfreqs[i][j]=mod->root_pi[i][j];
 	      				if(i==0)mod->pi[j]=mod->root_pi[i][j];
 	      				//printf("%d\t%lf\n",j,mod->pi[j]);
 	      			}
+	      		}
 	      		}
 	      	}
 	      }
@@ -491,6 +495,11 @@ if(io->mod->freq_model != ROOT){
   		if(io->mod->optDebug)printf("doing lhood\n");
   	    io->mod->update_eigen=1;
   	    io->both_sides=1;
+  	    Lk_rep(io);
+  	    Print_Lk_rep(io,"Repertoire likelihood!");
+  	    //io->mod->hotness[0]=10;
+  	    Lk_rep(io);
+  	    Print_Lk_rep(io,"Repertoire likelihood!");
   	    Lk_rep(io);
   	    Print_Lk_rep(io,"Repertoire likelihood!");
   	    For(i,io->ntrees){

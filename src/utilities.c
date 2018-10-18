@@ -2721,6 +2721,7 @@ void Make_Model_Complete(model *mod)
   //printf("%d\t%d\t%d\n",mod->ns,mod->n_w_catg,mod->nomega_part);
   //printf("%lf\n",mod->qmat_part[0][0]);
   mod->qmat_part[0][0]=1.0;
+  mod->tree_freqs=0;
   //if(mod->optDebug)printf("just tried2");
 }
 

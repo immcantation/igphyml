@@ -474,7 +474,6 @@ typedef struct __Arbre {
   phydbl                      logLk_correction_approx; /*!< correction factor loglikelihood according to Seo Kishino 2009. */
   phydbl                  logLk_correction_gaps_approx; /*!< correction factor (with gaps) loglikelihood according to Seo Kishino 2009. */
   int                       br_len_invar_set; /* is Br_Len_Involving_Invar already done? */
-
 }t_tree;
 
 /*********************************************************/
@@ -643,6 +642,7 @@ typedef struct __Model {
   struct __Option      *io;
   struct __Align              **data;/*!< pointer to the uncompressed sequences. MOVED FROM OPTION 1/9/2018 */
   struct __Calign             *cdata;/*!< pointer to the compressed sequences. MOVED FROM OPTION*/
+  struct __Arbre               *tree; //
   int                          n_otu; /*!< number of taxa. MOVED FROM OPTION */
   int                       init_len; /*!< sequence length. MOVED FROM OPTION*/
   ts_and_tv          *structTs_and_Tv; /*!< Counts for transitions and transversions in codon models. MOVED FROM OPTION*/ //!<Added by Marcelo.
@@ -868,6 +868,8 @@ typedef struct __Model {
  int prior;
  int		freqsTo;
 
+ phydbl**	mid_pi;
+ int		tree_freqs; //0: don't use, 1: solve and update model, 2: just update model
 }model;
 
 /*********************************************************/

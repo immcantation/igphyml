@@ -495,7 +495,7 @@ phydbl Lk(t_tree *tree)
   
   n_patterns = tree->n_pattern;
 	//printf("\nbefore set params: omega %d %lf %lf %lf %lf %lf %lf",tree->both_sides,tree->mod->omega_part[0],tree->mod-> kappa,tree->c_lnL,tree->mod->qmat_part[0][1],tree->mod->hotness[0],tree->mod->hotness[1]);
-  Set_Model_Parameters(tree->mod);
+  Set_Model_Parameters(tree->mod,tree->mod->mid_pi);
   #ifdef TIMES
   if((tree->rates) && (tree->rates->bl_from_rt)) RATES_Update_Cur_Bl(tree);
   if(tree->bl_from_node_stamps) TIMES_Bl_From_T(tree);
@@ -3060,9 +3060,9 @@ void Calculate_Flux_Freqs(t_edge* b_fcus, phydbl* ofreqs, phydbl* dfreqs,t_tree*
 		For(j,61){
 			//printf("%d\t%d\t%lf\t%lf\t%lf\t%lf\n",i,j,ofreqs[i],b_fcus->bPmat_part[modeli][i*dim2+j],ofreqs[j],b_fcus->bPmat_part[modeli][j*dim2+i]);
 			//if(j!=i){
-				phydbl fij = ofreqs[i]*b_fcus->bPmat_part[modeli][i*dim2+j];
+				//phydbl fij = ofreqs[i]*b_fcus->bPmat_part[modeli][i*dim2+j];
 				phydbl fji = ofreqs[j]*b_fcus->bPmat_part[modeli][j*dim2+i];
-				fluxs[i] += (fji-fij);
+				fluxs[i] += fji;
 			//}
 		}
 		dfreqs[i] = (ofreqs[i]+fluxs[i]);
@@ -3076,9 +3076,7 @@ void Calculate_Flux_Freqs(t_edge* b_fcus, phydbl* ofreqs, phydbl* dfreqs,t_tree*
 // Recursively update PMats
 void Update_PMat_Recursive(t_edge *b_fcus, t_tree *tree){
 	int modeli,i;
-	For(modeli,tree->mod->nomega_part){
-		Update_Qmat_Codons(tree->mod,0,modeli,b_fcus->anc_node->partfreqs[modeli]);
-	}
+	Set_Model_Parameters(tree->mod,b_fcus->anc_node->partfreqs);
 	Update_PMat_At_Given_Edge(b_fcus,tree);
 
 	//if(!b_fcus->des_node->tax){

@@ -44,7 +44,7 @@ void Update_Qmat_GTR(phydbl *rr, phydbl *rr_val, int *rr_num, phydbl *pi, phydbl
 void Update_Qmat_HKY(phydbl kappa, phydbl *pi, phydbl *qmat);
 void Update_Qmat_Generic(phydbl *rr, phydbl *pi, int ns, phydbl *qmat);
 void Translate_Custom_Mod_String(model *mod);
-void Set_Model_Parameters(model *mod);
+void Set_Model_Parameters(model *mod, phydbl** part_freqs);
 phydbl GTR_Dist(phydbl *F, phydbl alpha, eigen *eigen_struct);
 phydbl General_Dist(phydbl *F, model *mod, eigen *eigen_struct);
 
