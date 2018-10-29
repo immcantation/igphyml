@@ -412,29 +412,41 @@ void setUpHLP17(option* io, model *mod){
   	if(mod->primary){
    	printf(". Loading hotspot tables..\n");
    	mod->hotspotcmps = (phydbl**)mCalloc(mod->nmotifs,sizeof(phydbl *));
-   	for(mot = 0; mot < mod->nmotifs; mot++){
-   	    char *infile = mCalloc(strlen(HTABLE)+strlen(mod->motifs[mot])+1,sizeof(char));
-   	    strcpy(infile, HTABLE);
-   	    strcat(infile, mod->motifs[mot]);
-   	    if(mod->primary)printf("%s\n",infile);
-   	    FILE *file = fopen(infile, "r");
-   	    if(file == NULL){
-   	    	printf("\n\nCouldn't open %s\n\n",infile);
-   	    	exit(EXIT_FAILURE);
-   	    }
-   	    phydbl *hot;
-   	    int combinations = 13845841;
-   	    hot = (phydbl *)mCalloc(combinations,sizeof(phydbl));//checked 15/7/2016
-   	    int i=0;
-   	    double num;
-   	    while(i < combinations) {
-   	        int fscn = fscanf(file, "%lf\n",&num);
-   	        hot[i] = num;
-   	        i++;
-   	    }
-   	    fclose(file);
-   	    mod->hotspotcmps[mot] = hot;
-   	}
+    for(mot = 0; mot < mod->nmotifs; mot++){
+        char *infile = mCalloc(T_MAX_FILE+strlen(io->mod->motifs[mot])+1,sizeof(char));
+        strcpy(infile, HTABLE);
+        strcat(infile, io->mod->motifs[mot]);
+        FILE *file = fopen(infile, "r");
+        if(file == NULL){
+          const char* igpath = getenv("IGPHYML_PATH");
+          if(igpath==NULL){
+            printf("Hotspot tables not found in install directory and IGPHYML_PATH not set.\n");
+            printf("Try specifying their location with the IGPHYML_PATH environment variable.\n");
+            exit(1);
+          }
+          strcpy(infile, igpath);
+          strcat(infile, "/HTABLE_");
+          strcat(infile, io->mod->motifs[mot]);
+          file = fopen(infile, "r");
+          if(file == NULL){
+            printf("\n\nCouldn't open %s\n\n",infile);
+            exit(EXIT_FAILURE);
+          }
+    }
+    printf("%s\n",infile);
+        phydbl *hot;
+        int combinations = 13845841;
+        hot = (phydbl *)mCalloc(combinations,sizeof(phydbl));//checked 15/7/2016
+        int i=0;
+        double num;
+        while(i < combinations) {
+            int fscn = fscanf(file, "%lf\n",&num);
+            hot[i] = num;
+            i++;
+        }
+        fclose(file);
+        mod->hotspotcmps[mot] = hot;
+    }
    	}
 
   	//set up constant Bmat if desired
