@@ -389,12 +389,10 @@ int Site_listEmpty(){
  
 /*######start implementation of the interface of nucleotide to codon translation######*/  
 //!< Translate nucleotides into codons.
-void Nucleotides2Codons(align **data, option *io,model* mod)
-{
+void Nucleotides2Codons(align **data, option *io,model* mod){
   t_node_nucle2codon * root;
   t_node_listCodons * pointer;
   int i=0,j=0,k=0,condition=0,codon=0;
-  // int endStopCodons=0;
   char **alternativeCodons;
   int seqLen;
   

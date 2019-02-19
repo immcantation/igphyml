@@ -24,6 +24,7 @@ void finishOptions(option * io);
 
 int mainOptionSwitch(int opt, char * optarg, option * io);
 void setUpHLP17(option *io, model* mod);
+void setupRootFreqs(model* mod);
 void checkForRandStartTree(option * io);
 void checkModelCombinations(option * io);
 void adaptForM4(option * io);
@@ -33,7 +34,6 @@ void setupGeneticCode(option * io);
 void setupFreqs(option * io);
 void setupInitialRateMats(option * io);
 void setupOmegaCats(option * io);
-void setupPCM(option * io);
 void setupModelIdentifier(option * io);
 void setupFreqHandling(option * io);
 void setupKappa(option * io);

@@ -156,33 +156,25 @@ void Init_Node_Light(t_node *n, int num)
 
 /*********************************************************/
 
-void Make_Edge_Dirs(t_edge *b, t_node *a, t_node *d)
-{
+void Make_Edge_Dirs(t_edge *b, t_node *a, t_node *d){
   int i;
-  
-  if(a == b->rght)
-  {
+  if(a == b->rght){
     PhyML_Printf("\n. a->num = %3d ; d->num = %3d",a->num,d->num);
     PhyML_Printf("\n. Err in file %s at line %d\n",__FILE__,__LINE__);
     Warn_And_Exit("");
   }
-  if(d == b->left)
-  {
+  if(d == b->left){
     PhyML_Printf("\n. a->num = %3d ; d->num = %3d",a->num,d->num);
     PhyML_Printf("\n. Err in file %s at line %d\n",__FILE__,__LINE__);
     Warn_And_Exit("");
   }
   
   b->l_r = b->r_l = -1;
-  For(i,3)
-  {
-    if((a->v[i]) && (a->v[i] == d))
-    {
+  For(i,3){
+    if((a->v[i]) && (a->v[i] == d)){
       b->l_r  = i; /* we consider here that 'a' is on the left handside of 'b'*/
       a->b[i] = b;
-    }
-    if((d->v[i]) && (d->v[i] == a))
-    {
+    }if((d->v[i]) && (d->v[i] == a)){
       b->r_l  = i; /* we consider here that 'd' is on the right handside of 'b'*/
       d->b[i] = b;
     }
@@ -191,16 +183,13 @@ void Make_Edge_Dirs(t_edge *b, t_node *a, t_node *d)
   if(a->tax) {b->r_l = 0; For(i,3) if(d->v[i]==a) {b->l_r = i; break;}}
   
   b->l_v1 = b->l_v2 = b->r_v1 = b->r_v2 = -1;
-  For(i,3)
-  {
-    if(b->left->v[i] != b->rght)
-    {
+  For(i,3){
+    if(b->left->v[i] != b->rght){
       if(b->l_v1 < 0) b->l_v1 = i;
       else            b->l_v2 = i;
     }
     
-    if(b->rght->v[i] != b->left)
-    {
+    if(b->rght->v[i] != b->left){
       if(b->r_v1 < 0) b->r_v1 = i;
       else            b->r_v2 = i;
     }
@@ -213,18 +202,13 @@ void Make_Edge_Dirs(t_edge *b, t_node *a, t_node *d)
 void Make_Edge_Pars(t_edge *b, t_tree *tree)
 {
   /*   int site; */
-  
-  b->pars_l = (int *)mCalloc(tree->data->crunch_len,sizeof(int));
-  b->pars_r = (int *)mCalloc(tree->data->crunch_len,sizeof(int));
-  
-  
-  b->ui_l = (unsigned int *)mCalloc(tree->data->crunch_len,sizeof(unsigned int));
-  b->ui_r = (unsigned int *)mCalloc(tree->data->crunch_len,sizeof(unsigned int));
-  
-  
-  b->p_pars_l = (int *)mCalloc(tree->data->crunch_len*tree->mod->ns,sizeof(int ));
-  b->p_pars_r = (int *)mCalloc(tree->data->crunch_len*tree->mod->ns,sizeof(int ));
-  
+	 b->pars_l = (int *)mCalloc(tree->data->crunch_len,sizeof(int));
+  	 b->pars_r = (int *)mCalloc(tree->data->crunch_len,sizeof(int));
+  	 b->ui_l = (unsigned int *)mCalloc(tree->data->crunch_len,sizeof(unsigned int));
+  	 b->ui_r = (unsigned int *)mCalloc(tree->data->crunch_len,sizeof(unsigned int));
+  	 b->p_pars_l = (int *)mCalloc(tree->data->crunch_len*tree->mod->ns,sizeof(int ));
+  	 b->p_pars_r = (int *)mCalloc(tree->data->crunch_len*tree->mod->ns,sizeof(int ));
+
 }
 
 /*********************************************************/
@@ -348,9 +332,9 @@ t_node *Make_Node_Light(int num)
   n->l     = (phydbl *)mCalloc(3,sizeof(phydbl));
   n->score = (phydbl *)mCalloc(3,sizeof(phydbl));
   
-  n->partfreqs = mCalloc(2,sizeof(phydbl*));
-  n->partfreqs[0] = mCalloc(61,sizeof(phydbl));
-  n->partfreqs[1] = mCalloc(61,sizeof(phydbl));
+  int i;
+  n->partfreqs = mCalloc(7,sizeof(phydbl*));
+  For(i,7) n->partfreqs[i] = mCalloc(61,sizeof(phydbl));
 
   Init_Node_Light(n,num);
   
@@ -370,8 +354,7 @@ void Make_Node_Lk(t_node *n)
 
 /*********************************************************/
 
-void Detect_Align_File_Format(option *io, model* mod)
-{
+void Detect_Align_File_Format(option *io, model* mod){
   int c;char *m;
   fpos_t curr_pos;
   
@@ -379,16 +362,13 @@ void Detect_Align_File_Format(option *io, model* mod)
   
   errno = 0;
   
-  while((c=fgetc(mod->fp_in_align)) != EOF)
-  {
+  while((c=fgetc(mod->fp_in_align)) != EOF){
     if(errno) io->data_file_format = PHYLIP;
     else if(c == '>'){
     	io->data_file_format = FASTA;
     	if(!mod->quiet)printf("\nLooks like a fasta file..");
     	return;
-    }
-    else if(c == '#')
-    {
+    }else if(c == '#'){
       char s[10],t[6]="NEXUS";
       m=fgets(s,6,mod->fp_in_align);
       if(!strcmp(t,s)) 
@@ -413,11 +393,9 @@ void Uppercase(char *ch)
 
 /*********************************************************/
 
-calign *Compact_Data(align **data, option *io, model *mod)
-{
+calign *Compact_Data(align **data, option *io, model *mod){
   calign *cdata_tmp,*cdata;
   int i,j,k,site;
-  // int numsenseCodons;
   int n_patt,which_patt,n_invar;
   char **sp_names;
   int n_otu, n_sites;
@@ -430,29 +408,24 @@ calign *Compact_Data(align **data, option *io, model *mod)
   which_patt = 0;
   
   sp_names = (char **)mCalloc(n_otu,sizeof(char *));
-  For(i,n_otu)
-  {
+  For(i,n_otu){
     sp_names[i] = (char *)mCalloc(T_MAX_NAME,sizeof(char));
     strcpy(sp_names[i],data[i]->name);
   }
   
   if(mod->datatype==CODON) Nucleotides2Codons(data, io, mod);//!< Added by Marcelo. Translates nucleotides into codons.
   else{
-    if(mod->datatype==AA && io->convert_NT_to_AA){
-	//nothing yet
-    	printf("\n\nCan't use nucleotides or AAs\n\n"); //Ken 4/1/2017
-    	exit(EXIT_FAILURE);
-      }
+    if(mod->datatype==AA && io->convert_NT_to_AA)Warn_And_Exit("\n\nCan't use nucleotides or AAs\n\n"); //Ken 4/1/2017
   }
   
-  cdata_tmp = Make_Cseq(n_otu,data[0]->len,mod->state_len,data[0]->len,sp_names, io); //was io-> mod Ken 9/1/2018
+  //declare data structures associated with compacted sequence data
+  cdata_tmp = Make_Cseq(n_otu,data[0]->len,mod->state_len,data[0]->len,sp_names, io);
   proot     = (pnode *)Create_Pnode(T_MAX_ALPHABET);
   
   For(i,n_otu) free(sp_names[i]);
   free(sp_names);
   
-  if(data[0]->len%mod->state_len)//was io-> mod
-  {
+  if(data[0]->len%mod->state_len){//was io-> mod
     PhyML_Printf("\n. Sequence length is not a multiple of %d\n",mod->state_len); //was io-> mod
     Warn_And_Exit("");
   }
@@ -461,56 +434,40 @@ calign *Compact_Data(align **data, option *io, model *mod)
   n_ambigu = 0;
   is_ambigu = 0;
   
-  if(!mod->quiet && !compress) { PhyML_Printf("\n. WARNING: sequences are not compressed !\n");}
+  if(!mod->quiet && !compress){ PhyML_Printf("\n. WARNING: sequences are not compressed !\n");}
   
-  Fors(site,data[0]->len,mod->state_len) //was io-> mod
-  {
-    if(io->rm_ambigu) //remove columns with ambiguous data if requested
-    {
+  Fors(site,data[0]->len,mod->state_len){
+    if(io->rm_ambigu){ //remove columns with ambiguous data if requested by user
       is_ambigu = 0;
       For(j,n_otu) if(Is_Ambigu(data[j]->state+site,io->datatype,mod->state_len)) break; //was io-> mod
-      if(j != n_otu)
-      {
+      if(j != n_otu){
         is_ambigu = 1;
         n_ambigu++;
       }
     }
     
-    if(!is_ambigu)
-    {
-      if(compress)
-      {
+    if(!is_ambigu){
+      if(compress){ //not performed since io->colalias=1
         which_patt = -1;
         Traverse_Prefix_Tree(site,-1,&which_patt,&n_patt,data,io,proot,mod);
-        if(which_patt == n_patt-1) /* New pattern found */
-        {
+        if(which_patt == n_patt-1){ /* New pattern found */
           n_patt--;
           k=n_patt;
-        }
-        else
-        {
+        }else{
           k = n_patt-10;
         }
-      }
-      else
-      {
+      }else{
         k = n_patt;
       }
       
-      if(k == n_patt) /* add a new site pattern */
-      {
-        For(j,n_otu)
-        { 
+      if(k == n_patt){ /* add a new site pattern */
+        For(j,n_otu){
           Copy_One_State(data[j]->state+site, cdata_tmp->c_seq[j]->state+n_patt*mod->state_len, mod->state_len); //was io->mod
           if(io->datatype==CODON) CopyExtraFieldsCodon(data[j], site, cdata_tmp->c_seq[j],  n_patt);//!< Added by Marcelo.The name explains everything.
         }
-        
-        For(i,n_otu)
-        {
-          For(j,n_otu)
-          {
-            if (io->datatype==CODON)
-            {
+        For(i,n_otu){
+          For(j,n_otu){
+            if (io->datatype==CODON){
               if(!(Are_Compatible(cdata_tmp->c_seq[i]->state+n_patt*mod->state_len, //was io-> mod Ken 9/1/2018
                                   cdata_tmp->c_seq[j]->state+n_patt*mod->state_len,
                                   mod->state_len, //was io-> mod Ken 9/1/2018
@@ -523,12 +480,10 @@ calign *Compact_Data(align **data, option *io, model *mod)
           if(j != n_otu) break;
         }
         
-        if((j == n_otu) && (i == n_otu)) /* all characters at that site are compatible with one another the site may be invariant */
-        {
+        if((j == n_otu) && (i == n_otu)){ // all characters at that site are compatible with one another the site may be invariant
           if (io->datatype==CODON) cdata_tmp->invar[n_patt] = Intersect_Site_Alternatives(data, n_otu, site); //!< Added by Marcelo.The name explains everything.
           else 
-            For(j,n_otu)
-          {
+            For(j,n_otu){
             cdata_tmp->invar[n_patt] = Assign_State(cdata_tmp->c_seq[j]->state+n_patt*mod->state_len, io->datatype, mod->state_len); //was io-> mod Ken 9/1/2018
             if(cdata_tmp->invar[n_patt] > -1.) break; /*!< It is not actually (at least one state in the column is ambiguous).*/
           }
@@ -538,9 +493,7 @@ calign *Compact_Data(align **data, option *io, model *mod)
         cdata_tmp->sitepatt[site] = n_patt;
         cdata_tmp->wght[n_patt]  += 1;
         n_patt                   += 1;
-      }
-      else
-      {
+       }else{
         cdata_tmp->sitepatt[site]    = which_patt;
         cdata_tmp->wght[which_patt] += 1;
       }
@@ -548,39 +501,29 @@ calign *Compact_Data(align **data, option *io, model *mod)
   }
   
   data[0]->len -= n_ambigu;
-  
   cdata_tmp->init_len                   = data[0]->len;
   cdata_tmp->crunch_len                 = n_patt;
   For(i,n_otu) cdata_tmp->c_seq[i]->len = n_patt;
   
-  if(!io->quiet && !mod->quiet) PhyML_Printf("\n. %d patterns found (out of a total of %d sites). \n",n_patt,data[0]->len);
+  if(!io->quiet && !mod->quiet)
+	  PhyML_Printf("\n. %d patterns found (out of a total of %d sites). \n",n_patt,data[0]->len);
   
-  if((io->rm_ambigu) && (n_ambigu)) PhyML_Printf("\n. Removed %d columns of the alignment as they contain ambiguous characters (e.g., gaps) \n",n_ambigu);
-  
-  /*   For(i,n_otu) */
-  /*     { */
-  /*       For(j,cdata_tmp->crunch_len) */
-  /* 	{ */
-  /* 	  printf("%c",cdata_tmp->c_seq[i]->state[j*mod->state_len+1]); */  //was io-> mod Ken 9/1/2018
-  /* 	} */
-  /*       printf("\n"); */
-  /*     } */
+  if((io->rm_ambigu) && (n_ambigu))
+	  PhyML_Printf("\n. Removed %d columns of the alignment as they contain ambiguous characters (e.g., gaps) \n",n_ambigu);
   
   n_invar=0;
-  For(i,cdata_tmp->crunch_len) 
-  {
+  For(i,cdata_tmp->crunch_len){
     if(cdata_tmp->invar[i] > -1.) n_invar+=(int)cdata_tmp->wght[i];
-    
   }
   
-  if(!io->quiet && !mod->quiet) PhyML_Printf("\n. %d sites without polymorphism (%.2f%c).\n",n_invar,100.*(phydbl)n_invar/data[0]->len,'%');
+  if(!io->quiet && !mod->quiet)
+	  PhyML_Printf("\n. %d sites without polymorphism (%.2f%c).\n",n_invar,100.*(phydbl)n_invar/data[0]->len,'%');
   
   cdata_tmp->obs_pinvar = (phydbl)n_invar/data[0]->len;
   
   n_sites = 0;
   For(i,cdata_tmp->crunch_len) n_sites += cdata_tmp->wght[i];
-  if(n_sites != data[0]->len / mod->state_len)  //was io-> mod Ken 9/1/2018
-  {
+  if(n_sites != data[0]->len / mod->state_len){  //was io-> mod Ken 9/1/2018
     PhyML_Printf("\n. Err in file %s at line %d\n",__FILE__,__LINE__);
     Warn_And_Exit("");
   }else if(io->datatype == CODON){
@@ -593,13 +536,13 @@ calign *Compact_Data(align **data, option *io, model *mod)
           break;
         case FMODEL:
           break;
-        case ROOT:{
+        case ROOT: case MROOT:{
         	 int modeli;
         	 For(modeli,mod->nomega_part){
+        		 //Get_Base_Freqs_CODONS_FaXb(cdata_tmp, data, CF3X4, mod);
         		 Get_Root_Freqs(cdata_tmp, data, mod->rootname, mod->root_pi[modeli], mod, modeli);
-        		 if(mod->optDebug)For(j,61)printf("rootpi\t%lf\n",mod->root_pi[modeli][j]);
+        		 if(mod->optDebug)For(j,61)printf("rootpi\t%d\t%lf\n",modeli,mod->root_pi[modeli][j]);
         	 }
-
           break;
         }
         default:  
@@ -610,18 +553,17 @@ calign *Compact_Data(align **data, option *io, model *mod)
     }
     Free_Prefix_Tree(proot,T_MAX_ALPHABET);
     return cdata_tmp;
-  }
-  else {/* Uniform state frequency distribution.*/}
+  }else{/* Uniform state frequency distribution.*/}
   
   cdata = Copy_Cseq(cdata_tmp,io,mod);
   
   Free_Cseq(cdata_tmp);                                                                                   
   Free_Prefix_Tree(proot,T_MAX_ALPHABET);
+
   return cdata;
 }
 /*********************************************************/
-calign *Compact_Cdata(calign *data, option *io, model* mod)
-{
+calign *Compact_Cdata(calign *data, option *io, model* mod){
   calign *cdata;
   int i,j,k,site;
   int n_patt,which_patt;
@@ -638,17 +580,14 @@ calign *Compact_Cdata(calign *data, option *io, model* mod)
   cdata->invar  = (short int *)mCalloc(data->crunch_len,sizeof(short int));
   
   cdata->crunch_len = cdata->init_len = -1;
-  For(j,n_otu)
-  {
+  For(j,n_otu){
     cdata->c_seq[j]            = (align *)mCalloc(1,sizeof(align));
     cdata->c_seq[j]->name      = (char *)mCalloc(T_MAX_NAME,sizeof(char));
     strcpy(cdata->c_seq[j]->name,data->c_seq[j]->name);
     cdata->c_seq[j]->state     = (char *)mCalloc(data->crunch_len,sizeof(char));
     cdata->c_seq[j]->is_ambigu = (short int *)mCalloc(data->crunch_len,sizeof(short int));
     cdata->c_seq[j]->state[0]  = data->c_seq[j]->state[0];
-    //cdata->c_seq[j]->state  = data->c_seq[j]->state;
-    if(io->datatype==CODON)//! Added by Marcelo.
-    {
+    if(io->datatype==CODON){
       cdata->c_seq[j]->alternativeCodons=(char **)mCalloc(data->crunch_len,sizeof(char*));
     }
   }
@@ -656,122 +595,90 @@ calign *Compact_Cdata(calign *data, option *io, model* mod)
   
   n_patt = which_patt =  0;
   
-  For(site,data->crunch_len)
-  {
-    if(data->wght[site])
-    {
-      For(k,n_patt)
-	    {
-	      For(j,n_otu)
-        {
-          if(io->datatype==CODON) //! Added by Marcelo.
-          {
-            if(cdata->c_seq[j]->state+k != data->c_seq[j]->state+site) break;
-          }
-          else
-          {
-            if(strncmp(cdata->c_seq[j]->state+k*mod->state_len,  //was io-> mod Ken 9/1/2018
+  For(site,data->crunch_len){
+    if(data->wght[site]){
+      For(k,n_patt){
+	      For(j,n_otu){
+	    	  if(io->datatype==CODON){
+	    		  if(cdata->c_seq[j]->state+k != data->c_seq[j]->state+site) break;
+	    	  }else{
+	    		  if(strncmp(cdata->c_seq[j]->state+k*mod->state_len,  //was io-> mod Ken 9/1/2018
                        data->c_seq[j]->state+site*mod->state_len,
                        mod->state_len))
-              break;
-          }
-        }
-	      
-	      if(j == n_otu)
-        {
-          which_patt = k;
-          break;
-        }
+	    			  break;
+	    	  }
+	      }
+	      if(j == n_otu){
+	    	  which_patt = k;
+	    	  break;
+	      }
 	    }
-      
-      /*       /\* TO DO *\/ */
-      /*       k = n_patt; */
-      
-      if(k == n_patt)
-	    {
-	      For(j,n_otu)
-	      { 
-          Copy_One_State(data->c_seq[j]->state+site*mod->state_len,  //was io-> mod Ken 9/1/2018
+
+      if(k == n_patt){
+	      For(j,n_otu){
+	    	  Copy_One_State(data->c_seq[j]->state+site*mod->state_len,  //was io-> mod Ken 9/1/2018
                          cdata->c_seq[j]->state+n_patt*mod->state_len,
                          mod->state_len);
-          if(io->datatype==CODON) CopyExtraFieldsCodon(data->c_seq[j], site, cdata->c_seq[j],  n_patt);//!< Added by Marcelo.The name explains everything.
+	    	  if(io->datatype==CODON) CopyExtraFieldsCodon(data->c_seq[j], site, cdata->c_seq[j],  n_patt);//!< Added by Marcelo.The name explains everything.
 	      }
-	      For(i,n_otu)
-	      {
-          For(j,n_otu)
-          {
-            if(io->datatype==CODON)
-            {
-              if(!(Are_Compatible(cdata->c_seq[i]->state+n_patt*mod->state_len,  //was io-> mod Ken 9/1/2018
+	      For(i,n_otu){
+	    	  For(j,n_otu){
+	    		  if(io->datatype==CODON){
+	    			  if(!(Are_Compatible(cdata->c_seq[i]->state+n_patt*mod->state_len,  //was io-> mod Ken 9/1/2018
                                   cdata->c_seq[j]->state+n_patt*mod->state_len,
                                   mod->state_len,
                                   io->datatype,cdata->c_seq[i]->alternativeCodons[n_patt], cdata->c_seq[j]->alternativeCodons[n_patt]))) break;
-            }
-            else if(!(Are_Compatible(cdata->c_seq[i]->state+n_patt*mod->state_len,  //was io-> mod Ken 9/1/2018
+	    		  }
+	    		  else if(!(Are_Compatible(cdata->c_seq[i]->state+n_patt*mod->state_len,  //was io-> mod Ken 9/1/2018
                                      cdata->c_seq[j]->state+n_patt*mod->state_len,
                                      mod->state_len,
                                      io->datatype,0, 0))) break;
-          }
-          if(j != n_otu) break;
+	    	  	  }
+	    	 if(j != n_otu) break;
 	      }
 	      
-	      if((j == n_otu) && (i == n_otu)) 
-	      {
-          if (io->datatype==CODON) cdata->invar[n_patt] = Intersect_Site_Alternatives(data->c_seq, n_otu, site); //!< Added by Marcelo.The name explains everything.
-          else 
-            For(j,n_otu)
-          {
-            cdata->invar[n_patt] = Assign_State(cdata->c_seq[j]->state+n_patt*mod->state_len,  //was io-> mod Ken 9/1/2018
+	      if((j == n_otu) && (i == n_otu)){
+	    	  if (io->datatype==CODON) cdata->invar[n_patt] = Intersect_Site_Alternatives(data->c_seq, n_otu, site); //!< Added by Marcelo.The name explains everything.
+	    	  else
+	    		  For(j,n_otu){
+	    		  cdata->invar[n_patt] = Assign_State(cdata->c_seq[j]->state+n_patt*mod->state_len,  //was io-> mod Ken 9/1/2018
                                                 io->datatype,
                                                 mod->state_len);
-            if(cdata->invar[n_patt] > -1.) break;
-          }
-	      }
-	      else cdata->invar[n_patt] = -1;
+	    		  if(cdata->invar[n_patt] > -1.) break;
+          	}
+	      }else cdata->invar[n_patt] = -1;
 	      
 	      cdata->wght[n_patt] += data->wght[site];
 	      n_patt+=1;
-	    }
-      else cdata->wght[which_patt] += data->wght[site];
-      
-      /*       Print_Site(cdata,k,n_otu,"\n",io->stepsize); */
+	   } else cdata->wght[which_patt] += data->wght[site];
     }
   }
-  
   cdata->init_len   = data->crunch_len;
   cdata->crunch_len = n_patt;
   For(i,n_otu) cdata->c_seq[i]->len = n_patt;
-  
   
   return cdata;
 }
 
 /*********************************************************/
 
-void Traverse_Prefix_Tree(int site, int seqnum, int *patt_num, int *n_patt, align **data, option *io, pnode *n,model* mod)
-{
+void Traverse_Prefix_Tree(int site, int seqnum, int *patt_num, int *n_patt, align **data, option *io, pnode *n,model* mod){
   int ret_val;
   
   ret_val = -1;
   
-  if(seqnum == mod->n_otu-1)
-  {
+  if(seqnum == mod->n_otu-1){
     n->weight++;
-    if(n->weight == 1)
-    {
+    if(n->weight == 1){
       n->num = *n_patt;
       (*n_patt) += 1;
     }
     (*patt_num) = n->num;
     return;
-  }
-  else
-  {
+  }else{
     int next_state;
-    
     next_state = -1;
     next_state = Assign_State_With_Ambiguity(data[seqnum+1]->state+site, io->datatype, mod->state_len);  //was io-> mod Ken 9/1/2018
-    
     if(!n->next[next_state]) n->next[next_state] = Create_Pnode(T_MAX_ALPHABET);
     Traverse_Prefix_Tree(site,seqnum+1,patt_num,n_patt,data,io,n->next[next_state],mod);
   }
@@ -779,11 +686,9 @@ void Traverse_Prefix_Tree(int site, int seqnum, int *patt_num, int *n_patt, alig
 
 /*********************************************************/
 
-pnode *Create_Pnode(int size)
-{
+pnode *Create_Pnode(int size){
   pnode *n;
   int i;
-  
   n = (pnode *)mCalloc(1,sizeof(pnode ));
   n->next = (pnode **)mCalloc(size,sizeof(pnode *));
   For(i,size) n->next[i] = NULL;
@@ -794,16 +699,12 @@ pnode *Create_Pnode(int size)
 
 /*********************************************************/
 
-t_tree *Read_Tree_File_Phylip(FILE *fp_input_tree)
-{
+t_tree *Read_Tree_File_Phylip(FILE *fp_input_tree){
   char *line;
   t_tree *tree;
   int i;
   char c;
-  
-  
-  do
-  {
+  do{
     c=fgetc(fp_input_tree);
   }
   while((c != '(') && (c != EOF));
@@ -813,17 +714,14 @@ t_tree *Read_Tree_File_Phylip(FILE *fp_input_tree)
   line = (char *)mCalloc(1,sizeof(char));
   
   i=0;
-  for(;;)
-  {
-    if((c == ' ') || (c == '\n'))
-    {
+  for(;;){
+    if((c == ' ') || (c == '\n')){
       c=fgetc(fp_input_tree);
       if(c == EOF || c == ';') break;
       else continue;
     }
     
-    if(c == '[')
-    {
+    if(c == '['){
       Skip_Comment(fp_input_tree);
       c = fgetc(fp_input_tree);
       if(c == EOF || c == ';') break;
@@ -865,8 +763,7 @@ void Connect_One_Edge_To_Two_Nodes(t_node *a, t_node *d, t_edge *b, t_tree *tree
   dir_a_d = -1;
   For(i,3) if(a->v[i] == d) {dir_a_d = i; break;}
   
-  if(dir_a_d == -1)
-  {
+  if(dir_a_d == -1){
     PhyML_Printf("\n. Err in file %s at line %d\n",__FILE__,__LINE__);
     Warn_And_Exit("");
   }
@@ -1016,103 +913,6 @@ void Qksort_Matrix(phydbl **A, int col, int ilo, int ihi)
   Qksort_Matrix(A, col, uhi + 1, ihi);
 }
 
-/********************************************************/
-
-void Print_Site_Lk(t_tree *tree, FILE *fp)
-{
-    int site;
-    int catg;
-    int el;
-    phydbl invar;
-    phydbl postmean;
-    
-    token *rootTkn = Emit_Root_Token();
-    token *currTkn = rootTkn;
-    
-    if(!tree->mod->print_site_lnl) {
-        PhyML_Printf("\n. Err in file %s at line %d\n",__FILE__,__LINE__);
-        Warn_And_Exit("");
-    }
-    
-    if(!tree->mod->print_trace) {
-        currTkn = Emit_Out_Token(currTkn, "Header", "Header", COMMENTTKN, TFSTRING, "%s", "Note : P(D|M) is the probability of site D given the model M (i.e., the site likelihood)");
-        if(tree->mod->n_catg > 1 || tree->mod->invar) {
-            currTkn = Emit_Out_Token(currTkn, "Header", "Header", COMMENTTKN, TFSTRING, "%s", "P(D|M,rr[x]) is the probability of site D given the model M and the relative rate");
-            currTkn = Emit_Out_Token(currTkn, "Header", "Header", COMMENTTKN, TFSTRING, "%s", "of evolution rr[x], where x is the class of rate to be considered.");
-            currTkn = Emit_Out_Token(currTkn, "Header", "Header", COMMENTTKN, TFSTRING, "%s", "We have P(D|M) = \\sum_x P(x) x P(D|M,rr[x]).");
-        }
-        
-        currTkn = Emit_Out_Token(currTkn, "TblHeader", "TblHeader", COMMENTTKN, TFSTRING, "%s", "Fields are as follows:");
-        currTkn = Emit_Out_Token(currTkn, "TblHeader", "TblHeader", COMMENTTKN, TFSTRING, "%s", "Site, P(D|M)");
-        
-        if(tree->mod->n_catg > 1) {
-            For(catg,tree->mod->n_catg) {
-                char *s;
-                int temp = asprintf(&s,"P(D|M,rr[%d]=%5.4f)",catg+1,tree->mod->gamma_rr[catg]);//changed by Ken 12/1/2017
-                currTkn = Emit_Out_Token(currTkn, "TblHeader", "TblHeader", COMMENTTKN, TFSTRING, "%s", s);
-            }
-            
-            currTkn = Emit_Out_Token(currTkn, "TblHeader", "TblHeader", COMMENTTKN, TFSTRING, "%s", "Posterior Mean");
-        }
-        
-        
-        if(tree->mod->invar) {
-            currTkn = Emit_Out_Token(currTkn, "TblHeader", "TblHeader", COMMENTTKN, TFSTRING, "%s", "P(D|M,rr[0]=0)");
-        }
-        
-        currTkn = Emit_Out_Token(currTkn, "Sites", "Sites", SETSTARTTKN, TFSTRING, "%s", "");
-        For(site,tree->data->init_len) {
-            char *t;
-            int temp2 = asprintf(&t, "%i", site+1); //changed by Ken 12/1/2017
-            currTkn = Emit_Out_Token(currTkn, t, t, SETSTARTTKN, TFNUMERIC, "%s", "");
-            
-            el = 2;
-            if(tree->mod->n_catg > 1) {
-                el += tree->mod->n_catg + 1;
-            }
-            if(tree->mod->invar) {
-                el += 1;
-            }
-            currTkn = Emit_Out_Token(currTkn, "", "", TBLSTARTTKN, TFNUMERIC, "%i", el);
-            
-            currTkn = Emit_Out_Token(currTkn, "P(D|M)", "P(D|M)", SCALARTKN, TFNUMERIC, "%-16g", (phydbl)tree->cur_site_lk[tree->data->sitepatt[site]]);
-            
-            if(tree->mod->n_catg > 1) {
-                for(catg = 0; catg < tree->mod->n_catg; catg++) {
-                    char *s;
-                    int temp = asprintf(&s,"P(D|M,rr[%d]=%5.4f)",catg+1,tree->mod->gamma_rr[catg]); //changed by Ken 12/1/2017
-                    currTkn = Emit_Out_Token(currTkn, s, s, SCALARTKN, TFNUMERIC, "%-22g", (phydbl)tree->log_site_lk_cat[catg][tree->data->sitepatt[site]]);
-                }
-                postmean = .0;
-                For(catg, tree->mod->n_catg)
-                    postmean += tree->mod->gamma_rr[catg] *
-                                tree->log_site_lk_cat[catg][tree->data->sitepatt[site]] *
-                                tree->mod->gamma_r_proba[catg];
-                postmean /= tree->cur_site_lk[tree->data->sitepatt[site]];
-                
-                currTkn = Emit_Out_Token(currTkn, "Posterior Mean", "PostMean", SCALARTKN, TFNUMERIC, "%-22g", postmean);
-            }
-            if(tree->mod->invar) {
-                if((phydbl)tree->data->invar[tree->data->sitepatt[site]] > -0.5) {
-                    invar = tree->mod->pi[tree->data->invar[tree->data->sitepatt[site]]];
-                } else {
-                    invar = 0.0;
-                }
-                currTkn = Emit_Out_Token(currTkn, "P(D|M,rr[0]=0)", "P(D|M,rr[0]=0)", SCALARTKN, TFNUMERIC, "%-16g", invar);
-            }
-            
-            currTkn = Emit_Out_Token(currTkn, "", "", TBLENDTKN, TFNUMERIC, "%i", el);
-            currTkn = Emit_Out_Token(currTkn, t, t, SETENDTKN, TFNUMERIC, "%s", "");
-        }
-    } else {
-        For(site,tree->data->init_len)
-        currTkn = Emit_Out_Token(currTkn, "", "", SCALARTKN, TFNUMERIC, "%-16g", tree->cur_site_lk[tree->data->sitepatt[site]]);
-    }
-    currTkn = Emit_Out_Token(currTkn, "Sites", "Sites", SETENDTKN, TFSTRING, "%s", "");
-    
-    Output_Tokens(rootTkn, tree->mod->out_stats_format, fp);
-}
-
 
 /*********************************************************/
 
@@ -1124,26 +924,20 @@ void Order_Tree_CSeq(t_tree *tree, calign *cdata)
   n_otu_tree  = tree->n_otu;
   n_otu_cdata = cdata->n_otu;
   
-  if(n_otu_tree != n_otu_cdata) 
-  {
+  if(n_otu_tree != n_otu_cdata){
     PhyML_Printf("\n. Number of taxa in the tree: %d, number of sequences: %d.\n",n_otu_tree,n_otu_cdata);
     Warn_And_Exit("\n. The number of tips in the tree is not the same as the number of sequences\n");
   }
-  
-  For(i,MAX(n_otu_tree,n_otu_cdata))
-  {
-    For(j,MIN(n_otu_tree,n_otu_cdata))
-	  {
+  For(i,MAX(n_otu_tree,n_otu_cdata)){
+    For(j,MIN(n_otu_tree,n_otu_cdata)){
 	    if(!strcmp(tree->noeud[i]->name,cdata->c_seq[j]->name))
 	      break;
-	  }
+	}
     
-    if(j==MIN(n_otu_tree,n_otu_cdata))
-	  {
+    if(j==MIN(n_otu_tree,n_otu_cdata)){
 	    PhyML_Printf("\n. Err: %s is not found in sequence data set\n",tree->noeud[i]->name);
 	    Warn_And_Exit("");
-	  }
-    
+	}
     buff            = cdata->c_seq[j];
     cdata->c_seq[j] = cdata->c_seq[i];
     cdata->c_seq[i] = buff;
@@ -1169,8 +963,7 @@ matrix *Make_Mat(int n_otu)
   mat->tip_node = (t_node **)mCalloc(n_otu,sizeof(t_node *));
   
   
-  For(i,n_otu)
-  {
+  For(i,n_otu){
     mat->P[i]    = (phydbl *)mCalloc(n_otu,sizeof(phydbl));
     mat->Q[i]    = (phydbl *)mCalloc(n_otu,sizeof(phydbl));
     mat->dist[i] = (phydbl *)mCalloc(n_otu,sizeof(phydbl));
@@ -1191,8 +984,7 @@ void Init_Mat(matrix *mat, calign *data)
   mat->curr_int = mat->n_otu;
   mat->method = 1;
   
-  For(i,data->n_otu)
-  {
+  For(i,data->n_otu){
     strcpy(mat->name[i],data->c_seq[i]->name);
     mat->on_off[i] = 1;
   }
@@ -1200,16 +992,13 @@ void Init_Mat(matrix *mat, calign *data)
 
 /*********************************************************/
 
-t_tree *Make_Tree_From_Scratch(int n_otu, calign *data)
-{
+t_tree *Make_Tree_From_Scratch(int n_otu, calign *data){
   t_tree *tree;
-  
   tree = Make_Tree(n_otu);
   Make_All_Tree_Nodes(tree);
   Make_All_Tree_Edges(tree);
   Make_Tree_Path(tree);
-  if(data)
-  {
+  if(data){
     Copy_Tax_Names_To_Tip_Labels(tree,data);
     tree->data = data;
   }
@@ -1218,10 +1007,8 @@ t_tree *Make_Tree_From_Scratch(int n_otu, calign *data)
 
 /*********************************************************/
 
-t_tree *Make_Tree(int n_otu)
-{
+t_tree *Make_Tree(int n_otu){
   t_tree *tree;
-  // int i;
   tree = (t_tree *)mCalloc(1,sizeof(t_tree ));
   Init_Tree(tree,n_otu);
   tree->t_dir = (short int *)mCalloc((2*n_otu-2)*(2*n_otu-2),sizeof(int));
@@ -1230,21 +1017,16 @@ t_tree *Make_Tree(int n_otu)
 
 /*********************************************************/
 
-void Make_Tree_Path(t_tree *tree)
-{
+void Make_Tree_Path(t_tree *tree){
   tree->curr_path = (t_node **)mCalloc(tree->n_otu,sizeof(t_node *));
 }
 
 /*********************************************************/
 
-void Make_All_Tree_Nodes(t_tree *tree)
-{
+void Make_All_Tree_Nodes(t_tree *tree){
   int i;
-  
   tree->noeud = (t_node **)mCalloc(2*tree->n_otu-1,sizeof(t_node *));
-  
-  For(i,2*tree->n_otu-1)
-  {
+  For(i,2*tree->n_otu-1){
     tree->noeud[i] = (t_node *)Make_Node_Light(i);
     if(i < tree->n_otu) tree->noeud[i]->tax = 1;
     else                tree->noeud[i]->tax = 0;
@@ -1253,8 +1035,7 @@ void Make_All_Tree_Nodes(t_tree *tree)
 
 /*********************************************************/
 
-void Make_All_Tree_Edges(t_tree *tree)
-{
+void Make_All_Tree_Edges(t_tree *tree){
   int i;
   tree->t_edges      = (t_edge **)mCalloc(2*tree->n_otu-2,sizeof(t_edge *));
   For(i,2*tree->n_otu-2) tree->t_edges[i] = (t_edge *)Make_Edge_Light(NULL,NULL,i);
@@ -1262,142 +1043,13 @@ void Make_All_Tree_Edges(t_tree *tree)
 
 /*********************************************************/
 
-void Copy_Tax_Names_To_Tip_Labels(t_tree *tree, calign *data)
-{
+void Copy_Tax_Names_To_Tip_Labels(t_tree *tree, calign *data){
   int i;
-  
-  For(i,tree->n_otu)
-  {
-    /*tree->noeud[i]->name = (char *)mCalloc((int)strlen(data->c_seq[i]->name)+1,sizeof(char));*///!<Commented by Marcelo.
+  For(i,tree->n_otu){
     strcpy(tree->noeud[i]->ori_name, tree->noeud[i]->name);//!<Changed by Marcelo.
     strcpy(tree->noeud[i]->name,data->c_seq[i]->name);
     tree->noeud[i]->tax = 1;
     tree->noeud[i]->num = i;
-  }
-}
-
-/*********************************************************/
-
-void Share_Lk_Struct(t_tree *t_full, t_tree *t_empt)
-{
-  int i,j,n_otu;
-  t_edge *b_e,*b_f;
-  t_node *n_e, *n_f;
-  
-  n_otu                   = t_full->n_otu;
-  t_empt->n_root          = t_full->n_root;
-  t_empt->e_root          = t_full->e_root;
-  t_empt->c_lnL_sorted    = t_full->c_lnL_sorted;
-  t_empt->log_site_lk_cat = t_full->log_site_lk_cat;
-  t_empt->cur_site_lk     = t_full->cur_site_lk;
-  t_empt->old_site_lk     = t_full->old_site_lk;
-  t_empt->triplet_struct  = t_full->triplet_struct;
-  t_empt->log_lks_aLRT    = t_full->log_lks_aLRT;
-  t_empt->site_lk_cat     = t_full->site_lk_cat;
-  
-  For(i,2*n_otu-3)
-  {
-    b_f = t_full->t_edges[i];
-    b_e = t_empt->t_edges[i];
-    
-    b_e->Pij_rr = b_f->Pij_rr;
-    
-    b_e->nni = b_f->nni;
-  }
-  
-  
-  for(i=n_otu;i<2*n_otu-2;i++)
-  {
-    n_f = t_full->noeud[i];
-    n_e = t_empt->noeud[i];
-    
-    For(j,3)
-    {
-      if(n_f->b[j]->left == n_f)
-	    {
-	      if(n_e->b[j]->left == n_e)
-        {
-          n_e->b[j]->p_lk_left          = n_f->b[j]->p_lk_left;
-          n_e->b[j]->sum_scale_left     = n_f->b[j]->sum_scale_left;
-          n_e->b[j]->sum_scale_left_cat = n_f->b[j]->sum_scale_left_cat;
-          n_e->b[j]->p_lk_tip_l         = n_f->b[j]->p_lk_tip_l;
-        }
-	      else
-        {
-          n_e->b[j]->p_lk_rght          = n_f->b[j]->p_lk_left;
-          n_e->b[j]->sum_scale_rght     = n_f->b[j]->sum_scale_left;
-          n_e->b[j]->sum_scale_rght_cat = n_f->b[j]->sum_scale_left_cat;
-          n_e->b[j]->p_lk_tip_r         = n_f->b[j]->p_lk_tip_l;
-        }
-	    }
-      else
-	    {
-	      if(n_e->b[j]->rght == n_e)
-        {
-          n_e->b[j]->p_lk_rght          = n_f->b[j]->p_lk_rght;
-          n_e->b[j]->sum_scale_rght     = n_f->b[j]->sum_scale_rght;
-          n_e->b[j]->sum_scale_rght_cat = n_f->b[j]->sum_scale_rght_cat;
-          n_e->b[j]->p_lk_tip_r         = n_f->b[j]->p_lk_tip_r;
-        }
-	      else
-        {
-          n_e->b[j]->p_lk_left          = n_f->b[j]->p_lk_rght;
-          n_e->b[j]->sum_scale_left     = n_f->b[j]->sum_scale_rght;
-          n_e->b[j]->sum_scale_left_cat = n_f->b[j]->sum_scale_rght_cat;
-          n_e->b[j]->p_lk_tip_l         = n_f->b[j]->p_lk_tip_r;
-        }
-	    }
-    }
-  }
-  
-  For(i,n_otu)
-  {
-    n_f = t_full->noeud[i];
-    n_e = t_empt->noeud[i];
-    
-    if(n_f->b[0]->rght == n_f)
-    {
-      n_e->b[0]->p_lk_rght          = n_f->b[0]->p_lk_rght;
-      n_e->b[0]->sum_scale_rght     = n_f->b[0]->sum_scale_rght;
-      n_e->b[0]->sum_scale_rght_cat = n_f->b[0]->sum_scale_rght_cat;
-      n_e->b[0]->p_lk_tip_r         = n_f->b[0]->p_lk_tip_r;
-    }
-    else
-    {
-      PhyML_Printf("\n. Err in file %s at line %d\n",__FILE__,__LINE__);
-      Warn_And_Exit("");
-    }
-  }
-}
-
-/*********************************************************/
-
-void Share_Spr_Struct(t_tree *t_full, t_tree *t_empt)
-{
-  t_empt->size_spr_list = t_full->size_spr_list;
-  t_empt->spr_list      = t_full->spr_list;
-  t_empt->best_spr      = t_full->best_spr;
-}
-
-/*********************************************************/
-
-void Share_Pars_Struct(t_tree *t_full, t_tree *t_empt)
-{
-  int i;
-  
-  t_empt->site_pars = t_full->site_pars;
-  t_empt->step_mat  = t_full->step_mat;
-  
-  For(i,2*t_full->n_otu-3)
-  {
-    t_empt->t_edges[i]->ui_l     = t_full->t_edges[i]->ui_l;
-    t_empt->t_edges[i]->ui_r     = t_full->t_edges[i]->ui_r;
-    
-    t_empt->t_edges[i]->pars_l   = t_full->t_edges[i]->pars_l;
-    t_empt->t_edges[i]->pars_r   = t_full->t_edges[i]->pars_r;
-    
-    t_empt->t_edges[i]->p_pars_l = t_full->t_edges[i]->p_pars_l;
-    t_empt->t_edges[i]->p_pars_r = t_full->t_edges[i]->p_pars_r;
   }
 }
 
@@ -1408,12 +1060,9 @@ int Sort_Edges_NNI_Score(t_tree *tree, t_edge **sorted_edges, int n_elem)
   int i,j;
   t_edge *buff;
   
-  For(i,n_elem-1)
-  {
-    for(j=i+1;j<n_elem;j++)
-    {
-      if(sorted_edges[j]->nni->score  < sorted_edges[i]->nni->score)
-	    {
+  For(i,n_elem-1){
+    for(j=i+1;j<n_elem;j++){
+      if(sorted_edges[j]->nni->score  < sorted_edges[i]->nni->score){
 	      buff = sorted_edges[j];
 	      sorted_edges[j] = sorted_edges[i];
 	      sorted_edges[i] = buff;
@@ -1460,13 +1109,11 @@ void NNI(t_tree *tree, t_edge *b_fcus, int do_swap)
   v4                     = b_fcus->rght->v[b_fcus->r_v2];
   
   
-  if(v1->num < v2->num)
-  {
+  if(v1->num < v2->num){
     PhyML_Printf("\n. Err in file %s at line %d\n",__FILE__,__LINE__);
     Warn_And_Exit("");
   }
-  if(v3->num < v4->num)
-  {
+  if(v3->num < v4->num){
     PhyML_Printf("\n. Err in file %s at line %d\n",__FILE__,__LINE__);
     Warn_And_Exit("");
   }
@@ -1477,17 +1124,6 @@ void NNI(t_tree *tree, t_edge *b_fcus, int do_swap)
   Swap(v2,b_fcus->left,b_fcus->rght,v3,tree);
   tree->both_sides = 1;
   
- // int br;
-  	//      	  int n_edges=2*tree->n_otu-3;
-  	//      	  For(br,n_edges) Update_PMat_At_Given_Edge(tree->t_edges[br],tree);
-  	//      Get_UPP(tree->noeud[tree->mod->startnode], tree->noeud[tree->mod->startnode]->v[0], tree);
- /* if(tree->mod->whichrealmodel <= HLP17){
-	  if(b_fcus->anc_node->num != tree->mod->startnode){
- 	  	  Fill_UPP_single(tree,b_fcus);
-  	  }else{
-	  	  Fill_UPP_root(tree,b_fcus);
-  	  }
-  }*/
   lk1_init = Update_Lk_At_Given_Edge(b_fcus,tree);
   
   l_infa = 10.*b_fcus->l;
@@ -1498,31 +1134,12 @@ void NNI(t_tree *tree, t_edge *b_fcus, int do_swap)
     Fast_Br_Len(b_fcus,tree,1);
     lk1 = Lk_At_Given_Edge(b_fcus,tree);
   }else{
-	 //  int br;
-	//      	  int n_edges=2*tree->n_otu-3;
-	//      	  For(br,n_edges) Update_PMat_At_Given_Edge(tree->t_edges[br],tree);
-/*  if(tree->mod->whichrealmodel <= HLP17){
-	  if(b_fcus->anc_node->num != tree->mod->startnode){
-		  Fill_UPP_single(tree,b_fcus);
-	  }else{
-		  Fill_UPP_root(tree,b_fcus);
-	  }
-  }*/
-
    lk1 = Br_Len_Brent(l_infa,l_max,l_infb,
                        tree->mod->s_opt->min_diff_lk_local,
                        b_fcus,tree,
                        tree->mod->s_opt->brent_it_max,
                        tree->mod->s_opt->quickdirty);
     Update_PMat_At_Given_Edge(b_fcus,tree);
-
- /*  if(tree->mod->whichrealmodel <= HLP17){
-    if(b_fcus->anc_node->num != tree->mod->startnode){
-   	  Fill_UPP_single(tree,b_fcus);
-    }else{
-   	  Fill_UPP_root(tree,b_fcus);
-    }
-   }*/
   }
   
   if(lk1 < lk1_init - tree->mod->s_opt->min_diff_lk_local){
@@ -1533,24 +1150,12 @@ void NNI(t_tree *tree, t_edge *b_fcus, int do_swap)
   
   l1  = b_fcus->l;
   Swap(v3,b_fcus->left,b_fcus->rght,v2,tree);
+
   /***********/
   
-  
-  /***********/
   Swap(v2,b_fcus->left,b_fcus->rght,v4,tree);
   b_fcus->l = bl_init;
   tree->both_sides = 1;
-  	 // n_edges=2*tree->n_otu-3;
-  	 //     	  For(br,n_edges) Update_PMat_At_Given_Edge(tree->t_edges[br],tree);
-  	 //     Get_UPP(tree->noeud[tree->mod->startnode], tree->noeud[tree->mod->startnode]->v[0], tree);
-
-  /*if(tree->mod->whichrealmodel <= HLP17){
-	  if(b_fcus->anc_node->num != tree->mod->startnode){
-		  Fill_UPP_single(tree,b_fcus);
-	  }else{
-		  Fill_UPP_root(tree,b_fcus);
-	  }
-  }*/
 
   lk2_init = Update_Lk_At_Given_Edge(b_fcus,tree);
   
@@ -1564,27 +1169,16 @@ void NNI(t_tree *tree, t_edge *b_fcus, int do_swap)
   }else{
 	int br;
 	int n_edges=2*tree->n_otu-3;
-	 //   For(br,n_edges) Update_PMat_At_Given_Edge(tree->t_edges[br],tree);
-	//      Get_UPP(tree->noeud[tree->mod->startnode], tree->noeud[tree->mod->startnode]->v[0], tree);
-    
+
     lk2 = Br_Len_Brent(l_infa,l_max,l_infb,
                        tree->mod->s_opt->min_diff_lk_local,
                        b_fcus,tree,
                        tree->mod->s_opt->brent_it_max,
                        tree->mod->s_opt->quickdirty);
     Update_PMat_At_Given_Edge(b_fcus,tree);
-  /*  if(tree->mod->whichrealmodel <= HLP17){
-    	if(b_fcus->anc_node->num != tree->mod->startnode){
-    		Fill_UPP_single(tree,b_fcus);
-    	}else{
-    		Fill_UPP_root(tree,b_fcus);
-    	}
-    }*/
-
   }
   
-  if(lk2 < lk2_init - tree->mod->s_opt->min_diff_lk_local)
-  {
+  if(lk2 < lk2_init - tree->mod->s_opt->min_diff_lk_local){
     PhyML_Printf("%f %f %f %G\n",l_infa,l_max,l_infb,b_fcus->l);
     PhyML_Printf("%f -- %f \n",lk2_init,lk2);
     PhyML_Printf("\n. Err. in NNI (2)\n");
@@ -1592,33 +1186,19 @@ void NNI(t_tree *tree, t_edge *b_fcus, int do_swap)
   
   l2  = b_fcus->l;
   Swap(v4,b_fcus->left,b_fcus->rght,v2,tree);
+
   /***********/
   
-  
-  
-  /***********/
   b_fcus->l = bl_init;
-  if(b_fcus->l < BL_MIN) 
-  {
+  if(b_fcus->l < BL_MIN){
     b_fcus->l = BL_MIN;
   }
   
   tree->both_sides = 1;
- // n_edges=2*tree->n_otu-3;
-  	//      	  For(br,n_edges) Update_PMat_At_Given_Edge(tree->t_edges[br],tree);
-  	//      Get_UPP(tree->noeud[tree->mod->startnode], tree->noeud[tree->mod->startnode]->v[0], tree);
-  /*if(tree->mod->whichrealmodel <= HLP17){
-	  if(b_fcus->anc_node->num != tree->mod->startnode){
-		  Fill_UPP_single(tree,b_fcus);
-	  }else{
-		  Fill_UPP_root(tree,b_fcus);
-	  }
-  }*/
 
   lk0_init = Update_Lk_At_Given_Edge(b_fcus,tree);
   
-  if(tree->mod->datatype==CODON) //!< Added by Marcelo.This was a sanity check ... we can include it again after the likelihood calculation is revised.
-  {
+  if(tree->mod->datatype==CODON){ //!< Added by Marcelo.This was a sanity check ... we can include it again after the likelihood calculation is revised.
     //     if(lk0_init < lk_init)
     //     if(FABS(lk0_init - lk_init) > tree->mod-> mod->s_opt->min_diff_lk_codonModels)
     //     { 
@@ -1630,9 +1210,7 @@ void NNI(t_tree *tree, t_edge *b_fcus, int do_swap)
     //       PhyML_Printf("\n. Curr_lnL = %.20f\n",Lk(tree));
     //       Warn_And_Exit("\n. Err. in NNI (3)\n");
     //     }
-  }
-  else
-  {
+  }else{
     //     if(FABS(lk0_init - lk_init) > tree->mod->s_opt->min_diff_lk_local)
     //     {
     //       PhyML_Printf("\n. lk_init = %.20f; lk = %.20f diff = %.20f l = %G\n",
@@ -1649,24 +1227,10 @@ void NNI(t_tree *tree, t_edge *b_fcus, int do_swap)
   l_max  = b_fcus->l;
   l_infb = BL_MIN;
   
-  if(tree->mod->s_opt->fast_nni)
-  {
+  if(tree->mod->s_opt->fast_nni){
     Fast_Br_Len(b_fcus,tree,1);
     lk0 = Lk_At_Given_Edge(b_fcus,tree);
-  }
-  else
-  {
-	   //int br;
-	    //  	  int n_edges=2*tree->n_otu-3;
-	   //   	  For(br,n_edges) Update_PMat_At_Given_Edge(tree->t_edges[br],tree);
-	   //   Get_UPP(tree->noeud[tree->mod->startnode], tree->noeud[tree->mod->startnode]->v[0], tree);
-	/*  if(tree->mod->whichrealmodel <= HLP17){
-		  if(b_fcus->anc_node->num != tree->mod->startnode){
-	       	  Fill_UPP_single(tree,b_fcus);
-	      }else{
-	      	  Fill_UPP_root(tree,b_fcus);
-	      }
-	  }*/
+  }else{
 
     lk0 = Br_Len_Brent(l_infa,l_max,l_infb,
                        tree->mod->s_opt->min_diff_lk_local,
@@ -1674,18 +1238,9 @@ void NNI(t_tree *tree, t_edge *b_fcus, int do_swap)
                        tree->mod->s_opt->brent_it_max,
                        tree->mod->s_opt->quickdirty);
     Update_PMat_At_Given_Edge(b_fcus,tree);
-
-    /*if(tree->mod->whichrealmodel <= HLP17){
-    	if(b_fcus->anc_node->num != tree->mod->startnode){
-    		Fill_UPP_single(tree,b_fcus);
-    	}else{
-    		Fill_UPP_root(tree,b_fcus);
-    	}
-    }*/
     
   }
-  if(tree->mod->datatype==CODON) //!< Changed by Marcelo.//!< Added by Marcelo.This was a sanity check ... we can include it again after the likelihood calculation is revised.
-  {
+  if(tree->mod->datatype==CODON){ //!< Changed by Marcelo.//!< Added by Marcelo.This was a sanity check ... we can include it again after the likelihood calculation is revised.
     //     if(lk0 < lk_init)
     //     if(lk0 < lk_init - tree->mod->s_opt->min_diff_lk_codonModels)
     //     {
@@ -1694,9 +1249,7 @@ void NNI(t_tree *tree, t_edge *b_fcus, int do_swap)
     //       PhyML_Printf("\n. Err. in NNI (3)\n");
     //       Warn_And_Exit("\n");
     //     }
-  }
-  else
-  {
+  }else{
     //     if(lk0 < lk_init - tree->mod->s_opt->min_diff_lk_local)
     //     {
     //       PhyML_Printf("\n\n%f %f %f %f\n",l_infa,l_max,l_infb,b_fcus->l);
@@ -1706,6 +1259,7 @@ void NNI(t_tree *tree, t_edge *b_fcus, int do_swap)
     //     }
   }
   l0  = b_fcus->l;
+
   /***********/
   
   b_fcus->nni->lk0 = lk0;
@@ -1719,42 +1273,34 @@ void NNI(t_tree *tree, t_edge *b_fcus, int do_swap)
   b_fcus->nni->score = lk0 - MAX(lk1,lk2);
   
   if((b_fcus->nni->score <  tree->mod->s_opt->min_diff_lk_local) &&
-     (b_fcus->nni->score > -tree->mod->s_opt->min_diff_lk_local))
-  {
+     (b_fcus->nni->score > -tree->mod->s_opt->min_diff_lk_local)){
     b_fcus->nni->score = .0;
     b_fcus->nni->lk1 = b_fcus->nni->lk0;
     b_fcus->nni->lk2 = b_fcus->nni->lk0;
   }
   
-  if(lk0 > MAX(lk1,lk2))
-  {
+  if(lk0 > MAX(lk1,lk2)){
     b_fcus->nni->best_conf    = 0;
     b_fcus->nni->best_l       = l0;
     b_fcus->nni->swap_node_v1 = NULL;
     b_fcus->nni->swap_node_v2 = NULL;
     b_fcus->nni->swap_node_v3 = NULL;
     b_fcus->nni->swap_node_v4 = NULL;
-  }
-  else if(lk1 > MAX(lk0,lk2))
-  {
+  }else if(lk1 > MAX(lk0,lk2)){
     b_fcus->nni->best_conf    = 1;
     b_fcus->nni->best_l       = l1;
     b_fcus->nni->swap_node_v1 = v2;
     b_fcus->nni->swap_node_v2 = b_fcus->left;
     b_fcus->nni->swap_node_v3 = b_fcus->rght;
     b_fcus->nni->swap_node_v4 = v3;
-  }
-  else if(lk2 > MAX(lk0,lk1))
-  {
+  }else if(lk2 > MAX(lk0,lk1)){
     b_fcus->nni->best_conf    = 2;
     b_fcus->nni->best_l       = l2;
     b_fcus->nni->swap_node_v1 = v2;
     b_fcus->nni->swap_node_v2 = b_fcus->left;
     b_fcus->nni->swap_node_v3 = b_fcus->rght;
     b_fcus->nni->swap_node_v4 = v4;
-  }
-  else
-  {
+  }else{
     b_fcus->nni->score        = +1.0;
     b_fcus->nni->best_conf    = 0;
     b_fcus->nni->best_l       = l0;
@@ -1764,30 +1310,24 @@ void NNI(t_tree *tree, t_edge *b_fcus, int do_swap)
     b_fcus->nni->swap_node_v4 = NULL;
   }
   
-  if((do_swap) && ((lk1 > lk0) || (lk2 > lk0)))
-  {
+  if((do_swap) && ((lk1 > lk0) || (lk2 > lk0))){
     tree->n_swap++;
     PhyML_Printf("Swap t_edge %d -> %f\n",b_fcus->num,MAX(lk1,lk2));
     
-    if(lk1 > lk2)
-    {
+    if(lk1 > lk2){
       tree->best_lnL = lk1;
       Swap(v2,b_fcus->left,b_fcus->rght,v3,tree);
       b_fcus->l = l1;
       tree->both_sides = 1;
       Lk(tree);
-    }
-    else
-    {
+    }else{
       tree->best_lnL = lk2;
       Swap(v2,b_fcus->left,b_fcus->rght,v4,tree);
       b_fcus->l = l2;
       tree->both_sides = 1;
       Lk(tree);
     }
-  }
-  else
-  {
+  }else{
     b_fcus->l = bl_init;
     Update_PMat_At_Given_Edge(b_fcus,tree);
     tree->c_lnL = lk_init;
@@ -1910,12 +1450,9 @@ void Swap(t_node *a, t_node *b, t_node *c, t_node *d, t_tree *tree)
 
 /*********************************************************/
 
-calign *Make_Cseq(int n_otu, int crunch_len, int state_len, int init_len, char **sp_names, option *io)
-{
+calign *Make_Cseq(int n_otu, int crunch_len, int state_len, int init_len, char **sp_names, option *io){
   calign *cdata;
   int j;
-  // int i;
-  
   cdata           = (calign *)mCalloc(1,sizeof(calign));
   cdata->n_otu    = n_otu;
   cdata->c_seq    = (align **)mCalloc(n_otu,sizeof(align *));
@@ -1930,18 +1467,15 @@ calign *Make_Cseq(int n_otu, int crunch_len, int state_len, int init_len, char *
   cdata->init_len   = init_len;
   cdata->obs_pinvar = .0;
   
-  For(j,n_otu)
-  {
+  For(j,n_otu){
     cdata->c_seq[j]            = (align *)mCalloc(1,sizeof(align));
     cdata->c_seq[j]->name      = (char *)mCalloc((int)(strlen(sp_names[j])+1),sizeof(char));
     strcpy(cdata->c_seq[j]->name,sp_names[j]);
     cdata->c_seq[j]->state     = (char *)mCalloc(crunch_len*state_len,sizeof(char));
     cdata->c_seq[j]->is_ambigu = (short int *)mCalloc(crunch_len,sizeof(short int));
     
-    if(io->datatype==CODON)//!< Added by Marcelo.//!< 
-    {
+    if(io->datatype==CODON){//!< Added by Marcelo.//!<
       cdata->c_seq[j]->alternativeCodons=(char **)mCalloc(crunch_len,sizeof(char *));
-      //For(i,crunch_len) cdata->c_seq[j]->alternativeCodons[i]=(char *)mCalloc(io- >mod->ns+1,sizeof(char));
     }
   }
   return cdata;
@@ -2015,15 +1549,10 @@ calign *Copy_Cseq(calign *ori, option *io, model* mod)
   return new;
 }
 
-/*********************************************************/
-
-//! Allocate memory for the optimization options.
-
-/*!
- *    
- */
-optimiz *Make_Optimiz()
-{
+/********************************************************
+* ! Allocate memory for the optimization options.
+*/
+optimiz *Make_Optimiz(){
   optimiz *s_opt;                                //!< pointer.
   s_opt = (optimiz *)mCalloc(1,sizeof(optimiz)); //!< Allocate memory.
   return s_opt;                                  //!< Return pointer to the optimization options.
@@ -2150,24 +1679,20 @@ void Check_Ambiguities(calign *data, int datatype, int stepsize)
 {
   int i,j;
   
-  For(j,data->crunch_len) 
-  {
-    For(i,data->n_otu)
-    {
+  For(j,data->crunch_len){
+    For(i,data->n_otu){
       data->ambigu[j]                  = 0;
       data->c_seq[i]->is_ambigu[j]     = 0;
     }
     
-    For(i,data->n_otu)
-    {
+    For(i,data->n_otu){
       if(Is_Ambigu(data->c_seq[i]->state+j*stepsize,
                    datatype,
-                   stepsize))
-	    {
+                   stepsize)){
 	      data->ambigu[j]              = 1;
 	      data->c_seq[i]->is_ambigu[j] = 1;
 	    }
-    }
+     }
   }
 }
 
@@ -2365,11 +1890,7 @@ int Assign_State_With_Ambiguity(char *c, int datatype, int stepsize)
 }
 /*********************************************************/
 
-
-
-void Clean_Tree_Connections(t_tree *tree)
-{
-  
+void Clean_Tree_Connections(t_tree *tree){
   int i;
   For(i,2*tree->n_otu-2)
   {
@@ -2384,184 +1905,8 @@ void Clean_Tree_Connections(t_tree *tree)
 
 /*********************************************************/
 
-void Bootstrap(t_tree *tree)
-{
-/*  int *site_num, n_site;
-  int replicate,j,k;
-  int position,init_len;
-  calign *boot_data;
-  t_tree *boot_tree;
-  model *boot_mod;
-  matrix *boot_mat;
-  char *s;
-  
-  tree->print_boot_val = 1;
-  tree->print_alrt_val = 0;
-  boot_tree            = NULL;
-  
-  site_num = (int *)mCalloc(tree->data->init_len,sizeof(int));
-  
-  Free_Bip(tree);
-  Alloc_Bip(tree);
-  Get_Bip(tree->noeud[0],tree->noeud[0]->v[0],tree);
-  
-  n_site = 0;
-  For(j,tree->data->crunch_len) For(k,tree->data->wght[j])
-  {
-    site_num[n_site] = j;
-    n_site++;
-  }
-  
-  boot_data = Copy_Cseq(tree->data,tree->io,tree->mod); //added tree->mod instead of mod Ken 9/1/2018
-  
-  PhyML_Printf("\n\n. Non parametric bootstrap analysis \n\n");
-  PhyML_Printf("  ["); 
-  
-  For(replicate,tree->mod->bootstrap)
-  {
-    For(j,boot_data->crunch_len) boot_data->wght[j] = 0;
-    
-    init_len = 0;
-    For(j,boot_data->init_len)
-    {
-      position = Rand_Int(0,(int)(tree->data->init_len-1.0));
-      boot_data->wght[site_num[position]] += 1;
-      init_len++;
-    }
-    
-    if(init_len != tree->data->init_len) Warn_And_Exit("\n. Pb when copying sequences\n");
-    
-    init_len = 0;
-    For(j,boot_data->crunch_len) init_len += boot_data->wght[j];
-    
-    if(init_len != tree->data->init_len) Warn_And_Exit("\n. Pb when copying sequences\n");
-    
-    
-    if(tree->mod->random_boot_seq_order) Randomize_Sequence_Order(boot_data);
-    
-    boot_mod        = Copy_Model(tree->mod);
-    boot_mod->s_opt = tree->mod->s_opt; // WARNING: re-using the same address here instead of creating a copying
-                                        // requires to leave the value of s_opt unchanged during the boostrap.
-    boot_mod->io    = tree->io; //WARNING: re-using the same address here instead of creating a copying
-                                 //requires to leave the value of io unchanged during the boostrap.
-    Init_Model(boot_data,boot_mod,tree->io);
-    
-    if(tree->io->in_tree == 2)
-    {
-      rewind(tree->mod->fp_in_tree);
-      boot_tree = Read_Tree_File_Phylip(tree->io->mod->fp_in_tree);
-    }
-    else
-    {
-      boot_mat = ML_Dist(boot_data,boot_mod);
-      boot_mat->tree = Make_Tree_From_Scratch(boot_data->n_otu,boot_data);
-      Fill_Missing_Dist(boot_mat);
-      Bionj(boot_mat);
-      boot_tree = boot_mat->tree;
-      boot_tree->mat = boot_mat;
-    }
-    
-    
-    boot_tree->mod                = boot_mod;
-    boot_tree->io                 = tree->io;
-    boot_tree->data               = boot_data;
-    boot_tree->both_sides         = 1;
-    boot_tree->mod->s_opt->print  = 0;
-    boot_tree->n_pattern          = boot_tree->data->crunch_len;
-    boot_tree->io->print_site_lnl = 0;
-    boot_tree->mod->print_trace    = 0;
-    
-    if((boot_tree->mod->s_opt->random_input_tree) && (boot_tree->mod->s_opt->topo_search == SPR_MOVE)) Random_Tree(boot_tree);
-    Order_Tree_CSeq(boot_tree,boot_data);
-    Share_Lk_Struct(tree,boot_tree);
-    Share_Spr_Struct(tree,boot_tree);
-    Share_Pars_Struct(tree,boot_tree);
-    Fill_Dir_Table(boot_tree);
-    Update_Dirs(boot_tree);
-    
-    if(tree->mod->s_opt->greedy) Init_P_Lk_Tips_Double(boot_tree);
-    else                         Init_P_Lk_Tips_Int(boot_tree);
-    Init_Ui_Tips(boot_tree);
-    Init_P_Pars_Tips(boot_tree);
-    Br_Len_Not_Involving_Invar(boot_tree);
-    
-    if(boot_tree->mod->s_opt->opt_topo)
-    {
-      if(boot_tree->mod->s_opt->topo_search == NNI_MOVE) 
-	    {
-	      Simu_Loop(boot_tree);
-	    }
-      else if((boot_tree->mod->s_opt->topo_search == SPR_MOVE) ||
-              (boot_tree->mod->s_opt->topo_search == BEST_OF_NNI_AND_SPR))
-	    {
-	      Speed_Spr_Loop(boot_tree);
-	    }
-    }
-    else
-    {
-      if(boot_tree->mod->s_opt->opt_subst_param || boot_tree->mod->s_opt->opt_bl){
-    	  printf("BOOTSTRAP NOT YET SUPPORTED");
-      	  exit(EXIT_FAILURE);
-        //Round_Optimize(boot_tree,boot_tree->data,ROUND_MAX);
-      }else{
-        Lk(boot_tree);
-      }
-    }
-    
-    Free_Bip(boot_tree);
-    
-    Alloc_Bip(boot_tree);
-    
-    Match_Tip_Numbers(tree,boot_tree);
-    
-    Get_Bip(boot_tree->noeud[0],
-            boot_tree->noeud[0]->v[0],
-            boot_tree);
-    
-    
-    Compare_Bip(tree,boot_tree);
-    
-    Br_Len_Involving_Invar(boot_tree);
-    
-    
-    if(tree->io->print_boot_trees)
-    {
-      s = Write_Tree(boot_tree);
-      PhyML_Fprintf(tree->io->fp_out_boot_tree,"%s\n",s);
-      free(s);
-      Print_Fp_Out_Lines(tree->io->fp_out_boot_stats,0,0,boot_tree,tree->io,replicate+1,tree->mod);//added tree->mod instead of mod Ken 9/1/2018
-    }
-
-    
-    
-    PhyML_Printf("."); 
-#ifndef QUIET
-    fflush(stdout);
-#endif
-    if(!((replicate+1)%20))
-    {
-      PhyML_Printf("] %4d/%4d\n  ",replicate+1,tree->mod->bootstrap);
-      if(replicate != tree->mod->bootstrap-1) PhyML_Printf("[");
-    }
-    
-    if(boot_tree->mat) Free_Mat(boot_tree->mat);
-    Free_Tree(boot_tree);      
-    Free_Model(boot_mod);
-  }
-  
-  if(((replicate)%20)) PhyML_Printf("] %4d/%4d\n ",replicate,tree->mod->bootstrap);
-  
-  tree->lock_topo = 1; // Topology should not be modified afterwards
-  
-  if(tree->io->print_boot_trees)
-  {
-    fclose(tree->io->fp_out_boot_tree);
-    fclose(tree->io->fp_out_boot_stats);
-  }
-  
-  Free_Cseq(boot_data);
-  free(site_num);
-  */
+void Bootstrap(t_tree *tree){
+	Lazy_Exit("Bootstrapping",__FILE__,__LINE__);
 }
 
 /*********************************************************/
@@ -2601,14 +1946,9 @@ void Copy_One_State(char *from, char *to, int state_size)
 }
 
 /*********************************************************/
-
 //! Allocate memory for basic model options.
 
-/*!
- *
- */
-model *Make_Model_Basic()
-{
+model *Make_Model_Basic(){
   model *mod;
   
   mod                     = (model *)mCalloc(1,sizeof(model));              /*!< Allocate memory for a model structure.*/
@@ -2622,10 +1962,12 @@ model *Make_Model_Basic()
   return mod;
 }
 
-/*********************************************************/
 
-void Make_Model_Complete(model *mod) 
-{
+/********************************************************
+ * Allocate memory for data structures associated with model
+ * */
+void Make_Model_Complete(model *mod){
+  int i,j,modeli;
   mod->gamma_r_proba                         = (phydbl *)mCalloc(mod->n_catg,sizeof(phydbl));
   mod->gamma_rr                              = (phydbl *)mCalloc(mod->n_catg,sizeof(phydbl));
   mod->Pij_rr                                = (phydbl *)mCalloc(mod->n_catg*mod->ns*mod->ns,sizeof(phydbl));
@@ -2633,64 +1975,44 @@ void Make_Model_Complete(model *mod)
   mod->pi_unscaled                           = (phydbl *)mCalloc(mod->ns,sizeof(phydbl));
   mod->pi                                    = (phydbl *)mCalloc(mod->ns,sizeof(phydbl));
 
-  //added by Ken 17/8/2016
   mod->qmat_part = (phydbl **)mCalloc(mod->nomega_part,sizeof(phydbl*));
   mod->Pmat_part = (phydbl **)mCalloc(mod->nomega_part,sizeof(phydbl*));
   mod->qmat_buff_part = (phydbl **)mCalloc(mod->nomega_part,sizeof(phydbl*));
   phydbl* test=(phydbl *)mCalloc(mod->n_w_catg*mod->ns*mod->ns,sizeof(phydbl));
-  /*printf("QMAT0: %lf\n",mod->qmat_part[0]);
-  printf("QMAT0: %lf\n",mod->Pmat_part[0]);
-  printf("QMAT0: %lf\n",mod->qmat_buff_part[0]);*/
-  int i;
-  for(i=0;i<mod->nomega_part;i++){
-	  //printf("%d\n",mod->optDebug);
-	  if(mod->optDebug)printf("Making q mats %d %d %d %d %d size\n",i,mod->nomega_part,mod->n_w_catg*mod->ns*mod->ns,mod->nomega_part,mod->n_catg);
-	  //printf("0");
-	  //printf("02");
+  For(i, mod->nomega_part){
+	  if(mod->optDebug)printf("Making q mats %d %d %d %d %d size\n",
+			  i,mod->nomega_part,mod->n_w_catg*mod->ns*mod->ns,mod->nomega_part,mod->n_catg);
 	  mod->qmat_part[i]=mCalloc(mod->n_w_catg*mod->ns*mod->ns,sizeof(phydbl));
-	  //printf("1");
 	  mod->Pmat_part[i]=(phydbl *)mCalloc(mod->n_catg*mod->ns*mod->ns,sizeof(phydbl));
-	  //printf("2");
 	  mod->qmat_buff_part[i] = (phydbl *)mCalloc(mod->n_w_catg*mod->ns*mod->ns,sizeof(phydbl));
-	  //printf("3");
   }
-  mod->qmat_part[0][0]=1.0;
   if(mod->optDebug)printf("just tried1");
   if(mod->n_rr_branch){
     mod->rr_branch                           = (phydbl *)mCalloc(mod->n_rr_branch,sizeof(phydbl));
     mod->p_rr_branch                         = (phydbl *)mCalloc(mod->n_rr_branch,sizeof(phydbl));
   }
   
-  if(mod->datatype==CODON) //!< Added by Marcelo.
-  {
-    int i,j;
+  if(mod->datatype==CODON){ //!< Added by Marcelo.
     mod->prob_omegas_uns                     = (phydbl *)mCalloc(mod->n_w_catg,sizeof(phydbl));   
     mod->mr_w                                = (phydbl *)mCalloc(mod->n_w_catg,sizeof(phydbl));   
     mod->base_freq                           = (phydbl *)mCalloc(mod->num_base_freq,sizeof(phydbl));   
     mod->uns_base_freq                       = (phydbl *)mCalloc(mod->num_base_freq,sizeof(phydbl));   
-    
-    mod->A0_part                                  = (phydbl **)mCalloc(mod->nomega_part,sizeof(phydbl*));
-    int modeli = 0;
-    for(modeli=0;modeli<mod->nomega_part;modeli++){
-    	mod->A0_part[modeli]                                  = (phydbl *)mCalloc(mod->ns*mod->ns,sizeof(phydbl)); //modified by Ken 22/8
+    mod->A0_part                             = (phydbl **)mCalloc(mod->nomega_part,sizeof(phydbl*));
+    For(modeli,mod->nomega_part){
+    	mod->A0_part[modeli]                    = (phydbl *)mCalloc(mod->ns*mod->ns,sizeof(phydbl));
         Fors(i,mod->ns*mod->ns,mod->ns+1) mod->A0_part[modeli][i]=1.0; //!< create a identity matrix.
     }
 
-    mod->qmatScaled                          = (phydbl *)mCalloc(mod->n_w_catg*mod->ns*mod->ns,sizeof(phydbl));
+    mod->qmatScaled                = (phydbl *)mCalloc(mod->n_w_catg*mod->ns*mod->ns,sizeof(phydbl));
     
-    if(mod->heuristicExpm)
-    {
-    mod->A2_part                                  = (phydbl **)mCalloc(mod->nomega_part,sizeof(phydbl*));
-     for(modeli=0;modeli<mod->nomega_part;modeli++){
-    	mod->A2_part[modeli]                               = (phydbl *)mCalloc(15*mod->ns*mod->ns*mod->n_w_catg,sizeof(phydbl));
-     }
-      //Fors(i,mod->ns*mod->ns*mod->n_w_catg*15,mod->ns*mod->ns*15) For(j,mod->ns*mod->ns) mod->A2[i+j]=mod->A0[j];
+    if(mod->heuristicExpm){
+    	mod->A2_part                   = (phydbl **)mCalloc(mod->nomega_part,sizeof(phydbl*));
+    	For(modeli,mod->nomega_part){
+    		mod->A2_part[modeli]   = (phydbl *)mCalloc(15*mod->ns*mod->ns*mod->n_w_catg,sizeof(phydbl));
+    	}
     }
-    //printf("here\n");
-    //exit(EXIT_FAILURE);
 
-    if(mod->expm==SSPADE)
-    {
+    if(mod->expm==SSPADE){
       mod->ipiv_part                                = (int    **)mCalloc(mod->nomega_part,sizeof(int*));
       mod->U_part                                   = (phydbl **)mCalloc(mod->nomega_part,sizeof(phydbl*));
       mod->V_part                                   = (phydbl **)mCalloc(mod->nomega_part,sizeof(phydbl*));
@@ -2700,29 +2022,28 @@ void Make_Model_Complete(model *mod)
       mod->A8_part                                  = (phydbl **)mCalloc(mod->nomega_part,sizeof(phydbl*));
       mod->Apowers_part                             = (phydbl **)mCalloc(mod->nomega_part,sizeof(phydbl*));
       mod->matAux_part                              = (phydbl **)mCalloc(mod->nomega_part,sizeof(phydbl*));
-      for(modeli=0;modeli<mod->nomega_part;modeli++){
-    	  //printf("making models %d\n",modeli);
-    	        mod->ipiv_part[modeli]                                = (int    *)mCalloc(mod->ns*mod->n_w_catg,sizeof(int));
-    	        mod->U_part[modeli]                                   = (phydbl *)mCalloc(mod->ns*mod->ns*mod->n_w_catg,sizeof(phydbl));
-    	        mod->V_part[modeli]                                   = (phydbl *)mCalloc(mod->ns*mod->ns*mod->n_w_catg,sizeof(phydbl));
-    	        mod->A2_part[modeli]                                  = (phydbl *)mCalloc(mod->ns*mod->ns*mod->n_w_catg,sizeof(phydbl));
-    	        mod->A4_part[modeli]                                  = (phydbl *)mCalloc(mod->ns*mod->ns*mod->n_w_catg,sizeof(phydbl));
-    	        mod->A6_part[modeli]                                  = (phydbl *)mCalloc(mod->ns*mod->ns*mod->n_w_catg,sizeof(phydbl));
-    	        mod->A8_part[modeli]                                  = (phydbl *)mCalloc(mod->ns*mod->ns*mod->n_w_catg,sizeof(phydbl));
-    	        mod->Apowers_part[modeli]                             = (phydbl *)mCalloc(mod->ns*mod->ns*mod->n_w_catg*5,sizeof(phydbl));
-    	        mod->matAux_part[modeli]                              = (phydbl *)mCalloc(mod->ns*mod->ns*mod->n_w_catg,sizeof(phydbl));
-    	        Fors(i,mod->ns*mod->ns*mod->n_w_catg*5,mod->ns*mod->ns*5) For(j,mod->ns*mod->ns) mod->Apowers_part[modeli][i+j]=mod->A0_part[modeli][j];
+      For(modeli,mod->nomega_part){
+    	mod->ipiv_part[modeli]              = (int    *)mCalloc(mod->ns*mod->n_w_catg,sizeof(int));
+    	mod->U_part[modeli]                 = (phydbl *)mCalloc(mod->ns*mod->ns*mod->n_w_catg,sizeof(phydbl));
+    	mod->V_part[modeli]                 = (phydbl *)mCalloc(mod->ns*mod->ns*mod->n_w_catg,sizeof(phydbl));
+    	mod->A2_part[modeli]                = (phydbl *)mCalloc(mod->ns*mod->ns*mod->n_w_catg,sizeof(phydbl));
+    	mod->A4_part[modeli]                = (phydbl *)mCalloc(mod->ns*mod->ns*mod->n_w_catg,sizeof(phydbl));
+    	mod->A6_part[modeli]                = (phydbl *)mCalloc(mod->ns*mod->ns*mod->n_w_catg,sizeof(phydbl));
+    	mod->A8_part[modeli]                = (phydbl *)mCalloc(mod->ns*mod->ns*mod->n_w_catg,sizeof(phydbl));
+    	mod->Apowers_part[modeli]           = (phydbl *)mCalloc(mod->ns*mod->ns*mod->n_w_catg*5,sizeof(phydbl));
+    	mod->matAux_part[modeli]            = (phydbl *)mCalloc(mod->ns*mod->ns*mod->n_w_catg,sizeof(phydbl));
+    	Fors(i,mod->ns*mod->ns*mod->n_w_catg*5,mod->ns*mod->ns*5)
+    		For(j,mod->ns*mod->ns) mod->Apowers_part[modeli][i+j]=mod->A0_part[modeli][j];
       }
-
-
     }
   }
-  //printf("%lf\t%lf\t%lf\t%d\t%d\t%d\n",mod->U_part[0][0],mod->V_part[0][0],mod->A4_part[0][0],mod->ns,mod->n_w_catg,mod->nomega_part);
-  //printf("%d\t%d\t%d\n",mod->ns,mod->n_w_catg,mod->nomega_part);
-  //printf("%lf\n",mod->qmat_part[0][0]);
-  mod->qmat_part[0][0]=1.0;
-  mod->tree_freqs=0;
-  //if(mod->optDebug)printf("just tried2");
+  mod->tree_loaded=0;
+  mod->midpoint_div=SMALL;
+
+  if(mod->freq_model >= ROOT){
+    mod->root_pi = mCalloc(mod->nomega_part,sizeof(phydbl*));
+    For(i,mod->nomega_part)mod->root_pi[i]=mCalloc(mod->ns,sizeof(phydbl));
+  }
 }
 
 /*********************************************************/
@@ -2954,16 +2275,19 @@ void Record_Model(model *ori, model *cpy)
 
 model *Copy_Partial_Model(model *ori, int num){
   model *cpy;
+  int i;
 
   cpy                = Make_Model_Basic();
   cpy->ns            = ori->ns;
   cpy->n_catg        = ori->n_catg;
-
   cpy->num_base_freq = ori->num_base_freq;    //!< Added by Marcelo.
   cpy->io            = ori->io;               //!< Added by Marcelo.
-  cpy->s_opt         = ori->s_opt;            //!< Added by Marcelo.
+  //cpy->s_opt         = ori->s_opt;          //!< Added by Marcelo.
   cpy->n_w_catg      = ori->n_w_catg;         //!< Added by Marcelo.
 
+  //optimization parameters
+  cpy->s_opt = Make_Optimiz();
+  Copy_Optimiz(cpy->s_opt,ori->s_opt);
 
   cpy->primary=0;
   cpy->num=num;
@@ -2988,14 +2312,15 @@ model *Copy_Partial_Model(model *ori, int num){
   cpy->prior=ori->prior;
   cpy->freqsTo=ori->freqsTo;
 
-  cpy->in_tree_file = (char *)mCalloc(T_MAX_FILE,sizeof(char)); //input tree file
-  cpy->in_align_file = (char *)mCalloc(T_MAX_FILE,sizeof(char)); //!< Name of input aligned sequences file.
-  cpy->out_trace_tree_file  = (char *)mCalloc(T_MAX_FILE,sizeof(char)); //!< Name of output file containing each phylogeny explored during tree search.  //added by Ken 9/2/2017
-  cpy->out_trace_stats_file = (char *)mCalloc(T_MAX_FILE,sizeof(char)); //!< Name of output file containing each phylogeny explored during tree search. //added by Ken 9/2/201
+  cpy->in_tree_file = (char *)mCalloc(T_MAX_FILE,sizeof(char));
+  cpy->in_align_file = (char *)mCalloc(T_MAX_FILE,sizeof(char));
+  cpy->out_trace_tree_file  = (char *)mCalloc(T_MAX_FILE,sizeof(char));
+  cpy->out_trace_stats_file = (char *)mCalloc(T_MAX_FILE,sizeof(char));
   cpy->baseCounts=mCalloc(12,sizeof(phydbl));//basecounts
-  int i;
+  cpy->preconfile=mCalloc(T_MAX_FILE,sizeof(char));
   For(i,12){cpy->baseCounts[i]=0.0;}
 
+  strcpy(cpy->preconfile,ori->preconfile);
   cpy->ambigprint=ori->ambigprint;
   cpy->nparts=ori->nparts;
   cpy->n_otu = ori->n_otu;
@@ -3003,10 +2328,7 @@ model *Copy_Partial_Model(model *ori, int num){
   cpy->state_len = ori->state_len;
   cpy->whichrealmodel = ori->whichrealmodel;
   cpy->initqrates = ori->initqrates;
-  //printf("initqrates %d\n",cpy->initqrates);
-  //models need different optimization parameters
-  cpy->s_opt = Make_Optimiz();
-  Copy_Optimiz(cpy->s_opt,ori->s_opt);
+
   cpy->testcondition = ori->testcondition;
   cpy->optDebug=ori->optDebug;
   cpy->optKappa=ori->optKappa;
@@ -3017,68 +2339,32 @@ model *Copy_Partial_Model(model *ori, int num){
   cpy->rootpi=ori->rootpi;
 
   cpy->constB = ori->constB;
-
   cpy->omegaSiteVar = ori->omegaSiteVar;
-      //cpy->omega        = ori->omega;
   cpy->nomega_part = ori->nomega_part;
 
-      cpy->omega_part=mCalloc(ori->nomega_part,sizeof(phydbl));
-      cpy->omega_part_opt=mCalloc(ori->nomega_part,sizeof(int));
-      cpy->omega_part_ci = (int*)mCalloc(cpy->nomega_part,sizeof(int ));
-      cpy->omega_part_uci = (phydbl*)mCalloc(cpy->nomega_part,sizeof(phydbl ));
-      cpy->omega_part_lci = (phydbl*)mCalloc(cpy->nomega_part,sizeof(phydbl ));
-      int omegai; //added by Ken 17/8/2016
-      for(omegai=0;omegai<ori->nomega_part;omegai++){
-      	if(ori->optDebug)printf("omega: %lf\t%d\t%d\n",ori->omega_part[omegai],omegai,cpy->nomega_part);
-      	cpy->omega_part[omegai]    = ori->omega_part[omegai];
-      	cpy->omega_part_opt[omegai]=ori->omega_part_opt[omegai];
-      	if(ori->omega_part_ci[omegai]==-1)cpy->omega_part_ci[omegai]=1;
-      	else cpy->omega_part_ci[omegai]=0;
-      }
-      if(ori->optDebug)printf("assigned omegas\n");
+  cpy->omega_part=mCalloc(ori->nomega_part,sizeof(phydbl));
+  cpy->omega_part_opt=mCalloc(ori->nomega_part,sizeof(int));
+  cpy->omega_part_ci = (int*)mCalloc(cpy->nomega_part,sizeof(int ));
+  cpy->omega_part_uci = (phydbl*)mCalloc(cpy->nomega_part,sizeof(phydbl ));
+  cpy->omega_part_lci = (phydbl*)mCalloc(cpy->nomega_part,sizeof(phydbl ));
+  int omegai; //added by Ken 17/8/2016
+  For(i,ori->nomega_part){
+	  if(ori->optDebug)printf("omega: %lf\t%d\t%d\n",ori->omega_part[i],i,cpy->nomega_part);
+      	cpy->omega_part[i]    = ori->omega_part[i];
+      	cpy->omega_part_opt[i]=ori->omega_part_opt[i];
+      	if(ori->omega_part_ci[i]==-1)cpy->omega_part_ci[i]=1;
+      	else cpy->omega_part_ci[i]=0;
+  }
+  cpy->omega_old    = ori->omega_old;
 
-      cpy->omega_old    = ori->omega_old;
-
-
+  //copy options to model, allocate model memory storage
   copyIOtoMod(ori->io,cpy);
-  if(ori->optDebug){
-	  printf("making model complete\n");
-	  printf("%d\n",cpy->n_w_catg);
-	  printf("%d\n",cpy->n_catg);
-  }
   Make_Model_Complete(cpy);
-  if(ori->optDebug){
-	  printf("made model complete\n");
-	  printf("nparts %d\n",cpy->nparts);
-  }
+  if(ori->optDebug)printf("made model complete\nnparts %d\n",cpy->nparts);
 
-  if(ori->io->datatype==CODON) //!< Added by Marcelo.
-  {
+  if(ori->io->datatype==CODON){ //!< Added by Marcelo
     cpy->prob_omegas = (phydbl *)mCalloc(cpy->n_w_catg,sizeof(phydbl));
     cpy->omegas      = (phydbl *)mCalloc(cpy->n_w_catg,sizeof(phydbl));
-  }
-  cpy->qmat_part[0][0]=1.0;
-  //printf("just tried3");
-
-  //printf("recording model\n");
-  Record_Partial_Model(ori,cpy);
-  //printf("recorded model\n");
-
-#ifdef M4
-  if(ori->m4mod) cpy->m4mod = M4_Copy_M4_Model(ori, ori->m4mod);
-#endif
-
-  return cpy;
-}
-
-/*********************************************************/
-
-void Record_Partial_Model(model *ori, model *cpy)
-{
-  int i;
-  if(ori->nomega_part > 1){
-	  //printf("Record_Model doesn't work with parititions yet\n");
-	  //exit(EXIT_FAILURE);
   }
 
   cpy->alpha_old    = ori->alpha_old;
@@ -3094,42 +2380,6 @@ void Record_Partial_Model(model *ori, model *cpy)
   cpy->invar        = ori->invar;
   cpy->pinvar       = ori->pinvar;
   cpy->n_diff_rr    = ori->n_diff_rr;
-
-  cpy->print_trace  = ori->print_trace;
-
-  if((ori->whichmodel == CUSTOM)||(ori->whichmodel == GTR))
-  {
-    For(i,ori->ns*(ori->ns-1)/2)
-    {
-      cpy->rr_num[i]      = ori->rr_num[i];
-      cpy->rr_val[i]      = ori->rr_val[i];
-      cpy->rr[i]          = ori->rr[i]; //!< Corrected by Marcelo.
-      cpy->n_rr_per_cat[i]= ori->n_rr_per_cat[i];
-    }
-  }
-  /* Don't have sequence information yet
-   * printf("about to pis\n");
-  For(i,cpy->ns)
-  {
-    cpy->pi[i]          = ori->pi[i];
-    printf("about to pis\n");
-    cpy->pi_unscaled[i] = ori->pi_unscaled[i];
-    printf("about to pis\n");
-    cpy->user_b_freq[i] = ori->user_b_freq[i];
-    printf("about to pis\n");
-  }*/
-  cpy->qmat_part[0][i]=1.0;
-  if(ori->optDebug)printf("just tried");
-
-  if(ori->optDebug)printf("about to do qmats\n");
-  For(i,ori->n_w_catg*cpy->ns*cpy->ns){
-	  cpy->qmat_part[0][i]=ori->qmat_part[0][i];
-	  cpy->qmat_buff_part[0][i] = ori->qmat_buff_part[0][i];
-  }
-  //printf("did assigning a qmat value\n");
-  //cpy->qmat_part[0][1]=1.0;
-  //printf("did qmats\n");
-
   For(i,ori->n_w_catg){
     cpy->eigen->size = ori->eigen->size;
     For(i,2*ori->ns*ori->n_w_catg)       cpy->eigen->space[i]       = ori->eigen->space[i];
@@ -3142,67 +2392,58 @@ void Record_Partial_Model(model *ori, model *cpy)
     For(i,ori->ns*ori->ns*ori->n_w_catg) cpy->eigen->l_e_vect[i]    = ori->eigen->l_e_vect[i];
     For(i,ori->ns*ori->ns*ori->n_w_catg) cpy->eigen->q[i]           = ori->eigen->q[i];
   }
-
-  For(i,cpy->n_catg)
-  {
+  For(i,cpy->n_catg){
     cpy->gamma_r_proba[i] = ori->gamma_r_proba[i];
     cpy->gamma_rr[i]      = ori->gamma_rr[i];
+  }
+  cpy->print_trace  = ori->print_trace;
+
+  if(ori->optDebug)printf("about to do qmats\n");
+  For(i,ori->n_w_catg*cpy->ns*cpy->ns){
+	  cpy->qmat_part[0][i]=ori->qmat_part[0][i];
+	  cpy->qmat_buff_part[0][i] = ori->qmat_buff_part[0][i];
   }
 
 #ifndef PHYML
   cpy->use_m4mod = ori->use_m4mod;
 #endif
 
-  if(ori->io->datatype==CODON) //!< Added by Marcelo.
-  {
+  if(ori->io->datatype==CODON){
     int j;
-    if(ori->optDebug)printf("assigning omegas\n");
-
-
-    if(ori->kappaci==-1)cpy->kappaci=1;
-    else cpy->kappaci=0;
-
     cpy->freq_model   = ori->freq_model;
     cpy->genetic_code = ori->genetic_code;
-    if(ori->optDebug)printf("original model name: %s\n",ori->modelname);
     cpy->modelname=mCalloc(100,sizeof(char));
     strcpy(cpy->modelname,ori->modelname);
-    if(ori->optDebug)printf("here %s\n",cpy->modelname);
-    /*For(i,cpy->num_base_freq)
-    {
-      cpy->base_freq[i]     = ori->base_freq[i];
-      cpy->uns_base_freq[i] = ori->uns_base_freq[i];
-    }*/
-    if(ori->optDebug)printf("here\n");
+    cpy->structTs_and_Tv  = (ts_and_tv *)mCalloc(64*64,sizeof(ts_and_tv));
+    if(cpy->datatype==CODON) Make_Ts_and_Tv_Matrix(cpy->io,cpy);
 
-
+    //cut this block?
+    if(ori->optDebug)printf("assigning omegas\n");
+    if(ori->kappaci==-1)cpy->kappaci=1;
+    else cpy->kappaci=0;
     cpy->nkappa             = ori->nkappa;
-    For(i,ori->nkappa)
-    {
+    For(i,ori->nkappa){
       cpy->pkappa[i]        = ori->pkappa[i];
       cpy->unspkappa[i]     = ori->unspkappa[i];
     }
     if(ori->optDebug)printf("here\n");
-    For(j,ori->n_w_catg)
-    {
-    /*  cpy->mr_w[j]              = ori->mr_w[j];
-      cpy->prob_omegas_uns[j]   = ori->prob_omegas_uns[j];
-      cpy->omegas[i]            = ori->omegas[i];
-      cpy->prob_omegas[i]       = ori->prob_omegas[i];*/
-    }
 
-    //copyIOtoMod(ori->io,cpy);
-    if(ori->optDebug)printf("datatype: %d\n",cpy->datatype);
-    cpy->structTs_and_Tv  = (ts_and_tv *)mCalloc(64*64,sizeof(ts_and_tv));//!< Added by Marcelo. 64 possible codons ... will be initialized together with the model parameters in set model default.
-    if(cpy->datatype==CODON) Make_Ts_and_Tv_Matrix(cpy->io,cpy);
-
+    //set up HLP models
     if(ori->whichrealmodel<=HLP17){
     	  cpy->Bmat = (phydbl *)mCalloc(3721,sizeof(phydbl));
     	  setUpHLP17(ori->io,cpy);
     }
     if(ori->optDebug)printf("here\n");
   }
+
+#ifdef M4
+  if(ori->m4mod) cpy->m4mod = M4_Copy_M4_Model(ori, ori->m4mod);
+#endif
+
+  return cpy;
 }
+
+
 /*********************************************************/
 void copyIOtoMod(option* io, model* mod){
 		mod->expm=io->expm; /*!< 0 Eigenvalue; 1 scaling and squaring Pade. approx. COPIED FROM OPTION*/ //!< Added by Marcelo.
@@ -3229,6 +2470,47 @@ void copyIOtoMod(option* io, model* mod){
 	    mod->lkExpStepSize = io->lkExpStepSize;
 }
 
+/*********************************************************/
+
+void Get_Root_Pos(model* mod,t_tree* tree,option* io){
+	if(io->mod->optDebug)printf("rootname %s\n",mod->rootname);
+	int i,j;
+	mod->startnode = -1;
+	int nodepos;
+	for(nodepos=0;nodepos<((tree->n_otu-1)*2);nodepos++){
+	 if(strcmp(tree->noeud[nodepos]->name,mod->rootname)==0){
+	  mod->startnode=nodepos;
+	  Update_Ancestors_Edge(tree->noeud[nodepos],tree->noeud[nodepos]->v[0],tree->noeud[nodepos]->b[0],tree);
+	  if(mod->freq_model>=ROOT){
+		  mod->freq_node=nodepos;
+		  For(i,mod->nomega_part){
+			  For(j,mod->ns){
+				  tree->noeud[nodepos]->partfreqs[i][j]=mod->root_pi[i][j];
+				  if(mod->freq_model==MROOT)mod->mid_pi[i][j] = mod->root_pi[i][j];
+				  if(i==0)mod->pi[j]=mod->root_pi[i][j];
+			  }
+		  }
+		  if(io->mod->constB && io->mod->freq_model>=ROOT){
+			  if(io->bmatorder==1)Setup_CBmat(mod,-1,mod->root_pi[0]);
+			  else{
+				  Warn_And_Exit("Custom cBmat not supported yet!");
+				  //Setup_CBmat_Custom(mod,-1,mod->root_pi[0]);
+			  }
+		  }
+	  }else{
+		  For(i,mod->nomega_part){
+			  if(io->mod->constB)Setup_CBmat(mod,0,mod->pi);
+		  }
+	  }
+	 }
+	}
+	if(mod->startnode==-1){
+	 PhyML_Printf("\n\nRoot sequence ID not found in data file! %s %s\n",mod->rootname,mod->in_align_file);
+	 exit(EXIT_FAILURE);
+	}
+	int n_edges=2*tree->n_otu-3;
+	For(nodepos,n_edges)tree->t_edges[nodepos]->ol=tree->t_edges[nodepos]->l;
+}
 
 
 /*********************************************************/
@@ -3237,21 +2519,16 @@ void copyIOtoMod(option* io, model* mod){
 /*!
  *  Input: files of sequence alignement, initial tree file (if any ); Output: tree file, statistic file, bootstrap file, likelihood file, clade list.
  */  
-option *Make_Input()
-{
+option *Make_Input(){
   int i;
   option* io               = (option *)mCalloc(1,sizeof(option)); 
   
-  //io->out_tree_file        = (char *)mCalloc(T_MAX_FILE,sizeof(char)); //!< Name of output tree file.
   io->out_trees_file       = (char *)mCalloc(T_MAX_FILE,sizeof(char)); //!< Name of output tree file.
   io->out_boot_tree_file   = (char *)mCalloc(T_MAX_FILE,sizeof(char)); //!< Name of output boostrapped tree file.
   io->out_boot_stats_file  = (char *)mCalloc(T_MAX_FILE,sizeof(char)); //!< Name of output boostrap statistics file.
   io->out_stats_file       = (char *)mCalloc(T_MAX_FILE,sizeof(char)); //!< Name of output statistics file.
   io->out_lk_file          = (char *)mCalloc(T_MAX_FILE,sizeof(char)); //!< Name of output likelihood file.
   io->out_ps_file          = (char *)mCalloc(T_MAX_FILE,sizeof(char)); //!< Name of output parsimony score file.
- // io->out_trace_file       = (char *)mCalloc(T_MAX_FILE,sizeof(char)); //!< Name of output file containing each phylogeny explored during tree search.
- // io->out_trace_tree_file  = (char *)mCalloc(T_MAX_FILE,sizeof(char)); //!< Name of output file containing each phylogeny explored during tree search.  //added by Ken 9/2/2017
- // io->out_trace_stats_file = (char *)mCalloc(T_MAX_FILE,sizeof(char)); //!< Name of output file containing each phylogeny explored during tree search. //added by Ken 9/2/2017
   io->nt_or_cd             = (char *)mCalloc(T_MAX_FILE,sizeof(char)); //!< Nucleotide or codon data?.
   io->run_id_string        = (char *)mCalloc(T_MAX_OPTION,sizeof(char)); //!< Name of run id.
   io->clade_list_file      = (char *)mCalloc(T_MAX_FILE,sizeof(char)); //!< Name of output clade list file.
@@ -3265,11 +2542,9 @@ option *Make_Input()
 /*********************************************************/
 //! Initialize options with default inputs.
 
-/*!
- *
- */
 void Set_Defaults_Input(option* io,model * mod)
 {
+	int c,i,j;
   mod->fp_in_align                = NULL; //!< File pointer.
   mod->fp_in_tree                 = NULL; //!< File pointer.
   io->fp_out_tree                = NULL; //!< File pointer.
@@ -3350,7 +2625,56 @@ void Set_Defaults_Input(option* io,model * mod)
   io->open_ps_file               = 0;
   io->confformat                 = -1;
   io->logtree                    = 0; // no logging per default
-  io->treecounter                = 0; // reset counter
+  io->treecounter                 = 0; // reset counter
+
+  //stuff Ken added
+  io->roughCI=1.0;
+  io->outrepspec=0;
+  io->CIest=0;
+  io->min_diff_lk_global=1.E-3;
+  io->flux=0;
+  io->repwidefreqs=0;
+  io->threads=1;
+  io->splitByTree=1;
+  io->modeltypeOpt = 0; //Default placeholder model
+  io->precon=0; //recon options
+  io->omegaOpt=DM0;
+  io->userWantsKappa             = YES;
+  io->outrep=mCalloc(T_MAX_FILE,sizeof(char));
+  io->asrfile=mCalloc(T_MAX_FILE,sizeof(char));
+  io->GRstring=mCalloc(T_MAX_OPTION,sizeof(char));
+  io->bmatorder=1;
+  int* stopCodons=malloc(64*sizeof(int));
+  int* indexSenseCodons=malloc(64*sizeof(int));
+  int* senseCodons=malloc(64*sizeof(int));
+  For(i,64){
+     stopCodons[i]=0;
+     senseCodons[i]=-1;
+     indexSenseCodons[i]=-1;
+  }
+  stopCodons[10]=1; //!< Set stop codons according to the genetic code.
+  stopCodons[11]=1;
+  stopCodons[14]=1;
+  j=0;
+  For(i,64)if(!stopCodons[i])senseCodons[j++]=i; //!< Shift the sense codons down the array.
+  For(i,61)indexSenseCodons[senseCodons[i]]=i; //!< Correct the index for recovery.
+  io->stopCodons=stopCodons;
+  io->senseCodons=senseCodons;
+  io->indexSenseCodons=indexSenseCodons;
+
+  //previously global variables in Optimiz, now tree variables to ease in analyzing multiple data sets
+  io->SIZEp=0;
+  io->noisy=0;
+  io->Iround=0;
+  io->NFunCall=0;
+  io->AlwaysCenter=0;
+  io->gemin=1e-6;
+  io->Small_Diff=.5e-6;
+  io->both_sides=1;
+
+  io->n_trees = 1;
+  io->ratio_test = 0;
+  io->colalias = 0; //Don't compress data for now
 } 
 
 /*********************************************************/
@@ -3361,7 +2685,7 @@ void Set_Defaults_Input(option* io,model * mod)
  */
 void Set_Defaults_Model(model *mod)
 {
-  int i;
+  int c;
   strcpy(mod->modelname,"HKY85");
   strcpy(mod->custom_mod_string,"000000");
   mod->whichmodel              = HKY85;
@@ -3398,11 +2722,55 @@ void Set_Defaults_Model(model *mod)
   mod->codon_model_nature      = NOCHOICE; //!< Added by Marcelo. 
   mod->calculate_init_tree     = 0; //!< Added by Marcelo. 
   mod->npcs                    = 1; //!< Added by Marcelo. 
-  For(i,100) mod->pcsC[i]      = 1.0; //!< Added by Marcelo. 
+  //For(c,100) mod->pcsC[c]      = 1.0; //!< Added by Marcelo.
   mod->pcaModel                = 0; //!< Added by Marcelo.
   
   mod->initqrates              = NOINITMAT;
   mod->freq_model              = CF3X4;
+
+ //New stuff added by Ken
+  mod->motifstringopt=0;
+  mod->hotnessstringopt=0;
+  mod->partfilespec=0;
+  mod->rootfound=0;
+  mod->partfile="NONE";
+  mod->ambigprint=0;
+  mod->nomega_part=1;
+  mod->nparts=1;
+  mod->ambigprint=0;
+  mod->startnode=0;
+  mod->slowSPR=0;
+  mod->stretch=1.0;
+  mod->splitByTree=1;
+  mod->omega_opt_spec=0;
+  mod->optKappa=1;
+  mod->optFreq=1;
+  mod->optDebug=0;
+  mod->nhotness=0;
+  mod->kappaci=0;
+  mod->ASR=0;
+  mod->ASRcut=0;
+  mod->rootpi=0;
+  mod->constB=0;
+  mod->prior=0;
+  mod->preconfile=mCalloc(T_MAX_FILE,sizeof(char));
+  //new defaults, mostly for GY94 model
+  mod->kappa                 = 1.0;
+  mod->optKappa=1;//added by Ken 25/1/2018
+  mod->freqsTo=1;
+  mod->rootname = mCalloc(T_MAX_OPTION,sizeof(char));
+  mod->hotnessstring = mCalloc(T_MAX_OPTION,sizeof(char));
+  mod->aamodel = mCalloc(T_MAX_OPTION,sizeof(char));
+  mod->partfile = mCalloc(T_MAX_FILE,sizeof(char));
+  mod->motifstring = mCalloc(T_MAX_FILE,sizeof(char));
+  mod->ambigfile = mCalloc(T_MAX_FILE,sizeof(char));
+  mod->structTs_and_Tv = (ts_and_tv *)mCalloc(64*64,sizeof(ts_and_tv));
+  mod->omega_opt_string = mCalloc(T_MAX_OPTION,sizeof(char));
+  mod->baseCounts = mCalloc(12,sizeof(phydbl));
+  mod->in_align_file=mCalloc(T_MAX_FILE,sizeof(char));
+  For(c,12){mod->baseCounts[c]=0.0;}
+  mod->optIter=0;
+
 
 }
 /*********************************************************/
@@ -3468,7 +2836,6 @@ void Set_Defaults_Optimiz(optimiz *s_opt)
   s_opt->opt_method              = optPAML; //!< Added By Marcelo.
   s_opt->nBrentCycles            = 2;  //!< Added By Marcelo.
   s_opt->opt_state_freq_AAML     = NO;
-  
   s_opt->opt_kappa               = YES; // HKY85 is default
 }
 
@@ -3659,7 +3026,19 @@ void Compare_Bip(t_tree *tree1, t_tree *tree2)
   {
     b1 = tree1->t_edges[i];     
     bip_size1 = MIN(b1->left->bip_size[b1->l_r],b1->rght->bip_size[b1->r_l]);
-    
+    //     if (! tree->mod->quiet) {
+//       PhyML_Printf("\n. Do you really want to proceed? [Y/n] ");
+//       if(scanf("%c", &answer))
+//       {
+//         if(answer == '\n') answer = 'Y';
+//         else if(answer == 'n' || answer == 'N') Warn_And_Exit("\n");
+//         else getchar();
+//       }
+//       else
+//       {
+//         Warn_And_Exit("\n\n");
+//       }
+//     }  //COMMENTED OUT BY MARCELO ... 24.07.2014
     if(bip_size1 > 1)
     {
       For(j,2*tree2->n_otu-3)
@@ -5303,8 +4682,7 @@ void Random_Tree(t_tree *tree)
   For(i,tree->n_otu) list_of_nodes[i] = i;
   
   step = 0;
-  do
-  {
+  do{
     /*       node_num = (int)RINT(rand()/(phydbl)(RAND_MAX+1.0)*(tree->n_otu-1-step)); */
     node_num = Rand_Int(0,tree->n_otu-1-step);
     node_num = list_of_nodes[node_num];
@@ -5352,33 +4730,23 @@ void Random_Tree(t_tree *tree)
 
 /*********************************************************/
 
-
-
-
-void Fill_Missing_Dist(matrix *mat)
-{
+void Fill_Missing_Dist(matrix *mat){
   int i,j;
-  For(i,mat->n_otu)
-  {
-    for(j=i+1;j<mat->n_otu;j++)
-    {
-      if(i != j)
-	    {
-	      if(mat->dist[i][j] < .0) 
-        {
-          Fill_Missing_Dist_XY(i,j,mat);
-          mat->dist[j][i] = mat->dist[i][j];
-        }
-	    }
+  For(i,mat->n_otu){
+    for(j=i+1;j<mat->n_otu;j++){
+      if(i != j){
+	      if(mat->dist[i][j] < .0){
+	    	  Fill_Missing_Dist_XY(i,j,mat);
+	    	  mat->dist[j][i] = mat->dist[i][j];
+	      }
+	  }
     }
   }
 }
 
 /*********************************************************/
 
-void Fill_Missing_Dist_XY(int x, int y, matrix *mat)
-{
-  
+void Fill_Missing_Dist_XY(int x, int y, matrix *mat){
   int i,j;
   phydbl *local_mins,**S1S2;
   int cpt;
@@ -5390,22 +4758,17 @@ void Fill_Missing_Dist_XY(int x, int y, matrix *mat)
   For(i,mat->n_otu*mat->n_otu) S1S2[i] = (phydbl *)mCalloc(2,sizeof(phydbl));
   
   cpt = 0;
-  For(i,mat->n_otu)
-  {
-    if((mat->dist[i][x] > .0) && (mat->dist[i][y] > .0))
-    {
-      For(j,mat->n_otu)
-	    {
-	      if((mat->dist[j][x] > .0) && (mat->dist[j][y] > .0))
-        {
-          if((i != j) && (i != x) && (i != y) && (j != x) && (j != y))
-          {
+  For(i,mat->n_otu){
+    if((mat->dist[i][x] > .0) && (mat->dist[i][y] > .0)){
+      For(j,mat->n_otu){
+	      if((mat->dist[j][x] > .0) && (mat->dist[j][y] > .0)){
+          if((i != j) && (i != x) && (i != y) && (j != x) && (j != y)){
             S1S2[cpt][0] = MIN(mat->dist[i][x] + mat->dist[j][y] - mat->dist[i][j] , mat->dist[i][y] + mat->dist[j][x] - mat->dist[i][j]);
             S1S2[cpt][1] = MAX(mat->dist[i][x] + mat->dist[j][y] - mat->dist[i][j] , mat->dist[i][y] + mat->dist[j][x] - mat->dist[i][j]);
             cpt++;
           }
         }
-	    }
+	  }
     }
   }
   
@@ -5417,16 +4780,13 @@ void Fill_Missing_Dist_XY(int x, int y, matrix *mat)
   pos_best_estimate = 0;
   min_crit = curr_crit = BIG;
 	
-  For(i,cpt-1)
-  {
-    if((local_mins[i] < S1S2[i+1][0]) && (local_mins[i] > S1S2[i][0]))
-    {
+  For(i,cpt-1){
+    if((local_mins[i] < S1S2[i+1][0]) && (local_mins[i] > S1S2[i][0])){
       curr_crit = Least_Square_Missing_Dist_XY(x,y,local_mins[i],mat);
-      if(curr_crit < min_crit)
-	    {
+      if(curr_crit < min_crit){
 	      min_crit = curr_crit;
 	      pos_best_estimate = i;
-	    }
+	   }
     }
   }
   
@@ -5440,37 +4800,25 @@ void Fill_Missing_Dist_XY(int x, int y, matrix *mat)
 
 /*********************************************************/
 
-phydbl Least_Square_Missing_Dist_XY(int x, int y, phydbl dxy, matrix *mat)
-{
+phydbl Least_Square_Missing_Dist_XY(int x, int y, phydbl dxy, matrix *mat){
   int i,j;
   phydbl fit;
-  
   fit = .0;
-  For(i,mat->n_otu)
-  {
-    if((mat->dist[i][x] > .0) && (mat->dist[i][y] > .0))
-    {
-      For(j,mat->n_otu)
-	    {
-	      if((mat->dist[j][x] > .0) && (mat->dist[j][y] > .0))
-        {
-          if((i != j) && (i != x) && (i != y) && (j != x) && (j != y))
-          {
-            if(dxy < MIN(mat->dist[i][x] + mat->dist[j][y] - mat->dist[i][j] , mat->dist[i][y] + mat->dist[j][x] - mat->dist[i][j]))
-            {
+  For(i,mat->n_otu){
+    if((mat->dist[i][x] > .0) && (mat->dist[i][y] > .0)){
+      For(j,mat->n_otu){
+	      if((mat->dist[j][x] > .0) && (mat->dist[j][y] > .0)){
+          if((i != j) && (i != x) && (i != y) && (j != x) && (j != y)){
+            if(dxy < MIN(mat->dist[i][x] + mat->dist[j][y] - mat->dist[i][j] , mat->dist[i][y] + mat->dist[j][x] - mat->dist[i][j])){
               fit += POW((mat->dist[i][x] + mat->dist[j][y]) - (mat->dist[i][y] + mat->dist[j][x]),2);
-            }
-            else if((mat->dist[i][x] + mat->dist[j][y]) < (mat->dist[i][y] + mat->dist[j][x]))
-            {
+            }else if((mat->dist[i][x] + mat->dist[j][y]) < (mat->dist[i][y] + mat->dist[j][x])){
               fit += POW(dxy - (mat->dist[i][y] + mat->dist[j][x] - mat->dist[i][j]),2);
-            }
-            else
-            {
+            }else{
               fit += POW(dxy - (mat->dist[i][x] + mat->dist[j][y] - mat->dist[i][j]),2);
             }
           }
         }
-	    }
+	   }
     }
   }
   return fit;
@@ -5478,25 +4826,7 @@ phydbl Least_Square_Missing_Dist_XY(int x, int y, phydbl dxy, matrix *mat)
 
 /*********************************************************/
 
-token * Print_Banner_Small(token *t) {                                      
-    t = Emit_Out_Token(t, "Header", "Header", COMMENTTKN, TFSTRING, "%s", "oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo");
-    t = Emit_Out_Token(t, "Header", "Header", COMMENTTKN, TFSTRING, "%s%s ---", "                      --- IgPhyML ", VERSION);
-    t = Emit_Out_Token(t, "Header", "Header", COMMENTTKN, TFSTRING, "%s", "               Kenneth B Hoehn, Gerton Lunter, Oliver G Pybus");
-    t = Emit_Out_Token(t, "Header", "Header", COMMENTTKN, TFSTRING, "%s", "                                ");
-    t = Emit_Out_Token(t, "Header", "Header", COMMENTTKN, TFSTRING, "%s", "                                ");
-    t = Emit_Out_Token(t, "Header", "Header", COMMENTTKN, TFSTRING, "%s", "                         Based off of codonPhyML");
-    t = Emit_Out_Token(t, "Header", "Header", COMMENTTKN, TFSTRING, "%s", "Marcelo S Zanetti, Stefan Zoller, Manuel Gil, Louis du Plessis, Maria Anisimova");
-    t = Emit_Out_Token(t, "Header", "Header", COMMENTTKN, TFSTRING, "%s", "                 http://sourceforge.net/projects/codonphyml/");
-    t = Emit_Out_Token(t, "Header", "Header", COMMENTTKN, TFSTRING, "%s", "oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo");
-    return(t);
-}
-
-/*********************************************************/
-
-
-
-void Check_Memory_Amount(t_tree *tree)
-{
+void Check_Memory_Amount(t_tree *tree){
   /* Rough estimate of the amount of memory that has to be used */
   
   long long int nbytes;
@@ -5618,9 +4948,10 @@ void Print_Lk_rep(option* io, char *string)
 /*********************************************************/
 
 void Lazy_Exit(char *string,char* file, int line){
-	printf("Sorry, %s in file %s line %d isn't supported yet,\n",string,file,line);
-	printf("probably because Ken is lazy -\\ (:/)_ /-");
-	printf("\n");
+	printf("\nSorry, %s in file %s line %d isn't supported\n",string,file,line);
+	printf("This is due to presumed lack of importance and laziness on Ken's part -\\_(:/)_/-\n");
+	printf("Let him know if it's important to your application and he'll try to get it to work.\n");
+	printf("Contact: kenneth <dot> hoehn <at> yale.edu\n\n");
 	exit(EXIT_FAILURE);
 }
 
@@ -5759,59 +5090,23 @@ void Read_userRatesAndFreqsMG(phydbl *daa, phydbl *pi, phydbl *bfreqs, int nbfre
   Scale_freqs(bfreqs+8, 4);
   
 }
-/*********************************************************/
-
-
-void Randomize_Sequence_Order(calign *cdata)
-{
-  int i,exchange_with;
-  phydbl buff_dbl;
-  char *buff_name,*buff_state;
-  short int *buff_ambigu;
-  
-  exchange_with = -1;
-  For(i,cdata->n_otu)
-  {
-    buff_dbl  = rand();
-    buff_dbl /= (RAND_MAX+1.);
-    buff_dbl *= cdata->n_otu;
-    exchange_with = (int)FLOOR(buff_dbl);
-    
-    buff_name                         = cdata->c_seq[i]->name;
-    cdata->c_seq[i]->name             = cdata->c_seq[exchange_with]->name;
-    cdata->c_seq[exchange_with]->name = buff_name;
-    
-    buff_state                         = cdata->c_seq[i]->state;
-    cdata->c_seq[i]->state             = cdata->c_seq[exchange_with]->state;
-    cdata->c_seq[exchange_with]->state = buff_state;
-    
-    buff_ambigu                            = cdata->c_seq[i]->is_ambigu;
-    cdata->c_seq[i]->is_ambigu             = cdata->c_seq[exchange_with]->is_ambigu;
-    cdata->c_seq[exchange_with]->is_ambigu = buff_ambigu;
-  }
-}
 
 /*********************************************************/
-
 //Modified by Ken 3/8/2016
 void Update_Ancestors(t_node *a, t_node *d, t_tree *tree)
 {
   d->anc = a;
-
-
   if(d->tax) return;
-  else
-  {
+  else{
     int i;
     For(i,3)
     if((d->v[i] != d->anc) && (d->b[i] != tree->e_root))
       Update_Ancestors(d,d->v[i],tree);
   }
 }
-
+/*********************************************************/
 //Modified by Ken 3/8/2016
-void Update_Ancestors_Edge(t_node *a, t_node *d, t_edge *e, t_tree *tree)
-{
+void Update_Ancestors_Edge(t_node *a, t_node *d, t_edge *e, t_tree *tree){
   d->anc = a;
   d->anc_edge=e;
   a->lupdate=0;//intialize lupdate=0 on all nodes
@@ -5819,23 +5114,10 @@ void Update_Ancestors_Edge(t_node *a, t_node *d, t_edge *e, t_tree *tree)
   e->anc_node = a;
   e->des_node = d;
 
- // printf("a:%d\t%d\td:%d\t%d\t%d\t%lf\n",a->num,a->lupdate,d->num,d->lupdate,d->anc_edge->num,d->anc_edge->l);
- //printf("a:%d\td:%d\t%d\n",a->num,d->num,d->anc_edge->num);
-
   if(d->tax) return;
-  else
-  {
+  else{
     int i;
-    /*For(i,3){
-    	printf("checking edges %d\n",d->b[i]->num);
-        if(d->v[i]->num != d->anc->num){
-        	d->b[i]->anc_edge=e;
-        }
-    }*/
-
     For(i,3){
-	//	printf("%d\n",i);
-	//	printf("%d\n",d->v[i]->num);
     	if((d->v[i] != d->anc)){
     		Update_Ancestors_Edge(d,d->v[i],d->b[i],tree);
     	}
@@ -5878,124 +5160,24 @@ void Print_Ambig_States(t_node *d, t_tree *tree, FILE *ambigfile)
 
 /*********************************************************/
 
-void Best_Of_NNI_And_SPR(t_tree *tree)
-{
- /* if(tree->mod->s_opt->random_input_tree) Speed_Spr_Loop(tree); // Don't do simultaneous NNIs if starting tree is random
-  else
-  {
-    t_tree *ori_tree,*best_tree;
-    model *ori_mod,*best_mod;
-    phydbl *ori_bl,*best_bl;
-    phydbl best_lnL,ori_lnL,nni_lnL,spr_lnL;
-    
-    ori_bl = (phydbl *)mCalloc(2*tree->n_otu-3,sizeof(phydbl));
-    best_bl = (phydbl *)mCalloc(2*tree->n_otu-3,sizeof(phydbl));
-    
-    ori_mod   = Copy_Model(tree->mod);
-    best_mod  = Copy_Model(tree->mod);
-    
-    ori_tree = Make_Tree(tree->n_otu);
-    //Init_Tree(ori_tree,ori_tree->n_otu);
-    Make_All_Tree_Nodes(ori_tree);
-    Make_All_Tree_Edges(ori_tree);
-    
-    best_tree = Make_Tree(tree->n_otu);
-    //Init_Tree(best_tree,best_tree->n_otu);
-    Make_All_Tree_Nodes(best_tree);
-    Make_All_Tree_Edges(best_tree);
-    
-    Lk(tree);
-    Copy_Tree(tree,ori_tree);
-    Record_Br_Len(ori_bl,tree);
-    ori_lnL = tree->c_lnL; // Record likelihood of the starting tree
-    
-    Simu_Loop(tree); // Perform simultaneous NNIs
-    best_lnL = tree->c_lnL; // Record the likelihood
-    nni_lnL = tree->c_lnL;
-    Copy_Tree(tree,best_tree); // Record the tree topology and branch lengths
-    Record_Br_Len(best_bl,tree);
-    Restore_Br_Len(best_bl,best_tree);
-    Record_Model(tree->mod,best_mod);
-    
-    Copy_Tree(ori_tree,tree); // Back to the original tree topology
-    Restore_Br_Len(ori_bl,tree); // Back to the original branch lengths
-    Record_Model(ori_mod,tree->mod); // Back to the original model
-    
-    // Make sure the tree is in its original form
-    Lk(tree);
-//     if(FABS(tree->c_lnL - ori_lnL) > tree->mod->s_opt->min_diff_lk_global)
-//     {
-//       PhyML_Printf("\n. ori_lnL = %f, c_lnL = %f",ori_lnL,tree->c_lnL);
-//       PhyML_Printf("\n. Err in file %s at line %d\n",__FILE__,__LINE__);
-//       Warn_And_Exit("");
-//     }  //COMMENTED OUT BY MARCELO ... 24.07.2014
-    
-    Speed_Spr_Loop(tree);
-    spr_lnL = tree->c_lnL;
-    if(tree->c_lnL > best_lnL)
-    {
-      best_lnL = tree->c_lnL;
-      Copy_Tree(tree,best_tree); // Record tree topology, branch lengths and model parameters
-      Record_Br_Len(best_bl,tree);
-      Restore_Br_Len(best_bl,best_tree);
-      Record_Model(tree->mod,best_mod);
-    }
-    
-    Copy_Tree(best_tree,tree);
-    Restore_Br_Len(best_bl,tree);
-    Record_Model(best_mod,tree->mod);
-    
-    // Make sure the current tree has the best topology, branch lengths and model parameters
-    Lk(tree);
-//     if(FABS(tree->c_lnL - best_lnL) > tree->mod->s_opt->min_diff_lk_global)
-//     {
-//       PhyML_Printf("\n. best_lnL = %f, c_lnL = %f",best_lnL,tree->c_lnL);
-//       PhyML_Printf("\n. Err in file %s at line %d\n",__FILE__,__LINE__);
-//       Warn_And_Exit("");
-//     } //COMMENTED OUT BY MARCELO ... 24.07.2014
-    
-    if(tree->mod->s_opt->print)
-    {
-      PhyML_Printf("\n\n. Log likelihood obtained after NNI moves : %f",nni_lnL);
-      PhyML_Printf("\n. Log likelihood obtained after SPR moves : %f",spr_lnL);
-    }
-    
-    free(ori_bl);
-    free(best_bl);
-    
-    Free_Model(ori_mod);
-    Free_Model(best_mod);
-    
-    Free_Tree(ori_tree);
-    Free_Tree(best_tree);
-  }*/
+void Best_Of_NNI_And_SPR(t_tree *tree){
+	Lazy_Exit("Best of SPR and NNI",__FILE__,__LINE__);
+
 }
 
 /*********************************************************/
 
-t_tree *Dist_And_BioNJ(calign *cdata, model *mod, option *io)
-{
+t_tree *Dist_And_BioNJ(calign *cdata, model *mod, option *io){
   t_tree *tree;
   matrix *mat;
-  // matrix *mat2;
-  // int i,j;
-  if(!io->quiet) PhyML_Printf("\n");
-  if(!io->quiet) PhyML_Printf(". Computing pairwise distances...");
   mod->calculate_init_tree = 1; //!< Added by Marcelo. Used in the calculation of the probability transition matrix.
-  if((io->datatype==CODON)&&(io->init_DistanceTreeCD!=NUCLEO)) //!< Added by Marcelo. 
-  {
+  if((io->datatype==CODON)&&(io->init_DistanceTreeCD!=NUCLEO)){ //!< Added by Marcelo.
     mat = ML_CODONDist_Pairwise(cdata,mod->io,mod);
     Fill_Missing_Dist(mat);
-  }
-  else
-  {
-    
-    mat = ML_Dist(cdata,mod);
-    Fill_Missing_Dist(mat);
-    
+  }else{
+	Lazy_Exit("",__FILE__,__LINE__);
   }
   mod->calculate_init_tree = 0; //!< Added by Marcelo. 
-  if(!io->quiet) PhyML_Printf("\n. Building BioNJ tree...\n");
   mat->tree = Make_Tree_From_Scratch(cdata->n_otu,cdata);
   Bionj(mat);
   tree      = mat->tree;
@@ -6014,15 +5196,11 @@ void Add_BioNJ_Branch_Lengths(t_tree *tree, calign *cdata, model *mod)
   Order_Tree_CSeq(tree,cdata);
   
   mod->calculate_init_tree = 1; //!< Added by Marcelo. Used in the calculation of the probability transition matrix.
-  if((mod->datatype==CODON)&&(mod->init_DistanceTreeCD!=NUCLEO)) //!< Added by Marcelo.
-  {
+  if((mod->datatype==CODON)&&(mod->init_DistanceTreeCD!=NUCLEO)){
     mat = ML_CODONDist_Pairwise(cdata,mod->io, mod);
     Fill_Missing_Dist(mat);
-  }
-  else
-  {
-    mat = ML_Dist(cdata,mod);
-    Fill_Missing_Dist(mat);
+  }else{
+	Lazy_Exit("",__FILE__,__LINE__);
   }
   mod->calculate_init_tree = 0; //!< Added by Marcelo.
   
@@ -6035,18 +5213,18 @@ void Add_BioNJ_Branch_Lengths(t_tree *tree, calign *cdata, model *mod)
 
 /*********************************************************/
 
-t_tree *Read_User_Tree(calign *cdata, model *mod, option *io)
-{
+t_tree *Read_User_Tree(calign *cdata, model *mod, option *io){
   t_tree *tree;
-  
-  
   if(!mod->quiet)PhyML_Printf("\n. Reading user tree...\n"); fflush(NULL);
   if(io->n_trees == 1) rewind(mod->fp_in_tree);
   tree = Read_Tree_File_Phylip(mod->fp_in_tree);
-  if(!tree) Exit("\n. Input tree not found...\n");
-  /* Add branch lengths if necessary */
-  if(!tree->has_branch_lengths || io->nobl){ PhyML_Printf("\n. Tree does not have branch lengths or you chose to ignore them...\n"); fflush(NULL);Add_BioNJ_Branch_Lengths(tree,cdata,mod);}
-  else if(!mod->quiet) PhyML_Printf("\n. The user tree does have branch lengths...\n");
+  if(!tree) Warn_And_Exit("\n. Input tree not found...\n");
+  if(!tree->has_branch_lengths || io->nobl){ // Add branch lengths if necessary
+	  PhyML_Printf("\n. Tree does not have branch lengths or you chose to ignore them...\n");
+	  fflush(NULL);
+	  Add_BioNJ_Branch_Lengths(tree,cdata,mod);
+  }
+  else if(!mod->quiet)PhyML_Printf("\n. The user tree does have branch lengths...\n");
   return tree;
 }
 
@@ -6087,7 +5265,7 @@ char *Bootstrap_From_String(char *s_tree, calign *cdata, model *mod, option *io)
   if(tree->mod->s_opt->random_input_tree) Random_Tree(tree);
   Fill_Dir_Table(tree);
   Update_Dirs(tree);
-  Make_Tree_4_Pars(tree,cdata,cdata->init_len);
+  Make_Tree_4_Pars(tree,cdata->init_len);
   Make_Tree_4_Lk(tree,cdata,cdata->init_len);
   tree->triplet_struct = Make_Triplet_Struct(mod);
   //Br_Len_Not_Involving_Invar(tree);
@@ -6137,7 +5315,7 @@ char *aLRT_From_String(char *s_tree, calign *cdata, model *mod, option *io)
   if(tree->mod->s_opt->random_input_tree) Random_Tree(tree);
   Fill_Dir_Table(tree);
   Update_Dirs(tree);
-  Make_Tree_4_Pars(tree,cdata,cdata->init_len);
+  Make_Tree_4_Pars(tree,cdata->init_len);
   Make_Tree_4_Lk(tree,cdata,cdata->init_len);
   tree->triplet_struct = Make_Triplet_Struct(mod);
   Make_Spr_List(tree);
@@ -6165,11 +5343,10 @@ char *aLRT_From_String(char *s_tree, calign *cdata, model *mod, option *io)
 
 void Prepare_Tree_For_Lk(t_tree *tree)
 {
-
   Order_Tree_CSeq(tree,tree->data);
   Fill_Dir_Table(tree);
   Update_Dirs(tree);
-  Make_Tree_4_Pars(tree,tree->data,tree->data->init_len);
+  Make_Tree_4_Pars(tree,tree->data->init_len);
   Make_Tree_4_Lk(tree,tree->data,tree->data->init_len);
   tree->triplet_struct = Make_Triplet_Struct(tree->mod);
   Br_Len_Not_Involving_Invar(tree);
@@ -6229,7 +5406,9 @@ phydbl Get_Tree_Size(t_tree *tree)
   phydbl tree_size;
   
   tree_size = 0.0;
-  For(i,2*tree->n_otu-3) tree_size += tree->t_edges[i]->l;
+  For(i,2*tree->n_otu-3){
+	  tree_size += tree->t_edges[i]->l;
+  }
   /*   tree_size = 0.0; */
   /*   For(i,2*tree->n_otu-3) tree_size += tree->rates->u_cur_l[i]; */
   
@@ -6265,44 +5444,9 @@ char *Basename(char *path)
 
 /*********************************************************/
 
-void Copy_Tree_Topology_With_Labels(t_tree *ori, t_tree *cpy)
-{
-  int i,j;
-  
-  For(i,2*ori->n_otu-2)
-  {
-    For(j,3)
-    {
-      if(ori->noeud[i]->v[j])
-      {
-        cpy->noeud[i]->v[j] = cpy->noeud[ori->noeud[i]->v[j]->num];
-        cpy->noeud[i]->l[j] = ori->noeud[i]->l[j];
-      }
-      else
-        cpy->noeud[i]->v[j] = NULL;
-    }
-    cpy->noeud[i]->num = ori->noeud[i]->num;
-    cpy->noeud[i]->tax = 0;
-  }
-  
-  For(i,2*ori->n_otu-3)
-  {
-    cpy->t_edges[i]->l = ori->t_edges[i]->l;
-  }
-  
-  For(i,ori->n_otu)
-  {
-    cpy->noeud[i]->tax = 1;
-    strcpy(cpy->noeud[i]->name,ori->noeud[i]->name);
-  }
-  
-}
-
-/*********************************************************/
 //! Read the simulation options from interface or command line.
 
-option *Get_Input(int argc, char **argv)
-{
+option *Get_Input(int argc, char **argv){
   
   option *io; 
   model *mod;
@@ -6324,24 +5468,13 @@ option *Get_Input(int argc, char **argv)
 #ifdef MPI
   Read_Command_Line(io,argc,argv);
 #else
-  
-  //putchar('\n');
-  
-  switch (argc)
-  {
-    case 1:
-    {
-    	//printf("\n. Interface isn't implemented in IgPhyML yet. Please use command line."); //Added by Ken 4/1/2017
+
+  switch (argc){
+    case 1:{
     	Usage();
     	exit(EXIT_FAILURE);
-//      Launch_Interface(io);//!< Read user defined options from interface.
       break;
     }
-      /*
-       case 2:
-       Usage();
-       break;
-       */
     default:
       Read_Command_Line(io,argc,argv); //!< Read user defined options from command line.
   }
@@ -6520,6 +5653,9 @@ void Set_Model_Name(model *mod)
       case HLP17:
        strcpy( tempName, "HLP17" );
        break;
+      case HLP19:
+       strcpy( tempName, "HLP19" );
+       break;
       default:
         break;
     }
@@ -6589,8 +5725,7 @@ void Skip_Comment(FILE *fp)
   char c;
   
   in_comment = 1;
-  do
-  {
+  do{
     c = fgetc(fp);
     if(c == EOF) break;
     if(c == '[')      in_comment++;
@@ -6606,8 +5741,7 @@ int       senseCodons[64];                        //!< Added by Marcelo.
 int  indexSenseCodons[64];                        //!< Added by Marcelo.
 int            ThegenCode;                        //!< Added by Marcelo.
 
-int Get_Genetic_Code()
-{
+int Get_Genetic_Code(){
   return ThegenCode;
 }
 
@@ -6807,24 +5941,70 @@ int Genetic_code_ns() //!< Added by Marcelo.
   return 64-number;
 }
 
-/*********************************************************/
+/*******************************************************
+ * Get frequencies of a specified partition for HLP19 model
+ * */
 void Get_Root_Freqs(calign *cdata, align **data, char* root, phydbl* freqs, model* mod, int modeli){
-	 char curr_state;
-	  int i,j,k,l,m, counter;
-	  phydbl *freq,*codons,sum, sumf;
+ char curr_state;
+ int i,j,k,l,m, counter;
+ phydbl *codons,sum, sumf;
+ codons=(phydbl *)mCalloc(mod->ns,sizeof(phydbl));
+ For(i,mod->ns) codons[i]=0.0;
+ For(i,cdata->n_otu){
+   if(strcmp(data[i]->name,root)!=0)continue; //only include root sequence
+   For(j,data[0]->len){
+   if(mod->nomega_part > 1)if(mod->partIndex[j] != modeli)continue;
+   curr_state=data[i]->state[j];
+   if(curr_state>=(char)0 && curr_state<(char)64){
+        codons[indexSenseCodons[(int)curr_state]]++;
+   }else{ // ambiguous codons - use empirical distributions
+        if(curr_state==(char) 88){
+           l=-1;
+           while(data[i]->alternativeCodons[j][++l]<64); //get number of alternative codons
+           sumf=0;
+           if(modeli!=1){
+           	For(m,l) sumf+=mod->fwr[indexSenseCodons[data[i]->alternativeCodons[j][m]]]; //total frequency of alternative codons
+           	For(m,l) codons[indexSenseCodons[data[i]->alternativeCodons[j][m]]] //split alternatives equally among alternates
+					+=mod->fwr[indexSenseCodons[data[i]->alternativeCodons[j][m]]]/sumf;
+           }else{
+           	For(m,l) sumf+=mod->cdr[indexSenseCodons[data[i]->alternativeCodons[j][m]]];
+           	For(m,l) codons[indexSenseCodons[data[i]->alternativeCodons[j][m]]]
+					+=mod->cdr[indexSenseCodons[data[i]->alternativeCodons[j][m]]]/sumf;
+           }
+         }
+        }
+   	}
+  }
+  sum=0.0;
+  For(i,mod->ns) sum+=codons[i]; //scale frequencies
+  For(i,mod->ns) freqs[i]=codons[i]/sum;
+  //For(i,mod->ns) cdata->b_frq[i]=freqs[i];
+
+  free(codons);
+}
+
+/********************************************************
+ * Get codon frequencies and counts for different models
+ * */
+void Get_Base_Freqs_CODONS_FaXb(calign *cdata, align **data, int freqModel, model *mod){ //!< Added by Marcelo.
+  char curr_state;
+  int i,j,k,l,m, counter;
+  phydbl A,C,G,T;
+  phydbl fA,fC,fG,fT;
+  phydbl A1,C1,G1,T1, A2,C2,G2,T2, A3,C3,G3,T3;
+  phydbl fA1,fC1,fG1,fT1, fA2,fC2,fG2,fT2, fA3,fC3,fG3,fT3;
+  phydbl *freq,*codons,sum, sumf;
+  
+  counter=50;
+  switch(freqModel){
+    case F1XSENSECODONS:{
       freq=(phydbl *)mCalloc(mod->ns,sizeof(phydbl));
       codons=(phydbl *)mCalloc(mod->ns,sizeof(phydbl));
-      For(i,mod->ns) freq[i]=1.0/mod->ns;
-
-        For(i,mod->ns) codons[i]=0.0;
+      For(i,mod->ns) freq[i]=1.0/mod->ns; //start with initial freqs
+      For(k,1){
+        For(i,mod->ns) codons[i]=0.0; 
         For(i,cdata->n_otu){
-          if(strcmp(data[i]->name,root)!=0)continue;
           For(j,data[0]->len){
-        	  	if(mod->nomega_part > 1){
-        	  		if(mod->partIndex[j] != modeli){
-        	  			continue;
-        	  		}
-        	  	}
             curr_state=data[i]->state[j];
             if(curr_state>=(char)0 && curr_state<(char)64 ){
               codons[ indexSenseCodons[(int)curr_state] ]++;
@@ -6841,153 +6021,26 @@ void Get_Root_Freqs(calign *cdata, align **data, char* root, phydbl* freqs, mode
         }
         sum=0.0;
         For(i,mod->ns) sum+=codons[i];
-        For(i,mod->ns) freqs[i]=codons[i]/sum;
-
-
-      For(i,mod->ns) cdata->b_frq[i]=freqs[i];
-      For(i,mod->num_base_freq) mod->base_freq[i]=cdata->b_frq[i];
-
-      free(freq);
-      free(codons);
-}
-
-/*********************************************************/
-void Get_Base_Freqs_CODONS_FaXb(calign *cdata, align **data, int freqModel, model *mod) //!< Added by Marcelo.
-{
-  char curr_state;
-  int i,j,k,l,m, counter;
-  phydbl A,C,G,T;
-  phydbl fA,fC,fG,fT;
-  phydbl A1,C1,G1,T1, A2,C2,G2,T2, A3,C3,G3,T3;
-  phydbl fA1,fC1,fG1,fT1, fA2,fC2,fG2,fT2, fA3,fC3,fG3,fT3;
-  phydbl *freq,*codons,sum, sumf;
-  
-  counter=50;
-  switch(freqModel)
-  {
-    case F1XSENSECODONS://!< F1x61
-    {
-      freq=(phydbl *)mCalloc(mod->ns,sizeof(phydbl));
-      codons=(phydbl *)mCalloc(mod->ns,sizeof(phydbl));
-      For(i,mod->ns) freq[i]=1.0/mod->ns; 
-      
-      For(k,1)
-      {
-        
-        For(i,mod->ns) codons[i]=0.0; 
-        
-        For(i,cdata->n_otu)
-        {
-          For(j,data[0]->len)
-          {
-            curr_state=data[i]->state[j];
-            if(curr_state>=(char)0 && curr_state<(char)64 )
-            {
-              codons[ indexSenseCodons[(int)curr_state] ]++;
-            }
-            else 
-            {
-              if(curr_state==(char) 88)
-              {
-                l=-1;
-                while(data[i]->alternativeCodons[j][++l]<64);
-                sumf=0;
-                For(m,l) sumf+=freq[indexSenseCodons[data[i]->alternativeCodons[j][m]]];
-                For(m,l) codons[indexSenseCodons[data[i]->alternativeCodons[j][m]]]+=freq[indexSenseCodons[data[i]->alternativeCodons[j][m]]]/sumf;
-              }
-            }
-          }
-        }
-        sum=0.0;
-        For(i,mod->ns) sum+=codons[i];
         For(i,mod->ns) freq[i]=codons[i]/sum;
       }
-      
       For(i,mod->ns) cdata->b_frq[i]=freq[i];
       For(i,mod->num_base_freq) mod->base_freq[i]=cdata->b_frq[i];
-      
       free(freq);
       free(codons);
       break;
     }
-    case F1X4://!< F1x4
-    {
-      fT = fC = fA = fG = 0.25;	
-      
-      For(k,counter)
-      {
-        A = C = G = T = .0;
-        For(i,cdata->n_otu)
-        {
-          For(j,data[i]->ntLen)
-          {
-            switch(data[i]->ntStates[j])
-            {
-              case 'A' : A++;
-                break;
-              case 'C' : C++;
-                break;
-              case 'G' : G++;
-                break;
-              case 'T' : T++;
-                break;
-              case 'U' : T++;
-                break;
-              case 'M' : C+=fC/(fC+fA); A+=fA/(fA+fC);
-                break;
-              case 'R' : G+=fG/(fA+fG); A+=fA/(fA+fG);
-                break;
-              case 'W' : T+=fT/(fA+fT); A+=fA/(fA+fT);
-                break;
-              case 'S' : C+=fC/(fC+fG); G+=fG/(fC+fG);
-                break;
-              case 'Y' : C+=fC/(fC+fT); T+=fT/(fT+fC);
-                break;
-              case 'K' : G+=fG/(fG+fT); T+=fT/(fT+fG);
-                break;
-              case 'B' : C+=fC/(fC+fG+fT); G+=fG/(fC+fG+fT); T+=fT/(fC+fG+fT);
-                break;
-              case 'D' : A+=fA/(fA+fG+fT); G+=fG/(fA+fG+fT); T+=fT/(fA+fG+fT);
-                break;
-              case 'H' : A+=fA/(fA+fC+fT); C+=fC/(fA+fC+fT); T+=fT/(fA+fC+fT);
-                break;
-              case 'V' : A+=fA/(fA+fC+fG); C+=fC/(fA+fC+fG); G+=fG/(fA+fC+fG);
-                break;
-              case 'N' : case 'X' : case '?' : case 'O' : case '-' :
-                A+=fA; C+=fC; G+=fG; T+=fT; break;
-              default : break;
-            }
-          }
-        }
-        fA = A/(A+C+G+T);
-        fC = C/(A+C+G+T);
-        fG = G/(A+C+G+T);
-        fT = T/(A+C+G+T);
-      }
-      
-      cdata->b_frq[0] = fT;
-      cdata->b_frq[1] = fC;
-      cdata->b_frq[2] = fA;
-      cdata->b_frq[3] = fG;
-      
-      For(i,mod->num_base_freq) mod->base_freq[i]=cdata->b_frq[i];
-      
+    case F1X4:{
+      Lazy_Exit("F1X4 frequency model",__FILE__,__LINE__);
       break;
     }
     case F3X4://!< F3x4 and CF3x4.
-    case CF3X4:
-    {
+    case CF3X4:{ //tally up frequencies at each codon position
       fA1=fC1=fG1=fT1=fA2=fC2=fG2=fT2=fA3=fC3=fG3=fT3=0.25;
-      
-      For(k,counter)
-      {
+      For(k,counter){
         A1=C1=G1=T1=A2=C2=G2=T2=A3=C3=G3=T3=0.0;
-        For(i,cdata->n_otu)
-        {
-          Fors(j,data[i]->ntLen,3)
-          {
-            switch(data[i]->ntStates[j])
-            {
+        For(i,cdata->n_otu){
+          Fors(j,data[i]->ntLen,3) {
+            switch(data[i]->ntStates[j]){
               case 'A' : A1++;
                 break;
               case 'C' : C1++;
@@ -7022,8 +6075,7 @@ void Get_Base_Freqs_CODONS_FaXb(calign *cdata, align **data, int freqModel, mode
                 A1+=fA1; C1+=fC1; G1+=fG1; T1+=fT1; break;
               default : break;
             }
-            switch(data[i]->ntStates[j+1])
-            {
+            switch(data[i]->ntStates[j+1]){
               case 'A' : A2++;
                 break;
               case 'C' : C2++;
@@ -7058,8 +6110,7 @@ void Get_Base_Freqs_CODONS_FaXb(calign *cdata, align **data, int freqModel, mode
                 A2+=fA2; C2+=fC2; G2+=fG2; T2+=fT2; break;
               default : break;
             }
-            switch(data[i]->ntStates[j+2])
-            {
+            switch(data[i]->ntStates[j+2]){
               case 'A' : A3++;
                 break;
               case 'C' : C3++;
@@ -7096,6 +6147,7 @@ void Get_Base_Freqs_CODONS_FaXb(calign *cdata, align **data, int freqModel, mode
             }
           }
         }
+        //Final base frequencies
         fA1 = A1/(A1+C1+G1+T1);
         fC1 = C1/(A1+C1+G1+T1);
         fG1 = G1/(A1+C1+G1+T1);
@@ -7109,21 +6161,20 @@ void Get_Base_Freqs_CODONS_FaXb(calign *cdata, align **data, int freqModel, mode
         fG3 = G3/(A3+C3+G3+T3);
         fT3 = T3/(A3+C3+G3+T3);
 
-        mod->baseCounts[0] = T1;//Added by Ken 17/1/2018
+        //Tally up total base counts
+        mod->baseCounts[0] = T1;
         mod->baseCounts[1] = C1;
         mod->baseCounts[2] = A1;
         mod->baseCounts[3] = G1;
         mod->baseCounts[4] = T2;
         mod->baseCounts[5] = C2;
-        mod->baseCounts[6]= A2;
-        mod->baseCounts[7]= G2;
-        mod->baseCounts[8]= T3;
-        mod->baseCounts[9]= C3;
-        mod->baseCounts[10] = A3;
-        mod->baseCounts[11] = G3;
-        //printf("k %d\n",k);
+        mod->baseCounts[6] = A2;
+        mod->baseCounts[7] = G2;
+        mod->baseCounts[8] = T3;
+        mod->baseCounts[9] = C3;
+        mod->baseCounts[10]= A3;
+        mod->baseCounts[11]= G3;
       }
-      
       cdata->b_frq[0 ] = fT1;
       cdata->b_frq[1 ] = fC1;
       cdata->b_frq[2 ] = fA1;
@@ -7136,29 +6187,30 @@ void Get_Base_Freqs_CODONS_FaXb(calign *cdata, align **data, int freqModel, mode
       cdata->b_frq[9] = fC3;
       cdata->b_frq[10] = fA3;
       cdata->b_frq[11] = fG3;
-      For(i,12)cdata->b_frq[i]=roundf(cdata->b_frq[i]*10000.0f)/10000.0f; //ADDED BY KEN - REMOVE
-      /*For(i,12)printf("bfrq: %lf\n",cdata->b_frq[i]);
 
-      //if(freqModel==CF3X4) CF3x4(cdata->b_frq, mod->genetic_code);
-      printf("\n");
-      For(i,12)printf("bfrq: %lf\n",cdata->b_frq[i]);
-      printf("\n");*/
+      //Round frequencies to sane numbers
+      For(i,12)cdata->b_frq[i]=roundf(cdata->b_frq[i]*10000.0f)/10000.0f;
       For(i,mod->num_base_freq) mod->base_freq[i]=cdata->b_frq[i];
-      //For(i,12)printf("bfrq: %lf\n",mod->base_freq[i]);
 
-      
+      if(mod->optDebug){
+    	  For(i,12)printf("bfrq: %lf\n",cdata->b_frq[i]);
+    	  if(freqModel==CF3X4) CF3x4(cdata->b_frq, mod->genetic_code);
+    	  printf("\n");
+    	  For(i,12)printf("bfrq: %lf\n",cdata->b_frq[i]);
+    	  printf("\n");
+    	  For(i,12)printf("bfrq: %lf\n",mod->base_freq[i]);
+      }
       break;
     }
-    default: 
-    {
+    default:{
       Warn_And_Exit("Model for empirical calculation of base frequencies not implemented. Impossible to continue.\n");
       break;
     }
   }
 }
+
 /*********************************************************/
-void  CopyExtraFieldsCodon(align *from, int site, align *to,  int num_pattern)//!< Added by Marcelo.
-{
+void  CopyExtraFieldsCodon(align *from, int site, align *to,  int num_pattern){//!< Added by Marcelo.
   int i,j=-1;  
   to->is_ambigu[num_pattern]=from->is_ambigu[site];
   
@@ -7167,31 +6219,34 @@ void  CopyExtraFieldsCodon(align *from, int site, align *to,  int num_pattern)//
   if(!(to->alternativeCodons[num_pattern])) to->alternativeCodons[num_pattern]=(char *)mCalloc(j+1,sizeof(char)); 
   For(i,j+1) to->alternativeCodons[num_pattern][i]=from->alternativeCodons[site][i]; 
 }
+
 /*********************************************************/
-int Intersect_Site_Alternatives(align **data, int n_otu, int site)    /*!< Intersect ambiguities across sequences ... if empty the site is not invariable, if not empty*/
-{                                                                     /*! the site can be considered invariable.*/ //!< Added by Marcelo.
+int Intersect_Site_Alternatives(align **data, int n_otu, int site)/*!< Intersect ambiguities across sequences ... if empty the site is not invariable, if not empty*/
+{                                                                 /*! the site can be considered invariable.*/ //!< Added by Marcelo.
   int i,j,k=-1;
   char set[64];
   
   For(i,64) set[i]=0;
   
-  For(i,n_otu)                                                        /*!< Calculate intersection. Sum one to every possibility. At the end the elements that */
-  {                                                                   /*!< where marked for all taxa, if any, form the nonempty intersection.*/  
-    if(data[i]->is_ambigu[site]) 
-    {
+  For(i,n_otu){                                                    /*!< where marked for all taxa, if any, form the nonempty intersection.*/
+    if(data[i]->is_ambigu[site]){
       k=-1; 
       while(data[i]->alternativeCodons[site][++k]<64);
       For(j,k) set[ data[i]->alternativeCodons[site][j] ]++;
     }else set[ data[i]->state[site] ]++;
   }
   
-  For(i,64) if(set[i]==n_otu) return 1;                               /*!< Not empty intersectiong means site without polymorphism.*/
+  For(i,64) if(set[i]==n_otu) return 1;                            /*!< Not empty intersectiong means site without polymorphism.*/
   
-  return -1;                                                          /*!< Empty intersection polymorphism.*/
+  return -1;                                                       /*!< Empty intersection polymorphism.*/
 } 
 /*********************************************************/            
-void CF3x4(phydbl * freq, int genCode) //!< Added by Marcelo.
-{ //!< Corrected F3x4 estimation for the equilibrium frequencies.
+void CF3x4(phydbl * freq, int genCode){ //!< Added by Marcelo.
+ //!< Corrected F3x4 estimation for the equilibrium frequencies.
+ //!< too complicated to program ... therefore matrices are hardcoded ...
+ //add similar in the case of using another than standard genetic code.
+ //calculations according to kosakovsky et all (plos).
+ //2/4/2019 - cut all but standard genetic code (removed 2700 lines!)
   int i, n, info, rhs;
   phydbl freqStopcodons , *b, *x, *fq, *J;
   
@@ -7208,12 +6263,9 @@ void CF3x4(phydbl * freq, int genCode) //!< Added by Marcelo.
   For(i,n) fq[i]=freq[cf3x4Ind[i]]*(1.0-freqStopcodons);
   For(i,n) x[i]=0.25;
   For(i,n) b[i]=1.0;
-  switch(genCode)
-  {
-    case STANDARD: //!< too complicated to program ... therefore matrices are hardcoded ... add similar in the case of using another than standard genetic code. calculations according to kosakovsky et all (plos).
-    {
-      while(my2norm(b,n)>1e-10)
-      {
+  switch(genCode){
+    case STANDARD:{
+      while(my2norm(b,n)>1e-10){
         
         J[0*n+0]=-1+x[8]*(1-x[3]-x[4]-x[5])+(1-x[6]-x[7]-x[8])*x[5]+x[8]*x[5];
         J[0*n+1]=0;
@@ -7345,2217 +6397,7 @@ void CF3x4(phydbl * freq, int genCode) //!< Added by Marcelo.
           For(i,n) x[i]-=b[i];
         else 
           Warn_And_Exit("Error in Gauss Elimination Scheme.\n");
-        
       }
-      
-      break;
-    }
-    case TVMC: 
-    {
-      while(my2norm(b,n)>1e-10)
-      {
-        
-        J[0*n+0]=-1+(1-x[6]-x[7]-x[8])*x[5]+x[8]*x[5];
-        J[0*n+1]=0;                                                                                                                                                                                               
-        J[0*n+2]=0;
-        J[0*n+3]=0;
-        J[0*n+4]=0;
-        J[0*n+5]=(1-x[6]-x[7]-x[8])*x[0]+x[8]*x[0];
-        J[0*n+6]=-x[5]*x[0];                                                                                                                                                                                      
-        J[0*n+7]=-x[5]*x[0];                                                                                                                                                                                      
-        J[0*n+8]=0;
-        
-        
-        J[1*n+0]=0;
-        J[1*n+1]=-1;
-        J[1*n+2]=0;
-        J[1*n+3]=0;
-        J[1*n+4]=0;
-        J[1*n+5]=0;
-        J[1*n+6]=0;
-        J[1*n+7]=0;
-        J[1*n+8]=0;
-        
-        
-        J[2*n+0]=0;
-        J[2*n+1]=0;
-        J[2*n+2]=-1+(1-x[6]-x[7]-x[8])*(1-x[3]-x[4]-x[5])+x[8]*(1-x[3]-x[4]-x[5]);
-        J[2*n+3]=-(1-x[6]-x[7]-x[8])*x[2]-x[8]*x[2];
-        J[2*n+4]=-(1-x[6]-x[7]-x[8])*x[2]-x[8]*x[2];
-        J[2*n+5]=-(1-x[6]-x[7]-x[8])*x[2]-x[8]*x[2];
-        J[2*n+6]=-(1-x[3]-x[4]-x[5])*x[2];
-        J[2*n+7]=-(1-x[3]-x[4]-x[5])*x[2];
-        J[2*n+8]=0;
-        
-        
-        J[3*n+0]=0;
-        J[3*n+1]=0;
-        J[3*n+2]=0;
-        J[3*n+3]=-1;
-        J[3*n+4]=0;
-        J[3*n+5]=0;
-        J[3*n+6]=0;
-        J[3*n+7]=0;
-        J[3*n+8]=0;
-        
-        
-        J[4*n+0]=0;
-        J[4*n+1]=0;
-        J[4*n+2]=0;
-        J[4*n+3]=0;
-        J[4*n+4]=-1;
-        J[4*n+5]=0;
-        J[4*n+6]=0;
-        J[4*n+7]=0;
-        J[4*n+8]=0;
-        
-        
-        J[5*n+0]=(1-x[6]-x[7]-x[8])*x[5]+x[8]*x[5];
-        J[5*n+1]=0;
-        J[5*n+2]=0;
-        J[5*n+3]=0;
-        J[5*n+4]=0;
-        J[5*n+5]=-1+(1-x[6]-x[7]-x[8])*x[0]+x[8]*x[0];
-        J[5*n+6]=-x[5]*x[0];
-        J[5*n+7]=-x[5]*x[0];
-        J[5*n+8]=0;
-        
-        
-        J[6*n+0]=0;
-        J[6*n+1]=0;
-        J[6*n+2]=0;
-        J[6*n+3]=0;
-        J[6*n+4]=0;
-        J[6*n+5]=0;
-        J[6*n+6]=-1;
-        J[6*n+7]=0;
-        J[6*n+8]=0;
-        
-        
-        J[7*n+0]=0;
-        J[7*n+1]=0;
-        J[7*n+2]=0;
-        J[7*n+3]=0;
-        J[7*n+4]=0;
-        J[7*n+5]=0;
-        J[7*n+6]=0;
-        J[7*n+7]=-1;
-        J[7*n+8]=0;
-        
-        
-        J[8*n+0]=x[8]*x[5];
-        J[8*n+1]=0;
-        J[8*n+2]=x[8]*(1-x[3]-x[4]-x[5]);
-        J[8*n+3]=-x[8]*x[2];
-        J[8*n+4]=-x[8]*x[2];
-        J[8*n+5]=-x[8]*x[2]+x[8]*x[0];
-        J[8*n+6]=0;
-        J[8*n+7]=0;
-        J[8*n+8]=-1+(1-x[3]-x[4]-x[5])*x[2]+x[5]*x[0];
-        
-        
-        b[0] = fq[0] - x[0]+((1 - (x[6]+x[7]+x[8]))*x[5]*x[0]*1+x[8]*x[5]*x[0]*1+0);
-        b[1] = fq[1] - x[1];
-        b[2] = fq[2] - x[2]+((1 - (x[6]+x[7]+x[8]))*(1 - (x[3]+x[4]+x[5]))*x[2]*1+x[8]*(1 - (x[3]+x[4]+x[5]))*x[2]*1+0);
-        b[3] = fq[3] - x[3];
-        b[4] = fq[4] - x[4];
-        b[5] = fq[5] - x[5]+((1 - (x[6]+x[7]+x[8]))*x[5]*x[0]*1+x[8]*x[5]*x[0]*1+0);
-        b[6] = fq[6] - x[6];
-        b[7] = fq[7] - x[7];
-        b[8] = fq[8] - x[8]+(x[8]*(1 - (x[3]+x[4]+x[5]))*x[2]*1+x[8]*x[5]*x[0]*1+0);
-        
-#if defined BLAS || defined BLAS_OMP
-        
-        int  *ipiv;
-        ipiv=(int *)mCalloc(n, sizeof(int));
-        
-        dgesv_(&n, &rhs, J, &n, ipiv, b, &n, &info);
-        
-        free(ipiv);
-        
-#else
-        
-        info=MyGaussElimination_gNxRHS(J,b,n,rhs);
-        
-#endif
-        
-        if(!info) 
-          For(i,n) x[i]-=b[i];
-        else 
-          Warn_And_Exit("Error in Gauss Elimination Scheme.\n");
-        
-      }
-      
-      break;
-    }
-    case TYMC: 
-    {
-      while(my2norm(b,n)>1e-10)
-      {
-        
-        J[0*n+0]=-1+(1-x[6]-x[7]-x[8])*x[5]+x[8]*x[5];
-        J[0*n+1]=0;
-        J[0*n+2]=0;
-        J[0*n+3]=0;
-        J[0*n+4]=0;
-        J[0*n+5]=(1-x[6]-x[7]-x[8])*x[0]+x[8]*x[0];
-        J[0*n+6]=-x[5]*x[0];
-        J[0*n+7]=-x[5]*x[0];
-        J[0*n+8]=0;
-        
-        
-        J[1*n+0]=0;
-        J[1*n+1]=-1;
-        J[1*n+2]=0;
-        J[1*n+3]=0;
-        J[1*n+4]=0;
-        J[1*n+5]=0;
-        J[1*n+6]=0;
-        J[1*n+7]=0;
-        J[1*n+8]=0;
-        
-        
-        J[2*n+0]=0;
-        J[2*n+1]=0;
-        J[2*n+2]=-1;
-        J[2*n+3]=0;
-        J[2*n+4]=0;
-        J[2*n+5]=0;
-        J[2*n+6]=0;
-        J[2*n+7]=0;
-        J[2*n+8]=0;
-        
-        
-        J[3*n+0]=0;
-        J[3*n+1]=0;
-        J[3*n+2]=0;
-        J[3*n+3]=-1;
-        J[3*n+4]=0;
-        J[3*n+5]=0;
-        J[3*n+6]=0;
-        J[3*n+7]=0;
-        J[3*n+8]=0;
-        
-        
-        J[4*n+0]=0;
-        J[4*n+1]=0;
-        J[4*n+2]=0;
-        J[4*n+3]=0;
-        J[4*n+4]=-1;
-        J[4*n+5]=0;
-        J[4*n+6]=0;
-        J[4*n+7]=0;
-        J[4*n+8]=0;
-        
-        
-        J[5*n+0]=(1-x[6]-x[7]-x[8])*x[5]+x[8]*x[5];
-        J[5*n+1]=0;
-        J[5*n+2]=0;
-        J[5*n+3]=0;
-        J[5*n+4]=0;
-        J[5*n+5]=-1+(1-x[6]-x[7]-x[8])*x[0]+x[8]*x[0];
-        J[5*n+6]=-x[5]*x[0];
-        J[5*n+7]=-x[5]*x[0];
-        J[5*n+8]=0;
-        
-        
-        J[6*n+0]=0;
-        J[6*n+1]=0;
-        J[6*n+2]=0;
-        J[6*n+3]=0;
-        J[6*n+4]=0;
-        J[6*n+5]=0;
-        J[6*n+6]=-1;
-        J[6*n+7]=0;
-        J[6*n+8]=0;
-        
-        
-        J[7*n+0]=0;
-        J[7*n+1]=0;
-        J[7*n+2]=0;
-        J[7*n+3]=0;
-        J[7*n+4]=0;
-        J[7*n+5]=0;
-        J[7*n+6]=0;
-        J[7*n+7]=-1;
-        J[7*n+8]=0;
-        
-        
-        J[8*n+0]=x[8]*x[5];
-        J[8*n+1]=0;
-        J[8*n+2]=0;
-        J[8*n+3]=0;
-        J[8*n+4]=0;
-        J[8*n+5]=x[8]*x[0];
-        J[8*n+6]=0;
-        J[8*n+7]=0;
-        J[8*n+8]=-1+x[5]*x[0];
-        
-        
-        b[0] = fq[0] - x[0]+((1 - (x[6]+x[7]+x[8]))*x[5]*x[0]*1+x[8]*x[5]*x[0]*1+0);
-        b[1] = fq[1] - x[1];
-        b[2] = fq[2] - x[2];
-        b[3] = fq[3] - x[3];
-        b[4] = fq[4] - x[4];
-        b[5] = fq[5] - x[5]+((1 - (x[6]+x[7]+x[8]))*x[5]*x[0]*1+x[8]*x[5]*x[0]*1+0);
-        b[6] = fq[6] - x[6];
-        b[7] = fq[7] - x[7];
-        b[8] = fq[8] - x[8]+(x[8]*x[5]*x[0]*1+0);
-        
-#if defined BLAS || defined BLAS_OMP
-        
-        int  *ipiv;
-        ipiv=(int *)mCalloc(n, sizeof(int));
-        
-        dgesv_(&n, &rhs, J, &n, ipiv, b, &n, &info);
-        
-        free(ipiv);
-        
-#else
-        
-        info=MyGaussElimination_gNxRHS(J,b,n,rhs);
-        
-#endif
-        
-        if(!info) 
-          For(i,n) x[i]-=b[i];
-        else 
-          Warn_And_Exit("Error in Gauss Elimination Scheme.\n");
-        
-      }
-      
-      break;
-    }
-    case THMPCMCMSC: 
-    {
-      while(my2norm(b,n)>1e-10)
-      {
-        
-        J[0*n+0]=-1+(1-x[6]-x[7]-x[8])*x[5]+x[8]*x[5];
-        J[0*n+1]=0;
-        J[0*n+2]=0;
-        J[0*n+3]=0;
-        J[0*n+4]=0;
-        J[0*n+5]=(1-x[6]-x[7]-x[8])*x[0]+x[8]*x[0];
-        J[0*n+6]=-x[5]*x[0];
-        J[0*n+7]=-x[5]*x[0];
-        J[0*n+8]=0;
-        
-        
-        J[1*n+0]=0;
-        J[1*n+1]=-1;
-        J[1*n+2]=0;
-        J[1*n+3]=0;
-        J[1*n+4]=0;
-        J[1*n+5]=0;
-        J[1*n+6]=0;
-        J[1*n+7]=0;
-        J[1*n+8]=0;
-        
-        
-        J[2*n+0]=0;
-        J[2*n+1]=0;
-        J[2*n+2]=-1;
-        J[2*n+3]=0;
-        J[2*n+4]=0;
-        J[2*n+5]=0;
-        J[2*n+6]=0;
-        J[2*n+7]=0;
-        J[2*n+8]=0;
-        
-        
-        J[3*n+0]=0;
-        J[3*n+1]=0;
-        J[3*n+2]=0;
-        J[3*n+3]=-1;
-        J[3*n+4]=0;
-        J[3*n+5]=0;
-        J[3*n+6]=0;
-        J[3*n+7]=0;
-        J[3*n+8]=0;
-        
-        
-        J[4*n+0]=0;
-        J[4*n+1]=0;
-        J[4*n+2]=0;
-        J[4*n+3]=0;
-        J[4*n+4]=-1;
-        J[4*n+5]=0;
-        J[4*n+6]=0;
-        J[4*n+7]=0;
-        J[4*n+8]=0;
-        
-        
-        J[5*n+0]=(1-x[6]-x[7]-x[8])*x[5]+x[8]*x[5];
-        J[5*n+1]=0;
-        J[5*n+2]=0;
-        J[5*n+3]=0;
-        J[5*n+4]=0;
-        J[5*n+5]=-1+(1-x[6]-x[7]-x[8])*x[0]+x[8]*x[0];
-        J[5*n+6]=-x[5]*x[0];
-        J[5*n+7]=-x[5]*x[0];
-        J[5*n+8]=0;
-        
-        
-        J[6*n+0]=0;
-        J[6*n+1]=0;
-        J[6*n+2]=0;
-        J[6*n+3]=0;
-        J[6*n+4]=0;
-        J[6*n+5]=0;
-        J[6*n+6]=-1;
-        J[6*n+7]=0;
-        J[6*n+8]=0;
-        
-        
-        J[7*n+0]=0;
-        J[7*n+1]=0;
-        J[7*n+2]=0;
-        J[7*n+3]=0;
-        J[7*n+4]=0;
-        J[7*n+5]=0;
-        J[7*n+6]=0;
-        J[7*n+7]=-1;
-        J[7*n+8]=0;
-        
-        
-        J[8*n+0]=x[8]*x[5];
-        J[8*n+1]=0;
-        J[8*n+2]=0;
-        J[8*n+3]=0;
-        J[8*n+4]=0;
-        J[8*n+5]=x[8]*x[0];
-        J[8*n+6]=0;
-        J[8*n+7]=0;
-        J[8*n+8]=-1+x[5]*x[0];
-        
-        
-        b[0] = fq[0] - x[0]+((1 - (x[6]+x[7]+x[8]))*x[5]*x[0]*1+x[8]*x[5]*x[0]*1+0);
-        b[1] = fq[1] - x[1];
-        b[2] = fq[2] - x[2];
-        b[3] = fq[3] - x[3];
-        b[4] = fq[4] - x[4];
-        b[5] = fq[5] - x[5]+((1 - (x[6]+x[7]+x[8]))*x[5]*x[0]*1+x[8]*x[5]*x[0]*1+0);
-        b[6] = fq[6] - x[6];
-        b[7] = fq[7] - x[7];
-        b[8] = fq[8] - x[8]+(x[8]*x[5]*x[0]*1+0);
-        
-#if defined BLAS || defined BLAS_OMP
-        
-        int  *ipiv;
-        ipiv=(int *)mCalloc(n, sizeof(int));
-        
-        dgesv_(&n, &rhs, J, &n, ipiv, b, &n, &info);
-        
-        free(ipiv);
-        
-#else
-        
-        info=MyGaussElimination_gNxRHS(J,b,n,rhs);
-        
-#endif
-        
-        if(!info) 
-          For(i,n) x[i]-=b[i];
-        else 
-          Warn_And_Exit("Error in Gauss Elimination Scheme.\n");
-        
-      }
-      
-      break;
-    }
-    case THIMC: 
-    {
-      while(my2norm(b,n)>1e-10)
-      {
-        
-        J[0*n+0]=-1+(1-x[6]-x[7]-x[8])*x[5]+x[8]*x[5];
-        J[0*n+1]=0;
-        J[0*n+2]=0;
-        J[0*n+3]=0;
-        J[0*n+4]=0;
-        J[0*n+5]=(1-x[6]-x[7]-x[8])*x[0]+x[8]*x[0];
-        J[0*n+6]=-x[5]*x[0];
-        J[0*n+7]=-x[5]*x[0];
-        J[0*n+8]=0;
-        
-        
-        J[1*n+0]=0;
-        J[1*n+1]=-1;
-        J[1*n+2]=0;
-        J[1*n+3]=0;
-        J[1*n+4]=0;
-        J[1*n+5]=0;
-        J[1*n+6]=0;
-        J[1*n+7]=0;
-        J[1*n+8]=0;
-        
-        
-        J[2*n+0]=0;
-        J[2*n+1]=0;
-        J[2*n+2]=-1;
-        J[2*n+3]=0;
-        J[2*n+4]=0;
-        J[2*n+5]=0;
-        J[2*n+6]=0;
-        J[2*n+7]=0;
-        J[2*n+8]=0;
-        
-        
-        J[3*n+0]=0;
-        J[3*n+1]=0;
-        J[3*n+2]=0;
-        J[3*n+3]=-1;
-        J[3*n+4]=0;
-        J[3*n+5]=0;
-        J[3*n+6]=0;
-        J[3*n+7]=0;
-        J[3*n+8]=0;
-        
-        
-        J[4*n+0]=0;
-        J[4*n+1]=0;
-        J[4*n+2]=0;
-        J[4*n+3]=0;
-        J[4*n+4]=-1;
-        J[4*n+5]=0;
-        J[4*n+6]=0;
-        J[4*n+7]=0;
-        J[4*n+8]=0;
-        
-        
-        J[5*n+0]=(1-x[6]-x[7]-x[8])*x[5]+x[8]*x[5];
-        J[5*n+1]=0;
-        J[5*n+2]=0;
-        J[5*n+3]=0;
-        J[5*n+4]=0;
-        J[5*n+5]=-1+(1-x[6]-x[7]-x[8])*x[0]+x[8]*x[0];
-        J[5*n+6]=-x[5]*x[0];
-        J[5*n+7]=-x[5]*x[0];
-        J[5*n+8]=0;
-        
-        
-        J[6*n+0]=0;
-        J[6*n+1]=0;
-        J[6*n+2]=0;
-        J[6*n+3]=0;
-        J[6*n+4]=0;
-        J[6*n+5]=0;
-        J[6*n+6]=-1;
-        J[6*n+7]=0;
-        J[6*n+8]=0;
-        
-        
-        J[7*n+0]=0;
-        J[7*n+1]=0;
-        J[7*n+2]=0;
-        J[7*n+3]=0;
-        J[7*n+4]=0;
-        J[7*n+5]=0;
-        J[7*n+6]=0;
-        J[7*n+7]=-1;
-        J[7*n+8]=0;
-        
-        
-        J[8*n+0]=x[8]*x[5];
-        J[8*n+1]=0;
-        J[8*n+2]=0;
-        J[8*n+3]=0;
-        J[8*n+4]=0;
-        J[8*n+5]=x[8]*x[0];
-        J[8*n+6]=0;
-        J[8*n+7]=0;
-        J[8*n+8]=-1+x[5]*x[0];
-        
-        
-        b[0] = fq[0] - x[0]+((1 - (x[6]+x[7]+x[8]))*x[5]*x[0]*1+x[8]*x[5]*x[0]*1+0);
-        b[1] = fq[1] - x[1];
-        b[2] = fq[2] - x[2];
-        b[3] = fq[3] - x[3];
-        b[4] = fq[4] - x[4];
-        b[5] = fq[5] - x[5]+((1 - (x[6]+x[7]+x[8]))*x[5]*x[0]*1+x[8]*x[5]*x[0]*1+0);
-        b[6] = fq[6] - x[6];
-        b[7] = fq[7] - x[7];
-        b[8] = fq[8] - x[8]+(x[8]*x[5]*x[0]*1+0);
-        
-        
-#if defined BLAS || defined BLAS_OMP
-        
-        int  *ipiv;
-        ipiv=(int *)mCalloc(n, sizeof(int));
-        
-        dgesv_(&n, &rhs, J, &n, ipiv, b, &n, &info);
-        
-        free(ipiv);
-        
-#else
-        
-        info=MyGaussElimination_gNxRHS(J,b,n,rhs);
-        
-#endif
-        
-        if(!info) 
-          For(i,n) x[i]-=b[i];
-        else 
-          Warn_And_Exit("Error in Gauss Elimination Scheme.\n");
-        
-      }
-      
-      break;
-    }
-    case THCDHNC: 
-    {
-      while(my2norm(b,n)>1e-10)
-      {
-        
-        J[0*n+0]=-1+x[8]*(1-x[3]-x[4]-x[5]);
-        J[0*n+1]=0;
-        J[0*n+2]=0;
-        J[0*n+3]=-x[8]*x[0];
-        J[0*n+4]=-x[8]*x[0];
-        J[0*n+5]=-x[8]*x[0];
-        J[0*n+6]=0;
-        J[0*n+7]=0;
-        J[0*n+8]=(1-x[3]-x[4]-x[5])*x[0];
-        
-        
-        J[1*n+0]=0;
-        J[1*n+1]=-1;
-        J[1*n+2]=0;
-        J[1*n+3]=0;
-        J[1*n+4]=0;
-        J[1*n+5]=0;
-        J[1*n+6]=0;
-        J[1*n+7]=0;
-        J[1*n+8]=0;
-        
-        
-        J[2*n+0]=0;
-        J[2*n+1]=0;
-        J[2*n+2]=-1;
-        J[2*n+3]=0;
-        J[2*n+4]=0;
-        J[2*n+5]=0;
-        J[2*n+6]=0;
-        J[2*n+7]=0;
-        J[2*n+8]=0;
-        
-        
-        J[3*n+0]=0;
-        J[3*n+1]=0;
-        J[3*n+2]=0;
-        J[3*n+3]=-1;
-        J[3*n+4]=0;
-        J[3*n+5]=0;
-        J[3*n+6]=0;
-        J[3*n+7]=0;
-        J[3*n+8]=0;
-        
-        
-        J[4*n+0]=0;
-        J[4*n+1]=0;
-        J[4*n+2]=0;
-        J[4*n+3]=0;
-        J[4*n+4]=-1;
-        J[4*n+5]=0;
-        J[4*n+6]=0;
-        J[4*n+7]=0;
-        J[4*n+8]=0;
-        
-        
-        J[5*n+0]=0;
-        J[5*n+1]=0;
-        J[5*n+2]=0;
-        J[5*n+3]=0;
-        J[5*n+4]=0;
-        J[5*n+5]=-1;
-        J[5*n+6]=0;
-        J[5*n+7]=0;
-        J[5*n+8]=0;
-        
-        
-        J[6*n+0]=0;
-        J[6*n+1]=0;
-        J[6*n+2]=0;
-        J[6*n+3]=0;
-        J[6*n+4]=0;
-        J[6*n+5]=0;
-        J[6*n+6]=-1;
-        J[6*n+7]=0;
-        J[6*n+8]=0;
-        
-        
-        J[7*n+0]=0;
-        J[7*n+1]=0;
-        J[7*n+2]=0;
-        J[7*n+3]=0;
-        J[7*n+4]=0;
-        J[7*n+5]=0;
-        J[7*n+6]=0;
-        J[7*n+7]=-1;
-        J[7*n+8]=0;
-        
-        
-        J[8*n+0]=x[8]*(1-x[3]-x[4]-x[5]);
-        J[8*n+1]=0;
-        J[8*n+2]=0;
-        J[8*n+3]=-x[8]*x[0];
-        J[8*n+4]=-x[8]*x[0];
-        J[8*n+5]=-x[8]*x[0];
-        J[8*n+6]=0;
-        J[8*n+7]=0;
-        J[8*n+8]=-1+(1-x[3]-x[4]-x[5])*x[0];
-        
-        
-        b[0] = fq[0] - x[0]+(x[8]*(1 - (x[3]+x[4]+x[5]))*x[0]*1+0);
-        b[1] = fq[1] - x[1];
-        b[2] = fq[2] - x[2];
-        b[3] = fq[3] - x[3];
-        b[4] = fq[4] - x[4];
-        b[5] = fq[5] - x[5];
-        b[6] = fq[6] - x[6];
-        b[7] = fq[7] - x[7];
-        b[8] = fq[8] - x[8]+(x[8]*(1 - (x[3]+x[4]+x[5]))*x[0]*1+0);
-        
-#if defined BLAS || defined BLAS_OMP
-        
-        int  *ipiv;
-        ipiv=(int *)mCalloc(n, sizeof(int));
-        
-        dgesv_(&n, &rhs, J, &n, ipiv, b, &n, &info);
-        
-        free(ipiv);
-        
-#else
-        
-        info=MyGaussElimination_gNxRHS(J,b,n,rhs);
-        
-#endif
-        
-        if(!info) 
-          For(i,n) x[i]-=b[i];
-        else 
-          Warn_And_Exit("Error in Gauss Elimination Scheme.\n");
-        
-      }
-      
-      break;
-    }
-    case THEFMC: 
-    {
-      while(my2norm(b,n)>1e-10)
-      {
-        
-        J[0*n+0]=-1+(1-x[6]-x[7]-x[8])*x[5]+x[8]*x[5];
-        J[0*n+1]=0;
-        J[0*n+2]=0;
-        J[0*n+3]=0;
-        J[0*n+4]=0;
-        J[0*n+5]=(1-x[6]-x[7]-x[8])*x[0]+x[8]*x[0];
-        J[0*n+6]=-x[5]*x[0];
-        J[0*n+7]=-x[5]*x[0];
-        J[0*n+8]=0;
-        
-        
-        J[1*n+0]=0;
-        J[1*n+1]=-1;
-        J[1*n+2]=0;
-        J[1*n+3]=0;
-        J[1*n+4]=0;
-        J[1*n+5]=0;
-        J[1*n+6]=0;
-        J[1*n+7]=0;
-        J[1*n+8]=0;
-        
-        
-        J[2*n+0]=0;
-        J[2*n+1]=0;
-        J[2*n+2]=-1;
-        J[2*n+3]=0;
-        J[2*n+4]=0;
-        J[2*n+5]=0;
-        J[2*n+6]=0;
-        J[2*n+7]=0;
-        J[2*n+8]=0;
-        
-        
-        J[3*n+0]=0;
-        J[3*n+1]=0;
-        J[3*n+2]=0;
-        J[3*n+3]=-1;
-        J[3*n+4]=0;
-        J[3*n+5]=0;
-        J[3*n+6]=0;
-        J[3*n+7]=0;
-        J[3*n+8]=0;
-        
-        
-        J[4*n+0]=0;
-        J[4*n+1]=0;
-        J[4*n+2]=0;
-        J[4*n+3]=0;
-        J[4*n+4]=-1;
-        J[4*n+5]=0;
-        J[4*n+6]=0;
-        J[4*n+7]=0;
-        J[4*n+8]=0;
-        
-        
-        J[5*n+0]=(1-x[6]-x[7]-x[8])*x[5]+x[8]*x[5];
-        J[5*n+1]=0;
-        J[5*n+2]=0;
-        J[5*n+3]=0;
-        J[5*n+4]=0;
-        J[5*n+5]=-1+(1-x[6]-x[7]-x[8])*x[0]+x[8]*x[0];
-        J[5*n+6]=-x[5]*x[0];
-        J[5*n+7]=-x[5]*x[0];
-        J[5*n+8]=0;
-        
-        
-        J[6*n+0]=0;
-        J[6*n+1]=0;
-        J[6*n+2]=0;
-        J[6*n+3]=0;
-        J[6*n+4]=0;
-        J[6*n+5]=0;
-        J[6*n+6]=-1;
-        J[6*n+7]=0;
-        J[6*n+8]=0;
-        
-        
-        J[7*n+0]=0;
-        J[7*n+1]=0;
-        J[7*n+2]=0;
-        J[7*n+3]=0;
-        J[7*n+4]=0;
-        J[7*n+5]=0;
-        J[7*n+6]=0;
-        J[7*n+7]=-1;
-        J[7*n+8]=0;
-        
-        
-        J[8*n+0]=x[8]*x[5];
-        J[8*n+1]=0;
-        J[8*n+2]=0;
-        J[8*n+3]=0;
-        J[8*n+4]=0;
-        J[8*n+5]=x[8]*x[0];
-        J[8*n+6]=0;
-        J[8*n+7]=0;
-        J[8*n+8]=-1+x[5]*x[0];
-        
-        
-        b[0] = fq[0] - x[0]+((1 - (x[6]+x[7]+x[8]))*x[5]*x[0]*1+x[8]*x[5]*x[0]*1+0);
-        b[1] = fq[1] - x[1];
-        b[2] = fq[2] - x[2];
-        b[3] = fq[3] - x[3];
-        b[4] = fq[4] - x[4];
-        b[5] = fq[5] - x[5]+((1 - (x[6]+x[7]+x[8]))*x[5]*x[0]*1+x[8]*x[5]*x[0]*1+0);
-        b[6] = fq[6] - x[6];
-        b[7] = fq[7] - x[7];
-        b[8] = fq[8] - x[8]+(x[8]*x[5]*x[0]*1+0);
-        
-        
-#if defined BLAS || defined BLAS_OMP
-        
-        int  *ipiv;
-        ipiv=(int *)mCalloc(n, sizeof(int));
-        
-        dgesv_(&n, &rhs, J, &n, ipiv, b, &n, &info);
-        
-        free(ipiv);
-        
-#else
-        
-        info=MyGaussElimination_gNxRHS(J,b,n,rhs);
-        
-#endif
-        
-        if(!info) 
-          For(i,n) x[i]-=b[i];
-        else 
-          Warn_And_Exit("Error in Gauss Elimination Scheme.\n");
-        
-      }
-      
-      break;
-    }
-    case THENC: 
-    {
-      while(my2norm(b,n)>1e-10)
-      {
-        
-        J[0*n+0]=-1+(1-x[6]-x[7]-x[8])*x[5]+x[8]*x[5];
-        J[0*n+1]=0;
-        J[0*n+2]=0;
-        J[0*n+3]=0;
-        J[0*n+4]=0;
-        J[0*n+5]=(1-x[6]-x[7]-x[8])*x[0]+x[8]*x[0];
-        J[0*n+6]=-x[5]*x[0];
-        J[0*n+7]=-x[5]*x[0];
-        J[0*n+8]=0;
-        
-        
-        J[1*n+0]=0;
-        J[1*n+1]=-1;
-        J[1*n+2]=0;
-        J[1*n+3]=0;
-        J[1*n+4]=0;
-        J[1*n+5]=0;
-        J[1*n+6]=0;
-        J[1*n+7]=0;
-        J[1*n+8]=0;
-        
-        
-        J[2*n+0]=0;
-        J[2*n+1]=0;
-        J[2*n+2]=-1;
-        J[2*n+3]=0;
-        J[2*n+4]=0;
-        J[2*n+5]=0;
-        J[2*n+6]=0;
-        J[2*n+7]=0;
-        J[2*n+8]=0;
-        
-        
-        J[3*n+0]=0;
-        J[3*n+1]=0;
-        J[3*n+2]=0;
-        J[3*n+3]=-1;
-        J[3*n+4]=0;
-        J[3*n+5]=0;
-        J[3*n+6]=0;
-        J[3*n+7]=0;
-        J[3*n+8]=0;
-        
-        
-        J[4*n+0]=0;
-        J[4*n+1]=0;
-        J[4*n+2]=0;
-        J[4*n+3]=0;
-        J[4*n+4]=-1;
-        J[4*n+5]=0;
-        J[4*n+6]=0;
-        J[4*n+7]=0;
-        J[4*n+8]=0;
-        
-        
-        J[5*n+0]=(1-x[6]-x[7]-x[8])*x[5]+x[8]*x[5];
-        J[5*n+1]=0;
-        J[5*n+2]=0;
-        J[5*n+3]=0;
-        J[5*n+4]=0;
-        J[5*n+5]=-1+(1-x[6]-x[7]-x[8])*x[0]+x[8]*x[0];
-        J[5*n+6]=-x[5]*x[0];
-        J[5*n+7]=-x[5]*x[0];
-        J[5*n+8]=0;
-        
-        
-        J[6*n+0]=0;
-        J[6*n+1]=0;
-        J[6*n+2]=0;
-        J[6*n+3]=0;
-        J[6*n+4]=0;
-        J[6*n+5]=0;
-        J[6*n+6]=-1;
-        J[6*n+7]=0;
-        J[6*n+8]=0;
-        
-        
-        J[7*n+0]=0;
-        J[7*n+1]=0;
-        J[7*n+2]=0;
-        J[7*n+3]=0;
-        J[7*n+4]=0;
-        J[7*n+5]=0;
-        J[7*n+6]=0;
-        J[7*n+7]=-1;
-        J[7*n+8]=0;
-        
-        
-        J[8*n+0]=x[8]*x[5];
-        J[8*n+1]=0;
-        J[8*n+2]=0;
-        J[8*n+3]=0;
-        J[8*n+4]=0;
-        J[8*n+5]=x[8]*x[0];
-        J[8*n+6]=0;
-        J[8*n+7]=0;
-        J[8*n+8]=-1+x[5]*x[0];
-        
-        
-        b[0] = fq[0] - x[0]+((1 - (x[6]+x[7]+x[8]))*x[5]*x[0]*1+x[8]*x[5]*x[0]*1+0);
-        b[1] = fq[1] - x[1];
-        b[2] = fq[2] - x[2];
-        b[3] = fq[3] - x[3];
-        b[4] = fq[4] - x[4];
-        b[5] = fq[5] - x[5]+((1 - (x[6]+x[7]+x[8]))*x[5]*x[0]*1+x[8]*x[5]*x[0]*1+0);
-        b[6] = fq[6] - x[6];
-        b[7] = fq[7] - x[7];
-        b[8] = fq[8] - x[8]+(x[8]*x[5]*x[0]*1+0);
-        
-#if defined BLAS || defined BLAS_OMP
-        
-        int  *ipiv;
-        ipiv=(int *)mCalloc(n, sizeof(int));
-        
-        dgesv_(&n, &rhs, J, &n, ipiv, b, &n, &info);
-        
-        free(ipiv);
-        
-#else
-        
-        info=MyGaussElimination_gNxRHS(J,b,n,rhs);
-        
-#endif
-        
-        if(!info) 
-          For(i,n) x[i]-=b[i];
-        else 
-          Warn_And_Exit("Error in Gauss Elimination Scheme.\n");
-        
-      }
-      
-      break;
-    }
-    case THBAPPC: 
-    {
-      while(my2norm(b,n)>1e-10)
-      {
-        
-        J[0*n+0]=-1+x[8]*(1-x[3]-x[4]-x[5])+(1-x[6]-x[7]-x[8])*x[5]+x[8]*x[5];
-        J[0*n+1]=0;
-        J[0*n+2]=0;
-        J[0*n+3]=-x[8]*x[0];
-        J[0*n+4]=-x[8]*x[0];
-        J[0*n+5]=(1-x[6]-x[7]-x[8])*x[0];
-        J[0*n+6]=-x[5]*x[0];
-        J[0*n+7]=-x[5]*x[0];
-        J[0*n+8]=(1-x[3]-x[4]-x[5])*x[0];
-        
-        
-        J[1*n+0]=0;
-        J[1*n+1]=-1;
-        J[1*n+2]=0;
-        J[1*n+3]=0;
-        J[1*n+4]=0;
-        J[1*n+5]=0;
-        J[1*n+6]=0;
-        J[1*n+7]=0;
-        J[1*n+8]=0;
-        
-        
-        J[2*n+0]=0;
-        J[2*n+1]=0;
-        J[2*n+2]=-1;
-        J[2*n+3]=0;
-        J[2*n+4]=0;
-        J[2*n+5]=0;
-        J[2*n+6]=0;
-        J[2*n+7]=0;
-        J[2*n+8]=0;
-        
-        
-        J[3*n+0]=0;
-        J[3*n+1]=0;
-        J[3*n+2]=0;
-        J[3*n+3]=-1;
-        J[3*n+4]=0;
-        J[3*n+5]=0;
-        J[3*n+6]=0;
-        J[3*n+7]=0;
-        J[3*n+8]=0;
-        
-        
-        J[4*n+0]=0;
-        J[4*n+1]=0;
-        J[4*n+2]=0;
-        J[4*n+3]=0;
-        J[4*n+4]=-1;
-        J[4*n+5]=0;
-        J[4*n+6]=0;
-        J[4*n+7]=0;
-        J[4*n+8]=0;
-        
-        
-        J[5*n+0]=(1-x[6]-x[7]-x[8])*x[5]+x[8]*x[5];
-        J[5*n+1]=0;
-        J[5*n+2]=0;
-        J[5*n+3]=0;
-        J[5*n+4]=0;
-        J[5*n+5]=-1+(1-x[6]-x[7]-x[8])*x[0]+x[8]*x[0];
-        J[5*n+6]=-x[5]*x[0];
-        J[5*n+7]=-x[5]*x[0];
-        J[5*n+8]=0;
-        
-        
-        J[6*n+0]=0;
-        J[6*n+1]=0;
-        J[6*n+2]=0;
-        J[6*n+3]=0;
-        J[6*n+4]=0;
-        J[6*n+5]=0;
-        J[6*n+6]=-1;
-        J[6*n+7]=0;
-        J[6*n+8]=0;
-        
-        
-        J[7*n+0]=0;
-        J[7*n+1]=0;
-        J[7*n+2]=0;
-        J[7*n+3]=0;
-        J[7*n+4]=0;
-        J[7*n+5]=0;
-        J[7*n+6]=0;
-        J[7*n+7]=-1;
-        J[7*n+8]=0;
-        
-        
-        J[8*n+0]=x[8]*(1-x[3]-x[4]-x[5])+x[8]*x[5];
-        J[8*n+1]=0;
-        J[8*n+2]=0;
-        J[8*n+3]=-x[8]*x[0];
-        J[8*n+4]=-x[8]*x[0];
-        J[8*n+5]=0;
-        J[8*n+6]=0;
-        J[8*n+7]=0;
-        J[8*n+8]=-1+(1-x[3]-x[4]-x[5])*x[0]+x[5]*x[0];
-        
-        
-        b[0] = fq[0] - x[0]+(x[8]*(1 - (x[3]+x[4]+x[5]))*x[0]*1+(1 - (x[6]+x[7]+x[8]))*x[5]*x[0]*1+x[8]*x[5]*x[0]*1+0);
-        b[1] = fq[1] - x[1];
-        b[2] = fq[2] - x[2];
-        b[3] = fq[3] - x[3];
-        b[4] = fq[4] - x[4];
-        b[5] = fq[5] - x[5]+((1 - (x[6]+x[7]+x[8]))*x[5]*x[0]*1+x[8]*x[5]*x[0]*1+0);
-        b[6] = fq[6] - x[6];
-        b[7] = fq[7] - x[7];
-        b[8] = fq[8] - x[8]+(x[8]*(1 - (x[3]+x[4]+x[5]))*x[0]*1+x[8]*x[5]*x[0]*1+0);
-        
-        
-#if defined BLAS || defined BLAS_OMP
-        
-        int  *ipiv;
-        ipiv=(int *)mCalloc(n, sizeof(int));
-        
-        dgesv_(&n, &rhs, J, &n, ipiv, b, &n, &info);
-        
-        free(ipiv);
-        
-#else
-        
-        info=MyGaussElimination_gNxRHS(J,b,n,rhs);
-        
-#endif
-        
-        if(!info) 
-          For(i,n) x[i]-=b[i];
-        else 
-          Warn_And_Exit("Error in Gauss Elimination Scheme.\n");
-        
-      }
-      
-      break;
-    }
-    case THAYNC: 
-    {
-      while(my2norm(b,n)>1e-10)
-      {
-        
-        J[0*n+0]=-1+x[8]*(1-x[3]-x[4]-x[5])+(1-x[6]-x[7]-x[8])*x[5]+x[8]*x[5];
-        J[0*n+1]=0;
-        J[0*n+2]=0;
-        J[0*n+3]=-x[8]*x[0];
-        J[0*n+4]=-x[8]*x[0];
-        J[0*n+5]=(1-x[6]-x[7]-x[8])*x[0];
-        J[0*n+6]=-x[5]*x[0];
-        J[0*n+7]=-x[5]*x[0];
-        J[0*n+8]=(1-x[3]-x[4]-x[5])*x[0];
-        
-        
-        J[1*n+0]=0;
-        J[1*n+1]=-1;
-        J[1*n+2]=0;
-        J[1*n+3]=0;
-        J[1*n+4]=0;
-        J[1*n+5]=0;
-        J[1*n+6]=0;
-        J[1*n+7]=0;
-        J[1*n+8]=0;
-        
-        
-        J[2*n+0]=0;
-        J[2*n+1]=0;
-        J[2*n+2]=-1;
-        J[2*n+3]=0;
-        J[2*n+4]=0;
-        J[2*n+5]=0;
-        J[2*n+6]=0;
-        J[2*n+7]=0;
-        J[2*n+8]=0;
-        
-        
-        J[3*n+0]=0;
-        J[3*n+1]=0;
-        J[3*n+2]=0;
-        J[3*n+3]=-1;
-        J[3*n+4]=0;
-        J[3*n+5]=0;
-        J[3*n+6]=0;
-        J[3*n+7]=0;
-        J[3*n+8]=0;
-        
-        
-        J[4*n+0]=0;
-        J[4*n+1]=0;
-        J[4*n+2]=0;
-        J[4*n+3]=0;
-        J[4*n+4]=-1;
-        J[4*n+5]=0;
-        J[4*n+6]=0;
-        J[4*n+7]=0;
-        J[4*n+8]=0;
-        
-        
-        J[5*n+0]=(1-x[6]-x[7]-x[8])*x[5]+x[8]*x[5];
-        J[5*n+1]=0;
-        J[5*n+2]=0;
-        J[5*n+3]=0;
-        J[5*n+4]=0;
-        J[5*n+5]=-1+(1-x[6]-x[7]-x[8])*x[0]+x[8]*x[0];
-        J[5*n+6]=-x[5]*x[0];
-        J[5*n+7]=-x[5]*x[0];
-        J[5*n+8]=0;
-        
-        
-        J[6*n+0]=0;
-        J[6*n+1]=0;
-        J[6*n+2]=0;
-        J[6*n+3]=0;
-        J[6*n+4]=0;
-        J[6*n+5]=0;
-        J[6*n+6]=-1;
-        J[6*n+7]=0;
-        J[6*n+8]=0;
-        
-        
-        J[7*n+0]=0;
-        J[7*n+1]=0;
-        J[7*n+2]=0;
-        J[7*n+3]=0;
-        J[7*n+4]=0;
-        J[7*n+5]=0;
-        J[7*n+6]=0;
-        J[7*n+7]=-1;
-        J[7*n+8]=0;
-        
-        
-        J[8*n+0]=x[8]*(1-x[3]-x[4]-x[5])+x[8]*x[5];
-        J[8*n+1]=0;
-        J[8*n+2]=0;
-        J[8*n+3]=-x[8]*x[0];
-        J[8*n+4]=-x[8]*x[0];
-        J[8*n+5]=0;
-        J[8*n+6]=0;
-        J[8*n+7]=0;
-        J[8*n+8]=-1+(1-x[3]-x[4]-x[5])*x[0]+x[5]*x[0];
-        
-        
-        b[0] = fq[0] - x[0]+(x[8]*(1 - (x[3]+x[4]+x[5]))*x[0]+(1 - (x[6]+x[7]+x[8]))*x[5]*x[0]+x[8]*x[5]*x[0]);
-        b[1] = fq[1] - x[1];
-        b[2] = fq[2] - x[2];
-        b[3] = fq[3] - x[3];
-        b[4] = fq[4] - x[4];
-        b[5] = fq[5] - x[5]+((1 - (x[6]+x[7]+x[8]))*x[5]*x[0]+x[8]*x[5]*x[0]);
-        b[6] = fq[6] - x[6];
-        b[7] = fq[7] - x[7];
-        b[8] = fq[8] - x[8]+(x[8]*(1 - (x[3]+x[4]+x[5]))*x[0]+x[8]*x[5]*x[0]);
-        
-#if defined BLAS || defined BLAS_OMP
-        
-        int  *ipiv;
-        ipiv=(int *)mCalloc(n, sizeof(int));
-        
-        dgesv_(&n, &rhs, J, &n, ipiv, b, &n, &info);
-        
-        free(ipiv);
-        
-#else
-        
-        info=MyGaussElimination_gNxRHS(J,b,n,rhs);
-        
-#endif
-        
-        if(!info) 
-          For(i,n) x[i]-=b[i];
-        else 
-          Warn_And_Exit("Error in Gauss Elimination Scheme.\n");
-        
-      }
-      
-      break;
-    }
-    case THAMC: 
-    {
-      while(my2norm(b,n)>1e-10)
-      {
-        
-        J[0*n+0]=-1+(1-x[6]-x[7]-x[8])*x[5]+x[8]*x[5];
-        J[0*n+1]=0;
-        J[0*n+2]=0;
-        J[0*n+3]=0;
-        J[0*n+4]=0;
-        J[0*n+5]=(1-x[6]-x[7]-x[8])*x[0]+x[8]*x[0];
-        J[0*n+6]=-x[5]*x[0];
-        J[0*n+7]=-x[5]*x[0];
-        J[0*n+8]=0;
-        
-        
-        J[1*n+0]=0;
-        J[1*n+1]=-1;
-        J[1*n+2]=0;
-        J[1*n+3]=0;
-        J[1*n+4]=0;
-        J[1*n+5]=0;
-        J[1*n+6]=0;
-        J[1*n+7]=0;
-        J[1*n+8]=0;
-        
-        
-        J[2*n+0]=0;
-        J[2*n+1]=0;
-        J[2*n+2]=-1;
-        J[2*n+3]=0;
-        J[2*n+4]=0;
-        J[2*n+5]=0;
-        J[2*n+6]=0;
-        J[2*n+7]=0;
-        J[2*n+8]=0;
-        
-        
-        J[3*n+0]=0;
-        J[3*n+1]=0;
-        J[3*n+2]=0;
-        J[3*n+3]=-1;
-        J[3*n+4]=0;
-        J[3*n+5]=0;
-        J[3*n+6]=0;
-        J[3*n+7]=0;
-        J[3*n+8]=0;
-        
-        
-        J[4*n+0]=0;
-        J[4*n+1]=0;
-        J[4*n+2]=0;
-        J[4*n+3]=0;
-        J[4*n+4]=-1;
-        J[4*n+5]=0;
-        J[4*n+6]=0;
-        J[4*n+7]=0;
-        J[4*n+8]=0;
-        
-        
-        J[5*n+0]=(1-x[6]-x[7]-x[8])*x[5]+x[8]*x[5];
-        J[5*n+1]=0;
-        J[5*n+2]=0;
-        J[5*n+3]=0;
-        J[5*n+4]=0;
-        J[5*n+5]=-1+(1-x[6]-x[7]-x[8])*x[0]+x[8]*x[0];
-        J[5*n+6]=-x[5]*x[0];
-        J[5*n+7]=-x[5]*x[0];
-        J[5*n+8]=0;
-        
-        
-        J[6*n+0]=0;
-        J[6*n+1]=0;
-        J[6*n+2]=0;
-        J[6*n+3]=0;
-        J[6*n+4]=0;
-        J[6*n+5]=0;
-        J[6*n+6]=-1;
-        J[6*n+7]=0;
-        J[6*n+8]=0;
-        
-        
-        J[7*n+0]=0;
-        J[7*n+1]=0;
-        J[7*n+2]=0;
-        J[7*n+3]=0;
-        J[7*n+4]=0;
-        J[7*n+5]=0;
-        J[7*n+6]=0;
-        J[7*n+7]=-1;
-        J[7*n+8]=0;
-        
-        
-        J[8*n+0]=x[8]*x[5];
-        J[8*n+1]=0;
-        J[8*n+2]=0;
-        J[8*n+3]=0;
-        J[8*n+4]=0;
-        J[8*n+5]=x[8]*x[0];
-        J[8*n+6]=0;
-        J[8*n+7]=0;
-        J[8*n+8]=-1+x[5]*x[0];
-        
-        
-        b[0] = fq[0] - x[0]+((1 - (x[6]+x[7]+x[8]))*x[5]*x[0]*1+x[8]*x[5]*x[0]*1+0);
-        b[1] = fq[1] - x[1];
-        b[2] = fq[2] - x[2];
-        b[3] = fq[3] - x[3];
-        b[4] = fq[4] - x[4];
-        b[5] = fq[5] - x[5]+((1 - (x[6]+x[7]+x[8]))*x[5]*x[0]*1+x[8]*x[5]*x[0]*1+0);
-        b[6] = fq[6] - x[6];
-        b[7] = fq[7] - x[7];
-        b[8] = fq[8] - x[8]+(x[8]*x[5]*x[0]*1+0);
-        
-#if defined BLAS || defined BLAS_OMP
-        
-        int  *ipiv;
-        ipiv=(int *)mCalloc(n, sizeof(int));
-        
-        dgesv_(&n, &rhs, J, &n, ipiv, b, &n, &info);
-        
-        free(ipiv);
-        
-#else
-        
-        info=MyGaussElimination_gNxRHS(J,b,n,rhs);
-        
-#endif
-        
-        if(!info) 
-          For(i,n) x[i]-=b[i];
-        else 
-          Warn_And_Exit("Error in Gauss Elimination Scheme.\n");
-        
-      }
-      
-      break;
-    }
-    case THAFMC: 
-    {
-      while(my2norm(b,n)>1e-10)
-      {
-        
-        J[0*n+0]=-1+(1-x[6]-x[7]-x[8])*x[5];
-        J[0*n+1]=0;
-        J[0*n+2]=0;
-        J[0*n+3]=0;
-        J[0*n+4]=0;
-        J[0*n+5]=(1-x[6]-x[7]-x[8])*x[0];
-        J[0*n+6]=-x[5]*x[0];
-        J[0*n+7]=-x[5]*x[0];
-        J[0*n+8]=-x[5]*x[0];
-        
-        
-        J[1*n+0]=0;
-        J[1*n+1]=-1;
-        J[1*n+2]=0;
-        J[1*n+3]=0;
-        J[1*n+4]=0;
-        J[1*n+5]=0;
-        J[1*n+6]=0;
-        J[1*n+7]=0;
-        J[1*n+8]=0;
-        
-        
-        J[2*n+0]=0;
-        J[2*n+1]=0;
-        J[2*n+2]=-1;
-        J[2*n+3]=0;
-        J[2*n+4]=0;
-        J[2*n+5]=0;
-        J[2*n+6]=0;
-        J[2*n+7]=0;
-        J[2*n+8]=0;
-        
-        
-        J[3*n+0]=0;
-        J[3*n+1]=0;
-        J[3*n+2]=0;
-        J[3*n+3]=-1;
-        J[3*n+4]=0;
-        J[3*n+5]=0;
-        J[3*n+6]=0;
-        J[3*n+7]=0;
-        J[3*n+8]=0;
-        
-        
-        J[4*n+0]=0;
-        J[4*n+1]=0;
-        J[4*n+2]=0;
-        J[4*n+3]=0;
-        J[4*n+4]=-1;
-        J[4*n+5]=0;
-        J[4*n+6]=0;
-        J[4*n+7]=0;
-        J[4*n+8]=0;
-        
-        
-        J[5*n+0]=(1-x[6]-x[7]-x[8])*x[5];
-        J[5*n+1]=0;
-        J[5*n+2]=0;
-        J[5*n+3]=0;
-        J[5*n+4]=0;
-        J[5*n+5]=-1+(1-x[6]-x[7]-x[8])*x[0];
-        J[5*n+6]=-x[5]*x[0];
-        J[5*n+7]=-x[5]*x[0];
-        J[5*n+8]=-x[5]*x[0];
-        
-        
-        J[6*n+0]=0;
-        J[6*n+1]=0;
-        J[6*n+2]=0;
-        J[6*n+3]=0;
-        J[6*n+4]=0;
-        J[6*n+5]=0;
-        J[6*n+6]=-1;
-        J[6*n+7]=0;
-        J[6*n+8]=0;
-        
-        
-        J[7*n+0]=0;
-        J[7*n+1]=0;
-        J[7*n+2]=0;
-        J[7*n+3]=0;
-        J[7*n+4]=0;
-        J[7*n+5]=0;
-        J[7*n+6]=0;
-        J[7*n+7]=-1;
-        J[7*n+8]=0;
-        
-        
-        J[8*n+0]=0;
-        J[8*n+1]=0;
-        J[8*n+2]=0;
-        J[8*n+3]=0;
-        J[8*n+4]=0;
-        J[8*n+5]=0;
-        J[8*n+6]=0;
-        J[8*n+7]=0;
-        J[8*n+8]=-1;
-        
-        
-        b[0] = fq[0] - x[0]+((1 - (x[6]+x[7]+x[8]))*x[5]*x[0]*1+0);
-        b[1] = fq[1] - x[1];
-        b[2] = fq[2] - x[2];
-        b[3] = fq[3] - x[3];
-        b[4] = fq[4] - x[4];
-        b[5] = fq[5] - x[5]+((1 - (x[6]+x[7]+x[8]))*x[5]*x[0]*1+0);
-        b[6] = fq[6] - x[6];
-        b[7] = fq[7] - x[7];
-        b[8] = fq[8] - x[8];
-        
-        
-#if defined BLAS || defined BLAS_OMP
-        
-        int  *ipiv;
-        ipiv=(int *)mCalloc(n, sizeof(int));
-        
-        dgesv_(&n, &rhs, J, &n, ipiv, b, &n, &info);
-        
-        free(ipiv);
-        
-#else
-        
-        info=MyGaussElimination_gNxRHS(J,b,n,rhs);
-        
-#endif
-        
-        if(!info) 
-          For(i,n) x[i]-=b[i];
-        else 
-          Warn_And_Exit("Error in Gauss Elimination Scheme.\n");
-        
-      }
-      
-      break;
-    }
-    case BLNC: 
-    {
-      J[0*n+0]=-1+x[8]*(1-x[3]-x[4]-x[5])+x[8]*x[5];
-      J[0*n+1]=0;
-      J[0*n+2]=0;
-      J[0*n+3]=-x[8]*x[0];
-      J[0*n+4]=-x[8]*x[0];
-      J[0*n+5]=0;
-      J[0*n+6]=0;
-      J[0*n+7]=0;
-      J[0*n+8]=(1-x[3]-x[4]-x[5])*x[0]+x[5]*x[0];
-      
-      
-      J[1*n+0]=0;
-      J[1*n+1]=-1;
-      J[1*n+2]=0;
-      J[1*n+3]=0;
-      J[1*n+4]=0;
-      J[1*n+5]=0;
-      J[1*n+6]=0;
-      J[1*n+7]=0;
-      J[1*n+8]=0;
-      
-      
-      J[2*n+0]=0;
-      J[2*n+1]=0;
-      J[2*n+2]=-1;
-      J[2*n+3]=0;
-      J[2*n+4]=0;
-      J[2*n+5]=0;
-      J[2*n+6]=0;
-      J[2*n+7]=0;
-      J[2*n+8]=0;
-      
-      
-      J[3*n+0]=0;
-      J[3*n+1]=0;
-      J[3*n+2]=0;
-      J[3*n+3]=-1;
-      J[3*n+4]=0;
-      J[3*n+5]=0;
-      J[3*n+6]=0;
-      J[3*n+7]=0;
-      J[3*n+8]=0;
-      
-      
-      J[4*n+0]=0;
-      J[4*n+1]=0;
-      J[4*n+2]=0;
-      J[4*n+3]=0;
-      J[4*n+4]=-1;
-      J[4*n+5]=0;
-      J[4*n+6]=0;
-      J[4*n+7]=0;
-      J[4*n+8]=0;
-      
-      
-      J[5*n+0]=x[8]*x[5];
-      J[5*n+1]=0;
-      J[5*n+2]=0;
-      J[5*n+3]=0;
-      J[5*n+4]=0;
-      J[5*n+5]=-1+x[8]*x[0];
-      J[5*n+6]=0;
-      J[5*n+7]=0;
-      J[5*n+8]=x[5]*x[0];
-      
-      
-      J[6*n+0]=0;
-      J[6*n+1]=0;
-      J[6*n+2]=0;
-      J[6*n+3]=0;
-      J[6*n+4]=0;
-      J[6*n+5]=0;
-      J[6*n+6]=-1;
-      J[6*n+7]=0;
-      J[6*n+8]=0;
-      
-      
-      J[7*n+0]=0;
-      J[7*n+1]=0;
-      J[7*n+2]=0;
-      J[7*n+3]=0;
-      J[7*n+4]=0;
-      J[7*n+5]=0;
-      J[7*n+6]=0;
-      J[7*n+7]=-1;
-      J[7*n+8]=0;
-      
-      
-      J[8*n+0]=x[8]*(1-x[3]-x[4]-x[5])+x[8]*x[5];
-      J[8*n+1]=0;
-      J[8*n+2]=0;
-      J[8*n+3]=-x[8]*x[0];
-      J[8*n+4]=-x[8]*x[0];
-      J[8*n+5]=0;
-      J[8*n+6]=0;
-      J[8*n+7]=0;
-      J[8*n+8]=-1+(1-x[3]-x[4]-x[5])*x[0]+x[5]*x[0];
-      
-      b[0] = fq[0] - x[0]+(x[8]*(1 - (x[3]+x[4]+x[5]))*x[0]+x[8]*x[5]*x[0]);
-      b[1] = fq[1] - x[1]+(0);
-      b[2] = fq[2] - x[2]+(0);
-      b[3] = fq[3] - x[3]+(0);
-      b[4] = fq[4] - x[4]+(0);
-      b[5] = fq[5] - x[5]+(x[8]*x[5]*x[0]);
-      b[6] = fq[6] - x[6]+(0);
-      b[7] = fq[7] - x[7]+(0);
-      b[8] = fq[8] - x[8]+(x[8]*(1 - (x[3]+x[4]+x[5]))*x[0]+x[8]*x[5]*x[0]);
-      
-#if defined BLAS || defined BLAS_OMP
-      
-      int  *ipiv;
-      ipiv=(int *)mCalloc(n, sizeof(int));
-      
-      dgesv_(&n, &rhs, J, &n, ipiv, b, &n, &info);
-      
-      free(ipiv);
-      
-#else
-      
-      info=MyGaussElimination_gNxRHS(J,b,n,rhs);
-      
-#endif
-      
-      if(!info) 
-        For(i,n) x[i]-=b[i];
-      else 
-        Warn_And_Exit("Error in Gauss Elimination Scheme.\n");
-      
-      
-      
-      break;
-    }
-    case CHMC: 
-    {
-      while(my2norm(b,n)>1e-10)
-      {
-        
-        J[0*n+0]=-1+x[8]*(1-x[3]-x[4]-x[5])+x[8]*x[5];
-        J[0*n+1]=0;
-        J[0*n+2]=0;
-        J[0*n+3]=-x[8]*x[0];
-        J[0*n+4]=-x[8]*x[0];
-        J[0*n+5]=0;
-        J[0*n+6]=0;
-        J[0*n+7]=0;
-        J[0*n+8]=(1-x[3]-x[4]-x[5])*x[0]+x[5]*x[0];
-        
-        
-        J[1*n+0]=0;
-        J[1*n+1]=-1;
-        J[1*n+2]=0;
-        J[1*n+3]=0;
-        J[1*n+4]=0;
-        J[1*n+5]=0;
-        J[1*n+6]=0;
-        J[1*n+7]=0;
-        J[1*n+8]=0;
-        
-        
-        J[2*n+0]=0;
-        J[2*n+1]=0;
-        J[2*n+2]=-1;
-        J[2*n+3]=0;
-        J[2*n+4]=0;
-        J[2*n+5]=0;
-        J[2*n+6]=0;
-        J[2*n+7]=0;
-        J[2*n+8]=0;
-        
-        
-        J[3*n+0]=0;
-        J[3*n+1]=0;
-        J[3*n+2]=0;
-        J[3*n+3]=-1;
-        J[3*n+4]=0;
-        J[3*n+5]=0;
-        J[3*n+6]=0;
-        J[3*n+7]=0;
-        J[3*n+8]=0;
-        
-        
-        J[4*n+0]=0;
-        J[4*n+1]=0;
-        J[4*n+2]=0;
-        J[4*n+3]=0;
-        J[4*n+4]=-1;
-        J[4*n+5]=0;
-        J[4*n+6]=0;
-        J[4*n+7]=0;
-        J[4*n+8]=0;
-        
-        
-        J[5*n+0]=x[8]*x[5];
-        J[5*n+1]=0;
-        J[5*n+2]=0;
-        J[5*n+3]=0;
-        J[5*n+4]=0;
-        J[5*n+5]=-1+x[8]*x[0];
-        J[5*n+6]=0;
-        J[5*n+7]=0;
-        J[5*n+8]=x[5]*x[0];
-        
-        
-        J[6*n+0]=0;
-        J[6*n+1]=0;
-        J[6*n+2]=0;
-        J[6*n+3]=0;
-        J[6*n+4]=0;
-        J[6*n+5]=0;
-        J[6*n+6]=-1;
-        J[6*n+7]=0;
-        J[6*n+8]=0;
-        
-        
-        J[7*n+0]=0;
-        J[7*n+1]=0;
-        J[7*n+2]=0;
-        J[7*n+3]=0;
-        J[7*n+4]=0;
-        J[7*n+5]=0;
-        J[7*n+6]=0;
-        J[7*n+7]=-1;
-        J[7*n+8]=0;
-        
-        
-        J[8*n+0]=x[8]*(1-x[3]-x[4]-x[5])+x[8]*x[5];
-        J[8*n+1]=0;
-        J[8*n+2]=0;
-        J[8*n+3]=-x[8]*x[0];
-        J[8*n+4]=-x[8]*x[0];
-        J[8*n+5]=0;
-        J[8*n+6]=0;
-        J[8*n+7]=0;
-        J[8*n+8]=-1+(1-x[3]-x[4]-x[5])*x[0]+x[5]*x[0];
-        
-        
-        b[0] = fq[0] - x[0]+(x[8]*(1 - (x[3]+x[4]+x[5]))*x[0]+x[8]*x[5]*x[0]);
-        b[1] = fq[1] - x[1];
-        b[2] = fq[2] - x[2];
-        b[3] = fq[3] - x[3];
-        b[4] = fq[4] - x[4];
-        b[5] = fq[5] - x[5]+(x[8]*x[5]*x[0]+0);
-        b[6] = fq[6] - x[6];
-        b[7] = fq[7] - x[7];
-        b[8] = fq[8] - x[8]+(x[8]*(1 - (x[3]+x[4]+x[5]))*x[0]+x[8]*x[5]*x[0]);
-        
-#if defined BLAS || defined BLAS_OMP
-        
-        int  *ipiv;
-        ipiv=(int *)mCalloc(n, sizeof(int));
-        
-        dgesv_(&n, &rhs, J, &n, ipiv, b, &n, &info);
-        
-        free(ipiv);
-        
-#else
-        
-        info=MyGaussElimination_gNxRHS(J,b,n,rhs);
-        
-#endif
-        
-        if(!info) 
-          For(i,n) x[i]-=b[i];
-        else 
-          Warn_And_Exit("Error in Gauss Elimination Scheme.\n");
-        
-      }
-      
-      break;
-    }
-    case TRMC: 
-    {
-      while(my2norm(b,n)>1e-10)
-      {
-        
-        J[0*n+0]=-1+(1-x[6]-x[7]-x[8])*x[5]+x[8]*x[5];
-        J[0*n+1]=0;
-        J[0*n+2]=0;
-        J[0*n+3]=0;
-        J[0*n+4]=0;
-        J[0*n+5]=(1-x[6]-x[7]-x[8])*x[0]+x[8]*x[0];
-        J[0*n+6]=-x[5]*x[0];
-        J[0*n+7]=-x[5]*x[0];
-        J[0*n+8]=0;
-        
-        
-        J[1*n+0]=0;
-        J[1*n+1]=-1;
-        J[1*n+2]=0;
-        J[1*n+3]=0;
-        J[1*n+4]=0;
-        J[1*n+5]=0;
-        J[1*n+6]=0;
-        J[1*n+7]=0;
-        J[1*n+8]=0;
-        
-        
-        J[2*n+0]=0;
-        J[2*n+1]=0;
-        J[2*n+2]=-1;
-        J[2*n+3]=0;
-        J[2*n+4]=0;
-        J[2*n+5]=0;
-        J[2*n+6]=0;
-        J[2*n+7]=0;
-        J[2*n+8]=0;
-        
-        
-        J[3*n+0]=0;
-        J[3*n+1]=0;
-        J[3*n+2]=0;
-        J[3*n+3]=-1;
-        J[3*n+4]=0;
-        J[3*n+5]=0;
-        J[3*n+6]=0;
-        J[3*n+7]=0;
-        J[3*n+8]=0;
-        
-        
-        J[4*n+0]=0;
-        J[4*n+1]=0;
-        J[4*n+2]=0;
-        J[4*n+3]=0;
-        J[4*n+4]=-1;
-        J[4*n+5]=0;
-        J[4*n+6]=0;
-        J[4*n+7]=0;
-        J[4*n+8]=0;
-        
-        
-        J[5*n+0]=(1-x[6]-x[7]-x[8])*x[5]+x[8]*x[5];
-        J[5*n+1]=0;
-        J[5*n+2]=0;
-        J[5*n+3]=0;
-        J[5*n+4]=0;
-        J[5*n+5]=-1+(1-x[6]-x[7]-x[8])*x[0]+x[8]*x[0];
-        J[5*n+6]=-x[5]*x[0];
-        J[5*n+7]=-x[5]*x[0];
-        J[5*n+8]=0;
-        
-        
-        J[6*n+0]=0;
-        J[6*n+1]=0;
-        J[6*n+2]=0;
-        J[6*n+3]=0;
-        J[6*n+4]=0;
-        J[6*n+5]=0;
-        J[6*n+6]=-1;
-        J[6*n+7]=0;
-        J[6*n+8]=0;
-        
-        
-        J[7*n+0]=0;
-        J[7*n+1]=0;
-        J[7*n+2]=0;
-        J[7*n+3]=0;
-        J[7*n+4]=0;
-        J[7*n+5]=0;
-        J[7*n+6]=0;
-        J[7*n+7]=-1;
-        J[7*n+8]=0;
-        
-        
-        J[8*n+0]=x[8]*x[5];
-        J[8*n+1]=0;
-        J[8*n+2]=0;
-        J[8*n+3]=0;
-        J[8*n+4]=0;
-        J[8*n+5]=x[8]*x[0];
-        J[8*n+6]=0;
-        J[8*n+7]=0;
-        J[8*n+8]=-1+x[5]*x[0];
-        
-        
-        b[0] = fq[0] - x[0]+((1 - (x[6]+x[7]+x[8]))*x[5]*x[0]*1+x[8]*x[5]*x[0]*1+0);
-        b[1] = fq[1] - x[1];
-        b[2] = fq[2] - x[2];
-        b[3] = fq[3] - x[3];
-        b[4] = fq[4] - x[4];
-        b[5] = fq[5] - x[5]+((1 - (x[6]+x[7]+x[8]))*x[5]*x[0]*1+x[8]*x[5]*x[0]*1+0);
-        b[6] = fq[6] - x[6];
-        b[7] = fq[7] - x[7];
-        b[8] = fq[8] - x[8]+(x[8]*x[5]*x[0]*1+0);
-        
-#if defined BLAS || defined BLAS_OMP
-        
-        int  *ipiv;
-        ipiv=(int *)mCalloc(n, sizeof(int));
-        
-        dgesv_(&n, &rhs, J, &n, ipiv, b, &n, &info);
-        
-        free(ipiv);
-        
-#else
-        
-        info=MyGaussElimination_gNxRHS(J,b,n,rhs);
-        
-#endif
-        
-        if(!info) 
-          For(i,n) x[i]-=b[i];
-        else 
-          Warn_And_Exit("Error in Gauss Elimination Scheme.\n");
-        
-      }
-      
-      break;
-    }
-    case SCOMC: 
-    {
-      while(my2norm(b,n)>1e-10)
-      {
-        
-        J[0*n+0]=0;J[0*n+0]=-1+x[8]*(1-x[3]-x[4]-x[5])+x[8]*x[5]+x[8]*x[4];
-        J[0*n+1]=0;
-        J[0*n+2]=0;
-        J[0*n+3]=-x[8]*x[0];
-        J[0*n+4]=0;
-        J[0*n+5]=0;
-        J[0*n+6]=0;
-        J[0*n+7]=0;
-        J[0*n+8]=(1-x[3]-x[4]-x[5])*x[0]+x[5]*x[0]+x[4]*x[0];
-        
-        
-        J[1*n+0]=0;
-        J[1*n+1]=-1;
-        J[1*n+2]=0;
-        J[1*n+3]=0;
-        J[1*n+4]=0;
-        J[1*n+5]=0;
-        J[1*n+6]=0;
-        J[1*n+7]=0;
-        J[1*n+8]=0;
-        
-        
-        J[2*n+0]=0;
-        J[2*n+1]=0;
-        J[2*n+2]=-1;
-        J[2*n+3]=0;
-        J[2*n+4]=0;
-        J[2*n+5]=0;
-        J[2*n+6]=0;
-        J[2*n+7]=0;
-        J[2*n+8]=0;
-        
-        
-        J[3*n+0]=0;
-        J[3*n+1]=0;
-        J[3*n+2]=0;
-        J[3*n+3]=-1;
-        J[3*n+4]=0;
-        J[3*n+5]=0;
-        J[3*n+6]=0;
-        J[3*n+7]=0;
-        J[3*n+8]=0;
-        
-        
-        J[4*n+0]=x[8]*x[4];
-        J[4*n+1]=0;
-        J[4*n+2]=0;
-        J[4*n+3]=0;
-        J[4*n+4]=-1+x[8]*x[0];
-        J[4*n+5]=0;
-        J[4*n+6]=0;
-        J[4*n+7]=0;
-        J[4*n+8]=x[4]*x[0];
-        
-        
-        J[5*n+0]=x[8]*x[5];
-        J[5*n+1]=0;
-        J[5*n+2]=0;
-        J[5*n+3]=0;
-        J[5*n+4]=0;
-        J[5*n+5]=-1+x[8]*x[0];
-        J[5*n+6]=0;
-        J[5*n+7]=0;
-        J[5*n+8]=x[5]*x[0];
-        
-        
-        J[6*n+0]=0;
-        J[6*n+1]=0;
-        J[6*n+2]=0;
-        J[6*n+3]=0;
-        J[6*n+4]=0;
-        J[6*n+5]=0;
-        J[6*n+6]=-1;
-        J[6*n+7]=0;
-        J[6*n+8]=0;
-        
-        
-        J[7*n+0]=0;
-        J[7*n+1]=0;
-        J[7*n+2]=0;
-        J[7*n+3]=0;
-        J[7*n+4]=0;
-        J[7*n+5]=0;
-        J[7*n+6]=0;
-        J[7*n+7]=-1;
-        J[7*n+8]=0;
-        
-        
-        J[8*n+0]=x[8]*(1-x[3]-x[4]-x[5])+x[8]*x[5]+x[8]*x[4];
-        J[8*n+1]=0;
-        J[8*n+2]=0;
-        J[8*n+3]=-x[8]*x[0];
-        J[8*n+4]=0;
-        J[8*n+5]=0;
-        J[8*n+6]=0;
-        J[8*n+7]=0;
-        J[8*n+8]=-1+(1-x[3]-x[4]-x[5])*x[0]+x[5]*x[0]+x[4]*x[0];
-        
-        
-        b[0] = fq[0] - x[0]+(x[8]*(1 - (x[3]+x[4]+x[5]))*x[0]*1+x[8]*x[5]*x[0]*1+x[8]*x[4]*x[0]*1+0);
-        b[1] = fq[1] - x[1];
-        b[2] = fq[2] - x[2];
-        b[3] = fq[3] - x[3];
-        b[4] = fq[4] - x[4]+(x[8]*x[4]*x[0]*1+0);
-        b[5] = fq[5] - x[5]+(x[8]*x[5]*x[0]*1+0);
-        b[6] = fq[6] - x[6];
-        b[7] = fq[7] - x[7];
-        b[8] = fq[8] - x[8]+(x[8]*(1 - (x[3]+x[4]+x[5]))*x[0]*1+x[8]*x[5]*x[0]*1+x[8]*x[4]*x[0]*1+0);
-        
-#if defined BLAS || defined BLAS_OMP
-        
-        int  *ipiv;
-        ipiv=(int *)mCalloc(n, sizeof(int));
-        
-        dgesv_(&n, &rhs, J, &n, ipiv, b, &n, &info);
-        
-        free(ipiv);
-        
-#else
-        
-        info=MyGaussElimination_gNxRHS(J,b,n,rhs);
-        
-#endif
-        
-        if(!info) 
-          For(i,n) x[i]-=b[i];
-        else 
-          Warn_And_Exit("Error in Gauss Elimination Scheme.\n");
-        
-      }
-      
-      break;
-    }
-    case THMC: 
-    {
-      while(my2norm(b,n)>1e-10)
-      {
-        
-        J[0*n+0]=-1+x[8]*(1-x[3]-x[4]-x[5])+(1-x[6]-x[7]-x[8])*x[5]+x[8]*x[5]+x[8]*x[3];
-        J[0*n+1]=0;
-        J[0*n+2]=0;
-        J[0*n+3]=0;
-        J[0*n+4]=-x[8]*x[0];
-        J[0*n+5]=(1-x[6]-x[7]-x[8])*x[0];
-        J[0*n+6]=-x[5]*x[0];
-        J[0*n+7]=-x[5]*x[0];
-        J[0*n+8]=(1-x[3]-x[4]-x[5])*x[0]+x[3]*x[0];
-        
-        
-        J[1*n+0]=0;
-        J[1*n+1]=-1;
-        J[1*n+2]=0;
-        J[1*n+3]=0;
-        J[1*n+4]=0;
-        J[1*n+5]=0;
-        J[1*n+6]=0;
-        J[1*n+7]=0;
-        J[1*n+8]=0;
-        
-        
-        J[2*n+0]=0;
-        J[2*n+1]=0;
-        J[2*n+2]=-1;
-        J[2*n+3]=0;
-        J[2*n+4]=0;
-        J[2*n+5]=0;
-        J[2*n+6]=0;
-        J[2*n+7]=0;
-        J[2*n+8]=0;
-        
-        
-        J[3*n+0]=x[8]*x[3];
-        J[3*n+1]=0;
-        J[3*n+2]=0;
-        J[3*n+3]=-1+x[8]*x[0];
-        J[3*n+4]=0;
-        J[3*n+5]=0;
-        J[3*n+6]=0;
-        J[3*n+7]=0;
-        J[3*n+8]=x[3]*x[0];
-        
-        
-        J[4*n+0]=0;
-        J[4*n+1]=0;
-        J[4*n+2]=0;
-        J[4*n+3]=0;
-        J[4*n+4]=-1;
-        J[4*n+5]=0;
-        J[4*n+6]=0;
-        J[4*n+7]=0;
-        J[4*n+8]=0;
-        
-        
-        J[5*n+0]=(1-x[6]-x[7]-x[8])*x[5]+x[8]*x[5];
-        J[5*n+1]=0;
-        J[5*n+2]=0;
-        J[5*n+3]=0;
-        J[5*n+4]=0;
-        J[5*n+5]=-1+(1-x[6]-x[7]-x[8])*x[0]+x[8]*x[0];
-        J[5*n+6]=-x[5]*x[0];
-        J[5*n+7]=-x[5]*x[0];
-        J[5*n+8]=0;
-        
-        
-        J[6*n+0]=0;
-        J[6*n+1]=0;
-        J[6*n+2]=0;
-        J[6*n+3]=0;
-        J[6*n+4]=0;
-        J[6*n+5]=0;
-        J[6*n+6]=-1;
-        J[6*n+7]=0;
-        J[6*n+8]=0;
-        
-        
-        J[7*n+0]=0;
-        J[7*n+1]=0;
-        J[7*n+2]=0;
-        J[7*n+3]=0;
-        J[7*n+4]=0;
-        J[7*n+5]=0;
-        J[7*n+6]=0;
-        J[7*n+7]=-1;
-        J[7*n+8]=0;
-        
-        
-        J[8*n+0]=x[8]*(1-x[3]-x[4]-x[5])+x[8]*x[5]+x[8]*x[3];
-        J[8*n+1]=0;
-        J[8*n+2]=0;
-        J[8*n+3]=0;
-        J[8*n+4]=-x[8]*x[0];
-        J[8*n+5]=0;
-        J[8*n+6]=0;
-        J[8*n+7]=0;
-        J[8*n+8]=-1+(1-x[3]-x[4]-x[5])*x[0]+x[5]*x[0]+x[3]*x[0];
-        
-        
-        b[0] = fq[0] - x[0]+(x[8]*(1 - (x[3]+x[4]+x[5]))*x[0]*1+(1 - (x[6]+x[7]+x[8]))*x[5]*x[0]*1+x[8]*x[5]*x[0]*1+x[8]*x[3]*x[0]*1+0);
-        b[1] = fq[1] - x[1];
-        b[2] = fq[2] - x[2];
-        b[3] = fq[3] - x[3]+(x[8]*x[3]*x[0]*1+0);
-        b[4] = fq[4] - x[4];
-        b[5] = fq[5] - x[5]+((1 - (x[6]+x[7]+x[8]))*x[5]*x[0]*1+x[8]*x[5]*x[0]*1+0);
-        b[6] = fq[6] - x[6];
-        b[7] = fq[7] - x[7];
-        b[8] = fq[8] - x[8]+(x[8]*(1 - (x[3]+x[4]+x[5]))*x[0]*1+x[8]*x[5]*x[0]*1+x[8]*x[3]*x[0]*1+0);
-        
-#if defined BLAS || defined BLAS_OMP
-        
-        int  *ipiv;
-        ipiv=(int *)mCalloc(n, sizeof(int));
-        
-        dgesv_(&n, &rhs, J, &n, ipiv, b, &n, &info);
-        
-        free(ipiv);
-        
-#else
-        
-        info=MyGaussElimination_gNxRHS(J,b,n,rhs);
-        
-#endif
-        
-        if(!info) 
-          For(i,n) x[i]-=b[i];
-        else 
-          Warn_And_Exit("Error in Gauss Elimination Scheme.\n");
-        
-      }
-      
       break;
     }
     default: Warn_And_Exit("Genetic code not implemented."); break;
@@ -9675,45 +6517,36 @@ void Make_Ts_and_Tv_Matrix(option *io, model* mod)//!< Added by Marcelo. Store t
   if(mod->optDebug)printf("tstv %d\n",mat[0].sSub);
   numSensecodons=mod->ns;  //was io-> mod Ken 9/1/2018
   
-  For(i,numSensecodons)
-  {
-    For(j,numSensecodons)
-    {	
+  For(i,numSensecodons){
+    For(j,numSensecodons){
       diff=0;
       nts=0;
       ntv=0;
       sSub=1;
       caseK07=-1;
-      if(i==j)//!< It is a diagonal element ... jump to the next. 
-      {
+      if(i==j){//!< It is a diagonal element ... jump to the next.
         mat[numSensecodons*i+j].ndiff=diff;
         mat[numSensecodons*i+j].nts=nts;
         mat[numSensecodons*i+j].ntv=ntv;
         mat[numSensecodons*i+j].sSub=sSub;
         mat[numSensecodons*i+j].caseK07=caseK07;
-      }
-      else
-      {
-        
+      }else{
         codoni=senseCodons[i];
         codonj=senseCodons[j];
-        
         if(aminoAcidmap[codoni]!=aminoAcidmap[codonj]) sSub=0;   //!< Synonymous substitution?
         
-        For(k,3)
-        {
+        For(k,3){
           icodon[k]=codoni-((codoni>>2)<<2);                     //!<  n<<k= n*2^k, n>>k=n/2^k.
           codoni=codoni>>2;
           jcodon[k]=codonj-((codonj>>2)<<2);
           codonj=codonj>>2;
           
           //!< Transcribe the codon into the constituent nucleotides-
-          if(icodon[k]!=jcodon[k]) 
-          {
+          if(icodon[k]!=jcodon[k]){
             diff++;
             
-            switch(abs(icodon[k]*icodon[k]-jcodon[k]*jcodon[k])) /*!< The difference of the square of the values yields */ 
-            {                                                    /*!< a nice way to differ between transitions and transversions.*/
+            switch(abs(icodon[k]*icodon[k]-jcodon[k]*jcodon[k])){ /*!< The difference of the square of the values yields */
+            						/*!< a nice way to differ between transitions and transversions.*/
               case 1:
               case 5: nts++;  //!< Transition.
                 break;
@@ -9726,16 +6559,13 @@ void Make_Ts_and_Tv_Matrix(option *io, model* mod)//!< Added by Marcelo. Store t
             }
           }
         }
-        if(diff==1)/*!< cases 0-8 according to Kosiol 2007.*/
-        {
+        if(diff==1){/*!< cases 0-8 according to Kosiol 2007.*/
           if(nts) caseK07=0; else caseK07=1;
         }
-        else if(diff==2)
-        {
+        else if(diff==2){
           if(nts==2) caseK07=2; else if(nts==1) caseK07=3; else caseK07=4;
         }
-        else if(diff==3)
-        {
+        else if(diff==3){
           if(nts==3) caseK07=5; else if(nts==2) caseK07=6; else if(nts==1) caseK07=7; else caseK07=8;
         }
         mat[numSensecodons*i+j].ndiff=diff;
@@ -9747,15 +6577,16 @@ void Make_Ts_and_Tv_Matrix(option *io, model* mod)//!< Added by Marcelo. Store t
     }
   }
 }
-/*********************************************************/
+/*********************************************************
+ * Scale frequencies to a sum of 1
+ */
 void Scale_freqs(phydbl *f, int n)
 {
   phydbl sum;
   int i;
   do{
     sum = 0.0;
-    For(i,n)
-    {
+    For(i,n){
       if(f[i] < 1e-6) f[i]=1e-6;
       else if(f[i] > 0.999) f[i]=0.999;
       sum += f[i];
@@ -9764,6 +6595,7 @@ void Scale_freqs(phydbl *f, int n)
   }
   while((sum > 1.01) || (sum < 0.99));
 }
+
 /*********************************************************/
 void Scale_freqs_tol(phydbl *f, int n, phydbl tolmin, phydbl tolmax)
 {
@@ -9771,8 +6603,7 @@ void Scale_freqs_tol(phydbl *f, int n, phydbl tolmin, phydbl tolmax)
   int i;
   do{
     sum = 0.0;
-    For(i,n)
-    {
+    For(i,n){
       if(f[i] < tolmin) f[i]=tolmin;
       else if(f[i] > tolmax) f[i]=tolmax;
       sum += f[i];
@@ -9781,28 +6612,25 @@ void Scale_freqs_tol(phydbl *f, int n, phydbl tolmin, phydbl tolmax)
   }
   while((sum > 1.0001) || (sum < 0.99));
 }
+
 /*********************************************************/
-void Freq_to_UnsFreq(phydbl *f, phydbl *uf, int n, int f2U)
-{
+void Freq_to_UnsFreq(phydbl *f, phydbl *uf, int n, int f2U){
   phydbl sum;
   int i;
-  if(f2U)
-  {
+  if(f2U){
     sum=1-Sum(f,n-1);
     sum=1/sum;
-    For(i,n-1)  uf[i]=log(f[i]*sum);
+    For(i,n-1)uf[i]=log(f[i]*sum);
     uf[n-1]=0;
-  }
-  else
-  {
-    for(i=0,sum=1; i<n-1; i++)  sum+=(f[i]=exp(uf[i]));
-    For(i,n-1)  f[i]/=sum;
+  }else{
+    for(i=0,sum=1; i<n-1; i++)sum+=(f[i]=exp(uf[i]));
+    For(i,n-1)f[i]/=sum;
     f[n-1]=1/sum;
   }
 }
+
 /*********************************************************/
-void lkExperiment(t_tree * tree, int num_tree)
-{
+void lkExperiment(t_tree * tree, int num_tree){
   phydbl minW=tree->mod->minParam, minK=tree->mod->minParam, maxK=tree->mod->maxParam, stepSize=tree->mod->lkExpStepSize, kappa, omega;
   // phydbl maxW=tree->mod->maxParam;
   int gridSize=maxK/stepSize, i, j;
@@ -9891,7 +6719,6 @@ void lkExperiment(t_tree * tree, int num_tree)
 /*******************************************************/
 static unsigned int z_rndu=1237;
 static int          w_rndu=1237;
-
 void SetSeed (unsigned int seed)
 {
   if(sizeof(int) != 4) 
@@ -9945,327 +6772,4 @@ FILE * openOutputFile( char * outFile, char * appendString, char * suffix, optio
     return(outPtr);
 }
 
-
-// added by stefan for output format support
-
-token *Emit_Root_Token() {
-    token *tkn = (token *)malloc(sizeof(token));
-    tkn->type = ROOTTKN;
-    tkn->val = mCalloc(1, sizeof(char));
-    tkn->full = mCalloc(1, sizeof(char));
-    tkn->tag = mCalloc(1, sizeof(char));
-    tkn->next = NULL;
-    return tkn;
-}
-
-token *Emit_Out_Token(token *currTkn, char *full, char *tag, int type, int f, char *format, ...) {
-    va_list ptr;
-    char *val;
-    phydbl dval;
-    dval = 0.0;
-    
-#ifdef MPI
-    if(Global_myRank == 0) {
-        va_start(ptr, format);
-        //modified by Ken 22/7/2016
-        if(f == TFNUMERIC || f == TFNUMERICNEQ) {
-            dval = va_arg(ptr, double);
-        } else {
-            int temp = vasprintf(&val,format, ptr);//changed by Ken 12/1/2017
-        }
-        va_end(ptr);
-    }
-#else
-    va_start(ptr, format);
-    //modified by Ken 22/7/2016
-    if(f == TFNUMERIC || f == TFNUMERICNEQ) {
-        dval = va_arg(ptr, double);
-        val = mCalloc(1, sizeof(char));
-        strcpy(val, "");
-    } else {
-    	int temp = vasprintf(&val,format, ptr);//changed by Ken 12/1/2017
-    }
-    va_end(ptr);
-#endif
-    fflush (NULL);
-    
-    token *tkn = (token *)malloc(sizeof(token));
-    tkn->full = mCalloc((int)strlen(full)+1, sizeof(char));
-    strcpy(tkn->full, full);
-    tkn->tag = mCalloc((int)strlen(tag)+1, sizeof(char));
-    strcpy(tkn->tag, tag);
-    tkn->val = val;
-    tkn->dval = dval;
-    tkn->type = type;
-    tkn->format = f;
-    tkn->next = NULL;
-    currTkn->next = tkn;
-    currTkn = tkn;
-    return(currTkn);
-}
-
-token * Del_Last_Token(token *r) {
-    while(1) {
-        if(r->next && r->next->next) {
-            r = r->next;
-        } else {
-            if(r->next) {
-                Free_OutToken(r->next);
-            }
-            r->next = NULL;
-            break;
-        }
-    }
-    return(r);
-}
-
-void Output_Tokens(token *root, int format, FILE *fp_out) {
-    switch(format) {
-#ifdef USEYAML
-        case OUTYAML: {
-            Print_YAML_Tokenlist(fp_out, root);
-            break;
-        }
-#endif
-        case OUTDARWIN: {
-            Print_Darwin_Tokenlist(fp_out, root);
-            break;
-        }
-        default: {
-            Print_Txt_Tokenlist(fp_out, root);
-            break;
-        }
-    }
-    Free_OutList(root);
-}
-
-void Print_Txt_Tokenlist(FILE *fp_out, token *t) {
-    int level = 0;
-    int tabsize = 4;
-    int isTable = NO;
-    char *tablespace = "   ";
-    char * tabspace = malloc(256*sizeof(char));
-    const char *padding = "\t\t\t\t\t\t\t\t\t\t\t";
-    int spacerlen = 0;
-    char *spacer = malloc(128*sizeof(char));
-    //sprintf(spacer, "");
-    //sprintf(tabspace, "");
-    spacer[0]= 0; //fixed by Ken 12/1
-    tabspace[0]= 0;
-    while(1) {
-        switch(t->type) {
-            case SCALARTKN: {
-                if(isTable) {
-                    switch(t->format) {
-                        case TFNUMERIC: {
-                            PhyML_Fprintf(fp_out, "%s=%.8f%s", t->full, t->dval, tablespace);
-                            break;
-                        }
-                        case TFNUMERICNEQ: {//modified by Ken 22/7/2016
-                              PhyML_Fprintf(fp_out, "%s%.8f%s", t->full, t->dval, tablespace);
-                              break;
-                        }
-                        case TFSTRING:
-                        default: {
-                            PhyML_Fprintf(fp_out, "%s=%s%s", t->full, t->val, tablespace);
-                            break;
-                        }
-                    }
-                } else {
-                    spacerlen = 5 - (int)(strlen(t->full) / 6);
-                    sprintf(spacer, "%s: %*.*s", t->full, spacerlen, spacerlen, padding);
-                    switch(t->format) {
-                        case TFNUMERIC: {
-                            PhyML_Fprintf(fp_out, "\n%s. %s%g", tabspace, spacer, t->dval);
-                            break;
-                        }
-                        case TFNUMERICNEQ: {//modified by Ken 22/7/2016
-                            PhyML_Fprintf(fp_out, "%s%.8f%s", t->full, t->dval, tablespace);
-                            break;
-                        }
-                        case TFSTRING:
-                        default: {
-                            PhyML_Fprintf(fp_out, "\n%s. %s%s", tabspace, spacer, t->val);
-                            break;
-                        }
-                    }
-                }
-                break;
-            }
-            case SETSTARTTKN: {
-                PhyML_Fprintf(fp_out, "\n%s. %s: %s", tabspace, t->full, t->val);
-                level += 1;
-                sprintf(tabspace, "%*s", level*tabsize, "");
-                break;
-            }
-            case SETENDTKN: {
-                level -= 1;
-                sprintf(tabspace, "%*s", level*tabsize, "");
-                break;
-            }
-            case TBLSTARTTKN: {
-                if(strcmp(t->full, "")) {
-                    PhyML_Fprintf(fp_out, "\n%s%s: ", tabspace, t->full);
-                } else {
-                    PhyML_Fprintf(fp_out, "\n%s", tabspace, t->full);
-                }
-                isTable = YES;
-                break;
-            }
-            case TBLENDTKN: {
-                isTable = NO;
-                break;
-            }
-            case COMMENTTKN: {
-                PhyML_Fprintf(fp_out, "\n# %s", t->val);
-                break;
-            }
-        }
-        if(t->next != NULL) {
-            t = t->next;
-        } else {
-            break;
-        }
-    }
-    free(tabspace);
-}
-
-#ifdef USEYAML
-void Print_YAML_Tokenlist(FILE *fp_out, token *t) {
-    int level = 0;
-    int tabsize = 4;
-    char * tabspace = malloc(256*sizeof(char));
-    sprintf(tabspace, "");
-    while(1) {
-        switch(t->type) {
-            case SCALARTKN: {
-                switch(t->format) {
-                    case TFNUMERIC: {
-                        PhyML_Fprintf(fp_out, "\n%s%s: %g", tabspace, t->tag, t->dval);
-                        break;
-                    }
-                    case TFSTRING:
-                    default: {
-                        PhyML_Fprintf(fp_out, "\n%s%s: %s", tabspace, t->tag, t->val);
-                        break;
-                    }
-                }
-                break;
-            }
-            case SETSTARTTKN: {
-                PhyML_Fprintf(fp_out, "\n%s%s%s:", tabspace, t->tag, t->val);
-                level += 1;
-                sprintf(tabspace, "%*s", level*tabsize, "");
-                break;
-            }
-            case SETENDTKN: {
-                level -= 1;
-                sprintf(tabspace, "%*s", level*tabsize, "");
-                break;
-            }
-            case COMMENTTKN: {
-                PhyML_Fprintf(fp_out, "\n# %s", t->val);
-                break;
-            }
-        }
-        if(t->next != NULL) {
-            t = t->next;
-        } else {
-            break;
-        }
-    }
-    free(tabspace);
-}
-#endif
-
-void Print_Darwin_Tokenlist(FILE *fp_out, token *t) {
-    PhyML_Fprintf(fp_out, "if not assigned(cpres) then\n");
-    PhyML_Fprintf(fp_out, "cpres := table([],[]);\n");
-    PhyML_Fprintf(fp_out, "fi;\n");
-    double DARWIN_DBL_MAX = 1.7976931348623157e+308;
-    double DARWIN_DBL_EPSILON = 2.2204e-16;
-    token *dvar = Emit_Root_Token();
-    token *dvarc = Emit_Out_Token(dvar, "cpres", "", SCALARTKN, TFSTRING, "%s", "cpres");
-    while(1) {
-        switch(t->type) {
-            case SCALARTKN: {
-                switch(t->format) {
-                    case TFNUMERIC: {
-                        if(fabs(t->dval) >= DARWIN_DBL_MAX) {
-                            PhyML_Fprintf(fp_out, "\n%s['%s'] := %e;", getDarwinTable(dvar), t->tag, DARWIN_DBL_MAX);
-                        } else if(fabs(t->dval) <= DARWIN_DBL_EPSILON) {
-                            PhyML_Fprintf(fp_out, "\n%s['%s'] := %e;", getDarwinTable(dvar), t->tag, 0.0);
-                        } else {
-                            if(isnan(t->dval)) {
-                                PhyML_Fprintf(fp_out, "\n%s['%s'] := %g;", getDarwinTable(dvar), t->tag, 0.0);
-                            } else {
-                                PhyML_Fprintf(fp_out, "\n%s['%s'] := %g;", getDarwinTable(dvar), t->tag, t->dval);
-                            }
-                        }
-                        break;
-                    }
-                    case TFSTRING:
-                    default: {
-                        PhyML_Fprintf(fp_out, "\n%s['%s'] := '%s';", getDarwinTable(dvar), t->tag, t->val);
-                        break;
-                    }
-                }
-                break;
-            }
-            case SETSTARTTKN: {
-                if(t->format == TFSTRING) {
-                    PhyML_Fprintf(fp_out, "\n%s['%s'] := table();", getDarwinTable(dvar), t->tag);
-                    dvarc = Emit_Out_Token(dvarc, "\ncpres", "", SCALARTKN, TFSTRING, "['%s%s']", t->tag, t->val);
-                } else {
-                    PhyML_Fprintf(fp_out, "\n%s[%s] := table();", getDarwinTable(dvar), t->tag);
-                    dvarc = Emit_Out_Token(dvarc, "\ncpres", "", SCALARTKN, TFSTRING, "[%s]", t->tag);
-                }
-                break;
-            }
-            case SETENDTKN: {
-                dvarc = Del_Last_Token(dvar);
-                break;
-            }
-                
-            case TBLSTARTTKN:
-            case TBLENDTKN: {
-                break;
-            }
-                
-            case COMMENTTKN: {
-                PhyML_Fprintf(fp_out, "\n# %s", t->val);
-                break;
-            }
-        }
-        if(t->next != NULL) {
-            t = t->next;
-        } else {
-            break;
-        }
-    }
-}
-
-char * getDarwinTable(token *r) {
-    int len = 0;
-    token *tmp = r;
-    while(1) {
-        len += strlen(tmp->val);
-        if(tmp->next != NULL) {
-            tmp = tmp->next;
-        } else {
-            break;
-        }
-    }
-    char *res = malloc((len+1)*sizeof(char));
-    strcpy(res, "");
-    while(1) {
-        strcat(res, r->val);
-        if(r->next != NULL) {
-            r = r->next;
-        } else {
-            break;
-        }
-    }
-    return(res);
-}
 

@@ -25,17 +25,18 @@ the GNU public licence.  See http://www.opensource.org for details.
 
 
 #include "pars.h"
+#include "io.h"
+
 extern int     stopCodons[64];
 extern int   senseCodons[64];
 extern char aminoAcidmap[65];
 extern int indexSenseCodons[64];
+
 /*********************************************************/
 
-void Make_Tree_4_Pars(t_tree *tree, calign *cdata, int n_site)
+void Make_Tree_4_Pars(t_tree *tree, int n_site)
 {
   int i;
-
-
   tree->site_pars = (int *)mCalloc(tree->n_pattern, sizeof(int));
   tree->step_mat = (int *)mCalloc(tree->mod->ns * tree->mod->ns, sizeof(int));
   For(i,2*tree->n_otu-3) Make_Edge_Pars(tree->t_edges[i],tree);
@@ -193,7 +194,7 @@ void Init_Ui_Tips(t_tree *tree)
   short int *state_v;
   short int array[64];
   state_v = (short int *)mCalloc(tree->mod->ns,sizeof(short int));
-  
+
   For(curr_site,tree->data->crunch_len)
     {
       For(i,tree->n_otu)
@@ -203,7 +204,7 @@ void Init_Ui_Tips(t_tree *tree)
 	      if(tree->noeud[i]->b[0]->rght->tax != 1)
 		{
 		  PhyML_Printf("\n. Err in file %s at line %d\n",__FILE__,__LINE__);
-		  Warn_And_Exit("\n");	    
+		  Warn_And_Exit("\n");
 		}
 
 	      Init_Tips_At_One_Site_Nucleotides_Int(tree->data->c_seq[i]->state[curr_site],
@@ -239,12 +240,12 @@ void Init_Ui_Tips(t_tree *tree)
 	      tree->noeud[i]->b[0]->ui_r[curr_site] = 0;
 	      For(j,tree->mod->ns) tree->noeud[i]->b[0]->ui_r[curr_site] += (unsigned int)(array[j] * POW(2,j));
 	    }
-	    
-	    
+
+
 	}
     }
 
-  
+
   For(br,2*tree->n_otu-3)
     {
       For(curr_site,tree->data->crunch_len)
@@ -421,34 +422,25 @@ int Pars_Core(t_edge *b, t_tree *tree)
   site = tree->curr_site;
   site_pars = MAX_PARS;
 
-  if(tree->mod->s_opt->general_pars)
-    {
+  if(tree->mod->s_opt->general_pars){
+      For(i,tree->mod->ns){
+    	  	  min_l = MAX_PARS;
+    	  	  For(j,tree->mod->ns){
+    	  		  v = b->p_pars_l[site*dim1+j] + tree->step_mat[i*tree->mod->ns+j];
+    	  		  if(v < min_l) min_l = v;
+    	  	  }
 
-      For(i,tree->mod->ns)
-	{
-	  min_l = MAX_PARS;
-	  For(j,tree->mod->ns)
-	    {
-	      v = b->p_pars_l[site*dim1+j] + tree->step_mat[i*tree->mod->ns+j]; 
-	      if(v < min_l) min_l = v;
-	    }
-
-	  min_r = MAX_PARS;
-	  For(j,tree->mod->ns)
-	    {
-	      v = b->p_pars_r[site*dim1+j] + tree->step_mat[i*tree->mod->ns+j]; 
-	      if(v < min_r) min_r = v;
-	    }
-	  
-	  if((min_l + min_r) < site_pars) site_pars = min_l + min_r;
-	}
-    }
-  else
-    {
+    	  	  min_r = MAX_PARS;
+    	  	  For(j,tree->mod->ns){
+    	  		  v = b->p_pars_r[site*dim1+j] + tree->step_mat[i*tree->mod->ns+j];
+    	  		  if(v < min_r) min_r = v;
+    	  	  }
+    	  	  if((min_l + min_r) < site_pars) site_pars = min_l + min_r;
+      }
+    }else{
       site_pars = b->pars_l[site] + b->pars_r[site];      
       if(!(b->ui_l[site] & b->ui_r[site])) site_pars++;
     }
-
   return site_pars;
 }
 
@@ -985,6 +977,5 @@ void Get_Step_Mat(t_tree *tree)
   For(i,tree->mod->ns) tree->step_mat[i*tree->mod->ns+i] = 0;
 }
 
-/*********************************************************/
 
 /*********************************************************/

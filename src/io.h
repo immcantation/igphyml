@@ -42,8 +42,6 @@ void R_wtree(t_node *pere,t_node *fils,int *available,char **s_tree, int *pos,t_
 
 void Print_IgPhyML_Out(option* io);
 
-void Print_Fp_Out(FILE *fp_out, time_t t_beg, time_t t_end, t_tree *tree, option *input, int n_data_set, int num_rand_tree, model* mod);
-void Print_Fp_Out_Lines(FILE *fp_out,time_t t_beg,time_t t_end,t_tree *tree,option *input,int n_data_set,model* mod);
 
 
 #endif /* SRC_IO_H_ */

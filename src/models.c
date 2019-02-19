@@ -40,481 +40,76 @@ extern char  aminoAcidmap[65];
 /*********************************************************/
 /* Handle any number of states (>1) */
 /*! Jukes Cantor */
-void PMat_JC69(phydbl l, int pos, phydbl *Pij, model *mod)
-{
+void PMat_JC69(phydbl l, int pos, phydbl *Pij, model *mod){
     int ns;
     int i,j;
-    
     ns = mod->ns;
-    
     For(i,ns) Pij[pos+ ns*i+i] = 1. - ((ns - 1.)/ns)*(1. - EXP(-ns*l/(ns - 1.)));
-    For(i,ns-1) 
-    for(j=i+1;j<ns;j++) 
-    {
+    For(i,ns-1)
+    for(j=i+1;j<ns;j++) {
         Pij[pos+ ns*i+j] = (1./ns)*(1. - EXP(-ns*l/(ns - 1.)));
         if(Pij[pos+ns*i+j] < SMALL_PIJ) Pij[pos+ns*i+j] = SMALL_PIJ;
         Pij[pos+ ns*j+i] = Pij[pos+ ns*i+j];
-        
-    }
-}
-/*********************************************************/
-/*! Kimura 2-parameter (and JC) */
-void PMat_K80(phydbl l, phydbl kappa, int pos, phydbl *Pij)
-{
-    phydbl Ts,Tv,e1,e2,aux;
-    int i,j;
-    /*0 => A*/
-    /*1 => C*/
-    /*2 => G*/
-    /*3 => T*/
-    
-    /* Ts -> transition*/
-    /* Tv -> transversion*/
-    
-    aux = -2*l/(kappa+2);
-    e1 = (phydbl)EXP(aux *2);
-    
-    e2 = (phydbl)EXP(aux *(kappa+1));
-    Tv = .25*(1-e1);
-    Ts = .25*(1+e1-2*e2);
-    
-    Pij[pos+ 4*0+0] = Pij[pos+ 4*1+1] = 
-    Pij[pos+ 4*2+2] = Pij[pos+ 4*3+3] = 1.-Ts-2.*Tv;
-    
-    Pij[pos+ 4*0+1] = Pij[pos+ 4*1+0] = Tv;
-    Pij[pos+ 4*0+2] = Pij[pos+ 4*2+0] = Ts;
-    Pij[pos+ 4*0+3] = Pij[pos+ 4*3+0] = Tv;
-    
-    Pij[pos+ 4*1+2] = Pij[pos+ 4*2+1] = Tv;
-    Pij[pos+ 4*1+3] = Pij[pos+ 4*3+1] = Ts;
-    
-    Pij[pos+ 4*2+3] = Pij[pos+ 4*3+2] = Tv;
-    
-    For(i,4) For(j,4)
-    if(Pij[pos + 4*i+j] < SMALL_PIJ) Pij[pos + 4*i+j] = SMALL_PIJ;
-    
-}
-
-/*********************************************************/
-
-/*! Tamura Nei 93 (and Felsenstein 81, 84 and HKY85) */
-void PMat_TN93(phydbl l, model *mod, int pos, phydbl *Pij)
-{
-    int i,j;
-    phydbl e1,e2,e3;
-    phydbl a1t,a2t,bt;
-    phydbl A,C,G,T,R,Y;
-    phydbl kappa1,kappa2;
-    int kappa_has_changed;
-    
-    A = mod->pi[0]; C = mod->pi[1]; G = mod->pi[2]; T = mod->pi[3];
-    R = A+G;  Y = T+C;
-    
-    kappa_has_changed = 0;
-    if(mod->kappa < .0) mod->kappa = 1.0e-5;
-    
-    if((mod->whichmodel != F84) && (mod->whichmodel != TN93)) mod->lambda = 1.; 
-    else if(mod->whichmodel == F84)
-    {
-        do
-        {
-            mod->lambda = (Y+(R-Y)/(2.*mod->kappa))/(R-(R-Y)/(2.*mod->kappa));
-            
-            if(mod->lambda < .0)
-            {
-                mod->kappa += mod->kappa/10.;
-                kappa_has_changed = 1;
-            }
-        }while(mod->lambda < .0);
-    }
-    
-    
-    if((!mod->s_opt->opt_kappa) && (kappa_has_changed))
-    {
-        PhyML_Printf("\n. WARNING: This transition/transversion ratio\n");
-        PhyML_Printf("  is impossible with these base frequencies!\n");
-        PhyML_Printf("  The ratio is now set to %.3f\n",mod->kappa);
-    }
-    
-    kappa2 = mod->kappa*2./(1.+mod->lambda);
-    kappa1 = kappa2 * mod->lambda;
-    
-    
-    bt = l/(2.*(A*G*kappa1+C*T*kappa2+R*Y));
-    
-    a1t = kappa1;
-    a2t = kappa2;
-    a1t*=bt; a2t*=bt;
-    
-    e1 = (phydbl)EXP(-a1t*R-bt*Y);
-    e2 = (phydbl)EXP(-a2t*Y-bt*R);
-    e3 = (phydbl)EXP(-bt);
-    
-    
-    /*A->A*/Pij[pos + 4*0+0] = A+Y*A/R*e3+G/R*e1; 
-    /*A->C*/Pij[pos + 4*0+1] = C*(1-e3);
-    /*A->G*/Pij[pos + 4*0+2] = G+Y*G/R*e3-G/R*e1;
-    /*A->T*/Pij[pos + 4*0+3] = T*(1-e3);
-    
-    /*C->A*/Pij[pos + 4*1+0] = A*(1-e3);
-    /*C->C*/Pij[pos + 4*1+1] = C+R*C/Y*e3+T/Y*e2;
-    /*C->G*/Pij[pos + 4*1+2] = G*(1-e3);
-    /*C->T*/Pij[pos + 4*1+3] = T+R*T/Y*e3-T/Y*e2;
-    
-    /*G->A*/Pij[pos + 4*2+0] = A+Y*A/R*e3-A/R*e1;
-    /*G->C*/Pij[pos + 4*2+1] = C*(1-e3);
-    /*G->G*/Pij[pos + 4*2+2] = G+Y*G/R*e3+A/R*e1;
-    /*G->T*/Pij[pos + 4*2+3] = T*(1-e3);
-    
-    /*T->A*/Pij[pos + 4*3+0] = A*(1-e3);
-    /*T->C*/Pij[pos + 4*3+1] = C+R*C/Y*e3-C/Y*e2;
-    /*T->G*/Pij[pos + 4*3+2] = G*(1-e3);
-    /*T->T*/Pij[pos + 4*3+3] = T+R*T/Y*e3+C/Y*e2;
-    
-    For(i,4) For(j,4)
-    if(Pij[pos + 4*i+j] < SMALL_PIJ) Pij[pos + 4*i+j] = SMALL_PIJ;
-    
-    /*   /\*A->A*\/(*Pij)[0][0] = A+Y*A/R*e3+G/R*e1;  */
-    /*   /\*A->C*\/(*Pij)[0][1] = C*(1-e3); */
-    /*   /\*A->G*\/(*Pij)[0][2] = G+Y*G/R*e3-G/R*e1; */
-    /*   /\*A->T*\/(*Pij)[0][3] = T*(1-e3); */
-    
-    /*   /\*C->A*\/(*Pij)[1][0] = A*(1-e3); */
-    /*   /\*C->C*\/(*Pij)[1][1] = C+R*C/Y*e3+T/Y*e2; */
-    /*   /\*C->G*\/(*Pij)[1][2] = G*(1-e3); */
-    /*   /\*C->T*\/(*Pij)[1][3] = T+R*T/Y*e3-T/Y*e2; */
-    
-    /*   /\*G->A*\/(*Pij)[2][0] = A+Y*A/R*e3-A/R*e1; */
-    /*   /\*G->C*\/(*Pij)[2][1] = C*(1-e3); */
-    /*   /\*G->G*\/(*Pij)[2][2] = G+Y*G/R*e3+A/R*e1; */
-    /*   /\*G->T*\/(*Pij)[2][3] = T*(1-e3); */
-    
-    /*   /\*T->A*\/(*Pij)[3][0] = A*(1-e3); */
-    /*   /\*T->C*\/(*Pij)[3][1] = C+R*C/Y*e3-C/Y*e2; */
-    /*   /\*T->G*\/(*Pij)[3][2] = G*(1-e3); */
-    /*   /\*T->T*\/(*Pij)[3][3] = T+R*T/Y*e3+C/Y*e2; */
-    
-    /*   For(i,4) For(j,4) */
-    /*     if((*Pij)[i][j] < SMALL) (*Pij)[i][j] = SMALL; */
-    
-}
-
-/*********************************************************/
-
-
-/********************************************************************/
-/* void PMat_Empirical(phydbl l, model *mod, phydbl ***Pij)         */
-/*                                                                  */
-/* Computes the substitution probability matrix                     */
-/* from the initial substitution rate matrix and frequency vector   */
-/* and one specific branch length                                   */
-/*                                                                  */
-/* input : l , branch length                                        */
-/* input : mod , choosen model parameters, qmat and pi             */
-/* ouput : Pij , substitution probability matrix                    */
-/*                                                                  */
-/* matrix P(l) is computed as follows :                             */
-/* P(l) = EXP(Q*t) , where :                                        */
-/*                                                                  */
-/*   Q = substitution rate matrix = Vr*D*inverse(Vr) , where :      */
-/*                                                                  */
-/*     Vr = right eigenvector matrix for Q                          */
-/*     D  = diagonal matrix of eigenvalues for Q                    */
-/*                                                                  */
-/*   t = time interval = l / mr , where :                           */
-/*                                                                  */
-/*     mr = mean rate = branch length/time interval                 */
-/*        = sum(i)(pi[i]*p(i->j)) , where :                         */
-/*                                                                  */
-/*       pi = state frequency vector                                */
-/*       p(i->j) = subst. probability from i to a different state   */
-/*               = -Q[ii] , as sum(j)(Q[ij]) +Q[ii] =0              */
-/*                                                                  */
-/* the Taylor development of EXP(Q*t) gives :                       */
-/* P(l) = Vr*EXP(D*t)        *inverse(Vr)                           */
-/*      = Vr*POW(EXP(D/mr),l)*inverse(Vr)                           */
-/*                                                                  */
-/* for performance we compute only once the following matrixes :    */
-/* Vr, inverse(Vr), EXP(D/mr)                                       */
-/* thus each time we compute P(l) we only have to :                 */
-/* make 20 times the operation POW()                                */
-/* make 2 20x20 matrix multiplications , that is :                  */
-/*   16000 = 2x20x20x20 times the operation *                       */
-/*   16000 = 2x20x20x20 times the operation +                       */
-/*   which can be reduced to (the central matrix being diagonal) :  */
-/*   8400 = 20x20 + 20x20x20 times the operation *                  */
-/*   8000 = 20x20x20 times the operation +                          */
-/********************************************************************/
-
-/*! Empirical nucleotide model */
-void PMat_Empirical(phydbl l, model *mod, int pos, phydbl *Pij)
-{
-    int n = mod->ns;
-    int i, j, k;
-    phydbl *U,*V,*R;
-    phydbl *expt; 
-    phydbl *uexpt;
-    
-    expt  = mod->eigen->e_val_im;
-    uexpt = mod->eigen->r_e_vect_im;
-    U     = mod->eigen->r_e_vect;
-    V     = mod->eigen->l_e_vect;
-    R     = mod->eigen->e_val; /* exponential of the eigen value matrix */
-    
-    For(i,n) For(k,n) Pij[pos+mod->ns*i+k] = .0;
-    
-    /* compute POW(EXP(D/mr),l) into mat_eDmrl */
-    For(k,n) expt[k] = (phydbl)POW(R[k],l);
-    
-    /* multiply Vr*POW(EXP(D/mr),l)*Vi into Pij */
-    For (i,n) For (k,n) uexpt[i*n+k] = U[i*n+k] * expt[k];
-    
-    For (i,n) 
-    {
-        For (j,n) 
-        {
-            For(k,n)
-            {
-                Pij[pos+mod->ns*i+j] += (uexpt[i*n+k] * V[k*n+j]);
-            }
-            /* 	  if(Pij[pos+mod->ns*i+j] < SMALL) Pij[pos+mod->ns*i+j] = SMALL; */
-            if(Pij[pos+mod->ns*i+j] < SMALL_PIJ) Pij[pos+mod->ns*i+j] = SMALL_PIJ;
-        }
-        
-#ifndef PHYML
-        phydbl sum;
-        sum = .0;
-        For (j,n) sum += Pij[pos+mod->ns*i+j];
-        if((sum > 1.+.0001) || (sum < 1.-.0001))
-        {
-            PhyML_Printf("\n");
-            PhyML_Printf("\n. Q\n");
-            For(i,n) { For(j,n) PhyML_Printf("%7.3f ",mod->eigen->q[i*n+j]); PhyML_Printf("\n"); }
-            PhyML_Printf("\n. U\n");
-            For(i,n) { For(j,n) PhyML_Printf("%7.3f ",U[i*n+j]); PhyML_Printf("\n"); }
-            PhyML_Printf("\n");
-            PhyML_Printf("\n. V\n");
-            For(i,n) { For(j,n) PhyML_Printf("%7.3f ",V[i*n+j]); PhyML_Printf("\n"); }
-            PhyML_Printf("\n");
-            PhyML_Printf("\n. Eigen\n");
-            For(i,n)  PhyML_Printf("%E ",expt[i]);
-            PhyML_Printf("\n");
-            PhyML_Printf("\n. Pij\n");
-            For(i,n) { For (j,n) PhyML_Printf("%f ",Pij[pos+mod->ns*i+j]); PhyML_Printf("\n"); }
-            PhyML_Printf("\n. sum = %f",sum);
-            if(mod->m4mod)
-            {
-                int i;
-                PhyML_Printf("\n. mod->m4mod->alpha = %f",mod->m4mod->alpha);
-                PhyML_Printf("\n. mod->m4mod->delta = %f",mod->m4mod->delta);
-                For(i,mod->m4mod->n_h)
-                {
-                    PhyML_Printf("\n. mod->m4mod->multipl[%d] = %f",i,mod->m4mod->multipl[i]);
-                }
-            }
-            PhyML_Printf("\n. l=%f",l);
-            PhyML_Printf("\n. Err in file %s at line %d\n\n",__FILE__,__LINE__);
-            Warn_And_Exit("");
-        }
-#endif
     }
 }
 
-/*********************************************************/
-void PMat_Gamma(phydbl l, model *mod, int pos, phydbl *Pij)
-{
-    int n;
-    int i, j, k;
-    phydbl *U,*V,*R;
-    phydbl *expt; 
-    phydbl *uexpt;
-    phydbl shape;
-    
-    
-    n     = mod->ns;
-    expt  = mod->eigen->e_val_im;
-    uexpt = mod->eigen->r_e_vect_im;
-    U     = mod->eigen->r_e_vect;
-    V     = mod->eigen->l_e_vect;
-    R     = mod->eigen->e_val; /* exponential of the eigen value matrix */
-    
-    if(mod->n_catg == 1) shape = 1.E+4;
-    else                 shape = mod->alpha;
-    
-    
-    For(i,n) For(k,n) Pij[pos+mod->ns*i+k] = .0;
-    
-    if(shape < 1.E-10) 
-    {
-        PhyML_Printf("\n. Err in file %s at line %d\n\n",__FILE__,__LINE__);
-        Warn_And_Exit("");
-    }
-    
-    /* Formula 13.42, page 220 of Felsenstein's book ``Inferring Phylogenies'' */ 
-    For(k,n) expt[k] = POW(shape/(shape-LOG(R[k])*l),shape);
-    
-    /* multiply Vr*expt*Vi into Pij */
-    For(i,n) For(k,n) uexpt[i*n+k] = U[i*n+k] * expt[k];
-    
-    For (i,n) 
-    {
-        For (j,n) 
-        {
-            For(k,n)
-            {
-                Pij[pos+mod->ns*i+j] += (uexpt[i*n+k] * V[k*n+j]);
-            }
-            if(Pij[pos+mod->ns*i+j] < SMALL_PIJ) Pij[pos+mod->ns*i+j] = SMALL_PIJ;
-        }
-        
-#ifdef DEBUG
-        phydbl sum;
-        sum = .0;
-        For (j,n) sum += Pij[pos+mod->ns*i+j];
-        if((sum > 1.+.0001) || (sum < 1.-.0001))
-        {
-            PhyML_Printf("\n");
-            PhyML_Printf("\n. Q\n");
-            For(i,n) { For(j,n) PhyML_Printf("%7.3f ",mod->eigen->q[i*n+j]); PhyML_Printf("\n"); }
-            PhyML_Printf("\n. U\n");
-            For(i,n) { For(j,n) PhyML_Printf("%7.3f ",U[i*n+j]); PhyML_Printf("\n"); }
-            PhyML_Printf("\n");
-            PhyML_Printf("\n. V\n");
-            For(i,n) { For(j,n) PhyML_Printf("%7.3f ",V[i*n+j]); PhyML_Printf("\n"); }
-            PhyML_Printf("\n");
-            PhyML_Printf("\n. Eigen\n");
-            For(i,n)  PhyML_Printf("%E ",expt[i]);
-            PhyML_Printf("\n");
-            PhyML_Printf("\n. Pij\n");
-            For(i,n) { For (j,n) PhyML_Printf("%f ",Pij[pos+mod->ns*i+j]); PhyML_Printf("\n"); }
-            PhyML_Printf("\n. sum = %f",sum);
-            if(mod->m4mod)
-            {
-                int i;
-                PhyML_Printf("\n. mod->m4mod->alpha = %f",mod->m4mod->alpha);
-                PhyML_Printf("\n. mod->m4mod->delta = %f",mod->m4mod->delta);
-                For(i,mod->m4mod->n_h)
-                {
-                    PhyML_Printf("\n. mod->m4mod->multipl[%d] = %f",i,mod->m4mod->multipl[i]);
-                }
-            }
-            PhyML_Printf("\n. l=%f",l);
-            PhyML_Printf("\n. Err in file %s at line %d\n\n",__FILE__,__LINE__);
-            Warn_And_Exit("");
-        }
-#endif
-    }
-}
 
 /*********************************************************/
 
-void PMat_Zero_Br_Len(model  *mod, int pos, phydbl *Pij)
-{
+void PMat_Zero_Br_Len(model  *mod, int pos, phydbl *Pij){
     int n = mod->ns;
     int i;
-    // int j;
-    
     For (i,n*n) Pij[pos+i] = 0.0;  //!< Changed by Marcelo.
     For(i,n) Pij[pos+n*i+i] = 1.0;//!< Changed by Marcelo.
-    
 }
 
 /*********************************************************/
-
-void PMat(phydbl l, model *mod, int pos, phydbl *Pij)
-{
-    if(l < BL_MIN-POW(2,-27))
-    {
+void PMat(phydbl l, model *mod, int pos, phydbl *Pij){
+    if(l < BL_MIN-POW(2,-27)){
         PMat_Zero_Br_Len(mod,pos,Pij);
-    }
-    else
-    {
-        switch(mod->datatype)
-        {
-            case NT :
-            {
-                if(mod->use_m4mod)
-                {
-                    PMat_Empirical(l,mod,pos,Pij);
+    }else{
+        switch(mod->datatype){
+            case NT :{
+            	Warn_And_Exit("Only codon models supported\n");
+                break;
+            }
+            case AA :{
+                Warn_And_Exit("Only codon models supported\n");
+                break;
                 }
-                else
-                {
-                    if((mod->whichmodel == JC69) ||  
-                       (mod->whichmodel == K80))  
-                    {
-                        /* 		    PMat_JC69(l,pos,Pij,mod); */
-                        PMat_K80(l,mod->kappa,pos,Pij);
-                    }
-                    else
-                    {
-                        if(
-                           (mod->whichmodel == F81)   ||
-                           (mod->whichmodel == HKY85) ||
-                           (mod->whichmodel == F84)   ||
-                           (mod->whichmodel == TN93))
-                        {
-                            PMat_TN93(l,mod,pos,Pij);
-                        }
-                        else
-                        {
-                            PMat_Empirical(l,mod,pos,Pij);
-                        }
-                    }
-                    break;
-                }
-            case AA : 
-                {
-                    PMat_Empirical(l,mod,pos,Pij);
-                    break;
-                }
-                
-            case CODON ://!< Added by Marcelo.
-                {
+
+            case CODON :{
                     if(mod->calculate_init_tree && mod->init_DistanceTreeCD==NUCLEO) PMat_JC69(l,pos,Pij,mod);
                     else PMat_CODON(l,mod,0,Pij);
                     break;
                 }
-                
-            default:
-                {
+
+            default:{
                     PMat_JC69(l,pos,Pij,mod);
                     break;
-                    /* 	      PhyML_Printf("\n. Not implemented yet.\n"); */
-                    /* 	      PhyML_Printf("\n. Err in file %s at line %d\n",__FILE__,__LINE__); */
-                    /* 	      Warn_And_Exit(""); */
-                    /* 	      break; */
                 }
-            } //incorrect right curly bracket? Whole thing is case NT: CHECK, Ken 4/1/2017
         }
     }
 }
 
 /*********************************************************/
-
-void Init_Model(calign *data, model *mod, option *io)
-{
+void Init_Model(calign *data, model *mod, option *io){
     int i,j;
     phydbl sum, aux, mr;
     int result;
-    
     if(io->datatype == CODON) { //!<Added by Marcelo.
         if(!mod->invar) {
             For(i, data->crunch_len) {
                 data->invar[i] = 0;
             }
         }
-        
-        if(mod->s_opt->opt_pinvar) {
-            mod->pinvar = 0.2;
-        }
-        if(mod->optDebug)printf("here1\n");
-        /*! Omega variation model */
+        if(mod->s_opt->opt_pinvar)mod->pinvar = 0.2;
         switch(mod->omegaSiteVar) {
             case DM0: {
                 mod->alpha = 1.0;
                 mod->omegas[0] = 1.0;
                 mod->prob_omegas[0] = 1.0;
-                DiscreteGamma(mod->gamma_r_proba, mod->gamma_rr, mod->alpha, mod->alpha, mod->n_catg, mod->gamma_median);
+                //DiscreteGamma(mod->gamma_r_proba, mod->gamma_rr, mod->alpha, mod->alpha, mod->n_catg, mod->gamma_median);
                 break;
             }
             case DGAMMAK: {
@@ -532,18 +127,17 @@ void Init_Model(calign *data, model *mod, option *io)
             default:
                 break; 
         } 
-        if(mod->optDebug)printf("here2\n");
         if((mod->initqrates != NOINITMAT) && (mod->omegaSiteVar != NOOMEGA) && (io->kappaECM == kap5)) {
-            Scale_freqs(mod->pkappa, mod->nkappa);
-            Freq_to_UnsFreq(mod->pkappa, mod->unspkappa, mod->nkappa, 1);
+        	Warn_And_Exit("Init_Model options not supported.");
+        	/*Scale_freqs(mod->pkappa, mod->nkappa);
+            Freq_to_UnsFreq(mod->pkappa, mod->unspkappa, mod->nkappa, 1);*/
         }
         if((mod->freq_model != FUNDEFINED) && (mod->freq_model != FMODEL)) {
             if(mod->s_opt->user_state_freq) {
                 mod->s_opt->opt_state_freq = NO;
-                if(mod->freq_model!=ROOT)EqFrequencies(mod->freq_model, mod->pi, mod->user_b_freq, mod->ns);
-            } else {
-            	//printf("here blah blah\n");
-                if(mod->freq_model!=ROOT)EqFrequencies(mod->freq_model, mod->pi, mod->base_freq, mod->ns);
+                if(mod->freq_model<ROOT)EqFrequencies(mod->freq_model, mod->pi, mod->user_b_freq, mod->ns);
+            }else{
+                if(mod->freq_model<ROOT)EqFrequencies(mod->freq_model, mod->pi, mod->base_freq, mod->ns);
                 switch(mod->freq_model) {
                     case F1X4: {
                         Scale_freqs(mod->base_freq, mod->num_base_freq);
@@ -554,7 +148,7 @@ void Init_Model(calign *data, model *mod, option *io)
                     case CF3X4: {
                         Scale_freqs(mod->base_freq, 4);
                         Freq_to_UnsFreq(mod->base_freq, mod->uns_base_freq, 4, 1);
-                        
+
                         Scale_freqs(mod->base_freq+4, 4);
                         Freq_to_UnsFreq(mod->base_freq+4, mod->uns_base_freq+4, 4, 1);
                         
@@ -563,13 +157,13 @@ void Init_Model(calign *data, model *mod, option *io)
                         
                         break;
                     }
-                    case ROOT:
+                    case ROOT: case MROOT:
 						break;
                     default:
                         break;
                 } 
             }
-            if(mod->freq_model!=ROOT){
+            if(mod->freq_model<ROOT){
             	Scale_freqs(mod->pi, mod->ns);
             	Freq_to_UnsFreq(mod->pi, mod->pi_unscaled, mod->ns, 1);
             }
@@ -596,7 +190,7 @@ void Init_Model(calign *data, model *mod, option *io)
         if((mod->s_opt->opt_omega == NO) && 
            (mod->s_opt->opt_kappa == NO) && 
            (mod->s_opt->opt_state_freq == NO)) {
-        	if(mod->nomega_part > 1){printf("options not compatible with partitioned model error 8\n");exit(EXIT_FAILURE);}
+        	if(mod->nomega_part > 1){Warn_And_Exit("options not compatible with partitioned model error 8\n");}
             mr = Update_Qmat_Codons(mod, 0, 0, mod->pi); //modified by Ken 19/8
             EigenQREV(mod->qmat, mod->pi, mod->ns, mod->eigen->e_val, mod->eigen->r_e_vect, mod->eigen->l_e_vect, mod->eigen->space);
             For(i, mod->ns) mod->eigen->e_val[i] /= mr; //was io-> mod->ns 9/1 Ken
@@ -604,118 +198,14 @@ void Init_Model(calign *data, model *mod, option *io)
         } else {
         	if(mod->optDebug)printf("here3.3\n");
             mod->update_eigen = YES;
-            Set_Model_Parameters(mod,mod->mid_pi);
+            Set_Model_Parameters(mod);
             mod->update_eigen = NO;
             if(mod->optDebug)printf("here3.4\n");
         }
         if(mod->optDebug)printf("here4\n");
-        //mod->omega_old  = mod->omega; //Ken 18/8
         mod->beta_old = mod->beta;
-    }//!< Finish Added by Marcelo.
-    else
-    {
-        if(io->datatype == GENERIC) mod->whichmodel = JC69;
-        if(!mod->invar) For(i,data->crunch_len) data->invar[i] = 0;
-        if(mod->s_opt->opt_alpha)   mod->alpha  = 1.0;
-        if(mod->s_opt->opt_pinvar)  mod->pinvar = 0.2;
-        
-        For(i,mod->ns) 
-        {
-            mod->pi[i] = data->b_frq[i];
-            mod->pi_unscaled[i] = mod->pi[i] * 100.;
-        }
-        
-        if(io->datatype == NT)
-        {
-            /* Set the substitution parameters to their default values
-             when they are not fixed by the user */
-            if(mod->s_opt->opt_kappa) 
-            {
-                mod->kappa  = 4.0;
-                mod->lambda = 1.0;
-            }
-            if(mod->s_opt->opt_rr)
-            {
-                int i;
-                For(i,6) 
-                {
-                    mod->rr[i]     = 1.0;
-                    mod->rr_val[i] = 1.0;
-                }
-            }
-            mod->update_eigen = 1;
-            mod->lambda       = 1.;
-            if(mod->whichmodel == JC69)
-            {
-                mod->pi[0] = mod->pi[1] = mod->pi[2] = mod->pi[3] = .25;
-                mod->kappa = 1.;
-                mod->s_opt->opt_state_freq = NO;
-                mod->s_opt->opt_kappa      = NO;
-                mod->s_opt->opt_lambda     = NO;
-                mod->update_eigen          = NO;
-            }
-            if(mod->whichmodel == K80)
-            {
-                mod->pi[0] = mod->pi[1] = mod->pi[2] = mod->pi[3] = .25;
-                mod->s_opt->opt_state_freq = NO;
-                mod->s_opt->opt_lambda     = NO;
-                mod->update_eigen          = NO;
-            }
-            if(mod->whichmodel == F81)
-            {
-                mod->kappa                 = 1.;
-                mod->s_opt->opt_kappa      = NO;
-                mod->update_eigen          = NO;
-            }
-            if(mod->whichmodel == F84)
-            {
-                aux = ((mod->pi[0]+mod->pi[2])-(mod->pi[1]+mod->pi[3]))/(2.*mod->kappa);
-                mod->lambda = ((mod->pi[1]+mod->pi[3]) + aux)/((mod->pi[0]+mod->pi[2]) - aux); 
-                mod->update_eigen          = NO;
-            }
-            if(mod->whichmodel == TN93)
-            {
-                mod->update_eigen          = NO;
-                if(mod->s_opt->opt_kappa) mod->s_opt->opt_lambda = 1; //was io-> mod for both Ken 9/1/2018
-            }
-            if(mod->whichmodel == GTR)
-            {
-                mod->kappa = 1.;
-                mod->update_eigen          = YES;
-                mod->s_opt->opt_rr     = YES;// was io-> mod Ken 9/1/2018
-            }
-            if(mod->whichmodel == CUSTOM)
-            {
-                mod->kappa = 1.;
-                mod->update_eigen          = YES;
-                /* 	  io- >mod->s_opt->opt_rr     = YES; */ /* What if the user decided not to optimise the rates? */
-            }
-            if(mod->whichmodel == GTR)
-            {		  
-                mod->custom_mod_string[0] = '0';
-                mod->custom_mod_string[1] = '1';
-                mod->custom_mod_string[2] = '2';
-                mod->custom_mod_string[3] = '3';
-                mod->custom_mod_string[4] = '4';
-                mod->custom_mod_string[5] = '5';
-                Translate_Custom_Mod_String(mod);
-            }
-            if(mod->s_opt->user_state_freq) 
-                For(i,4)  
-            {
-                mod->pi[i] = mod->user_b_freq[i];
-            }
-            if(!mod->use_m4mod) Set_Model_Parameters(mod,mod->mid_pi);
-            if((mod->whichmodel != GTR)    && 
-               (mod->whichmodel != CUSTOM) && 
-               (mod->whichmodel != HKY85)) mod->update_eigen = 0;
-        }
-        else
-        {
-            PhyML_Printf("\n. Not implemented yet.\n");
-            PhyML_Printf("\n. Err in file %s at line %d\n",__FILE__,__LINE__);
-            Warn_And_Exit("");
-        }
+    }else{
+    	Warn_And_Exit("Currently only codon models supported\n");
     }
     mod->alpha_old   = mod->alpha;
     mod->kappa_old   = mod->kappa;
@@ -724,180 +214,10 @@ void Init_Model(calign *data, model *mod, option *io)
 }
 
 /*********************************************************/
-
-void Update_Qmat_Generic(phydbl *rr, phydbl *pi, int ns, phydbl *qmat)
-{
-    int i,j;
-    phydbl sum,mr;
-    
-    For(i,ns*ns) qmat[i] = .0;
-    
-    if(rr[(int)(ns*(ns-1)/2)-1] < 0.00001) {
-        PhyML_Printf("\n. Err in file %s at line %d\n\n",__FILE__,__LINE__);
-        Warn_And_Exit("");
-    }
-    
-    /*   PhyML_Printf("\n"); */
-    /*   For(i,(int)(ns*(ns-1)/2))  */
-    /*     { */
-    /*       PhyML_Printf("\n> rr %d = %f",i,rr[i]); */
-    /*     } */
-    
-    For(i,(int)(ns*(ns-1)/2)) 
-    { 
-        rr[i] /= rr[(int)(ns*(ns-1)/2)-1];
-    }
-    
-    /* Fill the non-diagonal parts */
-    For(i,ns)
-    {
-        for(j=i+1;j<ns;j++)
-        {
-            qmat[i*ns+j] = rr[MIN(i,j) * ns + MAX(i,j) -
-                              (MIN(i,j)+1+(int)POW(MIN(i,j)+1,2))/2];
-            qmat[j*ns+i] = qmat[i*ns+j];
-        }
-    }
-    
-    
-    /* Multiply by pi */
-    For(i,ns)
-    {
-        For(j,ns)
-        {
-            qmat[i*ns+j] *= pi[j];
-        }
-    }
-    
-    /* Compute diagonal elements */
-    mr = .0;
-    For(i,ns)
-    {
-        sum = .0;  
-        For(j,ns) {sum += qmat[i*ns+j];}
-        qmat[i*ns+i] = -sum;
-        mr += sum * pi[i];
-    }
-    
-    /*   For(i,ns) For(j,ns) qmat[i*ns+j] /= mr; */
-}
-
-/*********************************************************/
-
-void Update_Qmat_GTR(phydbl *rr, phydbl *rr_val, int *rr_num, phydbl *pi, phydbl *qmat)
-{
-    int i;
-    phydbl mr;
-    
-    For(i,6) rr[i] = rr_val[rr_num[i]];
-    For(i,6) if(rr[i] < 0.001) rr[i] = 0.001;
-    For(i,6) rr[i] /= rr[5];
-    
-    qmat[0*4+1] = (rr[0]*pi[1]);
-    qmat[0*4+2] = (rr[1]*pi[2]);
-    qmat[0*4+3] = (rr[2]*pi[3]);
-    
-    qmat[1*4+0] = (rr[0]*pi[0]);
-    qmat[1*4+2] = (rr[3]*pi[2]);
-    qmat[1*4+3] = (rr[4]*pi[3]);
-    
-    qmat[2*4+0] = (rr[1]*pi[0]);
-    qmat[2*4+1] = (rr[3]*pi[1]);
-    qmat[2*4+3] = (rr[5]*pi[3]);
-    
-    qmat[3*4+0] = (rr[2]*pi[0]);
-    qmat[3*4+1] = (rr[4]*pi[1]);
-    qmat[3*4+2] = (rr[5]*pi[2]);
-    
-    qmat[0*4+0] = -(rr[0]*pi[1]+rr[1]*pi[2]+rr[2]*pi[3]);
-    qmat[1*4+1] = -(rr[0]*pi[0]+rr[3]*pi[2]+rr[4]*pi[3]);
-    qmat[2*4+2] = -(rr[1]*pi[0]+rr[3]*pi[1]+rr[5]*pi[3]);
-    qmat[3*4+3] = -(rr[2]*pi[0]+rr[4]*pi[1]+rr[5]*pi[2]);
-    
-    /* compute diagonal terms of Q and mean rate mr = l/t */
-    mr = .0;
-    For (i,4) mr += pi[i] * (-qmat[i*4+i]);
-    For(i,16) qmat[i] /= mr;
-}
-
-/*********************************************************/
-
-void Update_Qmat_HKY(phydbl kappa, phydbl *pi, phydbl *qmat)
-{
-    int i;
-    phydbl mr;
-    
-    /* A -> C */ qmat[0*4+1] = (phydbl)(pi[1]);
-    /* A -> G */ qmat[0*4+2] = (phydbl)(kappa*pi[2]);
-    /* A -> T */ qmat[0*4+3] = (phydbl)(pi[3]);
-    
-    /* C -> A */ qmat[1*4+0] = (phydbl)(pi[0]);
-    /* C -> G */ qmat[1*4+2] = (phydbl)(pi[2]);
-    /* C -> T */ qmat[1*4+3] = (phydbl)(kappa*pi[3]);
-    
-    /* G -> A */ qmat[2*4+0] = (phydbl)(kappa*pi[0]);
-    /* G -> C */ qmat[2*4+1] = (phydbl)(pi[1]);
-    /* G -> T */ qmat[2*4+3] = (phydbl)(pi[3]);
-    
-    /* T -> A */ qmat[3*4+0] = (phydbl)(pi[0]);
-    /* T -> C */ qmat[3*4+1] = (phydbl)(kappa*pi[1]);
-    /* T -> G */ qmat[3*4+2] = (phydbl)(pi[2]);
-    
-    qmat[0*4+0] = (phydbl)(-(qmat[0*4+1]+qmat[0*4+2]+qmat[0*4+3]));
-    qmat[1*4+1] = (phydbl)(-(qmat[1*4+0]+qmat[1*4+2]+qmat[1*4+3]));
-    qmat[2*4+2] = (phydbl)(-(qmat[2*4+0]+qmat[2*4+1]+qmat[2*4+3]));
-    qmat[3*4+3] = (phydbl)(-(qmat[3*4+0]+qmat[3*4+1]+qmat[3*4+2]));
-    
-    /* compute diagonal terms of Q and mean rate mr = l/t */
-    mr = .0;
-    For (i,4) mr += pi[i] * (-qmat[i*4+i]);
-    For(i,16) qmat[i] /= mr;
-}
-/*********************************************************/
-
-
-
-void Translate_Custom_Mod_String(model *mod)
-{
-    int i,j;
-    
-    For(i,6) mod->n_rr_per_cat[i] = 0;
-    
-    mod->n_diff_rr = 0;
-    
-    For(i,6)
-    {
-        For(j,i)
-        {
-            if(mod->custom_mod_string[i] == mod->custom_mod_string[j])
-            {
-                break;
-            }
-        }
-        
-        if(i == j)
-        {
-            mod->rr_num[i] = mod->n_diff_rr;
-            mod->n_diff_rr++;
-        }
-        else
-        {
-            mod->rr_num[i] = mod->rr_num[j];
-        }
-        
-        mod->n_rr_per_cat[mod->rr_num[j]]++;
-    }
-    
-    /*   PhyML_Printf("\n"); */
-    /*   For(i,6) PhyML_Printf("%d ",mod->rr_param_num[i]); */
-    /*   For(i,mod->n_diff_rr_param) PhyML_Printf("\n. Class %d size %d",i+1,mod->n_rr_param_per_cat[i]); */
-}
-
-/*********************************************************/
-void Set_Model_Parameters(model *mod, phydbl** part_freqs) {
+void Set_Model_Parameters(model *mod) {
     if(mod->datatype == CODON) { //!Added by Marcelo.
         phydbl mr;
-        int i, j, k, n, nn, n_termsTaylor;
+        int modeli,i, j, k, n, nn, n_termsTaylor;
         switch(mod->omegaSiteVar) {
             case DGAMMAK: { 
                 DiscreteGamma(mod->prob_omegas, mod->omegas, mod->alpha, mod->beta, mod->n_w_catg, mod->gamma_median);
@@ -910,429 +230,72 @@ void Set_Model_Parameters(model *mod, phydbl** part_freqs) {
                 break;
             }
             case DM0: {
-                     DiscreteGamma(mod->gamma_r_proba, mod->gamma_rr, mod->alpha, mod->alpha, mod->n_catg, mod->gamma_median);
+                //DiscreteGamma(mod->gamma_r_proba, mod->gamma_rr, mod->alpha, mod->alpha, mod->n_catg, mod->gamma_median);
                 break;
             }
             default:
                 break;
         }
-         if((mod->s_opt->opt_state_freq) &&
-           (mod->s_opt->opt_omega == NO)) {
-        	if(mod->optDebug)printf("here\n");
-            switch(mod->freq_model) {
-                case F1XSENSECODONS: {
-                    Freq_to_UnsFreq(mod->pi, mod->pi_unscaled, mod->ns, 0);
-                    break;
-                }
-                case F1X4: {
-                    Freq_to_UnsFreq(mod->base_freq, mod->uns_base_freq, mod->num_base_freq, 0);
-                    EqFrequencies(mod->freq_model, mod->pi, mod->base_freq, mod->ns);
-                    break;
-                }
-                case F3X4:
-                case CF3X4: {
-                	if(mod->optDebug)printf("here\n");
-                    Freq_to_UnsFreq(mod->base_freq,   mod->uns_base_freq,   4, 0);
-                    Freq_to_UnsFreq(mod->base_freq+4, mod->uns_base_freq+4, 4, 0);
-                    Freq_to_UnsFreq(mod->base_freq+8, mod->uns_base_freq+8, 4, 0);
-                    EqFrequencies(mod->freq_model, mod->pi, mod->base_freq, mod->ns);
-                    break;
-                }
-                case ROOT:
-                	break;
-                default:
-                    break;
-            }
-            if(mod->whichrealmodel == MG) {
-                switch(mod->freq_model) {
-                    case F1X4:{
-                        Scale_freqs(mod->base_freq, mod->num_base_freq);
-                        break;
-                    }
-                    case F3X4:
-                    case CF3X4: {
-                        Scale_freqs(mod->base_freq,   4);
-                        Scale_freqs(mod->base_freq+4, 4);
-                        Scale_freqs(mod->base_freq+8, 4);
-                        break;
-                    }   
-                    default:
-                        break;
-                }
-            }
-            
-            Scale_freqs(mod->pi, mod->ns);
-        }
+        if((mod->s_opt->opt_state_freq) &&
+           (mod->s_opt->opt_omega == NO))Lazy_Exit("Optimizing frequencies without omega",__FILE__,__LINE__);
 
-
-
+        //udpate model parameters?
         if(mod->update_eigen) {
-            if(mod->whichrealmodel == PCM) Update_Rate_Matrix_PCAModel(mod);
             if(mod->n_w_catg == 1) {
-               if(mod->kappaECM==kap5){
-                   Freq_to_UnsFreq(mod->pkappa,   mod->unspkappa,  mod->nkappa, 0);
-                   Scale_freqs(mod->pkappa, mod->nkappa);
-               }
-               int modeli;
-               for(modeli=0;modeli<mod->nomega_part;modeli++){ //Ken 19/8
-                if(mod->freq_model < ROOT || mod->tree_freqs==0)mod->mr_w[0] = Update_Qmat_Codons(mod, 0, modeli,mod->pi); //Ken 19/8
-                else{
-                	printf("updating\n");
-                	mod->mr_w[0] = Update_Qmat_Codons(mod, 0, modeli,part_freqs[modeli]); //Ken 19/8
-                }
+               For(modeli,mod->nomega_part){ //Ken 19/8
+            	   if(mod->freq_model != MROOT)mod->mr_w[0] = Update_Qmat_Codons(mod, 0, modeli,mod->pi); //Ken 19/8
+            	   else mod->mr_w[0] = Update_Qmat_Codons(mod, 0, modeli,mod->mid_pi[modeli]); //Ken 19/8
 
-                if(mod->expm == EIGEN) {
-                	if(mod->nomega_part > 1){printf("Options not supported with partitioned models error 13\n");exit(EXIT_FAILURE);}
-                    EigenQREV(mod->qmat_part[0], mod->pi, mod->ns, mod->eigen->e_val, mod->eigen->r_e_vect, mod->eigen->l_e_vect, mod->eigen->space);
-                    For(i,mod->ns) mod->eigen->e_val[i]/=mod->mr_w[0];
-                }else if(mod->expm == TAYLOR){
-                	if(mod->nomega_part > 1){printf("Options not supported with partitioned models error 14\n");exit(EXIT_FAILURE);}
-                    int nn=mod->ns*mod->ns, n=mod->ns, l;
-                    For(i,nn) mod->qmat[i]/=mod->mr_w[0];
-                    For(i,nn) mod->A2_part[modeli][0*nn+i]=mod->A0_part[modeli][i];
-                    For(i,nn) mod->A2_part[modeli][nn+i]=mod->qmat_part[modeli][i];
-                    for(l=2;l<mod->n_termsTaylor;l++){
-#if defined BLAS || defined BLAS_OMP
-                        cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans, n, n, n, 1.0, mod->A2_part[modeli]+(nn*(l-1)), n, mod->A2_part[modeli]+nn,  n, 0.0, mod->A2_part[modeli]+nn*l, n);
-#else
-                        
-                        For(i,nn) mod->A2_part[modeli][nn*l+i]=0.0;
-                        
-                        For(i,n) For(j,n) For(k,n) mod->A2_part[modeli][nn*l+n*i+j] += mod->A2_part[modeli][nn*(l-1)+i*n+k] * mod->A2_part[modeli][nn+k*n+j];
-                        
-#endif
-                    }
-                }else if(mod->expm == SSPADE){
-                	//Modified by Ken 17/8/2016
-                    n=mod->ns;
-                    nn=n*n;
-                    For(i,nn) mod->qmat_part[modeli][i]/=mod->mr_w[0];
+            	   if(mod->expm == EIGEN) {
+            		   if(mod->nomega_part > 1){Lazy_Exit("Eigenvalue exponentiation with partitioned models",__FILE__,__LINE__);}
+            		   EigenQREV(mod->qmat_part[0], mod->pi, mod->ns, mod->eigen->e_val, mod->eigen->r_e_vect, mod->eigen->l_e_vect, mod->eigen->space);
+            		   For(i,mod->ns) mod->eigen->e_val[i]/=mod->mr_w[0];
+            	   }else if(mod->expm == TAYLOR) {
+            		   Lazy_Exit("Taylor series expansion",__FILE__,__LINE__);
+            	   }else if(mod->expm == SSPADE) { //Modified by Ken 17/8/2016
+            		   n=mod->ns;
+            		   nn=n*n;
+            		   For(i,nn) mod->qmat_part[modeli][i]/=mod->mr_w[0];
 
 #if defined BLAS || defined BLAS_OMP
-
+            		//multiply these matrices together
                     cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans, n, n, n, 1.0, mod->qmat_part[modeli], n, mod->qmat_part[modeli],  n, 0.0, mod->A2_part[modeli], n);
                     cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans, n, n, n, 1.0, mod->A2_part[modeli],   n, mod->A2_part[modeli],    n, 0.0, mod->A4_part[modeli], n);
                     cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans, n, n, n, 1.0, mod->A2_part[modeli],   n, mod->A4_part[modeli],    n, 0.0, mod->A6_part[modeli], n);
                     cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans, n, n, n, 1.0, mod->A2_part[modeli],   n, mod->A6_part[modeli],    n, 0.0, mod->A8_part[modeli], n);
-                    
+                    //copy vectors
                     cblas_dcopy(nn,mod->A2_part[modeli], 1, mod->Apowers_part[modeli]+  nn,1);
                     cblas_dcopy(nn,mod->A4_part[modeli], 1, mod->Apowers_part[modeli]+2*nn,1);
                     cblas_dcopy(nn,mod->A6_part[modeli], 1, mod->Apowers_part[modeli]+3*nn,1);
                     cblas_dcopy(nn,mod->A8_part[modeli], 1, mod->Apowers_part[modeli]+4*nn,1);
-                    
 #else
-                    
                     For(i,nn) mod->A2_part[modeli][i]=0.0;
                     For(i,nn) mod->A4_part[modeli][i]=0.0;
                     For(i,nn) mod->A6_part[modeli][i]=0.0;
                     For(i,nn) mod->A8_part[modeli][i]=0.0;
-                    
+                    //multiply these matrices together
                     For(i,n) For(j,n) For(k,n) mod->A2_part[modeli][n*i+j] += mod->qmat_part[modeli][i*n+k] * mod->qmat_part[modeli][k*n+j];
                     For(i,n) For(j,n) For(k,n) mod->A4_part[modeli][n*i+j] += mod->A2_part[modeli][i*n+k]   * mod->A2_part[modeli][k*n+j];
                     For(i,n) For(j,n) For(k,n) mod->A6_part[modeli][n*i+j] += mod->A2_part[modeli][i*n+k]   * mod->A4_part[modeli][k*n+j];
                     For(i,n) For(j,n) For(k,n) mod->A8_part[modeli][n*i+j] += mod->A2_part[modeli][i*n+k]   * mod->A6_part[modeli][k*n+j];
-                    
+                    //copy vectors
                     For(i,nn) mod->Apowers_part[modeli][nn+i]  =mod->A2_part[modeli][i];
                     For(i,nn) mod->Apowers_part[modeli][2*nn+i]=mod->A4_part[modeli][i];
                     For(i,nn) mod->Apowers_part[modeli][3*nn+i]=mod->A6_part[modeli][i];
                     For(i,nn) mod->Apowers_part[modeli][4*nn+i]=mod->A8_part[modeli][i];
-                    
 #endif
-                }
-            }//for(modeli)
-            } else if(mod->n_w_catg > 1) { 
-            	if(mod->nomega_part > 1){
-            		printf("CAN'T COMBINE PARTITIONS WITH SITE CLASSES\n");
-            		exit(EXIT_FAILURE);
             	}
-#if defined OMP || defined BLAS_OMP 
-                
-#pragma omp parallel for
-                
-#endif
-                
-                For(i, mod->n_w_catg) {
-                    if(mod->kappaECM == kap5) {
-                        Freq_to_UnsFreq(mod->pkappa,   mod->unspkappa,  mod->nkappa, 0);
-                        Scale_freqs(mod->pkappa, mod->nkappa);    
-                    }
-                    mod->mr_w[i] = Update_Qmat_Codons(mod, i,0,mod->pi);
-                }
-                
-                //!<Scaling Qmat together
-                mr = 0.0;
-                For(k, mod->n_w_catg) mr +=  mod->mr_w[k]*mod->prob_omegas[k];
-                
-                
-                
-                if(mod->expm==EIGEN) {
-#if defined OMP || defined BLAS_OMP 
-                    
-#pragma omp parallel for 
-                    
-#endif
-                    For(k, mod->n_w_catg) {
-                        EigenQREV(mod->qmat + k*mod->ns*mod->ns,                                     mod->pi, mod->ns, mod->eigen->e_val + k*mod->ns,                                   mod->eigen->r_e_vect + k*mod->ns*mod->ns,                                              mod->eigen->l_e_vect + k*mod->ns*mod->ns, mod->eigen->space + k*2*mod->ns);
-                    }
-                    For(i, mod->ns * mod->n_w_catg) mod->eigen->e_val[i]/=mr;
-                } else if(mod->expm == TAYLOR) {
-                    int catg, nn=mod->ns*mod->ns, n=mod->ns,l;
-                    For(i,nn*mod->n_w_catg) mod->qmat[i]/=mr;
-                    For(i,nn) mod->A2_part[0][nn+i]=mod->qmat[i]; //modified by Ken 22/8- doesn't work with partitioned models!
-                    
-#if defined OMP || defined BLAS_OMP 
-                    
-#pragma omp parallel for private(i,j,k,l)
-                    
-#endif
-                    
-                    For(catg, mod->n_w_catg) {
-                        for(l = 2; l < mod->n_termsTaylor; l++) {
-#if defined BLAS || defined BLAS_OMP
-                        	if(mod->nomega_part > 1){printf("Options not supported with partitioned models error 15\n");exit(EXIT_FAILURE);}
-                            cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans, n, n, n, 1.0, mod->A2_part[0]+(nn*(l-1))+catg*nn*15, n, mod->qmat_part[0]+catg*nn,  n, 0.0, mod->A2_part[0]+nn*l+catg*nn*15, n);
-                            
-#else
-                            
-                            For(i,nn) mod->A2_part[0][nn*l+i]=0.0; //modified by Ken 22/8
-                            For(i,n) For(j,n) For(k,n) mod->A2_part[0][nn*l+n*i+j] += mod->A2_part[0][nn*(l-1)+i*n+k] * mod->qmat_part[0][k*n+j+catg*nn];
-                            
-#endif
-                        }
-                    }
-                } else if(mod->expm == SSPADE) {
-                    n=mod->ns;
-                    nn=n*n;
-                    For(i,nn*mod->n_w_catg) mod->qmat_part[0][i]/=mr; //!< Scaling of the Q matrix.
-                    
-                    int catg;
-                    
-#if defined OMP || defined BLAS_OMP 
-                    
-#pragma omp parallel for private(i,j,k)
-                    
-#endif
-                    
-                    For(catg, mod->n_w_catg) {
-#if defined BLAS || defined BLAS_OMP
-                    	if(mod->nomega_part > 1){printf("Options not supported with partitioned models error 12\n");exit(EXIT_FAILURE);}
-                        cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans, n, n, n, 1.0, mod->qmat_part[0]+catg*nn,       n, mod->qmat_part[0]+catg*nn,       n, 0.0, mod->A2_part[0]+catg*nn, n);
-                        cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans, n, n, n, 1.0, mod->A2_part[0]+catg*nn,         n, mod->A2_part[0]+catg*nn,         n, 0.0, mod->A4_part[0]+catg*nn, n);
-                        cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans, n, n, n, 1.0, mod->A2_part[0]+catg*nn,         n, mod->A4_part[0]+catg*nn,         n, 0.0, mod->A6_part[0]+catg*nn, n);
-                        cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans, n, n, n, 1.0, mod->A2_part[0]+catg*nn,         n, mod->A4_part[0]+catg*nn,         n, 0.0, mod->A8_part[0]+catg*nn, n);
-                        
-                        cblas_dcopy(nn,mod->A2_part[0]+catg*nn, 1, mod->Apowers_part[0]+5*nn*catg+  nn,1);
-                        cblas_dcopy(nn,mod->A4_part[0]+catg*nn, 1, mod->Apowers_part[0]+5*nn*catg+2*nn,1);
-                        cblas_dcopy(nn,mod->A6_part[0]+catg*nn, 1, mod->Apowers_part[0]+5*nn*catg+3*nn,1);
-                        cblas_dcopy(nn,mod->A8_part[0]+catg*nn, 1, mod->Apowers_part[0]+5*nn*catg+4*nn,1);
-                        
-#else
-                    	if(mod->nomega_part > 1){printf("Options not supported with partitioned models error 12\n");exit(EXIT_FAILURE);}
-                        For(i,nn) mod->A2_part[0][i+catg*nn]=0.0;//modified by Ken 22/8 won't work with partitioned models
-                        For(i,nn) mod->A4_part[0][i+catg*nn]=0.0;
-                        For(i,nn) mod->A6_part[0][i+catg*nn]=0.0;
-                        For(i,nn) mod->A8_part[0][i+catg*nn]=0.0;
-                        
-                        For(i,n) For(j,n) For(k,n) mod->A2_part[0][n*i+j+catg*nn] += mod->qmat[i*n+k+catg*nn] * mod->qmat[k*n+j+catg*nn];
-                        For(i,n) For(j,n) For(k,n) mod->A4_part[0][n*i+j+catg*nn] += mod->A2_part[0][i*n+k+catg*nn]   * mod->A2_part[0][k*n+j+catg*nn];
-                        For(i,n) For(j,n) For(k,n) mod->A6_part[0][n*i+j+catg*nn] += mod->A2_part[0][i*n+k+catg*nn]   * mod->A4_part[0][k*n+j+catg*nn];
-                        For(i,n) For(j,n) For(k,n) mod->A8_part[0][n*i+j+catg*nn] += mod->A2_part[0][i*n+k+catg*nn]   * mod->A6_part[0][k*n+j+catg*nn];
-                        
-                        For(i,nn) mod->Apowers_part[0][5*nn*catg+  nn+i]=mod->A2_part[0][i+catg*nn];
-                        For(i,nn) mod->Apowers_part[0][5*nn*catg+2*nn+i]=mod->A4_part[0][i+catg*nn];
-                        For(i,nn) mod->Apowers_part[0][5*nn*catg+3*nn+i]=mod->A6_part[0][i+catg*nn];
-                        For(i,nn) mod->Apowers_part[0][5*nn*catg+4*nn+i]=mod->A8_part[0][i+catg*nn];
-                        
-#endif
-                    }
-                }
-            }
+            }//for(modeli)
+          }else if(mod->n_w_catg > 1)Lazy_Exit("Multiple omega categories",__FILE__,__LINE__);
         }
-
-    } else {
-        phydbl sum;
-        int i;
-        int result, n_iter;
-        phydbl scalar;
-        
-        DiscreteGamma(mod->gamma_r_proba, mod->gamma_rr, mod->alpha, mod->alpha, mod->n_catg, mod->gamma_median);
-        
-        if(mod->n_rr_branch > 0)
-            DiscreteGamma(mod->p_rr_branch, mod->rr_branch, mod->rr_branch_alpha, mod->rr_branch_alpha, mod->n_rr_branch, mod->gamma_median);
-        
-        if((mod->datatype == NT) && (mod->s_opt->opt_state_freq))
-        {
-            sum = .0;
-            For(i,mod->ns) sum += FABS(mod->pi_unscaled[i]);
-            For(i,mod->ns) mod->pi[i] = FABS(mod->pi_unscaled[i])/sum;
-            
-            do
-            {
-                sum = .0;
-                For(i,mod->ns)
-                {
-                    if(mod->pi[i] < 0.01) mod->pi[i]=0.01;
-                    if(mod->pi[i] > 0.99) mod->pi[i]=0.99;
-                    sum += mod->pi[i];
-                }
-                For(i,mod->ns) mod->pi[i]/=sum;
-            }
-            while((sum > 1.01) || (sum < 0.99));
-        }
-        
-        if(mod->update_eigen) 
-        {
-            int j;
-
-            if (mod->datatype==AA) //!Added by Marcelo
-            {
-                For(i,mod->ns*mod->ns) mod->qmat[i] = .0;
-                For(i,mod->ns       ) mod->pi[i]   = .0;
-                switch(mod->whichmodel)
-                {
-
-                    default : break;
-                }
-                
-                Freq_to_UnsFreq(mod->pi, mod->pi_unscaled, mod->ns, 0);
-                Scale_freqs(mod->pi, mod->ns);
-                
-                /*       /\* multiply the nth col of Q by the nth term of pi/100 just as in PAML *\/ */
-                For(i,mod->ns) For(j,mod->ns) mod->qmat[i*mod->ns+j] *= mod->pi[j]/100.0;
-                /* compute diagonal terms of Q and mean rate mr = l/t */
-                mod->mr = .0;
-                For (i,mod->ns)
-                {
-                    sum=.0;
-                    For(j, mod->ns) sum += mod->qmat[i*mod->ns+j];
-                    mod->qmat[i*mod->ns+i] = -sum;
-                    mod->mr += mod->pi[i] * sum;
-                }
-                /* scale imod->nstantaneous rate matrix so that mu=1 */
-                For (i,mod->ns*mod->ns) mod->qmat[i] /= mod->mr;
-                /* compute eigenvectors/values */
-                result = 0;
-            	if(mod->nomega_part > 1){printf("options not compatible with partitioned model error 10\n");exit(EXIT_FAILURE);}
-                For(i,mod->ns*mod->ns) mod->qmat_buff_part[0][i] = mod->qmat_part[0][i];
-                if(!Eigen(1,mod->qmat_buff_part[0],mod->eigen->size,mod->eigen->e_val,
-                          mod->eigen->e_val_im,mod->eigen->r_e_vect,
-                          mod->eigen->r_e_vect_im,mod->eigen->space))
-                {
-                    /* compute inverse(Vr) into Vi */
-                    For (i,mod->ns*mod->ns) mod->eigen->l_e_vect[i] = mod->eigen->r_e_vect[i];
-                    if(!Matinv(mod->eigen->l_e_vect,mod->eigen->size,mod->eigen->size))
-                    {
-                        PhyML_Printf("\n. Err in file %s at line %d\n",__FILE__,__LINE__);
-                        Exit("\n");      
-                    }
-                    /* compute the diagonal terms of EXP(D) */
-                    For(i,mod->ns) mod->eigen->e_val[i] = (phydbl)EXP(mod->eigen->e_val[i]);
-                }
-                else
-                {
-                    if (result==-1) PhyML_Printf("\n. Eigenvalues/vectors computation does not converge : computation cancelled");
-                    else if (result==1) PhyML_Printf("\n. Complex eigenvalues/vectors : computation cancelled");
-                }
-            }
-            else
-            {
-                if(!mod->use_m4mod)
-                {
-                    if(mod->datatype == NT)
-                    {
-                        if(mod->whichmodel == GTR)
-                            Update_Qmat_GTR(mod->rr, mod->rr_val, mod->rr_num, mod->pi, mod->qmat);
-                        else if(mod->whichmodel == CUSTOM) 
-                            Update_Qmat_GTR(mod->rr, mod->rr_val, mod->rr_num, mod->pi, mod->qmat);
-                        else if(mod->whichmodel == HKY85)  
-                            Update_Qmat_HKY(mod->kappa, mod->pi, mod->qmat);
-                        else /* Any other nucleotide-based model */
-                            Update_Qmat_HKY(mod->kappa, mod->pi, mod->qmat);
-                    }
-                    
-                }
-#ifdef M4
-                else 
-                {
-                    M4_Update_Qmat(mod->m4mod,mod);
-                }
-#endif
-                
-                scalar   = 1.0;
-                n_iter   = 0;
-                result   = 0;
-            	if(mod->nomega_part > 1){printf("options not compatible with partitioned model error 11\n");exit(EXIT_FAILURE);}
-                For(i,mod->ns*mod->ns) mod->qmat_buff_part[0][i] = mod->qmat_part[0][i];
-                
-                /* compute eigenvectors/values */
-                /*       if(!EigenRealGeneral(mod->eigen->size,mod->qmat,mod->eigen->e_val, */
-                /* 			  mod->eigen->e_val_im, mod->eigen->r_e_vect, */
-                /* 			  mod->eigen->space_int,mod->eigen->space)) */
-                
-                if(!Eigen(1,mod->qmat_buff_part[0],mod->eigen->size,mod->eigen->e_val,mod->eigen->e_val_im,mod->eigen->r_e_vect,mod->eigen->r_e_vect_im,mod->eigen->space))
-                {
-                    /* compute inverse(Vr) into Vi */
-                    For (i,mod->ns*mod->ns) mod->eigen->l_e_vect[i] = mod->eigen->r_e_vect[i];
-                    while(!Matinv(mod->eigen->l_e_vect, mod->eigen->size, mod->eigen->size))
-                    {
-                        PhyML_Printf("\n. Trying Q<-Q*scalar and then Root<-Root/scalar to fix this...\n");
-                        scalar += scalar / 3.;
-                        For(i,mod->eigen->size*mod->eigen->size) mod->qmat_buff_part[0][i]  = mod->qmat_part[0][i];
-                        For(i,mod->eigen->size*mod->eigen->size) mod->qmat_buff_part[0][i] *= scalar;
-                        result = Eigen(1,mod->qmat_buff_part[0],mod->eigen->size,mod->eigen->e_val,mod->eigen->e_val_im,mod->eigen->r_e_vect,mod->eigen->r_e_vect_im,mod->eigen->space);
-                        if (result == -1)
-                            Exit("\n. Eigenvalues/vectors computation did not converge : computation cancelled\n");
-                        else if (result == 1)
-                            Exit("\n. Complex eigenvalues/vectors : computation cancelled\n");
-                        
-                        For (i,mod->eigen->size*mod->eigen->size) mod->eigen->l_e_vect[i] = mod->eigen->r_e_vect[i];
-                        n_iter++;
-                        if(n_iter > 100) Exit("\n. Cannot work out eigen vectors\n");
-                    };
-                    For(i,mod->eigen->size) mod->eigen->e_val[i] /= scalar;
-                    
-                    /* compute the diagonal terms of EXP(D) */
-                    For(i,mod->ns) mod->eigen->e_val[i] = (phydbl)EXP(mod->eigen->e_val[i]);
-                    
-                }
-                else
-                {
-                    PhyML_Printf("\n. Eigenvalues/vectors computation does not converge : computation cancelled");
-                    Warn_And_Exit("\n");
-                }
-            }
-        }
+    }else{
+    	Warn_And_Exit("\nOnly codon data currently supported\n");
     }
 }
 
 /*********************************************************/
 
-void Switch_From_M4mod_To_Mod(model *mod)
-{
-    int i;
-    
-    mod->use_m4mod = 0;
-    mod->ns = mod->m4mod->n_o;
-    For(i,mod->ns) mod->pi[i] = mod->m4mod->o_fq[i];
-    mod->eigen->size = mod->ns;
-    mod->update_eigen = 1;
-}
-
-/*********************************************************/
-
-void Switch_From_Mod_To_M4mod(model *mod)
-{
-    int i;
-    mod->use_m4mod = 1;
-    mod->ns = mod->m4mod->n_o * mod->m4mod->n_h;
-    For(i,mod->ns) mod->pi[i] = mod->m4mod->o_fq[i%mod->m4mod->n_o] * mod->m4mod->h_fq[i/mod->m4mod->n_o];
-    mod->eigen->size = mod->ns;
-    mod->update_eigen = 1;
-}
-
-
-phydbl F1x4(int codon, phydbl *freq) //!<Added by marcelo.
-{
+phydbl F1x4(int codon, phydbl *freq){ //!<Added by marcelo.
     phydbl val=1.0;
     int i, remainder=0;
     For(i,3){
@@ -1358,25 +321,24 @@ phydbl F3x4(int codon, phydbl *freq) { //!<Added by marcelo.
 
 /*********************************************************/
 
-void EqFrequencies(int modfreq, phydbl *pi, phydbl *freq, int numSensecodons) //!<Added by marcelo.
-{ 
+void EqFrequencies(int modfreq, phydbl *pi, phydbl *freq, int numSensecodons){ //!<Added by marcelo.
     int i;
     phydbl freqStopcodons;
     
     switch(modfreq) {
         case F1XSENSECODONS: {
-            For(i,numSensecodons) pi[i]=freq[i];                     //!< Initialize the values before optimization 
+            For(i,numSensecodons) pi[i]=freq[i];//!< Initialize the values before optimization
             break;
         }
         case F1X4: {
-            freqStopcodons=0.0;                                       //! Calculate the total frequency of stop codons to correct the frequency of the sense codons.
+            freqStopcodons=0.0;//! Calculate the total frequency of stop codons to correct the frequency of the sense codons.
             For(i,64) if(stopCodons[i]) freqStopcodons+=F1x4(i,freq);
             For(i,numSensecodons) pi[i] = F1x4(senseCodons[i], freq)/(1-freqStopcodons); 
             break;
         }
         case F3X4:
         case CF3X4: {
-            freqStopcodons=0.0;                                       //! Calculate the total frequency of stop codons to correct the frequency of the sense codons.
+            freqStopcodons=0.0;//! Calculate the total frequency of stop codons to correct the frequency of the sense codons.
             For(i,64) if(stopCodons[i]) freqStopcodons+=F3x4(i,freq);
             For(i,numSensecodons) pi[i] = F3x4(senseCodons[i], freq)/(1-freqStopcodons); 
             break;
@@ -1386,13 +348,13 @@ void EqFrequencies(int modfreq, phydbl *pi, phydbl *freq, int numSensecodons) //
         }
     }
 }
+/**************************************************************/
 
 phydbl Update_Qmat_Codons(model *mod, int cat, int modeli, phydbl* freqs) {
     int numSensecodons, i, j, allocFreqs;
     phydbl sum, mu;
     phydbl *qmat, *mat;
     
-    //Added by Ken
     //incorporate equilibrium frequencies in case they have been updated
     switch(mod->freq_model) {
         case F1XSENSECODONS: {
@@ -1406,29 +368,35 @@ phydbl Update_Qmat_Codons(model *mod, int cat, int modeli, phydbl* freqs) {
         }
         case F3X4:
         case CF3X4: {
-        	//printf("updating freq model\n");
-            Freq_to_UnsFreq(mod->base_freq,   mod->uns_base_freq,   4, 0);
+            Freq_to_UnsFreq(mod->base_freq,   mod->uns_base_freq,   4, 0); //convert to decimal
             Freq_to_UnsFreq(mod->base_freq+4, mod->uns_base_freq+4, 4, 0);
             Freq_to_UnsFreq(mod->base_freq+8, mod->uns_base_freq+8, 4, 0);
             EqFrequencies(mod->freq_model, mod->pi, mod->base_freq, mod->ns);
             break;
         }
         case ROOT:
+        	if(mod->tree_loaded) freqs=mod->tree->noeud[mod->freq_node]->partfreqs[modeli];
+        	else freqs = mod->root_pi[modeli];
+        	break;
+        case MROOT:
+        	if(mod->tree_loaded>=1){
+        		if(mod->tree_loaded==1)Update_Midpoint_Freqs(mod->tree);
+        		freqs=mod->mid_pi[modeli];
+        	}else{
+        		freqs=mod->root_pi[modeli];
+        	}
         	break;
         default:
             break;
      }
-    //printf("in qmat\n");
-    //printf("qmat pi %lf %lf\n",mod->pi[0],mod->pi[1]);
-    //Added by Ken 17/8/2016
-   // int modeli;
-   // for(modeli=0;modeli<mod->nomega_parts;modeli++){
+
 
     qmat = mod->qmat_part[modeli] + (cat * mod->ns * mod->ns);
     numSensecodons = mod->ns;
     allocFreqs = NO;
     
     // Deal with initial rate matrices
+    // KOSI07 used when an initial tree topology not provided
     if(mod->initqrates != NOINITMAT) {
         switch(mod->initqrates) {
             case KOSI07:
@@ -1437,7 +405,7 @@ phydbl Update_Qmat_Codons(model *mod, int cat, int modeli, phydbl* freqs) {
                 freqs = ecmK07freq;
                 break;
                 
-            case SCHN05:
+           case SCHN05:
                 mat = (phydbl *) mCalloc(numSensecodons * numSensecodons, sizeof(phydbl));
                 if(mod->optDebug)printf("USING SHN05n");
                 For(i, numSensecodons) {
@@ -1471,36 +439,30 @@ phydbl Update_Qmat_Codons(model *mod, int cat, int modeli, phydbl* freqs) {
                     allocFreqs = YES;
                 }
                 break;
-                
             default:
                 break;
         }
-    } else if(mod->pcaModel) {
-        mat = (phydbl *) mCalloc(numSensecodons * numSensecodons, sizeof(phydbl));
-        For(i, numSensecodons) {
-            For(j, numSensecodons) mat[i*numSensecodons+j] = mod->userRates[senseCodons[i]][senseCodons[j]];
-        }
     } else {
+    	//if not an initial topology search, start off with a blank Qmat
         mat = (phydbl *) mCalloc(numSensecodons * numSensecodons, sizeof(phydbl));
         For(i, numSensecodons * numSensecodons) mat[i] = 1.0;
-        if(mod->freq_model != ROOT){
+        if(mod->freq_model < ROOT){
         	freqs = (phydbl *) mCalloc(numSensecodons, sizeof(phydbl));
         	For(i, numSensecodons) freqs[i] = 1.0;
         }
     }
-    // deal with frequency models
-    if((mod->freq_model != FMODEL && mod->freq_model != FUNDEFINED) && mod->freq_model != ROOT) {
+    // deal with frequency models. Usefd in GY and HLP17
+    if((mod->freq_model != FMODEL && mod->freq_model != FUNDEFINED) && mod->freq_model < ROOT) {
         if((mod->initqrates == NOINITMAT && mod->pcaModel == NO) || mod->initqrates == SCHN05) {
             free(freqs);
             allocFreqs = NO;
         }
         freqs = mod->pi;
-    } else {
+    }else{ //used in HLP19
         for(i=0; i<numSensecodons; i++) {
-        	if(mod->freq_model != ROOT) mod->pi[i] = freqs[i];
+        	if(mod->freq_model < ROOT) mod->pi[i] = freqs[i];
         }
     }
-    //printf("qmat pi %lf %lf\n",mod->pi[0],mod->pi[1]);
     For(i, numSensecodons*numSensecodons) qmat[i] = 0.0;
     
     // calculate the actual Q matrix
@@ -1508,20 +470,13 @@ phydbl Update_Qmat_Codons(model *mod, int cat, int modeli, phydbl* freqs) {
     	case GY: case PCM:
             Update_Qmat_GY(mat, qmat, freqs, cat, mod);
             break;
-        case MG:
-            Update_Qmat_MG(mat, qmat, mod->base_freq, cat, mod);
-            break;
-        case YAP:
-            Update_Qmat_YAP(mat, qmat, freqs, cat, mod);
-            break;
         case HLP17:
-        case HLP18:
-            Update_Qmat_HLP17(mat, qmat, freqs, cat, mod,mod->omega_part[modeli]);
+        case HLP19:
+            Update_Qmat_HLP17(mat, qmat, freqs, cat, mod,mod->omega_part[modeli],modeli);
             break;
         default:
             break;
     }
-
 
     /*! Calculate the diagonal element which is the negative of the sum of the other elements in a row.*/
     For(i, numSensecodons) {
@@ -1559,11 +514,10 @@ phydbl Update_Qmat_Codons(model *mod, int cat, int modeli, phydbl* freqs) {
         }
         free(mat);
     }
-   // }
-   // mu=1.0;
     return mu;
 }
 
+/**************************************************************/
 void Update_Qmat_GY(phydbl *mat, phydbl *qmat, phydbl * freqs, int cat, model *mod) {
     int i, j, numSensecodons;
     phydbl value;
@@ -1577,336 +531,104 @@ void Update_Qmat_GY(phydbl *mat, phydbl *qmat, phydbl * freqs, int cat, model *m
     }
 }
 
-//Modified GY94 by Ken
+/**************************************************************/
+//Update parameters of HLP-type models
 //Modified to be omega*kappa*pi*(1+b*h) on 12/Jun/2016
-void Update_Qmat_HLP17(phydbl *mat, phydbl *qmat, phydbl * freqs, int cat, model *mod,phydbl omega) {
-	 int fi,ti,li,ri,hot,c;
+//tally up expected number of each type of hotspot mutation
+//Cut down on RAM usage by using copy of hotspot tables at upper level
+void Update_Qmat_HLP17(phydbl *mat, phydbl *qmat, phydbl * freqs, int cat, model *mod,phydbl omega,int modeli) {
+	 int i,j,fi,ti,li,ri,hot,c;
 	 double htotal[mod->nmotifs];
-	 if(!mod->constB){//if B matrix is updated with changing frequencies
-	 for(fi=0;fi<61;fi++){ //Fill in B matrix
-    	for(ti=0;ti<61;ti++){
-    		for(c=0;c< mod->nmotifs;c++)htotal[c]=0; //set htotal array to zero
+
+	 //skip B matrix construction if constant B matrix used
+	 if(!mod->constB){
+		 For(fi,61){ //Fill in B matrix
+			 For(ti,61){
+				For(c,mod->nmotifs)htotal[c]=0; //set htotal array to zero
 #if defined OMP || BLAS_OMP
     			omp_lock_t writelock;
     			omp_init_lock(&writelock);
     			omp_set_lock(&writelock);
 #endif
-    			for(li=0;li<61;li++){
-    				for(ri=0;ri<61;ri++){//should drastically cut down on RAM usage by using a single copy of all hotspot tables at the upper level
-    					for(c=0;c< mod->nmotifs;c++){ //tally up expected number of each type of hotspot mutation
-    							htotal[c] += freqs[li]*freqs[ri]*mod->io->mod->hotspotcmps[c][fi*61*61*61+ti*61*61+li*61+ri];
-    					}
-    				}
-    			}
-#if defined OMP || BLAS_OMP
-    			omp_unset_lock(&writelock);
-    			omp_destroy_lock(&writelock);
-#endif
-    			 double hot = 0;
-    			           	for(c=0;c<mod->nmotifs;c++)hot += htotal[c]*mod->hotness[mod->motif_hotness[c]];//additive interaction function
-    			            if(hot < -1)hot=-1; //constrain total modification to never go below -1
-    			    		mod->Bmat[fi*61+ti]=hot;
-    		}/*else{ //skip all that if B matrix isn't updated with eq freqs
-    			for(c=0;c<mod->nmotifs;c++)htotal[c]=mod->cBmat[fi*61+ti][c];
-    		}*/
+    				For(li,61)
+    					For(ri,61)
+    						For(c,mod->nmotifs)
+    							htotal[c] += freqs[li]*freqs[ri]*
+    								mod->io->mod->hotspotcmps[c][fi*61*61*61+ti*61*61+li*61+ri];
 
+#if defined OMP || BLAS_OMP
+    				omp_unset_lock(&writelock);
+    				omp_destroy_lock(&writelock);
+#endif
+    				//add up hotspot values
+    				mod->Bmat[fi*61+ti] = 0.0;
+    			    For(c,mod->nmotifs)mod->Bmat[fi*61+ti] += htotal[c]*mod->hotness[mod->motif_hotness[c]];
+    			    if(mod->Bmat[fi*61+ti] < -1)mod->Bmat[fi*61+ti]=-1; //constrain total modification to never go below -1
+    		}
     	}
     }
-	 //printf("%lf\t%lf\n",freqs[0],freqs[1]);
-    int i, j, numSensecodons;
-    phydbl value;
-    numSensecodons = mod->ns;
-    For(i, numSensecodons) {
-        For(j, i) {
-        		if(mod->constB){
-        			mod->Bmat[i*numSensecodons+j]=0.0;
-        			mod->Bmat[j*numSensecodons+i]=0.0;
-        			for(c=0;c<mod->nmotifs;c++){
-        				mod->Bmat[i*numSensecodons+j] += mod->cBmat[i*61+j][c]*mod->hotness[mod->motif_hotness[c]];
-        				mod->Bmat[j*numSensecodons+i] += mod->cBmat[j*61+i][c]*mod->hotness[mod->motif_hotness[c]];
-        			}
-        			if(mod->Bmat[i*numSensecodons+j] < -1)mod->Bmat[i*numSensecodons+j]=-1;
-        			if(mod->Bmat[j*numSensecodons+i] < -1)mod->Bmat[j*numSensecodons+i]=-1;
-        		}
 
-            	value = mat[i*numSensecodons+j] * Kappa_Omega_Factor(i, j, mod, cat,omega);
-            if(mod->modeltypeOpt==HLP17){
-              if(mod->freqsTo){
+    int numSensecodons = mod->ns;
+    For(i,numSensecodons){
+        For(j, i) {
+        	if(mod->constB){
+        		mod->Bmat[i*numSensecodons+j]=0.0;
+        		mod->Bmat[j*numSensecodons+i]=0.0;
+        		For(c,mod->nmotifs){
+        			mod->Bmat[i*numSensecodons+j] += mod->cBmat[modeli][i*61+j][c]*mod->hotness[mod->motif_hotness[c]];
+        			mod->Bmat[j*numSensecodons+i] += mod->cBmat[modeli][j*61+i][c]*mod->hotness[mod->motif_hotness[c]];
+        		}
+        		if(mod->Bmat[i*numSensecodons+j] < -1)mod->Bmat[i*numSensecodons+j]=-1;
+        		if(mod->Bmat[j*numSensecodons+i] < -1)mod->Bmat[j*numSensecodons+i]=-1;
+        	}
+            phydbl value = mat[i*numSensecodons+j] * Kappa_Omega_Factor(i, j, mod, cat,omega);
+            if(mod->modeltypeOpt==HLP17 && mod->freqsTo){ //HLP17 freqs
             	  qmat[ i*numSensecodons+j ] = value * freqs[j]*(1+mod->Bmat[ i*numSensecodons+j ]);
             	  qmat[ j*numSensecodons+i ] = value * freqs[i]*(1+mod->Bmat[ j*numSensecodons+i ]);
-              }else{
+            }else{ //HLP19 freqs
             	qmat[ i*numSensecodons+j ] = value * (1.0/61)*(1+mod->Bmat[ i*numSensecodons+j ]);
             	qmat[ j*numSensecodons+i ] = value * (1.0/61)*(1+mod->Bmat[ j*numSensecodons+i ]);
             }
-          	//qmat[ i*numSensecodons+j ] = value * (1.0/61)*(1+mod->Bmat[ i*numSensecodons+j ]);
-          	//qmat[ j*numSensecodons+i ] = value * (1.0/61)*(1+mod->Bmat[ j*numSensecodons+i ]);
-            }else{
-            	qmat[ i*numSensecodons+j ] = value * (1.0/61)*(1+mod->Bmat[ i*numSensecodons+j ]);
-            	qmat[ j*numSensecodons+i ] = value * (1.0/61)*(1+mod->Bmat[ j*numSensecodons+i ]);
-            }
-            //	qmat[ i*numSensecodons+j ] = value * 0.016*(1+mod->Bmat[ i*numSensecodons+j ]);
-            //	qmat[ j*numSensecodons+i ] = value * 0.016*(1+mod->Bmat[ j*numSensecodons+i ]);
-        }
-    }
-    //printf("updated2\n");
-}
-
-
-void Update_Qmat_MG(phydbl *mat, phydbl *qmat, phydbl * freqs, int cat, model *mod) {
-    int diff, codoni, codonj, numSensecodons, i, j, k, m;
-    int icodon[3], jcodon[3], targetNTi[3], targetNTj[3], posTargetNT[3];
-    phydbl value, freqTargetNTi[3], freqTargetNTj[3], freqTNTi, freqTNTj;
-    
-    numSensecodons = mod->ns;
-    For(i, numSensecodons) {
-        For(j, i) {
-            diff = 0;
-            codoni = senseCodons[i];
-            codonj = senseCodons[j];
-            
-            For(k, 3) {
-                icodon[k] = codoni - ((codoni >> 2) << 2);                     //!<  n<<k= n*2^k, n>>k=n/2^k.
-                codoni = codoni >> 2;
-                jcodon[k] = codonj - ((codonj >> 2) << 2);
-                codonj = codonj >> 2;
-                if(icodon[k] != jcodon[k]) {
-                    diff++;
-                    targetNTi[diff-1] = icodon[k];                         //!< Store the target nucleotides.
-                    targetNTj[diff-1] = jcodon[k];                         //!< Store the target nucleotides.
-                    posTargetNT[diff-1] = 2-k;                             //!< Store the codon position of the target nucleotide.  
-                }
-            }
-            
-            if(diff > 0) {
-                //!< Set the target nucleotide frequency according to the given models.
-                switch(mod->freq_model) {
-                    case F1X4: {
-                        For(m, diff) freqTargetNTi[m] = freqs[targetNTi[m]];
-                        For(m, diff) freqTargetNTj[m] = freqs[targetNTj[m]];
-                        break;
-                    }
-                    case F3X4:
-                    case CF3X4: {
-                        For(m, diff) freqTargetNTi[m] = freqs[ 4*posTargetNT[m] + targetNTi[m] ];
-                        For(m, diff) freqTargetNTj[m] = freqs[ 4*posTargetNT[m] + targetNTj[m] ];
-                        break;
-                    }
-                    default: Warn_And_Exit("Frequency model not available in MG framework."); break;
-                }
-                
-                value = mat[i*numSensecodons+j] * Kappa_Omega_Factor(i, j, mod, cat,mod->omega_part[0]);
-                
-                freqTNTj = 1.0;
-                freqTNTi = 1.0;
-                
-                For(m, diff) freqTNTi *= freqTargetNTi[m];
-                For(m, diff) freqTNTj *= freqTargetNTj[m];
-                
-                if(freqTNTi < MODELPAREPS) freqTNTi = MODELPAREPS;
-                if(freqTNTj < MODELPAREPS) freqTNTj = MODELPAREPS;
-                
-                qmat[numSensecodons*i+j] = value * freqTNTj;
-                qmat[numSensecodons*j+i] = value * freqTNTi;
-            }
         }
     }
 }
 
-void Update_Qmat_YAP(phydbl *mat, phydbl *qmat, phydbl * freqs, int cat, model *mod) {
-    int diff, codoni, codonj, numSensecodons, i, j, k, m, n, TC, h, g;
-    int icodon[3], jcodon[3], targetCD[3], posTargetNT[3];
-    phydbl margFreq, condTCi, condTCj, value;
-    
-    numSensecodons = mod->ns;
-    
-    For(i, numSensecodons) {
-        For(j, i) {
-            diff = 0;
-            codoni = senseCodons[i];
-            codonj = senseCodons[j];
-            For(k, 3) {
-                icodon[k] = codoni - ((codoni >> 2) << 2); //!<  n<<k= n*2^k, n>>k=n/2^k.
-                codoni = codoni >> 2;
-                jcodon[k] = codonj - ((codonj >> 2) << 2);
-                codonj = codonj >> 2;
-                
-                targetCD[2-k] = jcodon[k]; //!< Transcribe the codon into the constituent nucleotides-
-                
-                if(icodon[k] != jcodon[k]) {
-                    diff++;
-                    posTargetNT[diff-1] = 2-k; //!< Store the codon position of the target nucleotide.  
-                }
-            }
-            
-            if(diff > 0) {
-                switch(diff) {
-                    case 1: {
-                        margFreq = 0.0;
-                        switch(posTargetNT[0]) {
-                            case 0: {
-                                m = 1;
-                                n = 2;
-                                For(h, 4) {
-                                    TC = 16*h + 4*targetCD[m] + targetCD[n];
-                                    if(!stopCodons[TC]) margFreq += freqs[indexSenseCodons[TC]]; 
-                                }
-                                break;
-                            }
-                            case 1: {
-                                m = 0;
-                                n = 2;
-                                For(h, 4) {
-                                    TC = 16*targetCD[m] + 4*h + targetCD[n];
-                                    if(!stopCodons[TC]) margFreq += freqs[indexSenseCodons[TC]]; 
-                                }
-                                break;
-                            }
-                            case 2: {
-                                m = 0;
-                                n = 1;
-                                For(h, 4) {
-                                    TC = 16*targetCD[m] + 4*targetCD[n] + h;
-                                    if(!stopCodons[TC]) margFreq += freqs[indexSenseCodons[TC]]; 
-                                }
-                                break;
-                            }
-                            default: break;
-                        }
-                        break;
-                    }
-                    case 2: {
-                        margFreq = 0.0;
-                        switch(posTargetNT[0]) {
-                            case 0: {
-                                if(posTargetNT[1] == 1) {
-                                    n = 2;
-                                    For(h, 4) {
-                                        For(g, 4) {
-                                            TC = 16*h + 4*g + targetCD[n];
-                                            if(!stopCodons[TC]) margFreq += freqs[indexSenseCodons[TC]];
-                                        } 
-                                    }
-                                } else if(posTargetNT[1]==2) {
-                                    n = 1;
-                                    For(h, 4) {
-                                        For(g, 4) {
-                                            TC = 16*h + 4*targetCD[n] + g;
-                                            if(!stopCodons[TC]) margFreq += freqs[indexSenseCodons[TC]];
-                                        } 
-                                    }
-                                }
-                                break;	    
-                            }
-                            case 1: {
-                                if(posTargetNT[1] == 0) {
-                                    n = 2;
-                                    For(h, 4) {
-                                        For(g, 4) {
-                                            TC = 16*g + 4*h + targetCD[n];
-                                            if(!stopCodons[TC]) margFreq += freqs[indexSenseCodons[TC]];
-                                        } 
-                                    }
-                                } else if(posTargetNT[1]==2) {
-                                    n = 0;
-                                    For(h, 4) {
-                                        For(g, 4) {
-                                            TC = 16*targetCD[n] + 4*h + g;
-                                            if(!stopCodons[TC]) margFreq += freqs[indexSenseCodons[TC]];
-                                        } 
-                                    }
-                                }
-                                break;	    
-                            }
-                            case 2: {
-                                if(posTargetNT[1]  ==  0) {
-                                    n = 1;
-                                    For(h, 4) {
-                                        For(g, 4) {
-                                            TC = 16*g + 4*targetCD[n] + h;
-                                            if(!stopCodons[TC]) margFreq += freqs[indexSenseCodons[TC]];
-                                        } 
-                                    }
-                                } else if(posTargetNT[1] == 1) {
-                                    n = 0;
-                                    For(h, 4) {
-                                        For(g, 4) {
-                                            TC = 16*targetCD[n] + 4*g + h;
-                                            if(!stopCodons[TC]) margFreq += freqs[indexSenseCodons[TC]];
-                                        } 
-                                    }
-                                }
-                                break;	    
-                            }
-                            default:
-                                break;
-                        }
-                        break;
-                    }
-                    case 3: {
-                        margFreq = 1.0;
-                        break;
-                    }
-                    default:
-                        break;
-                }
-                
-                condTCi = freqs[i] / margFreq;
-                condTCj = freqs[j] / margFreq;
-                
-                if(condTCi < MODELPAREPS) condTCi = MODELPAREPS;
-                if(condTCj < MODELPAREPS) condTCj = MODELPAREPS;
-                
-                value = mat[i*numSensecodons+j] * Kappa_Omega_Factor(i, j, mod, cat,mod->omega_part[0]);
-                
-                qmat[numSensecodons*i+j] = value * condTCj;
-                qmat[numSensecodons*j+i] = value * condTCi;
-            }
-        }
-    }
+/**************************************************************/
+//set up constant Bmat if desired
+void Setup_CBmat(model* mod, int uniform, phydbl* pis){
+  int modeli,fi,ti,li,ri,hot,c;
+  mod->cBmat=(phydbl ***)mCalloc(mod->nomega_part,sizeof(phydbl**));
+  For(modeli,mod->nomega_part){
+		mod->cBmat[modeli]=(phydbl **)mCalloc(3721,sizeof(phydbl*));
+		double htotal[mod->nmotifs];
+		For(fi,61){ //Fill in B matrix
+			For(ti,61){
+				mod->cBmat[modeli][fi*61+ti]=mCalloc(mod->nmotifs,sizeof(phydbl));
+				For(li,61){
+					For(ri,61){
+						For(c,mod->nmotifs){
+							if(uniform==1) mod->cBmat[modeli][fi*61+ti][c] += (1.0/61)*(1.0/61)*
+									mod->io->mod->hotspotcmps[c][fi*61*61*61+ti*61*61+li*61+ri];
+							else if(uniform==-1){
+								mod->cBmat[modeli][fi*61+ti][c] += mod->root_pi[modeli][li]*
+								mod->root_pi[modeli][ri]*mod->io->mod->hotspotcmps[c][fi*61*61*61+ti*61*61+li*61+ri];
+							}else{ mod->cBmat[modeli][fi*61+ti][c] += pis[li]*pis[ri]*
+									mod->io->mod->hotspotcmps[c][fi*61*61*61+ti*61*61+li*61+ri];
+							}
+						}
+					}
+				}
+			}
+		}
+  	}
 }
-
 
 /*******************************************************/
-
-// Converts ECM omega values to 'normal' ones as given in Kosiol 2007
-phydbl Omega_ECMtoMmechModels(phydbl *pi, phydbl *qmat, phydbl *qmatbuff, int numSensecodons, int n_w_catg) //!< Added by Marcelo.
-{	
-    phydbl val, roa,ros;
-    int i,j;
-    
-    roa = 0.0;  // nonsynonymous
-    ros = 0.0;  // synonymous
-    
-    For(i, numSensecodons*numSensecodons) qmatbuff[i] = qmat[i];
-    val = 0.0;
-    For(i, numSensecodons) val += pi[i] * (-qmatbuff[i*numSensecodons+i]);
-    For(i, numSensecodons * numSensecodons) qmatbuff[i] /= val;
-    
-    For(i, numSensecodons) {
-        For(j, numSensecodons) {
-            if(j != i) {
-                if(aminoAcidmap[senseCodons[i]] != aminoAcidmap[senseCodons[j]]) {
-                    roa += pi[i] * qmatbuff[i*numSensecodons+j];
-                } else {
-                    ros += pi[i] * qmatbuff[i*numSensecodons+j];
-                }
-            }
-            else continue;
-        }
-    } if(n_w_catg == 1) {
-        val = (roa*0.21)/((1-roa)*0.79);
-    } else {
-        val = (roa*0.21) / (ros*0.79);
-    }
-    return val;
-}
-
 // Returns a single factor for a given site that includes both values for kappa
 // and/or omega. If neither of those is needed, return value will simply be 1.0 .
 phydbl Kappa_Omega_Factor(int senseCodoni, int senseCodonj, model* mod, int cat,phydbl omega) {//modified by Ken 18/8
     phydbl val = 1.0;
     phydbl *kappa = mod->pkappa;
-   // phydbl omega;
     int numSensecodons = mod->ns;
     ts_and_tv *mat = mod->structTs_and_Tv;
    
@@ -1921,10 +643,9 @@ phydbl Kappa_Omega_Factor(int senseCodoni, int senseCodonj, model* mod, int cat,
             omega = mod->omegas[ cat ];
             break;
     }
-
     // First deal with kappa...
         if(mod->initqrates != NOINITMAT) {
-            switch(mod->kappaECM) {
+          /*  switch(mod->kappaECM) {
                 case kap1: { 
                     val = 1.0;
                     break;
@@ -1978,7 +699,7 @@ phydbl Kappa_Omega_Factor(int senseCodoni, int senseCodonj, model* mod, int cat,
                 }
                 default:
                     break;
-            }
+            }*/
         } else {
             if(mat[numSensecodons * senseCodoni + senseCodonj].ndiff == 1) {
                 if(mat[numSensecodons * senseCodoni + senseCodonj].nts) {
@@ -1998,12 +719,10 @@ phydbl Kappa_Omega_Factor(int senseCodoni, int senseCodonj, model* mod, int cat,
 }
 
 /*********************************************************/
-void PMat_CODON(phydbl l, model *mod, int pos, phydbl *Pij) //!< Added by Marcelo.
-{
+void PMat_CODON(phydbl l, model *mod, int pos, phydbl *Pij){ //!< Added by Marcelo.
     int n = mod->ns, nn = n*n, nw=mod->n_w_catg, i, g, j, k, catg;
     
-    if(mod->expm==EIGEN)
-    {
+    if(mod->expm==EIGEN){
         phydbl *U, *V, *R, *P;
         phydbl *expt, expt_n, *pP;
         phydbl *uexpt, uexpt_n;
@@ -2011,51 +730,38 @@ void PMat_CODON(phydbl l, model *mod, int pos, phydbl *Pij) //!< Added by Marcel
         P=Pij;
         
 #if defined OMP || defined BLAS_OMP
-        
         expt  = (phydbl *)malloc(n*nw*sizeof(phydbl));
         uexpt = (phydbl *)malloc(nn*nw*sizeof(phydbl));
-        
 #else
-        
         expt  = mod->eigen->e_val_im;
         uexpt = mod->eigen->r_e_vect_im;
-        
 #endif
         
         U     = mod->eigen->r_e_vect;
         V     = mod->eigen->l_e_vect;
         R     = mod->eigen->e_val;
         
-        For(catg,nw)
-        {
+        For(catg,nw){
 #if defined BLAS || defined BLAS_OMP
-            
             /* compute EXP(D/mr * l) into mat_eDmrl */
             For(k,n) expt[k+catg*n] = (phydbl)exp(R[k+catg*n]*l);
             
             /* multiply Vr*EXP(D/mr*l)*Vi into Pij */
             For (i,n) For (k,n) uexpt[i*n+k+catg*nn] = U[i*n+k+catg*nn] * expt[k+catg*n];
-            
+
             cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans, n, n, n, 1.0, uexpt+catg*nn, n, V+catg*nn, n, 0.0, P+catg*nn, n);
-            
 #else
-            
             for (k=0,zero(P+catg*nn,nn); k<n; k++) for (i=0,pP=P+catg*nn,expt_n=exp(R[k+catg*n]*l); i<n; i++) for (j=0,uexpt_n=U[i*n+k+catg*nn]*expt_n; j<n; j++) *pP++ += uexpt_n*V[k*n+j+catg*nn];
-            
 #endif 
         }
         
         For(i,nn*nw) if(Pij[i]<SMALL_PIJ) Pij[i]=SMALL_PIJ;
         
 #if defined OMP || defined BLAS_OMP
-        
         free(expt); 
         free(uexpt);
-        
 #endif
-    }
-    else if(mod->expm==TAYLOR)
-    {
+    }else if(mod->expm==TAYLOR){
     	if(mod->nomega_part > 1){
     		printf("TAYLOR APPROXIMATION DOESN'T WORK WITH PARITTIONED MODELS IN IGPHYML\n");
     		exit(EXIT_FAILURE);
@@ -2066,17 +772,13 @@ void PMat_CODON(phydbl l, model *mod, int pos, phydbl *Pij) //!< Added by Marcel
         
         For(i,nn*nw) Pij[i]=0.0;
         
-        For(catg,nw)
-        {
-            For(m,mod->n_termsTaylor)
-            {
+        For(catg,nw){
+            For(m,mod->n_termsTaylor){
                 For(i,nn) Pij[i+catg*nn]+=pow(l,m)*Q2[i+catg*nn*15+m*nn]/(phydbl)myFactorial(m);
             }
         } 
         For(i,nn*nw) if(Pij[i]<SMALL_PIJ) Pij[i]=SMALL_PIJ;
-    }
-    else  if(mod->expm==SSPADE)
-    {
+    } else  if(mod->expm==SSPADE){
         phydbl norm_1_Q, *Q, *A, *B, *F, theta[5] = {1.495585217958292e-002, 2.539398330063230e-001, 9.504178996162932e-001, 2.097847961257068e+000, 5.371920351148152e+000}; 
         int m_vals[5]={3, 5, 7, 9, 13}, z=5;
         
@@ -2089,8 +791,7 @@ void PMat_CODON(phydbl l, model *mod, int pos, phydbl *Pij) //!< Added by Marcel
         
         int modeli;
 		for(modeli=0;modeli<mod->nomega_part;modeli++){ //Added by Ken 22/8
-        For(catg,nw)
-        {
+        For(catg,nw){
 
             pos = nn*catg;
             Q   = mod->qmat_part[modeli]+pos;
@@ -2122,19 +823,14 @@ void PMat_CODON(phydbl l, model *mod, int pos, phydbl *Pij) //!< Added by Marcel
             
 #endif
             
-            if(norm_1_Q<=theta[z-1])
-            {
-                For(i,z)
-                {
-                    if(norm_1_Q<=theta[i])
-                    {
+            if(norm_1_Q<=theta[z-1]){
+                For(i,z){
+                    if(norm_1_Q<=theta[i]){
                         PadeApprox(n, nn, A, mod, F, pos, l, m_vals[i],modeli);
                         break;
                     }
                 }
-            }
-            else
-            {
+            }else{
                 phydbl Mantissa, sFactor, num;
                 int Exponent;
                 num=norm_1_Q/theta[z-1];
@@ -2148,16 +844,12 @@ void PMat_CODON(phydbl l, model *mod, int pos, phydbl *Pij) //!< Added by Marcel
                 
 #if defined BLAS || defined BLAS_OMP
                 
-                Fors(i,Exponent,2)
-                {
+                Fors(i,Exponent,2){
                     cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans, n, n, n, 1.0, F, n, F, n, 0.0, B, n);
                     
-                    if(i+1<Exponent)
-                    {
+                    if(i+1<Exponent){
                         cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans, n, n, n, 1.0, B, n, B, n, 0.0, F, n);
-                    }
-                    else 
-                    {
+                    }else{
                         cblas_dcopy(nn,B,1,F,1);
                         break;
                     }
@@ -2165,18 +857,14 @@ void PMat_CODON(phydbl l, model *mod, int pos, phydbl *Pij) //!< Added by Marcel
                 
 #else
                 
-                Fors(g,Exponent,2)
-                {
+                Fors(g,Exponent,2){
                     For(i,nn) B[i]=0.0;
                     For(i,n) For(j,n) For(k,n) B[n*i+j] += F[i*n+k] * F[k*n+j];
                     
-                    if(g+1<Exponent)
-                    {
+                    if(g+1<Exponent){
                         For(i,nn) F[i]=0.0;
                         For(i,n) For(j,n) For(k,n) F[n*i+j] += B[i*n+k] * B[k*n+j];
-                    }
-                    else 
-                    {
+                    }else{
                         For(i,nn) F[i]=B[i];
                         break;
                     }
@@ -2199,36 +887,28 @@ void PMat_CODON(phydbl l, model *mod, int pos, phydbl *Pij) //!< Added by Marcel
 
 
 /*********************************************************/
-void PMat_CODON_part(phydbl l, model *mod, int pos, phydbl *Qmat, phydbl *Pij, int modeli) //!< Added by Marcelo.
-{
+void PMat_CODON_part(phydbl l, model *mod, int pos, phydbl *Qmat, phydbl *Pij, int modeli){ //!< Added by Marcelo.
     int n = mod->ns, nn = n*n, nw=mod->n_w_catg, i, g, j, k, catg;
 
-    if(mod->expm==EIGEN)
-    {
+    if(mod->expm==EIGEN){
         phydbl *U, *V, *R, *P;
         phydbl *expt, expt_n, *pP;
         phydbl *uexpt, uexpt_n;
-
         P=Pij;
 
 #if defined OMP || defined BLAS_OMP
-
         expt  = (phydbl *)malloc(n*nw*sizeof(phydbl));
         uexpt = (phydbl *)malloc(nn*nw*sizeof(phydbl));
-
 #else
-
         expt  = mod->eigen->e_val_im;
         uexpt = mod->eigen->r_e_vect_im;
-
 #endif
 
         U     = mod->eigen->r_e_vect;
         V     = mod->eigen->l_e_vect;
         R     = mod->eigen->e_val;
 
-        For(catg,nw)
-        {
+        For(catg,nw){
 #if defined BLAS || defined BLAS_OMP
 
             /* compute EXP(D/mr * l) into mat_eDmrl */
@@ -2240,9 +920,8 @@ void PMat_CODON_part(phydbl l, model *mod, int pos, phydbl *Qmat, phydbl *Pij, i
             cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans, n, n, n, 1.0, uexpt+catg*nn, n, V+catg*nn, n, 0.0, P+catg*nn, n);
 
 #else
-
-            for (k=0,zero(P+catg*nn,nn); k<n; k++) for (i=0,pP=P+catg*nn,expt_n=exp(R[k+catg*n]*l); i<n; i++) for (j=0,uexpt_n=U[i*n+k+catg*nn]*expt_n; j<n; j++) *pP++ += uexpt_n*V[k*n+j+catg*nn];
-
+            for (k=0,zero(P+catg*nn,nn); k<n; k++) for (i=0,pP=P+catg*nn,expt_n=exp(R[k+catg*n]*l); i<n; i++)
+            	for (j=0,uexpt_n=U[i*n+k+catg*nn]*expt_n; j<n; j++) *pP++ += uexpt_n*V[k*n+j+catg*nn];
 #endif
         }
 
@@ -2254,9 +933,7 @@ void PMat_CODON_part(phydbl l, model *mod, int pos, phydbl *Qmat, phydbl *Pij, i
         free(uexpt);
 
 #endif
-    }
-    else if(mod->expm==TAYLOR)
-    {
+    }else if(mod->expm==TAYLOR){
     	if(mod->nomega_part > 1){
     		printf("TAYLOR APPROX DOESNT WORK WITH PARTITIONED MODELS IN IGPHYML YET\n");
     		exit(EXIT_FAILURE);
@@ -2267,17 +944,13 @@ void PMat_CODON_part(phydbl l, model *mod, int pos, phydbl *Qmat, phydbl *Pij, i
 
         For(i,nn*nw) Pij[i]=0.0;
 
-        For(catg,nw)
-        {
-            For(m,mod->n_termsTaylor)
-            {
+        For(catg,nw){
+            For(m,mod->n_termsTaylor){
                 For(i,nn) Pij[i+catg*nn]+=pow(l,m)*Q2[i+catg*nn*15+m*nn]/(phydbl)myFactorial(m);
             }
         }
         For(i,nn*nw) if(Pij[i]<SMALL_PIJ) Pij[i]=SMALL_PIJ;
-    }
-    else  if(mod->expm==SSPADE)
-    {
+    }else  if(mod->expm==SSPADE){
         phydbl norm_1_Q, *Q, *A, *B, *F, theta[5] = {1.495585217958292e-002, 2.539398330063230e-001, 9.504178996162932e-001, 2.097847961257068e+000, 5.371920351148152e+000};
         int m_vals[5]={3, 5, 7, 9, 13}, z=5;
 
@@ -2288,9 +961,7 @@ void PMat_CODON_part(phydbl l, model *mod, int pos, phydbl *Qmat, phydbl *Pij, i
 
 #endif
 
-        For(catg,nw)
-        {
-
+        For(catg,nw){
             pos = nn*catg;
             Q   = Qmat+pos;
             F   = Pij+pos;
@@ -2321,19 +992,14 @@ void PMat_CODON_part(phydbl l, model *mod, int pos, phydbl *Qmat, phydbl *Pij, i
 
 #endif
 
-            if(norm_1_Q<=theta[z-1])
-            {
-                For(i,z)
-                {
-                    if(norm_1_Q<=theta[i])
-                    {
+            if(norm_1_Q<=theta[z-1]){
+                For(i,z){
+                    if(norm_1_Q<=theta[i]){
                         PadeApprox(n, nn, A, mod, F, pos, l, m_vals[i],modeli);
                         break;
                     }
                 }
-            }
-            else
-            {
+            }else{
                 phydbl Mantissa, sFactor, num;
                 int Exponent;
                 num=norm_1_Q/theta[z-1];
@@ -2347,16 +1013,12 @@ void PMat_CODON_part(phydbl l, model *mod, int pos, phydbl *Qmat, phydbl *Pij, i
 
 #if defined BLAS || defined BLAS_OMP
 
-                Fors(i,Exponent,2)
-                {
+                Fors(i,Exponent,2){
                     cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans, n, n, n, 1.0, F, n, F, n, 0.0, B, n);
 
-                    if(i+1<Exponent)
-                    {
+                    if(i+1<Exponent){
                         cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans, n, n, n, 1.0, B, n, B, n, 0.0, F, n);
-                    }
-                    else
-                    {
+                    }else{
                         cblas_dcopy(nn,B,1,F,1);
                         break;
                     }
@@ -2364,18 +1026,14 @@ void PMat_CODON_part(phydbl l, model *mod, int pos, phydbl *Qmat, phydbl *Pij, i
 
 #else
 
-                Fors(g,Exponent,2)
-                {
+                Fors(g,Exponent,2){
                     For(i,nn) B[i]=0.0;
                     For(i,n) For(j,n) For(k,n) B[n*i+j] += F[i*n+k] * F[k*n+j];
 
-                    if(g+1<Exponent)
-                    {
+                    if(g+1<Exponent){
                         For(i,nn) F[i]=0.0;
                         For(i,n) For(j,n) For(k,n) F[n*i+j] += B[i*n+k] * B[k*n+j];
-                    }
-                    else
-                    {
+                    }else{
                         For(i,nn) F[i]=B[i];
                         break;
                     }
@@ -2581,7 +1239,7 @@ void PadeApprox(int n, int nn, phydbl *A, model *mod, phydbl *F, int pos, phydbl
             
 #endif
             
-            
+            break;
         }
         default:break;
     }
@@ -2595,50 +1253,7 @@ void PadeApprox(int n, int nn, phydbl *A, model *mod, phydbl *F, int pos, phydbl
     
 #endif
 }
-/***********************************************************/
-phydbl Scale_Q_MatrixManyOmegaModels(phydbl *qmat,  phydbl *pi, phydbl *freq, int n_w_catg, int numSenseCodons, model *mod) //!< Added by Marcelo.
-{
-    /*! Normalize Q matrix.*/
-    int i, k, nn=numSenseCodons*numSenseCodons;
-    phydbl mu, sum;
-    
-    mu=0.0;
-    For(k, n_w_catg)
-    {
-        sum=0.0;
-        For(i,numSenseCodons)
-        {
-            sum+=(-qmat[k*nn + numSenseCodons*i+i])*pi[i];
-        }
-        mu+=sum*freq[k];
-    } 
-    
-    For(i,n_w_catg*nn) mod->qmatScaled[i]=mod->qmat[i]/mu;
-    
-    return(mu);
-}
-/***********************************************************/
-phydbl Scale_P_MatrixManyOmegaModels(phydbl *Pij,  phydbl *pi, phydbl *freq, int n_w_catg, int numSenseCodons, model *mod) //!< Added by Marcelo.
-{
-    /*! Normalize Q matrix.*/
-    int i, k, nn=numSenseCodons*numSenseCodons;
-    phydbl mu, sum;
-    
-    mu=0.0;
-    For(k, n_w_catg)
-    {
-        sum=0.0;
-        For(i,numSenseCodons)
-        {
-            sum+=(Pij[k*nn + numSenseCodons*i+i])*pi[i];
-        }
-        mu+=sum*freq[k];
-    } 
-    
-    For(i,n_w_catg*nn) Pij[i]/=mu;
-    
-    return(mu);
-}
+
 /***********************************************************/
 void PMat_CODON_Pairwise(phydbl l, phydbl *Pij,  phydbl *U, phydbl *V, phydbl *R, int n, phydbl *uexpt, phydbl *expt) //!< Added by Marcelo.
 {
@@ -2663,63 +1278,98 @@ void PMat_CODON_Pairwise(phydbl l, phydbl *Pij,  phydbl *U, phydbl *V, phydbl *R
     for (k=0; k<n; k++) for (i=0,pP=Pij,expt_n=exp(R[k]*l); i<n; i++) for (j=0,uexpt_n=U[i*n+k]*expt_n; j<n; j++) *pP++ += uexpt_n*V[k*n+j];
     
 #endif
-    
     For(i,nn) if(Pij[i]<SMALL_PIJ) Pij[i]=SMALL_PIJ;
-    
 }
 
-/*********************************************************/
 
-void print_matrix(phydbl *mat, int ns, char *s,int row) //!< Added by Marcelo.
-{ //!< Useful for debugging.
-    int i,j;
-    FILE *out;
-    out=fopen(s,"w");
-    For(i,ns)
-    {
-        For(j,ns) fprintf(out,"%.16f ",mat[i*ns+j]);
-        if(!row) fprintf(out,"\n ");
-    }
-    fprintf(out,"\n ");
-    fclose(out);
+/**********************************************************
+ * Added by Ken - sets up repertoire-wide model settings
+ * declares necessary data structures
+ * */
+void Setup_Repertoire_Models(option* io){
+	int i,j;
+	if(io->repwidefreqs){ //calculate repertoire-wide codon frequencies
+	  if(io->eq_freq_handling != USER){
+		  For(i,io->ntrees){
+			  For(j,12){
+				  io->mod->baseCounts[j]+=io->mod_s[i]->baseCounts[j];
+				  if(io->mod->optDebug)printf("%d\t%lf\n",j,io->mod->baseCounts[j]);
+			  }
+		  }
+		  io->mod->base_freq[0]= (io->mod->baseCounts[0]) /(io->mod->baseCounts[0]+io->mod->baseCounts[1]+io->mod->baseCounts[2]+io->mod->baseCounts[3]);
+		  io->mod->base_freq[1]= (io->mod->baseCounts[1]) /(io->mod->baseCounts[0]+io->mod->baseCounts[1]+io->mod->baseCounts[2]+io->mod->baseCounts[3]);
+		  io->mod->base_freq[2]= (io->mod->baseCounts[2]) /(io->mod->baseCounts[0]+io->mod->baseCounts[1]+io->mod->baseCounts[2]+io->mod->baseCounts[3]);
+		  io->mod->base_freq[3]= (io->mod->baseCounts[3]) /(io->mod->baseCounts[0]+io->mod->baseCounts[1]+io->mod->baseCounts[2]+io->mod->baseCounts[3]);
+		  io->mod->base_freq[4]= (io->mod->baseCounts[4]) /(io->mod->baseCounts[4]+io->mod->baseCounts[5]+io->mod->baseCounts[6]+io->mod->baseCounts[7]);
+		  io->mod->base_freq[5]= (io->mod->baseCounts[5]) /(io->mod->baseCounts[4]+io->mod->baseCounts[5]+io->mod->baseCounts[6]+io->mod->baseCounts[7]);
+		  io->mod->base_freq[6]= (io->mod->baseCounts[6]) /(io->mod->baseCounts[4]+io->mod->baseCounts[5]+io->mod->baseCounts[6]+io->mod->baseCounts[7]);
+		  io->mod->base_freq[7]= (io->mod->baseCounts[7]) /(io->mod->baseCounts[4]+io->mod->baseCounts[5]+io->mod->baseCounts[6]+io->mod->baseCounts[7]);
+		  io->mod->base_freq[8]= (io->mod->baseCounts[8]) /(io->mod->baseCounts[8]+io->mod->baseCounts[9]+io->mod->baseCounts[10]+io->mod->baseCounts[11]);
+		  io->mod->base_freq[9]= (io->mod->baseCounts[9]) /(io->mod->baseCounts[8]+io->mod->baseCounts[9]+io->mod->baseCounts[10]+io->mod->baseCounts[11]);
+		  io->mod->base_freq[10]=(io->mod->baseCounts[10])/(io->mod->baseCounts[8]+io->mod->baseCounts[9]+io->mod->baseCounts[10]+io->mod->baseCounts[11]);
+		  io->mod->base_freq[11]=(io->mod->baseCounts[11])/(io->mod->baseCounts[8]+io->mod->baseCounts[9]+io->mod->baseCounts[10]+io->mod->baseCounts[11]);
+		  For(j,12)io->mod->base_freq[j]=roundf(io->mod->base_freq[j]*10000.0f)/10000.0f; //round base freqs to 5 decimal places
+		  if(io->mod->optDebug)For(j,12){printf("%lf\t%lf\n",io->mod->baseCounts[j],io->mod->base_freq[j]);}
+		  CF3x4(io->mod->base_freq, io->mod->genetic_code);
+  	  }else{
+	  	  For(i,12)io->mod->base_freq[i]=io->mod->user_b_freq[i];
+	  	  CF3x4(io->mod->base_freq, io->mod->genetic_code);
+  	  }
+  	  if(io->mod->optDebug)printf("cf3x4\n");
+  	  if(io->mod->optDebug)For(j,12){printf("%lf\t%lf\n",io->mod->baseCounts[j],io->mod->base_freq[j]);}
+  	  Freq_to_UnsFreq(io->mod->base_freq,   io->mod->uns_base_freq,   4, 1);
+  	  Freq_to_UnsFreq(io->mod->base_freq+4, io->mod->uns_base_freq+4, 4, 1);
+  	  Freq_to_UnsFreq(io->mod->base_freq+8, io->mod->uns_base_freq+8, 4, 1);
+  	  if(io->mod->optDebug)For(j,12)printf("%lf\t%lf\t%lf\t%lf\n",io->mod->baseCounts[j],io->mod->base_freq[j],io->mod->uns_base_freq[j],io->mod_s[0]->base_freq[j]);
+	}else if(io->mod->whichrealmodel == HLP19){ //calculate midpoint divergence along tree
+		For(i,io->ntrees){ //calculate midpoint divergence for each tree
+			t_tree* tree = io->tree_s[i];
+			phydbl tl = Get_Total_Divergence(tree->noeud[tree->mod->startnode], tree->noeud[tree->mod->startnode]->v[0],
+					tree->noeud[tree->mod->startnode]->b[0], 0.0, tree);
+			tree->mod->midpoint_div = tl/(tree->n_otu*2.0);
+			//if(io->mod->optDebug)
+				//printf("Total divergence: %lf %lf\n",tl,tree->mod->midpoint_div);
+		}
+		if(io->mod->freq_model==MROOT)Setup_Midpoint_Flux(io);
+		else Warn_And_Exit("HLP19 must be run with freq_model == MROOT");
+	}else{ //set up empirical frequencies for individual lineages (GY, or if -f empirical)
+		 For(i,io->ntrees){
+			model* mod = io->tree_s[i]->mod;
+			CF3x4(mod->base_freq, mod->genetic_code); //cut these segments?
+			EqFrequencies(mod->freq_model, mod->pi, mod->base_freq, mod->ns);
+		}
+	}
+
+	//set up data structures to store parameters
+	int nparams=0;
+	int nmodparams=2+io->mod->nomega_part+io->mod->nhotness+12;
+	nparams += nmodparams*(io->ntrees+1);
+	For(j,io->ntrees)nparams += 2*io->tree_s[j]->n_otu-3;
+	if(io->mod->optDebug)printf("\nNeed to store %d parameters",nparams);
+	io->paramStore=mCalloc(nparams,sizeof(phydbl));
+	io->nparams=nparams;
+
+	//need to copy this parameter over
+	io->mod->s_opt->min_diff_lk_global = io->min_diff_lk_global;
+
+	//set starting time for computations
+	#if defined OMP || defined BLAS_OMP
+	  io->t_beg=omp_get_wtime();
+	#else
+	  time(&io->t_beg);
+	#endif
+
+	//Set partial upward likelihoods for HLP models
+	if(io->mod->whichrealmodel<=HLP17){
+		For(i,io->ntrees){
+		  if(io->mod->whichrealmodel <= HLP17)
+			  Get_UPP(io->tree_s[i]->noeud[io->tree_s[i]->mod->startnode],
+				  io->tree_s[i]->noeud[io->tree_s[i]->mod->startnode]->v[0],
+				  io->tree_s[i]);
+		  }
+	}
 }
-/*********************************************************/
 
-void print_array(phydbl *array, int ns, char *s) //!< Added by Marcelo.
-{ //!< Useful for debugging.
-    int i;
-    // int j;
-    FILE *out;
-    out=fopen(s,"w");
-    For(i,ns)
-    {
-        fprintf(out,"%.11f ",array[i]);
-    }
-    fprintf(out,"\n ");
-    fclose(out);
-}
 
-/*******************************************************/
 
-void Update_Rate_Matrix_PCAModel(model *mod) { //!<Added by Marcelo.
-    int i, j, k;
-    int numSensecodons = mod->ns;
-    phydbl value;
-    
-    For(i, 64) For(j, 64) mod->userRates[i][j] = 0.0;
-    
-    // printf("%f, %f\n", mod->pcsC[0], mod->pcsC[1]);
-    
-    For(i, numSensecodons) {
-        For(j, i) {
-            value = 0;
-            For(k, mod->npcs) value += mod->pcsC[k] * pcaP[k*numSensecodons*numSensecodons + i*numSensecodons +j];
-            value *= pcaS[i][j];
-            value += pcaM[i][j];
-            value = (value>0) ? value : 0;
-            mod->userRates[senseCodons[i]][senseCodons[j]] = value;
-            mod->userRates[senseCodons[j]][senseCodons[i]] = value;
-        }
-    }
-}
-/*******************************************************/
+

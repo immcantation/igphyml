@@ -46,6 +46,5 @@ void Unswap_N_Branch(t_tree *tree,t_edge **b,int beg,int end);
 void Swap_N_Branch(t_tree *tree,t_edge **b,int beg,int end);
 void Check_NNI_Scores_Around(t_node *a, t_node *d, t_edge *b, phydbl *best_score);
 int Mov_Backward_Topo_Pars(t_tree *tree, int pars_old, t_edge **tested_b, int n_tested);
-void Simu_Pars(t_tree *tree, int n_step_max);
 
 #endif
