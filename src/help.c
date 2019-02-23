@@ -461,8 +461,8 @@ void Usage()
     //PhyML_Printf("%s\n\n\t\tNote: Use of options other than those here isn't yet supported in IgPhyML.\n\n",FLAT,BOLD,FLAT);
 
     //PhyML_Printf("\n");
-    
-        Exit("");
+    exit(0);
+    //    Exit("");
 }
 
 /*********************************************************/
