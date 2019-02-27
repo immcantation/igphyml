@@ -1439,6 +1439,7 @@ typedef struct __OutputToken {
 #define OUTTXT      0
 #define OUTYAML     1
 #define OUTDARWIN   2
+#define OUTTAB		3
 
 #define TFNUMERIC   0
 #define TFSTRING    1

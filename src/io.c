@@ -1284,6 +1284,92 @@ void R_wtree(t_node *pere, t_node *fils, int *available, char **s_tree, int *pos
   }
 }
 
+
+/********************************************************/
+//Print model parameters
+void Print_Params_Tab(model* mod, FILE* f){
+	int i;
+	if(mod->kappaci){
+		fprintf(f,"\t%.4f\t%.4f\t%.4f",mod->kappa,mod->kappalci,mod->kappauci);
+	}else if(mod->io->mod->kappaci){
+		fprintf(f,"\t%.4f\t%.4f\t%.4f",mod->io->mod->kappa,mod->io->mod->kappalci,mod->io->mod->kappauci);
+	}else{
+		fprintf(f,"\t%.4f",mod->kappa);
+	}
+	For(i,mod->nomega_part){
+		if(mod->omega_part_ci[i]){
+			fprintf(f,"\t%.4f\t%.4f\t%.4f",mod->omega_part[i],mod->omega_part_lci[i],mod->omega_part_uci[i]);
+		}else if(mod->io->mod->omega_part_ci[i]){
+			fprintf(f,"\t%.4f\t%.4f\t%.4f",mod->io->mod->omega_part[i],mod->io->mod->omega_part_lci[i],mod->io->mod->omega_part_uci[i]);
+		}else{
+			fprintf(f,"\t%.4f",mod->omega_part[i]);
+		}
+	}
+	For(i,mod->nmotifs){
+		if(mod->io->mod->hoptci[mod->io->mod->motif_hotness[i]] == 2){
+			fprintf(f,"\t%.4f\t%.4f\t%.4f",mod->hotness[mod->motif_hotness[i]],mod->hoptlci[mod->motif_hotness[i]],mod->hoptuci[mod->motif_hotness[i]]);
+		}else if(mod->io->mod->hoptci[mod->io->mod->motif_hotness[i]] == 1){
+			fprintf(f,"\t%.4f\t%.4f\t%.4f",mod->io->mod->hotness[mod->motif_hotness[i]],
+					mod->io->mod->hoptlci[mod->motif_hotness[i]],mod->io->mod->hoptuci[mod->motif_hotness[i]]);
+		}else{
+			fprintf(f,"\t%.4f",mod->hotness[mod->motif_hotness[i]]);
+		}
+	}
+}
+
+/********************************************************/
+void Print_Param_Header(char* str,int ci, FILE* f){
+	if(ci){
+		fprintf(f,"\t%s_MLE\t%s_LCI\t%s_UCI",str,str,str);
+	}else{
+		fprintf(f,"\t%s_MLE",str);
+	}
+}
+
+/********************************************************/
+//Tabular output function
+void Print_Tab_Out(option *io){
+	FILE* f = io->fp_out_stats;
+	int i;
+	int nseq = 0;
+	phydbl treel = 0.0;
+	fprintf(f,"CLONE\tNSEQ\tTREE_LENGTH\tLHOOD");
+	Print_Param_Header("KAPPA",io->mod->kappaci,f);
+	if(io->mod->nomega_part==1)Print_Param_Header("OMEGA",io->mod->omega_part_ci[0],f);
+	else if(io->mod->nomega_part==2){
+		Print_Param_Header("OMEGA_FWR",io->mod->omega_part_ci[0],f);
+		Print_Param_Header("OMEGA_CDR",io->mod->omega_part_ci[1],f);
+	}
+	For(i,io->mod->nmotifs){
+		Print_Param_Header(io->mod->motifs[i],io->mod->hoptci[io->mod->motif_hotness[i]],f);
+	}
+	fprintf(f,"\tTREE");
+
+	//print repertoire-wide information
+	For(i,io->ntrees){
+		nseq += io->mod_s[i]->n_otu - 1;
+		treel += Get_Tree_Size(io->tree_s[i]);
+	}
+	treel = treel/(io->ntrees*1.0);
+
+	fprintf(f,"\nREPERTOIRE\t%d\t%.4f\t%.4f",nseq,treel,io->replnL);
+	Print_Params_Tab(io->mod,f);
+	fprintf(f,"\t`%s`",io->command); //command is repertoire-wide "tree"
+
+	//print information for all subtrees
+	For(i,io->ntrees){
+		model* mod = io->mod_s[i];
+		int cloneid;
+		sscanf(mod->rootname,"%d_GERM",&cloneid);
+		fprintf(f,"\n%d\t%d\t%.4f\t%.4f",cloneid,mod->n_otu-1,Get_Tree_Size(io->tree_s[i]),mod->tree->c_lnL);
+		Print_Params_Tab(mod,f);
+		char* s_tree = (char *)Write_Tree(mod->tree);
+		fprintf(f,"\t%s",s_tree);
+	}
+	fprintf(f,"\n");
+}
+
+
 /********************************************************/
 //replacement output function
 void Print_IgPhyML_Out(option* io){

@@ -332,7 +332,7 @@ void setUpHLP17(option* io, model *mod){
    	while ((mtemp1 = strsep(&minfo1, ",")) != NULL){mod->nhotness++;}
    	mod->hotness = (phydbl*)mCalloc(mod->nhotness,sizeof(phydbl));
    	mod->hoptindex = (int*)mCalloc(mod->nhotness,sizeof(int ));
-   	mod->hoptci= (int*)mCalloc(mod->nhotness,sizeof(int ));
+   	mod->hoptci = (int*)mCalloc(mod->nhotness,sizeof(int ));
    	mod->hoptuci= (phydbl*)mCalloc(mod->nhotness,sizeof(phydbl));
    	mod->hoptlci=(phydbl*)mCalloc(mod->nhotness,sizeof(phydbl));
    	for(c=0;c<mod->nhotness;c++){
@@ -431,6 +431,16 @@ void setUpHLP17(option* io, model *mod){
        mod->partIndex = (int *)mCalloc(nsite,sizeof(int));
        mod->partNames = (char**)mCalloc(mod->nparts,sizeof(char*));
        mod->omega_part = (phydbl*)mCalloc(mod->nomega_part,sizeof(phydbl));
+       if(!mod->primary){
+       	   mod->omega_part_ci = (int*)mCalloc(io->mod->nomega_part,sizeof(int ));
+       	   mod->omega_part_uci = (phydbl*)mCalloc(io->mod->nomega_part,sizeof(phydbl ));
+       	   mod->omega_part_lci = (phydbl*)mCalloc(io->mod->nomega_part,sizeof(phydbl ));
+       	   /*For(c,mod->nomega_part){
+       		   mod->omega_part_ci[c] = io->mod->omega_part_ci[c];
+       		   mod->omega_part_lci[c] = io->mod->omega_part_lci[c];
+       		   mod->omega_part_uci[c] = io->mod->omega_part_uci[c];
+       	   }*/
+       }
        For(c,mod->nomega_part)mod->omega_part[c]=0.4;
        For(c,nsite)mod->partIndex[c]=-1;
 
@@ -724,7 +734,8 @@ void createOutFiles(option * io){
     	strcat(io->out_stats_file, "_igphyml_stats");
         strcat(io->out_stats_file, "_");
         strcat(io->out_stats_file, io->run_id_string);
-        strcat(io->out_stats_file, ".txt");
+        if(io->out_stats_format == OUTTXT)strcat(io->out_stats_file, ".txt");
+        else strcat(io->out_stats_file, ".tab");
     }else{
     	strcat(io->out_stats_file, "_igphyml_stats.txt");
     }
@@ -2138,7 +2149,6 @@ int mainOptionSwitch(int opt, char * optarg, option * io)
         case 'm': case 5 : {
             int i;
             For(i,strlen(optarg)) Uppercase(optarg+i);
-            
             if(!isalpha(optarg[0])) {
                 strcpy(io->mod->custom_mod_string,optarg);
                 
@@ -2954,7 +2964,9 @@ int mainOptionSwitch(int opt, char * optarg, option * io)
             if ((strcmp (optarg, "darwin") == 0) ||
                        (strcmp (optarg, "Darwin") == 0)) {
                 io->out_stats_format = OUTDARWIN;
-            } else {
+            }else if(strcmp (optarg, "tab") == 0){
+            	io->out_stats_format = OUTTAB;
+            }else {
                 io->out_stats_format = OUTTXT;
             }
             break;

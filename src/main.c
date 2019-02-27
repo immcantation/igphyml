@@ -255,8 +255,11 @@ int main(int argc, char **argv){
   #endif
 
   //output data!
-  Print_IgPhyML_Out(io);
-
+  if(io->out_stats_format != OUTTXT){
+	  Print_Tab_Out(io);
+  }else{
+	  Print_IgPhyML_Out(io);
+  }
 
   //TODO: METHODS FOR FREEING DATA STRUCTURES
 

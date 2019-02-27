@@ -39,7 +39,7 @@ int Next_Par(char *s,int pos);
 char *Write_Tree(t_tree *tree);
 void R_wtree(t_node *pere,t_node *fils,int *available,char **s_tree, int *pos,t_tree *tree);
 
-
+void Print_Tab_Out(option *io);
 void Print_IgPhyML_Out(option* io);
 
 
