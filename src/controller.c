@@ -2873,7 +2873,7 @@ int mainOptionSwitch(int opt, char * optarg, option * io)
             io->precon=7;//atoi(optarg);
             printf("\nDoing pars recon\n");
             strcpy(io->mod->preconfile,optarg);
-            //printf("preconfile: \t %s\n",io->mod->preconfile);
+            printf("preconfile: \t %s\n",io->mod->preconfile);
            	break;
         }
 
