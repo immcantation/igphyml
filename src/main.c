@@ -206,7 +206,7 @@ int main(int argc, char **argv){
 		  "\n........ Use the '--threads' option to specify more (might speed things up).\n");
 
   //Set up base frequencies and additional data structures
-  Setup_Repertoire_Models(io);
+  if(!io->precon)Setup_Repertoire_Models(io);
 
 
   //Do topology and parameter estimation if requested
@@ -248,6 +248,11 @@ int main(int argc, char **argv){
   //ASR, if desired
   if(io->mod->ASR)ASR_Wrapper(io);
 
+  //re-arrange topology based on parsimony model, if desired
+  if(io->precon==2 || io->precon==-2 || io->precon==4 ||
+		  io->precon==-4 || io->precon==-6|| io->precon==7)
+	  Prepars_Wrapper(io);
+
   #if defined OMP || defined BLAS_OMP
   t_end=omp_get_wtime();
   #else
@@ -260,6 +265,9 @@ int main(int argc, char **argv){
   }else{
 	  Print_IgPhyML_Out(io);
   }
+
+  //parsimony reconstructions, if desired
+  if(io->precon)Pars_Reconstructions(io);
 
   //TODO: METHODS FOR FREEING DATA STRUCTURES
 

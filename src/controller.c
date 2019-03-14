@@ -405,8 +405,10 @@ void setUpHLP17(option* io, model *mod){
   			phydbl *hot;
   			int combinations = 13845841;
   			mod->hotspotcmps[mot] = (phydbl *)mCalloc(combinations,sizeof(phydbl));//checked 15/7/2016
-  			For(c,combinations){
-  				int fscn = fscanf(file, "%lf\n",&mod->hotspotcmps[mot][c]);
+  			if(!io->precon){
+  				For(c,combinations){
+  					int fscn = fscanf(file, "%lf\n",&mod->hotspotcmps[mot][c]);
+  				}
   			}
   			fclose(file);
   		}
@@ -585,7 +587,7 @@ void setUpHLP17(option* io, model *mod){
         	mod->mid_pi[0] = mCalloc(mod->ns,sizeof(phydbl));
         }
     }//partfilespec==1
-   	if(io->mod->constB)Setup_CBmat(mod,1,mod->pi);
+   	if(io->mod->constB )Setup_CBmat(mod,1,mod->pi);
   	setupRootFreqs(mod);
 }
 

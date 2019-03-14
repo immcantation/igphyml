@@ -601,9 +601,10 @@ void Setup_CBmat(model* mod, int uniform, phydbl* pis){
   For(modeli,mod->nomega_part){
 		mod->cBmat[modeli]=(phydbl **)mCalloc(3721,sizeof(phydbl*));
 		double htotal[mod->nmotifs];
-		For(fi,61){ //Fill in B matrix
+		  For(fi,61){ //Fill in B matrix
 			For(ti,61){
 				mod->cBmat[modeli][fi*61+ti]=mCalloc(mod->nmotifs,sizeof(phydbl));
+				if(!mod->io->precon){
 				For(li,61){
 					For(ri,61){
 						For(c,mod->nmotifs){
@@ -618,7 +619,8 @@ void Setup_CBmat(model* mod, int uniform, phydbl* pis){
 						}
 					}
 				}
-			}
+			 }
+		  }
 		}
   	}
 }
