@@ -471,7 +471,7 @@ void Setup_Custom_Pars_Model(t_tree* tree){
 	 }
 	  For(i,tree->nstate){ //set up step mat
 	 	 For(j,tree->nstate){
-	 		// printf("%s\t%s\t%d\n",tree->chars[i],tree->chars[j],tree->step_mat[i*tree->nstate+j]);
+	 		 //printf("%s\t%s\t%d\n",tree->chars[i],tree->chars[j],tree->step_mat[i*tree->nstate+j]);
 	 	 }
 	 }
 	  //read in ambiguous states
@@ -495,7 +495,7 @@ void Setup_Custom_Pars_Model(t_tree* tree){
 		 }
 	 }
 	 For(j,statecount){
-		// printf("state %d\t%s\t%d\n",j,ambigstatesfrom[j],ambigstatesto[j]);
+		 //printf("state %d\t%s\t%d\n",j,ambigstatesfrom[j],ambigstatesto[j]);
 	 }
 
 	 For(i,tree->n_otu){//read in information from the ends of the sequence names
@@ -508,15 +508,24 @@ void Setup_Custom_Pars_Model(t_tree* tree){
 			 strcpy(state,strsep(&minfo2, "_"));
 		 }
 		 if(tree->mod->optDebug)printf("\n%s\t%s",tree->noeud[i]->name,state);
+		 //printf("\n%s\t%s",tree->noeud[i]->name,state);
+		 int found = 0;
 		 For(j,statecount){
 			 if(strcmp(state,ambigstatesfrom[j])==0){
 				 tree->noeud[i]->s[ambigstatesto[j]]=0;
+				 found++;
 			 }
+		 }
+		 if(!found){
+			 printf("\nState %s from sequence %s not found in model.\n",state,tree->noeud[i]->name);
+			 Warn_And_Exit("");
 		 }
 		 For(j,tree->nstate){
 			 if(tree->mod->optDebug)printf(" %d",tree->noeud[i]->s[j]);
+			 //printf(" %d",tree->noeud[i]->s[j]);
 		 }
 		 if(tree->mod->optDebug)printf("\n");
+		 //printf("\n");
 	 }
 	 fclose(PARS);
 }
