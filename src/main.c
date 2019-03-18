@@ -139,7 +139,7 @@ int main(int argc, char **argv){
 
    if(!io->mod->s_opt->random_input_tree) io->mod->s_opt->n_rand_starts = 1;
    if((io->mod->s_opt->random_input_tree) && (io->mod->s_opt->topo_search != NNI_MOVE)) io->init_run=1; //! Added by Marcelo.
-   Init_Model(cdata,mod,io);
+   if(!io->precon)Init_Model(cdata,mod,io);
    io->init_run=0;
    if(io->in_tree<=1 || strcmp(mod->in_tree_file,"N")==0){
 	   tree = Dist_And_BioNJ(cdata,mod,io); //estimate initial tree topology

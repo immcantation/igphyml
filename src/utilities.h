@@ -1081,6 +1081,10 @@ typedef struct __Option {
 
   //Options for recon
   int					precon;
+  int					maxparstrees; //maximum number of possible ambgiuous trees in parsimony reconstruction
+  int					parssample;
+  int					maxparsotu;
+
   int 					flux; //do full flux adjustment?
   char*					asrfile;
   int					bmatorder;

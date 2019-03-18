@@ -135,6 +135,8 @@ struct option longopts[] =
 	{"flux",		  no_argument,NULL,173},  //!<Added by Ken
 	{"eat",		  required_argument,NULL,174},  //!<Added by Ken
 	{"repwidefreqs",		  no_argument,NULL,175},  //!<Added by Ken
+	{"max_pars_trees",		  required_argument,NULL,176},  //!<Added by Ken
+	{"pars_samples",		  required_argument,NULL,177},  //!<Added by Ken
     {0,0,0,0}
 };
 
@@ -2903,6 +2905,20 @@ int mainOptionSwitch(int opt, char * optarg, option * io)
         	printf("\nUsing repertoire-wide codon frequencies\n");
         	io->repwidefreqs=1;
         	break;
+        }
+           	//////////////////////////////////////////////////////////////////////////////////////
+            // --max_pars_trees <int>
+        case 176:{
+        		io->maxparstrees=atoi(optarg);
+        		//printf("new mindiff %lf\n",io->min_diff_lk_global);
+        		break;
+        }
+
+            //////////////////////////////////////////////////////////////////////////////////////
+            // --pars_sample <int>
+        case 177:{
+        		io->parssample=atoi(optarg);
+        		break;
         }
 
             //////////////////////////////////////////////////////////////////////////////////////

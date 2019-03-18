@@ -2012,7 +2012,7 @@ void Make_Model_Complete(model *mod){
     	}
     }
 
-    if(mod->expm==SSPADE){
+    if(mod->expm==SSPADE && !mod->io->precon){
       mod->ipiv_part                                = (int    **)mCalloc(mod->nomega_part,sizeof(int*));
       mod->U_part                                   = (phydbl **)mCalloc(mod->nomega_part,sizeof(phydbl*));
       mod->V_part                                   = (phydbl **)mCalloc(mod->nomega_part,sizeof(phydbl*));
@@ -2675,6 +2675,10 @@ void Set_Defaults_Input(option* io,model * mod)
   io->n_trees = 1;
   io->ratio_test = 0;
   io->colalias = 0; //Don't compress data for now
+
+  io->maxparstrees = 100;
+  io->parssample = 1000;
+  io->maxparsotu = 10000;
 } 
 
 /*********************************************************/

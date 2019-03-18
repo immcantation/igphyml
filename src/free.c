@@ -147,7 +147,7 @@ void Free_Edge(t_edge *b)
 
 void Free_Node(t_node *n)
 {
-  //int i;
+  int i;
 
   free(n->b);
   free(n->v);
@@ -157,6 +157,9 @@ void Free_Node(t_node *n)
   free(n->ori_name);//!< Added by Marcelo.
   free(n->name);//!< Added by Marcelo.
   
+  For(i,7) free(n->partfreqs[i]);
+  free(n->partfreqs);
+
   free(n);
 }
 
@@ -711,5 +714,4 @@ void Free_DarwinToken(dtoken *t) {
     free(t);
 }
 
-/*********************************************************/
 /*********************************************************/
