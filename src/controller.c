@@ -137,6 +137,7 @@ struct option longopts[] =
 	{"repwidefreqs",		  no_argument,NULL,175},  //!<Added by Ken
 	{"max_pars_trees",		  required_argument,NULL,176},  //!<Added by Ken
 	{"pars_samples",		  required_argument,NULL,177},  //!<Added by Ken
+	{"mdpos",		  required_argument,NULL,178},  //!<Added by Ken
     {0,0,0,0}
 };
 
@@ -2920,7 +2921,12 @@ int mainOptionSwitch(int opt, char * optarg, option * io)
         		io->parssample=atoi(optarg);
         		break;
         }
-
+        	//////////////////////////////////////////////////////////////////////////////////////
+            // --pars_sample <int>
+        case 178:{
+        		io->mod->mdpos=atoi(optarg);
+        		break;
+        }
             //////////////////////////////////////////////////////////////////////////////////////
             // --multiple
             //

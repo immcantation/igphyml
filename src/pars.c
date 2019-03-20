@@ -515,7 +515,7 @@ void Setup_Custom_Pars_Model(t_tree* tree){
 		 char* minfo1 = strdup(tree->noeud[i]->name);
 		 char* minfo2 = strdup(tree->noeud[i]->name);
 		 while ((mtemp = strsep(&minfo1, "_")) != NULL){nelements++;}
-		 For(j,nelements){
+		 For(j,nelements-tree->mod->mdpos){
 			 strcpy(state,strsep(&minfo2, "_"));
 		 }
 		 if(tree->mod->optDebug)printf("\n%s\t%s",tree->noeud[i]->name,state);

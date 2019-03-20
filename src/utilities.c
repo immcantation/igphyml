@@ -2285,6 +2285,8 @@ model *Copy_Partial_Model(model *ori, int num){
   //cpy->s_opt         = ori->s_opt;          //!< Added by Marcelo.
   cpy->n_w_catg      = ori->n_w_catg;         //!< Added by Marcelo.
 
+  cpy->mdpos 		 = ori->mdpos;
+
   //optimization parameters
   cpy->s_opt = Make_Optimiz();
   Copy_Optimiz(cpy->s_opt,ori->s_opt);
@@ -2775,6 +2777,7 @@ void Set_Defaults_Model(model *mod)
   For(c,12){mod->baseCounts[c]=0.0;}
   mod->optIter=0;
 
+  mod->mdpos = 0;
 
 }
 /*********************************************************/
