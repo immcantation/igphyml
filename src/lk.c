@@ -2141,7 +2141,7 @@ phydbl Lk_Core(t_edge *b, t_tree *tree)
       if(site_lk_cat < SMALL){
     	  site_lk_cat = SMALL;
     	  printf("site lk = 0 %lf %d %d %d.\nSetting underflow to DBL_MIN. Probably not a big problem during initial parameter searching..\n",site_lk_cat,site,sum_scale_left_cat[catg],sum_scale_rght_cat[catg]);
-    	  printf("%lf %lf",tree->mod->omega_part[0],tree->mod->kappa);
+    	  printf("%lf %lf tree: %d, root: %s",tree->mod->omega_part[0],tree->mod->kappa,tree->mod->num,tree->mod->rootname);
        	  printf("\n");
       }
       tree->site_lk_cat[catg] = site_lk_cat;
