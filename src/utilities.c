@@ -2679,7 +2679,7 @@ void Set_Defaults_Input(option* io,model * mod)
   io->colalias = 0; //Don't compress data for now
 
   io->maxparstrees = 100;
-  io->parssample = 1000;
+  io->parssample = 100;
   io->maxparsotu = 10000;
 } 
 
