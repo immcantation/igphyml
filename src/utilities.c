@@ -2286,6 +2286,7 @@ model *Copy_Partial_Model(model *ori, int num){
   cpy->n_w_catg      = ori->n_w_catg;         //!< Added by Marcelo.
 
   cpy->mdpos 		 = ori->mdpos;
+  cpy->permute_tips 		 = ori->permute_tips;
 
   //optimization parameters
   cpy->s_opt = Make_Optimiz();
@@ -2778,7 +2779,7 @@ void Set_Defaults_Model(model *mod)
   mod->optIter=0;
 
   mod->mdpos = 0;
-
+  mod->permute_tips = 0;
 }
 /*********************************************************/
 

@@ -138,6 +138,7 @@ struct option longopts[] =
 	{"max_pars_trees",		  required_argument,NULL,176},  //!<Added by Ken
 	{"pars_samples",		  required_argument,NULL,177},  //!<Added by Ken
 	{"mdpos",		  required_argument,NULL,178},  //!<Added by Ken
+	{"permute",		  no_argument,NULL,179},  //!<Added by Ken
     {0,0,0,0}
 };
 
@@ -2926,6 +2927,12 @@ int mainOptionSwitch(int opt, char * optarg, option * io)
         case 178:{
         		io->mod->mdpos=atoi(optarg);
         		break;
+        }
+        //////////////////////////////////////////////////////////////////////////////////////
+                // --permute
+        case 179:{
+        		io->mod->permute_tips=1;
+            break;
         }
             //////////////////////////////////////////////////////////////////////////////////////
             // --multiple

@@ -894,6 +894,7 @@ typedef struct __Model {
 
  char*				preconfile; //file used for custom parsimony model
  int					mdpos; //position (from the left of the sequence ID) of the metadata of interest. Rightmost is 0, increasing to the left
+ int						permute_tips;
 }model;
 
 /*********************************************************/

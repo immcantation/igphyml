@@ -34,6 +34,7 @@ the GNU public licence.  See http://www.opensource.org for details.
 
 void Prepars_Wrapper(option* io);
 
+void Permute_Tips(t_tree* tree);
 void Init_Class_Tips(t_tree* tree, int precon);
 int Fill_Sankoff(t_node* d,t_tree* tree, int root);
 void Get_First_Path(t_node* d,int index,t_tree* tree, int root);

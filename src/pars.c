@@ -282,7 +282,6 @@ void Init_Class_Tips(t_tree* tree, int precon){
 	 char* mtemp;
 	 if(precon == 7){
 		 Setup_Custom_Pars_Model(tree);
-
 	 }else{
 	  if(precon <= -5){ //create model
 		 tree->nstate=6;
@@ -400,7 +399,33 @@ void Init_Class_Tips(t_tree* tree, int precon){
 }
 
 /*********************************************************
-* Free extraneous data structures
+* Permute tip names except for germline
+*/
+void Permute_Tips(t_tree* tree){
+	int i, j;
+	int indexes[tree->n_otu-1];
+
+	int count = 0;
+	//For(i,tree->n_otu)printf("1 %d\t%s\n",i,tree->noeud[i]->name);
+	int n = tree->n_otu;
+	char temp[T_MAX_NAME];
+    For(i,n - 1) {
+    		if(strcmp(tree->noeud[i]->name,tree->mod->rootname) != 0){
+    			j = i + rand() / (RAND_MAX / (n - i) + 1);
+    			while(strcmp(tree->noeud[j]->name,tree->mod->rootname) == 0)
+    				j = i + rand() / (RAND_MAX / (n - i) + 1);
+    			strcpy(temp,tree->noeud[i]->name);
+    			strcpy(tree->noeud[i]->name,tree->noeud[j]->name);
+    			strcpy(tree->noeud[j]->name,temp);
+    		}
+    }
+	//For(i,tree->n_otu)printf("2 %d\t%s\n",i,tree->noeud[i]->name);
+
+}
+
+
+/*********************************************************
+* read in parimsony model
 */
 void Setup_Custom_Pars_Model(t_tree* tree){
 	//printf("Opening %s\n",tree->mod->preconfile);
@@ -508,7 +533,6 @@ void Setup_Custom_Pars_Model(t_tree* tree){
 	 For(j,statecount){
 		 //printf("state %d\t%s\t%d\n",j,ambigstatesfrom[j],ambigstatesto[j]);
 	 }
-
 	 For(i,tree->n_otu){//read in information from the ends of the sequence names
 		 int nelements=0;
 		 char* state = mCalloc(T_MAX_OPTION,sizeof(char));
@@ -519,7 +543,7 @@ void Setup_Custom_Pars_Model(t_tree* tree){
 			 strcpy(state,strsep(&minfo2, "_"));
 		 }
 		 if(tree->mod->optDebug)printf("\n%s\t%s",tree->noeud[i]->name,state);
-		 //printf("\n%s\t%s",tree->noeud[i]->name,state);
+		 printf("\n%s\t%s",tree->noeud[i]->name,state);
 		 int found = 0;
 		 For(j,statecount){
 			 if(strcmp(state,ambigstatesfrom[j])==0){
@@ -543,6 +567,7 @@ void Setup_Custom_Pars_Model(t_tree* tree){
 	 free(to);
 	 fclose(PARS);
 }
+
 
 /*********************************************************
 * Free extraneous data structures
