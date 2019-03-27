@@ -543,7 +543,7 @@ void Setup_Custom_Pars_Model(t_tree* tree){
 			 strcpy(state,strsep(&minfo2, "_"));
 		 }
 		 if(tree->mod->optDebug)printf("\n%s\t%s",tree->noeud[i]->name,state);
-		 printf("\n%s\t%s",tree->noeud[i]->name,state);
+		 //printf("\n%s\t%s",tree->noeud[i]->name,state);
 		 int found = 0;
 		 For(j,statecount){
 			 if(strcmp(state,ambigstatesfrom[j])==0){

@@ -167,7 +167,7 @@ int main(int argc, char **argv){
 
     //Find location of root node if HLP
     if(mod->whichrealmodel <= HLP17)Get_Root_Pos(mod,tree,io);
-   // if(mod->permute_tips)Permute_Tips(tree);
+    if(mod->permute_tips)Permute_Tips(tree);
     if(tree->mod->partfilespec==0){ //Set up default partition model if necessary
     	tree->mod->partIndex = (int *)mCalloc(tree->n_pattern,sizeof(int));
     	For(i,tree->n_pattern)mod->partIndex[i]=0;
