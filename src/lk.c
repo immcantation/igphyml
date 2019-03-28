@@ -1882,8 +1882,8 @@ phydbl Lk_Core_UPP(t_edge *b, t_tree *tree, t_node *anc, t_node *d)
 
 	      if(site_lk_cat < SMALL){
 	    	  site_lk_cat = SMALL;
-	    	  printf("site lk = 0 %d %d %lf %d %d %d.\nSetting underflow to DBL_MIN. See Manual.\n",anc->num,d->num,site_lk_cat,site,sum_scale_upp_cat[catg],sum_scale_down_cat[catg]);
-	    	  printf("%lf %lf",tree->mod->omega_part[0],tree->mod->kappa);
+	    	  printf("site lk = 0 %lf %d %d %d.\nSetting underflow to DBL_MIN. Probably not a big problem during initial parameter searching..\n",site_lk_cat,site,sum_scale_upp_cat[catg],sum_scale_down_cat[catg]);
+    	  printf("omega: %lf, kappa: %lf, number in repfile: %d, site: %d",tree->mod->omega_part[0],tree->mod->kappa,tree->mod->num,site);
 	       	  printf("\n");
 	      }
 	      tree->site_lk_cat[catg] = site_lk_cat;
@@ -2141,7 +2141,7 @@ phydbl Lk_Core(t_edge *b, t_tree *tree)
       if(site_lk_cat < SMALL){
     	  site_lk_cat = SMALL;
     	  printf("site lk = 0 %lf %d %d %d.\nSetting underflow to DBL_MIN. Probably not a big problem during initial parameter searching..\n",site_lk_cat,site,sum_scale_left_cat[catg],sum_scale_rght_cat[catg]);
-    	  printf("%lf %lf",tree->mod->omega_part[0],tree->mod->kappa);
+    	  printf("omega: %lf, kappa: %lf, number in repfile: %d, site: %d",tree->mod->omega_part[0],tree->mod->kappa,tree->mod->num,site);
        	  printf("\n");
       }
       tree->site_lk_cat[catg] = site_lk_cat;

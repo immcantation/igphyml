@@ -2874,6 +2874,7 @@ int mainOptionSwitch(int opt, char * optarg, option * io)
             //printf("\nDoing pars recon\n");
             strcpy(io->mod->preconfile,optarg);
             //printf("preconfile: \t %s\n",io->mod->preconfile);
+            Warn_And_Exit("--recon not available! (yet)");
            	break;
         }
 
