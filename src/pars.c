@@ -143,10 +143,12 @@ void Pars_Reconstructions(option* io){
   	      phydbl* classl = mCalloc(tree->nstate,sizeof(phydbl));
 
   		  int npars = maxtrees;
+  		  int minrootsar[tree->nstate];
   		  int minroots=0;
   		  int minroot=-1;
   		  For(i,tree->nstate){
   			if(r->sroot[i] == pars){
+  				minrootsar[minroots] = i;
   				minroots++;
   				minroot=i;
   			}
@@ -165,10 +167,6 @@ void Pars_Reconstructions(option* io){
 					Copy_Sankoff_Tree(tree,tree2);
 					trees[npars]=tree2;
   					npars = Get_All_Paths(r2,i,tree2,trees,1,maxtrees,npars,j,i)+1;
-  					//Clean_Tree(tree2);
-  					//Free_Tree(tree2);
-  					//printf("%d %d\n",trees[0]->noeud[trees[0]->mod->startnode]->pstate,npars);
-  					//printTreeState(trees[npars-1]->noeud[trees[npars-1]->mod->startnode],trees[npars-1],1);printf(" 0\n");
   				}
   				if(npars >= maxtrees)break; //unless you get too many trees, then just sample
   			  }
@@ -207,10 +205,10 @@ void Pars_Reconstructions(option* io){
   		  }
   		  if(npars>=maxtrees){ //if too many trees found, sample!
   			  npars = sample;
-  			  if(minroots != 1){
+  			  /*if(minroots != 1){
   				  printf("NEED TO FIX RAND PATH TO WORK WITH AMBIGUOUS ROOTS %d %d\n",minroots,minroot);
   			  	  exit(EXIT_FAILURE);
-  			  }
+  			  }*/
   	  		  FILE* treeout1 = Openfile(fout, 1 );
   			  printf("\n. Sampling %d trees instead for tree %d %s.",sample,j,tree->mod->rootname);
   			  for(i=1;i<maxtrees;i++){ //free trees from attempt to solve for all
@@ -228,6 +226,9 @@ void Pars_Reconstructions(option* io){
   		  	  fprintf(treeout1,";\nEnd\nBegin trees;\n");
   			  For(i,sample){
 	  	  		  fprintf(treeout1,"Tree TREE%d = [&R] ",i+1);
+	  	  		  int n = rand() % minroots;
+	  	  		  int minroot = minrootsar[n];
+	  	  		  //printf("root %d %d\n",minroot,minroots);
   			  	  Get_Rand_Path(r,minroot,tree,1);
   			  	  Fill_Pars_Stats(r,tree, switches,classl,1);
   			  	  io->precon *= 10;
@@ -826,7 +827,7 @@ void Get_First_Path(t_node *d, int index, t_tree *tree,int root){
 /********************************************************
  * Recurse down tree, randomly choosing ambiguous pointers
  * */
-void Get_Rand_Path(t_node *d, int index, t_tree *tree,int root){
+void Get_Rand_Path(t_node *d, int index, t_tree *tree, int root){
 	int i,j,dir1,dir2;
 	int ldraw=0;
 	int rdraw=0;
