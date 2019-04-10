@@ -254,10 +254,14 @@ void Pars_Reconstructions(option* io){
   		 }
   		 phydbl tswitch, tlen;
   		 tswitch=tlen=0;
+  		 //printf("\nMINROOTS: %d",minroots);
   		 For(tposi,tree->nstate){
   		 	fprintf(pstatf,"%d\t%s\tN\t%lf\n",j,tree->chars[tposi],classl[tposi]);
   		 	tlen+=classl[tposi];
   		 }
+  		 fprintf(pstatf,"%d\tUCA\t%s",j,tree->chars[minrootsar[0]]);
+  		 for(i = 1; i < minroots; i++)fprintf(pstatf,":%s",tree->chars[minrootsar[i]]);
+  		 fprintf(pstatf,"\t0.0\n");
   		 	For(tposi,tree->nstate){
   		 		For(tposj,trees[0]->nstate){
   		 			fprintf(pstatf,"%d\t%s\t%s\t%lf\n",j,tree->chars[tposi],tree->chars[tposj],switches[tposi*tree->nstate+tposj]);
