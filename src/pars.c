@@ -428,6 +428,32 @@ void Permute_Tips(t_tree* tree){
 
 }
 
+/*********************************************************
+* Permute tip names except for germline
+*/
+void Permute_MetaData(t_tree* tree, int pos){
+	int i, j;
+	int indexes[tree->n_otu-1];
+
+	//permute last element of tips and re-assign to sequence IDs
+	int count = 0;
+	//For(i,tree->n_otu)printf("1 %d\t%s\n",i,tree->noeud[i]->name);
+	int n = tree->n_otu;
+	char temp[T_MAX_NAME];
+    For(i,n - 1) {
+    		if(strcmp(tree->noeud[i]->name,tree->mod->rootname) != 0){
+    			j = i + rand() / (RAND_MAX / (n - i) + 1);
+    			while(strcmp(tree->noeud[j]->name,tree->mod->rootname) == 0)
+    				j = i + rand() / (RAND_MAX / (n - i) + 1);
+    			strcpy(temp,tree->noeud[i]->name);
+    			strcpy(tree->noeud[i]->name,tree->noeud[j]->name);
+    			strcpy(tree->noeud[j]->name,temp);
+    		}
+    }
+	//For(i,tree->n_otu)printf("2 %d\t%s\n",i,tree->noeud[i]->name);
+
+}
+
 
 /*********************************************************
 * read in parimsony model
@@ -495,7 +521,7 @@ void Setup_Custom_Pars_Model(t_tree* tree){
 	 int val=MAX_PARS;
 	 if(fscn != EOF && strcmp(line,"#CONSTRAINTS")==0){
 		 do{
-			 fscn = fscanf(PARS, "%s %s\n",from,to);
+			 fscn = fscanf(PARS, "%s %s %d\n",from,to,&val);
 			 //printf("LINE %s %s %d\n",from,to,val);
 			 if(strcmp(from,"#AMBIGUOUS")!=0){
 			 For(i,tree->nstate){ //set up step mat
@@ -1004,14 +1030,14 @@ void Fill_Pars_Stats(t_node* d,t_tree* tree, phydbl* switches, phydbl* classl, i
 	dir1=dir2=-1;
 	if(!root){
 		//printf("%d\t%d\n",d->anc->pstate,d->pstate);
-		if(d->pstate != d->anc->pstate){
+		//if(d->pstate != d->anc->pstate){
 			//printf("%d\t%d\n",d->anc->pstate,d->pstate);
 			switches[d->anc->pstate*tree->nstate+d->pstate]++;
 			classl[d->pstate] += d->anc_edge->l*0.5; //split switched branch lengths
 			classl[d->anc->pstate] += d->anc_edge->l*0.5;
-		}else{
+		/*}else{
 			classl[d->pstate] += d->anc_edge->l;
-		}
+		}*/
 	}
 	if(!d->tax){
 		t_node* a = d->anc;

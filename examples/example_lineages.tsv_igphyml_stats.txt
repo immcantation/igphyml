@@ -1,0 +1,56 @@
+oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo
+                      --- IgPhyML 1.0.7 201902.19 ---
+               Kenneth B Hoehn, Gerton Lunter, Oliver G Pybus
+
+
+                         Based off of codonPhyML
+Marcelo S Zanetti, Stefan Zoller, Manuel Gil, Louis du Plessis, Maria Anisimova
+                 http://sourceforge.net/projects/codonphyml/
+oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo
+                                 Summary
+     See doc/IgPhyML_Manual.pdf for further detail on interpreting results
+oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo
+. Command: ../src/igphyml --repfile example_lineages.tsv -m HLP 
+. Data sets: 2
+. Model name:	HLP19+W+K+F
+. Hotspots:	WRC_2:0,GYW_0:1,WA_1:2,TW_0:3,SYC_2:4,GRS_0:5
+. h optimization:	e,e,e,e,e,e
+. Tree topology search:	NNIs
+. Combined log-likelihood: 	-290.7931
+. Estimated substitutions in repertoire:	61.1902
+. Mean tree length:	0.2859
+. Transition/transversion ratio: 	2.26600
+. Omega 0:	0.5285
+. Omega 1:	2.3328
+. Hotspot model		h_index	optimized?	h_value
+	Motif:	WRC_2		0		1		4.80275038
+	Motif:	GYW_0		1		1		3.44653087
+	Motif:	WA_1		2		1		5.97147166
+	Motif:	TW_0		3		1		0.81272546
+	Motif:	SYC_2		4		1		-0.99000000
+	Motif:	GRS_0		5		1		0.25832142
+. Time used:	0h0m15s
+. Seconds:	15
+
+oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo
+                                 Submodels
+oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo
+Ind	Seq	TreeL	Likelihood	Kappa	Omega0	Omega1	WRC_2	GYW_0	WA_1	TW_0	SYC_2	GRS_0	RootID	Seq_File	Tree_File
+0	5	0.29	-149.85	2.2660	0.5285	2.3328	4.8028	3.4465	5.9715	0.8127	-0.9900	0.2583	1_GERM	example/1.fasta	N
+1	4	0.28	-140.94	2.2660	0.5285	2.3328	4.8028	3.4465	5.9715	0.8127	-0.9900	0.2583	2_GERM	example/2.fasta	N
+
+
+#	If you use IgPhyML, please cite:
+#	K.B. Hoehn, G Lunter, O.G. Pybus
+#	A phylogenetic codon substitution model for antibody lineages
+#	Genetics. 2017 May; 206(1): 417–427
+#
+#	and
+#
+#	M. Gil, M.S. Zanetti, S. Zoller and M. Anisimova 2013
+#	CodonPhyML: Fast Maximum Likelihood Phylogeny Estimation under Codon Substitution Models
+#	Molecular Biology and Evolution, pages 1270-1280, volume 30, number 6
+#
+#	If you use aBayes branch supports please cite:
+#	M. Anisimova, M. Gil, J.F. Dufayard, C. Dessimoz and O. Gascuel 2011
+#	Survey of branch support methods demonstrates accuracy, power, and robustness of fast likelihood-based approximation schemes. Syst Biol 60:685-699
