@@ -1073,6 +1073,7 @@ typedef struct __Option {
   int							GRv;
   phydbl 					roughCI;
   char*						outrep;
+  char*						outname;
   int						outrepspec;
   int							CIest;
   phydbl 			min_diff_lk_global;

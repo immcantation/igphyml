@@ -2641,6 +2641,8 @@ void Set_Defaults_Input(option* io,model * mod)
   io->omegaOpt=DM0;
   io->userWantsKappa             = YES;
   io->outrep=mCalloc(T_MAX_FILE,sizeof(char));
+  io->outname=mCalloc(T_MAX_FILE,sizeof(char));
+  strcpy(io->outname,"NULL");
   io->asrfile=mCalloc(T_MAX_FILE,sizeof(char));
   io->GRstring=mCalloc(T_MAX_OPTION,sizeof(char));
   io->bmatorder=1;

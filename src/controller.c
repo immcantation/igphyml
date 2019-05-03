@@ -135,6 +135,7 @@ struct option longopts[] =
 	{"flux",		  no_argument,NULL,173},  //!<Added by Ken
 	{"eat",		  required_argument,NULL,174},  //!<Added by Ken
 	{"repwidefreqs",		  no_argument,NULL,175},  //!<Added by Ken
+	{"outname",		  required_argument,NULL,176},  //!<Added by Ken
     {0,0,0,0}
 };
 
@@ -730,14 +731,18 @@ void checkModelCombinations(option * io){
 
 /* Create output files */
 void createOutFiles(option * io){
-    if(io->append_run_ID) {
+    if(io->append_run_ID){
     	strcat(io->out_stats_file, "_igphyml_stats");
         strcat(io->out_stats_file, "_");
         strcat(io->out_stats_file, io->run_id_string);
         if(io->out_stats_format == OUTTXT)strcat(io->out_stats_file, ".txt");
         else strcat(io->out_stats_file, ".tab");
     }else{
-    	strcat(io->out_stats_file, "_igphyml_stats.txt");
+    	if(io->out_stats_format == OUTTXT)strcat(io->out_stats_file, "_igphyml_stats.txt");
+    	else strcat(io->out_stats_file, "_igphyml_stats.tab");
+    }
+    if(strcmp(io->outname,"NULL") != 0){
+    	strcpy(io->out_stats_file,io->outname);
     }
     io->fp_out_stats = Openfile(io->out_stats_file, io->writemode);
 }
@@ -745,8 +750,6 @@ void createOutFiles(option * io){
 
 /*****************************************************
  *  deprecated methods - potentially add back in?
-
-
 void checkForRandStartTree(option * io){
     if((io->mod->s_opt->n_rand_starts)           &&
        (io->mod->s_opt->topo_search == NNI_MOVE) &&
@@ -2894,6 +2897,12 @@ int mainOptionSwitch(int opt, char * optarg, option * io)
             io->bmatorder=2;
             //printf("preconfile: \t %s\n",io->mod->preconfile);
             break;
+        }
+                	//////////////////////////////////////////////////////////////////////////////////////
+            // --outname <outfile>
+        case 176:{
+        	strcpy(io->outname,optarg);
+        	break;
         }
 
         	//////////////////////////////////////////////////////////////////////////////////////

@@ -1333,7 +1333,7 @@ void Print_Tab_Out(option *io){
 	int i;
 	int nseq = 0;
 	phydbl treel = 0.0;
-	fprintf(f,"CLONE\tNSEQ\tTREE_LENGTH\tLHOOD");
+	fprintf(f,"CLONE\tNSEQ\tNSITE\tTREE_LENGTH\tLHOOD");
 	Print_Param_Header("KAPPA",io->mod->kappaci,f);
 	if(io->mod->nomega_part==1)Print_Param_Header("OMEGA",io->mod->omega_part_ci[0],f);
 	else if(io->mod->nomega_part==2){
@@ -1346,13 +1346,16 @@ void Print_Tab_Out(option *io){
 	fprintf(f,"\tTREE");
 
 	//print repertoire-wide information
+	phydbl msite = 0.0;
 	For(i,io->ntrees){
 		nseq += io->mod_s[i]->n_otu - 1;
 		treel += Get_Tree_Size(io->tree_s[i]);
+		msite += io->tree_s[i]->n_pattern;
 	}
 	treel = treel/(io->ntrees*1.0);
+	msite = msite/(io->ntrees*1.0);
 
-	fprintf(f,"\nREPERTOIRE\t%d\t%.4f\t%.4f",nseq,treel,io->replnL);
+	fprintf(f,"\nREPERTOIRE\t%d\t%.4f\t%.4f\t%.4f",nseq,msite,treel,io->replnL);
 	Print_Params_Tab(io->mod,f);
 	fprintf(f,"\t`%s`",io->command); //command is repertoire-wide "tree"
 
@@ -1361,7 +1364,7 @@ void Print_Tab_Out(option *io){
 		model* mod = io->mod_s[i];
 		int cloneid;
 		sscanf(mod->rootname,"%d_GERM",&cloneid);
-		fprintf(f,"\n%d\t%d\t%.4f\t%.4f",cloneid,mod->n_otu-1,Get_Tree_Size(io->tree_s[i]),mod->tree->c_lnL);
+		fprintf(f,"\n%d\t%d\t%d\t%.4f\t%.4f",cloneid,mod->n_otu-1,mod->tree->n_pattern,Get_Tree_Size(io->tree_s[i]),mod->tree->c_lnL);
 		Print_Params_Tab(mod,f);
 		char* s_tree = (char *)Write_Tree(mod->tree);
 		fprintf(f,"\t%s",s_tree);
