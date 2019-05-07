@@ -2751,7 +2751,7 @@ void Set_Defaults_Model(model *mod)
   mod->nhotness=0;
   mod->kappaci=0;
   mod->ASR=0;
-  mod->ASRcut=0;
+  mod->ASRcut=-1;
   mod->rootpi=0;
   mod->constB=0;
   mod->prior=0;

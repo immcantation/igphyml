@@ -968,7 +968,7 @@ char* printThreeNum(phydbl G1p){
  * */
 void ASR_Wrapper(option* io){
 	int i,j;
-	printf("\nWarning: ASR still under development. It's probably fine, but caveat emptor.\n");
+	printf("\n\nDoing ASR - how'd you know IgPhyML could do this?\nIt's under development. Email Ken with questions or feedback\n");
 	For(j,io->ntrees){
 		t_tree* tree=io->tree_s[j];
 		model* mod = io->mod_s[j];
@@ -1059,7 +1059,8 @@ phydbl ASR_Core(t_edge *b, t_tree *tree, t_node *anc, t_node *d)
 
 	  if(tree->mod->use_m4mod) ambiguity_check = 1;
 
-
+	  //go through likelihood caluclation, and probc
+	  //will hold the likelihoods of each codon at this site
 	  phydbl* probc = mCalloc(ns,sizeof(phydbl));
 	  For(catg,tree->mod->n_catg){
 	      site_lk_cat = .0;
@@ -1067,111 +1068,72 @@ phydbl ASR_Core(t_edge *b, t_tree *tree, t_node *anc, t_node *d)
 	      if((d->tax) && (!tree->mod->s_opt->greedy)){
 	          /* If the character observed at the tip is NOT ambiguous: ns x 1 terms to consider */
 	          if(!ambiguity_check){
-	        	 // printf("a\n");
-	              sum = .0;
+	              probc[state] = 0.0;
 	              For(l,ns){
-	                phydbl val = b->bPmat_part[tree->mod->partIndex[site]][catg*dim3+l*dim2+state]*b->upp[site][l];
-	                sum+=val;
+	                probc[state] += b->bPmat_part[tree->mod->partIndex[site]][catg*dim3+l*dim2+state]*b->upp[site][l];
 	              }
-	              probc[state]=sum;
-	              site_lk_cat = sum;
-	            }
-	          /* If the character observed at the tip is ambiguous: ns x ns terms to consider */
-	          else{
-	        	//  printf("b\n");
+	              site_lk_cat = probc[state];
+	          }else{ //ambiguous site in tip
 	              For(l,ns){
-	                  sum = .0;
-	                      For(k,ns){
-	                        phydbl val = b->bPmat_part[tree->mod->partIndex[site]][catg*dim3+k*dim2+l]*b->p_lk_tip_r[site*dim2+l]*b->upp[site][k];
-	                        sum+=val;
-	                      }
-	                      probc[l]=sum;
-	                      site_lk_cat += sum;
-	                    }
+	                  probc[l] = .0;
+	                  For(k,ns){
+	                     probc[l] += b->bPmat_part[tree->mod->partIndex[site]][catg*dim3+k*dim2+l]*b->p_lk_tip_r[site*dim2+l]*b->upp[site][k];
+	                   }
+	                   site_lk_cat += probc[l];
+	               }
 	            }
-	        }
-	      /* b is an internal edge: ns x ns terms to consider */
-	      else{
-	    	  //printf("c\n");
-	          For(l,ns){
-	        	  	sum = .0;
+	        }else{
+	        	For(l,ns){
+	        	  	probc[l] = .0;
 	                For(k,ns){
-	                  	phydbl val = b->bPmat_part[tree->mod->partIndex[site]][catg*dim3+k*dim2+l]*p_lk[site*dim1+catg*dim2+l]*b->upp[site][k];//Modified by Ken 17/8/2016
-	                    sum+=val;
+	                  	probc[l] += b->bPmat_part[tree->mod->partIndex[site]][catg*dim3+k*dim2+l]*p_lk[site*dim1+catg*dim2+l]*b->upp[site][k];//Modified by Ken 17/8/2016
 	                }
-	                probc[l]=sum;
-	                site_lk_cat+=sum;
+	                site_lk_cat+=probc[l];
 	           }
 	        }
 	      tree->site_lk_cat[catg] = site_lk_cat;
-	    }
+	  }
 
-	  phydbl max=-DBL_MAX;
+	  //find ML codon
 	  int maxc=-1;
-	  int i;
-	  For(i,ns){
-		  char s1[4];
-		  Sprint_codon(s1,tree->io->senseCodons[i]);
-		  /*if(site==0 && (i==0 || i==8)){
-			  printf("\n%d\t%lf\t%s\t%lf\t%lf\t%lf\t%lf\t%lf",b->num,b->l,s1,probc[i]/tree->site_lk_cat[0],b->bPmat_part[0][0],b->bPmat_part[0][8],b->bPmat_part[0][8*61],b->bPmat_part[0][8*61+8]);
-		  }*/
-		  if(probc[i]>max){
-			  max=probc[i];
-			  maxc=i;
+  	  phydbl max=-DBL_MAX;
+	  For(k,ns){
+		  if(probc[k]>max){
+			  max=probc[k];
+			  maxc=k;
 		  }
 	  }
-	 /* int sense[61];
-	  For(i,61){
-		  probc[i]=probc[i]/tree->site_lk_cat[0];
-		  sense[i]=tree->io->senseCodons[i];
-	  }
-	  BSort(probc,sense);
-	  int ncodons=0;
-	  phydbl probsum=0;
-	  For(i,61){
-		  char s1[4];
-		  Sprint_codon(s1,sense[i]);
-		 // printf("\npossible: %d\t%d\t%s\t%lf",b->num,site,s1,probc[i]);
-		  probsum+=probc[i];
-		  ncodons++;
-		  if(probsum>=tree->mod->ASRcut)break;
-	  }*/
 
+	  //count number of codons within the significance threshold
 	  int ncodons=0;
-	  For(i,61){
-		 // printf("\n%d\t%lf\t%lf",i,probc[i],probc[i]/tree->site_lk_cat[0]);
-		  if(probc[i]==0)probc[i]=-DBL_MAX;
+	  For(k,61){
+		  if(probc[k]==0)probc[k]=-DBL_MAX;
 		  else{
-			  probc[i]=log(probc[i]);
-			  //printf("\n%d\t%d\t%lf\t%lf",site,i,probc[i],log(max)-1.92);
+			  probc[k]=log(probc[k]);
 		  }
-		  if(probc[i]>=(log(max)-1.92))ncodons++;
+		  if(probc[k]>=(log(max)-tree->mod->ASRcut))ncodons++;
 	  }
 
+	  //get set of codons within the significance threshold
 	  char** codonset=malloc(ncodons*sizeof(char*));
 	  int c=0;
-	  //For(i,ncodons){
-	  For(i,61){
-		  if(probc[i]>=(log(max)-1.92)){
+	  For(k,61){
+		  if(probc[k]>=(log(max)-tree->mod->ASRcut)){
 			  codonset[c]=mCalloc(4,sizeof(char));
 		  	  char* s1=mCalloc(4,sizeof(char));
-		  	  Sprint_codon(s1,tree->io->senseCodons[i]);
+		  	  Sprint_codon(s1,tree->io->senseCodons[k]);
 		  	  strcpy(codonset[c],s1);
-		  	//printf("\n%c\t%c\t%c\t%s",codonset[c][0],codonset[c][1],codonset[c][2],codonset[c]);
-		  	c++;
+		  	  c++;
 		  }
 	  }
-	  For(i,3){
-		  //printf("\n%s\t%d\n",codonset[0],ncodons);
-		  tree->mod->mlCodon[b->num][site*3+i]=ambigAssign(codonset,ncodons,i);
+
+	  //collapse each of the three codon sites using ambiguous characters
+	  For(k,3){
+		  tree->mod->mlCodon[b->num][site*3+k]=ambigAssign(codonset,ncodons,k);
 	  }
 
-
-	  //tree->mod->mlASR[b->num][site]=maxc;
-	  //tree->mod->probASR[b->num][site]=max/tree->site_lk_cat[0];
-	 // printf("%d\t%lf\t%lf\n",maxc,max,tree->site_lk_cat[0]);
+	  //add a sequence identifier label to this node
 	  if(site==0){
-		//  printf("labels: %d\n",b->n_labels);
 	  	  if(!b->n_labels ){
 		  	  b->labels=mCalloc(1,sizeof(char*));
 		  	  b->labels[0]=mCalloc(T_MAX_LABEL,sizeof(char));
@@ -1180,10 +1142,8 @@ phydbl ASR_Core(t_edge *b, t_tree *tree, t_node *anc, t_node *d)
 	  	  char s1[4];
 	  	  sprintf(s1,"%d",b->num);
 	  	  strcpy(b->labels[0],s1);
-	  	  //printf("edge and des: %d\t%d\n",b->num,b->des_node->num);
 	  }
 	  free(probc);
-	 // exit(EXIT_FAILURE);
 
 	  max_sum_scale =  (phydbl)BIG;
 	  For(catg,tree->mod->n_catg){
@@ -1222,8 +1182,7 @@ phydbl ASR_Core(t_edge *b, t_tree *tree, t_node *anc, t_node *d)
 	    		  exponent -= piecewise_exponent;
 	    	  }
 	    	  while(exponent != 0);
-	      }
-	      else{
+	      }else{
 	    	  do{
 	    		  piecewise_exponent = MAX(exponent,-63);
 	    		  multiplier = 1. / (phydbl)((unsigned long long)(1) << -piecewise_exponent);
@@ -1384,121 +1343,69 @@ phydbl ASR_Core_root(t_edge *b, t_tree *tree, t_node *anc, t_node *d)
 	          /* If the character observed at the tip is NOT ambiguous: ns x 1 terms to consider */
 	          if(!ambiguity_check){
 	        	 // printf("a\n");
-	              sum = .0;
+	              probc[state] = .0;
 	              For(l,ns){//re-arrange direction of change
-	                phydbl val = b->bPmat_part[tree->mod->partIndex[site]][catg*dim3+state*dim2+l]*b->upp[site][state];
-	                sum+=val;
+	                probc[state] += b->bPmat_part[tree->mod->partIndex[site]][catg*dim3+state*dim2+l]*b->upp[site][state];
 	              }
-	              probc[state]=sum;
-	              site_lk_cat = sum;
-	            }
-	          /* If the character observed at the tip is ambiguous: ns x ns terms to consider */
-	          else{
-	        	 // printf("b\n");
+	              site_lk_cat = probc[state];
+	            }else{
 	              For(l,ns){//direction is changed from l to k
-	                  sum = .0;
-	                      For(k,ns){
-	                        phydbl val = b->bPmat_part[tree->mod->partIndex[site]][catg*dim3+l*dim2+k]*b->p_lk_tip_r[site*dim2+k]*b->upp[site][l];
-	                        sum+=val;
-	                      }
-	                      probc[l]=sum;
-	                      site_lk_cat += sum;
-	                    }
-	            }
-	        }
-	      /* b is an internal edge: ns x ns terms to consider */
-	      else{
-	    	//  printf("c\n");
-	          For(l,ns){
-	              sum = .0;
+	                  probc[l] = .0;
 	                  For(k,ns){
-	                    	phydbl val = b->bPmat_part[tree->mod->partIndex[site]][catg*dim3+l*dim2+k]*p_lk[site*dim1+catg*dim2+k]*b->upp[site][l];//Modified by Ken 17/8/2016
-	                      sum+=val;
-	                    }
-	                  probc[l]=sum;
-	                  site_lk_cat+=sum;
+	                     probc[l] += b->bPmat_part[tree->mod->partIndex[site]][catg*dim3+l*dim2+k]*b->p_lk_tip_r[site*dim2+k]*b->upp[site][l];
+	                  }
+	                  site_lk_cat += probc[l];
 	                }
+	            }
+	        }else{
+	          For(l,ns){
+	              probc[l] = .0;
+	              For(k,ns){
+	                  probc[l] += b->bPmat_part[tree->mod->partIndex[site]][catg*dim3+l*dim2+k]*p_lk[site*dim1+catg*dim2+k]*b->upp[site][l];//Modified by Ken 17/8/2016
+	               }
+	               site_lk_cat+=probc[l];
+	          }
 	        }
 	      tree->site_lk_cat[catg] = site_lk_cat;
 	    }
 
-	  phydbl max=-DBL_MAX;
+	  //find ML codon
 	  int maxc=-1;
-	  int i;
-	  For(i,ns){
-		  char s1[4];
-		  		  Sprint_codon(s1,tree->io->senseCodons[i]);
-		  		  //printf("%s\t%lf\n",s1,probc[i]/tree->site_lk_cat[0]);
-		  		  if(site==0 && (i==0 || i==8)){
-		  			  //printf("%d\t%d\t%s\t%lf\n",-1,i,s1,probc[i]/tree->site_lk_cat[0]);
-					  //printf("\n%d\t%s\t%lf\t%lf\t%lf\t%lf\t%lf",-1,s1,probc[i]/tree->site_lk_cat[0],b->bPmat_part[0][0],b->bPmat_part[0][8],b->bPmat_part[0][8*61],b->bPmat_part[0][8*61+8]);
-
-		  		  }
-		  //printf("%lf\t%lf\n",probc[i],max);
-		  if(probc[i]>max){
-			  max=probc[i];
-			  maxc=i;
+  	  phydbl max=-DBL_MAX;
+	  For(k,ns){
+		  if(probc[k]>max){
+			  max=probc[k];
+			  maxc=k;
 		  }
 	  }
 	  tree->mod->mlASR[tree->mod->nedges][site]=maxc;
 	  tree->mod->probASR[tree->mod->nedges][site]=max/tree->site_lk_cat[0];
-	  /*int sense[61];
-	  	  For(i,61){
-	  		  probc[i]=probc[i]/tree->site_lk_cat[0];
-	  		  sense[i]=tree->io->senseCodons[i];
-	  	  }
-	  	  BSort(probc,sense);
-	  	  int ncodons=0;
-	  	  phydbl probsum=0;
-	  	  For(i,61){
-	  		  char s1[4];
-	  		  Sprint_codon(s1,sense[i]);
-	  		  printf("\npossible: %d\t%d\t%s\t%lf",b->num,site,s1,probc[i]);
-	  		  probsum+=probc[i];
-	  		  ncodons++;
-	  		  if(probsum>=tree->mod->ASRcut)break;
-	  	  }
-	  	  char** codonset=malloc(ncodons*sizeof(char*));
-	  	  For(i,ncodons){
-	  		  char* s1=mCalloc(4,sizeof(char));
-	  		  Sprint_codon(s1,sense[i]);
-	  		  codonset[i]=s1;
-	  		  //printf("\n%c\t%c\t%c",codonset[i][0],codonset[i][1],codonset[i][2]);
 
-	  	  }
-	  	  //printf("\n%c",ambigAssign(codonset,ncodons,1));
-	  	  //printf("\n%c\t%c\t%c",ambigAssign(codonset,ncodons,0),ambigAssign(codonset,ncodons,1),ambigAssign(codonset,ncodons,2));
-	  	  For(i,3)tree->mod->mlCodon[tree->mod->nedges][site*3+i]=ambigAssign(codonset,ncodons,i);*/
-
-
-		  int ncodons=0;
-		  For(i,61){
-			 // printf("\n%d\t%lf\t%lf",i,probc[i],probc[i]/tree->site_lk_cat[0]);
-			  if(probc[i]==0)probc[i]=-DBL_MAX;
-			  else{
-				  probc[i]=log(probc[i]);
-				  //printf("\n%d\t%d\t%lf\t%lf",site,i,probc[i],log(max)-1.92);
-			  }
-			  if(probc[i]>=(log(max)-1.92))ncodons++;
+	  int ncodons=0;
+	  For(k,61){
+		  if(probc[k]==0)probc[k]=-DBL_MAX;
+		  else{
+			  probc[k]=log(probc[k]);
 		  }
+		  if(probc[k]>=(log(max)-tree->mod->ASRcut))ncodons++;
+	  }
 
-		  char** codonset=malloc(ncodons*sizeof(char*));
-		  int c=0;
-		  //For(i,ncodons){
-		  For(i,61){
-			  if(probc[i]>=(log(max)-1.92)){
-				  codonset[c]=mCalloc(4,sizeof(char));
-			  	  char* s1=mCalloc(4,sizeof(char));
-			  	  Sprint_codon(s1,tree->io->senseCodons[i]);
-			  	  strcpy(codonset[c],s1);
-			  	//printf("\n%c\t%c\t%c\t%s",codonset[c][0],codonset[c][1],codonset[c][2],codonset[c]);
-			  	c++;
-			  }
+	  //get set of codons within the significance threshold
+	  char** codonset=malloc(ncodons*sizeof(char*));
+	  int c=0;
+	  For(k,61){
+		  if(probc[k]>=(log(max)-tree->mod->ASRcut)){
+			  codonset[c]=mCalloc(4,sizeof(char));
+		  	  char* s1=mCalloc(4,sizeof(char));
+		  	  Sprint_codon(s1,tree->io->senseCodons[k]);
+		  	  strcpy(codonset[c],s1);
+		  	  c++;
 		  }
-		  For(i,3){
-			 // printf("\n%s\t%d\n",codonset[0],ncodons);
-			  For(i,3)tree->mod->mlCodon[tree->mod->nedges][site*3+i]=ambigAssign(codonset,ncodons,i);
-		  }
+	  }
+	  For(k,3){
+		// printf("\n%s\t%d\n",codonset[0],ncodons);
+		For(k,3)tree->mod->mlCodon[tree->mod->nedges][site*3+k]=ambigAssign(codonset,ncodons,k);
+	  }
 	  free(probc);
 
 	  max_sum_scale =  (phydbl)BIG;

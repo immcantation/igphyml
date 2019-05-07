@@ -1157,7 +1157,7 @@ void R_wtree(t_node *pere, t_node *fils, int *available, char **s_tree, int *pos
 	      if(fils->b[0]->n_labels < 10)
           For(i,fils->b[0]->n_labels){
           //(*pos) += sprintf(*s_tree+*pos,"#%s",fils->b[0]->labels[i]);
-	      (*pos) += sprintf(*s_tree+*pos,"[&Num=%d_%s]",tree->mod->num,fils->b[0]->labels[i]);
+	      (*pos) += sprintf(*s_tree+*pos,"[%d_%s]",tree->mod->num,fils->b[0]->labels[i]);
 	      //printf("%d\t%lf\th\n",fils->b[0]->num,fils->b[0]->l);
 	      }else{
 	    	  (*pos) += sprintf(*s_tree+*pos,"#%d_labels",fils->b[0]->n_labels);
@@ -1237,7 +1237,7 @@ void R_wtree(t_node *pere, t_node *fils, int *available, char **s_tree, int *pos
      if(tree->print_labels){
 	      if(fils->b[p]->n_labels < 10)
           For(i,fils->b[p]->n_labels){
-	    	  (*pos) += sprintf(*s_tree+*pos,"[&Num=%d_%s]",tree->mod->num,fils->b[p]->labels[i]);
+	    	  (*pos) += sprintf(*s_tree+*pos,"[%d_%s]",tree->mod->num,fils->b[p]->labels[i]);
 	      }else{
 	    	  (*pos) += sprintf(*s_tree+*pos,"#%d_labels",fils->b[p]->n_labels);
 	      }
@@ -1521,9 +1521,9 @@ void Print_IgPhyML_Out(option* io){
 	fprintf(f,"oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo\n");
 	fprintf(f,"                     Ancestral Sequence Reconstruction\n");
 	fprintf(f,"Marginal ML codon predictions for internal nodes. Open specified tree files using\n");
-	fprintf(f,"FigTree (tree.bio.ed.ac.uk/software/figtree) to view sequence placement on tree.\n");
+	fprintf(f,"R phylotate::read_annotated() to view sequence placement on tree.\n");
 	fprintf(f,"Codon assignments use ambiguous nucleotides to summarize the minimal set of codons\n");
-	fprintf(f,"making up 95%% relative probability (or the cutoff specified in --ASRc). Check out\n");
+	fprintf(f,"making up 95%% relative probability. Check out\n");
 	fprintf(f,"bioinformatics.org/sms/iupac.html for a reference on nucleotide ambiguity codes.\n");
 	fprintf(f,"             See Manual for more information on this section.\n");
 	fprintf(f,"oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo");
@@ -1531,21 +1531,36 @@ void Print_IgPhyML_Out(option* io){
 	  For(i,io->ntrees){
 		 t_tree* tree=io->tree_s[i];
 		 model* mod = io->mod_s[i];
-		 fprintf(f,"\n# Lineage %d Reconstructions\n# Sequence file: %s\n",i,io->datafs[i]);
-		 if(io->append_run_ID)fprintf(f,"# Tree file: %s%s%s%s\n",io->datafs[i],"_igphyml_figtree_",io->run_id_string,".txt");
-		 else fprintf(f,"# Tree file: %s%s\n",io->datafs[i],"_igphyml_figtree.txt");
+		 if(io->append_run_ID)fprintf(f,"\n# Lineage %d Reconstructions\n# Sequence file: %s%s%s%s\n",i,io->datafs[i],"_igphyml_asr_",io->run_id_string,".nex");
+		 else fprintf(f,"\n# Lineage %d Reconstructions\n# Sequence file: %s%s%s\n",i,io->datafs[i],"_igphyml_asr",".nex");
+		 if(io->append_run_ID)fprintf(f,"# Tree file: %s%s%s%s\n",io->datafs[i],"_igphyml_asr_",io->run_id_string,".nex");
+		 else fprintf(f,"# Tree file: %s%s\n",io->datafs[i],"_igphyml_asr.nex");
+
+		 //output individual ASR fasta files
+		 char fastafile[T_MAX_FILE];
+		 strcpy(fastafile,io->datafs[i]);
+		 strcat(fastafile,"_igphyml_asr");
+		 if(io->append_run_ID){
+			 strcat(fastafile,"_");
+			 strcat(fastafile,io->run_id_string);
+			 strcat(fastafile,".fasta");
+		 }else strcat(fastafile,".fasta");
+		 char buf[T_MAX_FILE];
+		 snprintf(buf, sizeof(buf), "%s", fastafile);
+		 FILE* fastaout = fopen(buf,"w");
 		 For(j,mod->nedges+1){
 			if(j<mod->nedges){
 				 if(tree->t_edges[j]->des_node->tax)continue;
-			 	 if(!tree->t_edges[j]->des_node->name) fprintf(f,">%d_%d\n",mod->num,j);
-			 	 else if(strcmp(tree->t_edges[j]->des_node->name,"")!=0)fprintf(f,">%s\n",tree->t_edges[j]->des_node->name);
-			 	 else fprintf(f,">%d_%d\n",mod->num,j);
+			 	 if(!tree->t_edges[j]->des_node->name) fprintf(fastaout,">%d_%d\n",mod->num,j);
+			 	 else if(strcmp(tree->t_edges[j]->des_node->name,"")!=0)fprintf(fastaout,">%s\n",tree->t_edges[j]->des_node->name);
+			 	 else fprintf(fastaout,">%d_%d\n",mod->num,j);
 			}else{
-				fprintf(f,">%s\n",tree->mod->rootname);
+				fprintf(fastaout,">%s\n",tree->mod->rootname);
 			}
 			mod->mlCodon[j][mod->init_len]='\0';
-			fprintf(f,"%s\n",mod->mlCodon[j]);
+			fprintf(fastaout,"%s\n",mod->mlCodon[j]);
 		   }
+		 fclose(fastaout);
 		 }
 	   }
 
@@ -1574,13 +1589,14 @@ void Print_IgPhyML_Out(option* io){
 		 t_tree* tree=io->tree_s[i];
 		 char fout[T_MAX_FILE];
 		 strcpy(fout,io->datafs[i]);
-		 if(io->mod->ASR)strcat(fout,"_igphyml_figtree");
+		 if(io->mod->ASR)strcat(fout,"_igphyml_asr");
 		 else strcat(fout,"_igphyml_tree");
 		 if(io->append_run_ID){
 			 strcat(fout, "_");
 			 strcat(fout, io->run_id_string);
 		 }
-		 strcat(fout,".txt");
+		 if(io->mod->ASR)strcat(fout,".nex");
+		 else strcat(fout,".txt");
 		 //potentially output new repertoire file
 		 if(io->outrepspec)fprintf(orep,"%s\t%s\t%s\t%s\n",io->datafs[i],fout,io->rootids[i],io->partfs[i]);
 		 FILE* treeout = Openfile(fout, 1 );
@@ -1601,11 +1617,11 @@ void Print_IgPhyML_Out(option* io){
 		 Print_Tree(treeout,io->tree_s[i]);
 		 if(io->mod->ASR){
 			 fprintf(treeout,"End;");
-			 fprintf(treeout,"begin figtree;\nset nodeLabels.colorAttribute=\"User selection\";\nset "
+			 /*fprintf(treeout,"begin figtree;\nset nodeLabels.colorAttribute=\"User selection\";\nset "
 					 "nodeLabels.displayAttribute=\"Num\";\nset nodeLabels.fontName=\"sansserif\";"
 					 "\nset nodeLabels.fontSize=9;\nset nodeLabels.fontStyle=0;\nset nodeLabels."
 					 "isShown=true;\nset nodeLabels.significantDigits=4;\nset trees.order=true;"
-					 "\nset trees.orderType=\"increasing\";\nend;");
+					 "\nset trees.orderType=\"increasing\";\nend;");*/
 		 }
 		 fclose(treeout);
 		 if(io->precon){
