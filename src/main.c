@@ -254,6 +254,9 @@ int main(int argc, char **argv){
 		  io->precon==-4 || io->precon==-6|| io->precon==7)
 	  Prepars_Wrapper(io);
 
+  t_tree* t = io->tree_s[0];
+  printf("pars: %d\n",Fill_Sankoff(tree->noeud[tree->mod->startnode],tree,1));
+
   #if defined OMP || defined BLAS_OMP
   t_end=omp_get_wtime();
   #else

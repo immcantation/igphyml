@@ -44,13 +44,20 @@ void Clean_Tree(t_tree* tree);
 void Set_Pars_Counters(t_node *d, t_tree *tree,int root);
 void Copy_Sankoff_Tree(t_tree* tree1,t_tree* tree2);
 int Get_All_Paths(t_node *d, int index, t_tree *tree, t_tree** btrees, int root,int maxtrees,int treeindex,int repindex, int rootstate);
-int Resolve_Polytomies_Pars(t_tree* tree,phydbl minbl);
+int Resolve_Polytomies_Pars(t_tree* tree, phydbl minbl);
 int NNI_ParsSwaps(t_node *a, t_node *b, t_node *c, t_node *d, t_tree *tree);
 int NNI_Pars_Search(t_node *c, t_node *d,t_edge* c_fcus,t_edge* d_fcus, int pars0, phydbl thresh,t_tree* tree);
 void Get_Pars_Stats(t_tree** trees, int ntrees, int index, FILE* out);
 void Fill_Pars_Stats(t_node* d,t_tree* tree, phydbl* switches, phydbl* classl, int root);
 void Setup_Custom_Pars_Model(t_tree* tree);
 void Pars_Reconstructions(option* io);
+phydbl Score_Polytomy(t_node* d, t_node* b,phydbl thresh, int maxtrees, int sumscore,t_tree* tree);
+void Isolate_Polytomy(t_node* d, phydbl thresh, t_tree* tree);
+void Score_Mono(t_node* d, int level, int* scores, int debug, t_tree* tree);
+int NNI_Paths_Search(t_node *c, t_node *d,t_edge* c_fcus,t_edge* d_fcus, int pars0, phydbl thresh,
+		t_tree* tree, int maxtrees,t_tree** trees,phydbl paths0,int iter);
+int NNI_PathsSwaps(t_node *a, t_node *b, t_node *c, t_node *d, t_tree *tree, phydbl thresh,
+		int maxtrees, t_tree** trees);
 
 void Make_Tree_4_Pars(t_tree *tree, int n_site);
 int  Pars(t_tree *tree);

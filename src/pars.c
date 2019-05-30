@@ -596,6 +596,10 @@ void Setup_Custom_Pars_Model(t_tree* tree){
 	 }
 	 free(from);
 	 free(to);
+	 free(line);
+	 free(ambigstatesto);
+	 For(i,tree->nstate*T_MAX_OPTION)free(ambigstatesfrom[i]);
+	 free(ambigstatesfrom);
 	 fclose(PARS);
 }
 
@@ -658,7 +662,7 @@ void Copy_Sankoff_Tree(t_tree* tree1,t_tree* tree2){
 
 /*********************************************************/
 // Resolve polytomies based on parsimony score
-int Resolve_Polytomies_Pars(t_tree* tree,phydbl thresh){
+int Resolve_Polytomies_Pars(t_tree* tree, phydbl thresh){
 	int i;
 	int nni=1;
 	int nnifound=1; //initial parsimony score
@@ -677,9 +681,335 @@ int Resolve_Polytomies_Pars(t_tree* tree,phydbl thresh){
 		}
 		iters++;
 	}
+	int j;
+	/*t_node* a;
+	t_node* b;
+	t_node* c;
+	t_node* d;
+	t_node* b10;
+	t_node* a11;
+	t_node* d2;
+	For(i,(tree->n_otu-1)*2){
+		printf("%d",tree->noeud[i]->num);
+		if(tree->noeud[i]->num != tree->mod->startnode)printf("\t%d\n",tree->noeud[i]->anc->num);
+		if(tree->noeud[i]->tax)printf("\t%s\n",tree->noeud[i]->name);
+		if(tree->noeud[i]->num==9)a=tree->noeud[i];
+		if(tree->noeud[i]->num==8)b=tree->noeud[i];
+		if(tree->noeud[i]->num==7)c=tree->noeud[i];
+		if(tree->noeud[i]->num==0)d=tree->noeud[i];
+		if(tree->noeud[i]->num==10)b10=tree->noeud[i];
+		if(tree->noeud[i]->num==11)a11=tree->noeud[i];
+		if(tree->noeud[i]->num==2)d2=tree->noeud[i];
+	}
+	printf("resolved tree: %s\n",Write_Tree(tree));
+	printf("%lf\n",Score_Polytomy(tree->noeud[11],a,thresh,1,1000,tree));
+	Swap(a,b,c,d,tree);
+	printf("swapped tree: %s\n",Write_Tree(tree));
+	pars0 = Fill_Sankoff(tree->noeud[tree->mod->startnode],tree,1);
+	phydbl paths = Score_Polytomy(tree->noeud[11],a,thresh,1,1000,tree);
+	printf("PARS: %d PATHS: %lf\n",pars0,paths);
+	For(i,(tree->n_otu-1)*2){
+		printf("%d",tree->noeud[i]->num);
+		if(tree->noeud[i]->num != tree->mod->startnode)printf("\t%d\n",tree->noeud[i]->anc->num);
+		if(tree->noeud[i]->tax)printf("\t%s\n",tree->noeud[i]->name);
+	}
+	Swap(a11,b10,a,d2,tree);
+	pars0 = Fill_Sankoff(tree->noeud[tree->mod->startnode],tree,1);
+	paths = Score_Polytomy(tree->noeud[11],a,thresh,1,1000,tree);
+	printf("PARS: %d PATHS: %lf\n",pars0,paths);
+	printf("swapped tree: %s\n",Write_Tree(tree));
+	/*exit(1);*/
+	nnifound=1; //initial parsimony score
+	phydbl unresolved = 1.0;
+	iters = 0;
+	int maxtrees = 1000;
+	t_tree** trees = mCalloc(maxtrees,sizeof(t_tree*));
+	while(nnifound){ //execute if a rearrangement is found in a tree
+		nnifound=0;
+		unresolved=0;
+		For(i,(tree->n_otu-1)*2){ //if no taxa on either side of edge and length is below threshold, search for NNIs
+			t_node* node = tree->noeud[i];
+			if(!tree->noeud[i]->tax && !tree->noeud[i]->anc->tax && tree->noeud[i]->anc_edge->l < thresh){
+				pars0 = Fill_Sankoff(tree->noeud[tree->mod->startnode],tree,1);
+				phydbl score = Score_Polytomy(node,node->anc,thresh,1,1000,tree);
+				/*t_edge* b = node->anc_edge;
+				t_node* top = node->anc;
+				t_edge* pedge = node->anc_edge;
+				while(top->anc->num != tree->mod->startnode && top->anc_edge->l < thresh){
+					pedge = top->anc_edge;
+					top = top->anc;
+				}*/
+				        nni = NNI_Paths_Search(node,node->anc,node->anc_edge,node->anc_edge,pars0,thresh,tree,maxtrees,trees,score,iters);
+				if(!nni)nni = NNI_Paths_Search(node->anc,node,node->anc_edge,node->anc_edge,pars0,thresh,tree,maxtrees,trees,score,iters);
+				//if(nni)printf("%d\t%d\n",iters,node->num);
+				nnifound+=nni;
+				phydbl resolve = Score_Polytomy(node,node->anc,thresh,0,1000,tree);
+				unresolved += resolve;
+			}
+		}
+						//break;
+		printf("ITER %d %d %d %lf\n",iters,pars0,nnifound,unresolved);
+		//printf("%s\n",Write_Tree(tree));
+		if(unresolved < 0.01 && unresolved > -0.01)unresolved = 0;
+		iters++;
+	}
 	return pars0;
 }
 
+/*********************************************************
+ *
+ */
+phydbl Score_Polytomy(t_node* d, t_node* b, phydbl thresh, int sumscore, int maxtrees, t_tree* tree){
+	int debug = 1;
+	maxtrees = 1;
+	if(debug)printf("NODE: %d\n",d->num);
+	int i,j,k;
+	t_node* top = d;
+	/*if(d->anc->num == tree->mod->startnode){
+		if(debug)printf("switch\n");
+		top = b->anc;
+	}*/
+	int nedges = (tree->n_otu-1)*2;
+	while(top->anc->num != tree->mod->startnode && top->anc_edge->l < thresh){
+		//printf("trying\n");
+		top = top->anc;
+	}
+
+
+	t_tree** btrees = mCalloc(maxtrees,sizeof(t_tree*));
+	t_node* r = tree->noeud[tree->mod->startnode];
+	//Init_Class_Tips(tree,tree->io->precon); //initialize tip states and data structures
+  	int pars = Fill_Sankoff(r,tree,1); //max parsimony score
+  	Set_Pars_Counters(r,tree,1);
+
+	t_node* tr2 = tree->noeud[top->num];
+	int taxinfo[nedges];
+	For(i,nedges)taxinfo[i] = tree->noeud[i]->tax;
+	For(i,3){
+		if(tr2->anc->num != tr2->v[i]->num)
+		Isolate_Polytomy(tr2->v[i],thresh,tree);
+	}
+
+	btrees[0]=tree;
+	//paths = Get_All_Paths(tree->noeud[top->num], mins, tree, btrees, 0, maxtrees, paths, tree->mod->num, mins)+1;
+	int paths = 0;
+	int smin = INT_MAX;
+	int mins = 0;
+	For(i,tree->nstate){
+		if(r->sroot[i] < smin){
+			smin = r->sroot[i];
+			mins = i;
+		}
+	}
+	paths = 1;
+	Get_First_Path(tree->noeud[tree->mod->startnode],mins,tree,1);
+
+	tree->io->precon *= 10;
+	if(debug)printf("%s\n",Write_Tree(tree));
+  	tree->io->precon /= 10;
+  	if(debug)printf("%s\n",Write_Tree(tree));
+
+	phydbl mscore = 0;
+	int nzero = 0;
+	For(i,paths){
+		int* scores = mCalloc(tree->nstate,sizeof(int));
+		//if(d->num == 1251)debug=1;
+		Score_Mono(btrees[i]->noeud[top->num],1,scores,debug,tree);
+		For(j,tree->nstate){
+			if(debug)printf("%s\t%d\t%d\n",tree->chars[j],scores[j],sumscore);
+			if(mscore < scores[j] && !sumscore)mscore = scores[j];
+			if(sumscore){
+				if(scores[j] > 0)scores[j] *= scores[j];
+				mscore += scores[j];
+			}
+			if(scores[j] > 0)nzero++;
+		}
+		free(scores);
+	}
+
+	phydbl best;
+	int ninternal = nzero - 2;
+	phydbl worst = 1.0;
+	if(nzero > 1)worst = floor(ninternal/2.0) + (ninternal % 2) + 2;
+	if(!sumscore){
+		//printf("%d\t%lf\t%lf\n",nzero,mscore,worst);
+		mscore -= worst;
+	}else{
+		best = 1 + (nzero-1)*worst;
+	}
+
+	For(i,nedges)tree->noeud[i]->tax = taxinfo[i];
+	for(i=1;i<paths;i++){
+		Clean_Tree(btrees[i]);
+		Free_Tree(btrees[i]);
+	}
+	free(btrees);
+	return(mscore);
+}
+
+/*********************************************************/
+
+void Score_Mono(t_node* d, int level, int* scores, int debug, t_tree* tree){
+	int i;
+	if(debug)printf("polytomy\t%d\t%d\t%lf\t%s\n",d->anc->num,d->num,d->anc_edge->l,tree->chars[d->pstate]);
+	if(scores[d->pstate] == 0){
+		//printf("score %d\t%s\t%d\n",d->num,tree->chars[d->pstate],level);
+		scores[d->pstate] = -level;
+	}
+	if(d->tax){
+		if(scores[d->pstate] < 0)scores[d->pstate]=-scores[d->pstate];
+	}
+	if(!d->tax){
+		For(i,3){
+			if(d->v[i]->num != d->anc->num){
+				Score_Mono(d->v[i],level+1,scores,debug,tree);
+			}
+		}
+	}
+}
+
+/*********************************************************
+ *
+ */
+void Isolate_Polytomy(t_node* d, phydbl thresh, t_tree* tree){
+	int i;
+	//printf("iso %d\n",d->num);
+	if(d->tax && d->num != tree->mod->startnode)return;
+	if(d->anc_edge->l < thresh){
+		For(i,3){
+			if(d->v[i]->num != d->anc->num){
+				Isolate_Polytomy(d->v[i],thresh,tree);
+			}
+		}
+	}else{
+		//printf("%d is now tax\n",d->num);
+		d->tax = 1;
+	}
+}
+
+/*********************************************************
+ * Starting from an intitial small length branch, check for NNI moves that would increase parsimony score, then recu333rsively search across
+ * all adjacent branches (spreading c and d f) connected with at most thresh length
+ * \b           /e
+ *  \ c_fcus   /
+ *   \c_...__ /d
+ *   /  d_fcus\
+ *  /          \
+ * /a           \f
+ *
+ * d_fcus does not necessarily connect d and c. c_fcus is not necessarily d_fcus */
+int NNI_Paths_Search(t_node *c, t_node *d,t_edge* c_fcus,t_edge* d_fcus, int pars0,phydbl thresh,
+		t_tree* tree, int maxtrees,t_tree** trees,phydbl paths0, int iter){
+
+	int dir1,dir2,dir3,dir4,i;
+	dir1=dir2=dir3=dir4-1;
+	For(i,3) if(d->b[i]->num != d_fcus->num) (dir1<0)?(dir1=i):(dir2=i);
+	For(i,3) if(c->b[i]->num != c_fcus->num) (dir3<0)?(dir3=i):(dir4=i);
+	t_node* e = d->v[dir1];
+	t_node* f = d->v[dir2];
+	t_edge* ee = d->b[dir1];
+	t_edge* fe = d->b[dir2];
+
+	t_node* a = c->v[dir3];
+	t_node* b = c->v[dir4];
+
+
+	int parsv[3];
+	int parsmin[3];
+	phydbl pathv[3];
+
+	parsv[0] = pars0;
+	parsv[1] = NNI_ParsSwaps(a,c,d,e,tree);
+	parsv[2] = NNI_ParsSwaps(b,c,d,e,tree);
+	parsmin[0] = 0;
+	parsmin[1] = 0;
+	parsmin[2] = 0;
+
+	pathv[0] = paths0;
+	pathv[1] = NNI_PathsSwaps(a,c,d,e,tree,thresh, maxtrees, trees);
+	pathv[2] = NNI_PathsSwaps(b,c,d,e,tree,thresh, maxtrees, trees);
+
+	int minpars = INT_MAX;
+	phydbl maxpath = DBL_MAX;
+	For(i,3)if(parsv[i] < minpars)minpars = parsv[i];
+	For(i,3)if(parsv[i] == minpars)if(pathv[i] < maxpath)maxpath = pathv[i];
+
+	if(parsv[0] == minpars && pathv[0] == maxpath){//Nothing!
+		//printf("Not swapping!\n");
+	}else if(parsv[1] == minpars && pathv[1] == maxpath){
+	 // printf("0 Swapping!\n");
+	  Swap(a,c,d,e,tree);
+		  return 1;
+	}else if(parsv[2] == minpars && pathv[2] == maxpath){
+	 // printf("1 Swapping!\n");
+	  Swap(b,c,d,e,tree);
+		  return 1;
+	}else{
+		printf("SOMETHING WEIRD\n");
+	}
+	if(!e->tax){ //search along edge between d and e
+		if(ee->l<thresh){
+			int pt = NNI_Paths_Search(c,e,c_fcus,ee,pars0,thresh,tree,maxtrees,trees,paths0,iter);
+			if(pt)return pt;
+		}
+	}
+	if(!f->tax){ //search along edge between d and f
+		if(fe->l<thresh){
+			int pt = NNI_Paths_Search(c,f,c_fcus,fe,pars0,thresh,tree,maxtrees,trees,paths0,iter);
+			if(pt)return pt;
+		}
+	}
+	//exit(1);
+	return 0;
+}
+
+/********************************************************
+  *Swap specified nodes, swap back, and return parsimony score of the swap
+  * \             /d      \             /a
+  *  \           /         \           /
+  *   \b__...__c/    ->     \b__...__c/
+  *   /         \	   		 /		   \
+  *  /           \	        /	        \
+  * /a            \  	   /d            \
+  *
+  * nodes b and c are not necessarily on the same branch */
+int NNI_PathsSwaps(t_node *a, t_node *b, t_node *c, t_node *d, t_tree *tree, phydbl thresh, int maxtrees, t_tree** trees){
+	int l_r, r_l, l_v1, l_v2, r_v3, r_v4;
+	int pars0,pars1,pars2;
+	phydbl paths0,paths1,paths2;
+
+	  pars0 = Fill_Sankoff(tree->noeud[tree->mod->startnode],tree,1);
+	  paths0 = Score_Polytomy(b,c,thresh,1,maxtrees,tree);
+	  if(tree->mod->optDebug){
+	  	  Get_First_Path(tree->noeud[tree->mod->startnode],1,tree,1);
+	  	  printTreeState(tree->noeud[tree->mod->startnode],tree,1);printf(" %lf ",paths0);printf(" 0\n");
+	  }
+	  //	  exit(1);
+	  Swap(a,b,c,d,tree);
+	  pars1 = Fill_Sankoff(tree->noeud[tree->mod->startnode],tree,1);
+	  paths1 = Score_Polytomy(b,c,thresh,1,maxtrees,tree);
+	  if(tree->mod->optDebug){
+		  Get_First_Path(tree->noeud[tree->mod->startnode],1,tree,1);
+		  printTreeState(tree->noeud[tree->mod->startnode],tree,1);printf(" %lf ",paths1);printf(" 1\n");
+	  }
+	  Swap(d,b,c,a,tree); //swap nodes
+	  pars2 = Fill_Sankoff(tree->noeud[tree->mod->startnode],tree,1);
+	  paths2 = Score_Polytomy(b,c,thresh,1,maxtrees,tree);
+	  if(tree->mod->optDebug){
+	  	  Get_First_Path(tree->noeud[tree->mod->startnode],1,tree,1);
+	  	  printTreeState(tree->noeud[tree->mod->startnode],tree,1);printf(" %lf ",paths2);printf(" 2\n");
+	  }
+	  //	  exit(1);
+	  //printf("pars score %d\t%d\t%d\t%lf\t%lf\t%lf\n",pars0,pars1,pars2,paths0,paths1,paths2);
+	  if(pars0 != pars2 || paths0 != paths2){
+		  printf("pars score %d\t%d\t%d\n",pars0,pars1,pars2);
+		  printf("paths score %lf\t%lf\t%lf\n",paths0,paths1,paths2);
+		  printf("\n.\tParsimony reconstruction swap inconsistent!\n");
+		  exit(EXIT_FAILURE);
+	  }
+	  //exit(1);
+	  return paths1;
+}
 /*********************************************************
  * Starting from an intitial small length branch, check for NNI moves that would increase parsimony score, then recursively search across
  * all adjacent branches (spreading c and d f) connected with at most thresh length
@@ -964,8 +1294,10 @@ int Get_All_Paths(t_node *d, int index, t_tree *tree, t_tree** btrees, int root,
 			For(i,tree->nstate){
 				if(d->pl[index*tree->nstate+i] == d->lmin[index]){
 					if(lfound>0 && treeindex+1 < maxtrees){ //if alternate left path found
-						t_tree* tree2; //read in copy of that tree
-						tree2 = Read_User_Tree(tree->io->tree_s[repindex]->data,tree->io->mod_s[repindex],tree->io);
+						//t_tree* tree2; //read in copy of that tree
+						//tree2 = Read_User_Tree(tree->io->tree_s[repindex]->data,tree->io->mod_s[repindex],tree->io);
+						t_tree* tree2 = Make_Tree_From_Scratch(tree->n_otu,tree->data);
+						Copy_Tree(tree,tree2);
 						tree2->mod=tree->mod;
 						tree2->mod->startnode = tree->mod->startnode;
 						t_node* r2 = tree2->noeud[tree->mod->startnode];
@@ -993,8 +1325,10 @@ int Get_All_Paths(t_node *d, int index, t_tree *tree, t_tree** btrees, int root,
 				For(i,tree->nstate){
 					if(d->pr[index*tree->nstate+i] == d->rmin[index]){
 						if(rfound>0 && treeindex+1 < maxtrees){ //if alternate left path found
-							t_tree* tree2;
-							tree2 = Read_User_Tree(tree->io->tree_s[repindex]->data,tree->io->mod_s[repindex],tree->io);
+							//t_tree* tree2;
+							//tree2 = Read_User_Tree(tree->io->tree_s[repindex]->data,tree->io->mod_s[repindex],tree->io);
+							t_tree* tree2 = Make_Tree_From_Scratch(tree->n_otu,tree->data);
+							Copy_Tree(tree,tree2);
 							tree2->mod=tree->mod;
 							tree2->mod->startnode = tree->mod->startnode;
 							t_node* r2 = tree2->noeud[tree2->mod->startnode];
