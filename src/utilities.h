@@ -303,7 +303,7 @@ typedef struct __Node {
   phydbl                     dist_to_root; /* distance to the root t_node */
 
   short int                        common;
-  phydbl                           y_rank;
+  int                              y_rank;
   phydbl                       y_rank_ori;
   phydbl                       y_rank_min;
   phydbl                       y_rank_max;
@@ -1091,6 +1091,7 @@ typedef struct __Option {
   char*					asrfile;
   int					bmatorder;
   int 					repwidefreqs;
+  phydbl        thresh;
  }option;
 
 /*********************************************************/

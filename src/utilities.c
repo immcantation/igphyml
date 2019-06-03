@@ -147,10 +147,10 @@ void Init_Node_Light(t_node *n, int num)
   n->ext_node               = NULL;
   n->name                   = NULL;
   n->ori_name               = NULL;
-  n->y_rank                 = 0.;
-  n->y_rank_ori             = 0.;
-  n->y_rank_max             = 0.;
-  n->y_rank_min             = 0.;
+  n->y_rank                 = 0;
+  n->y_rank_ori             = 0.0;
+  n->y_rank_max             = 0.0;
+  n->y_rank_min             = 0.0;
   n->anc                    = NULL;
 }
 

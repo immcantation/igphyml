@@ -51,13 +51,19 @@ void Get_Pars_Stats(t_tree** trees, int ntrees, int index, FILE* out);
 void Fill_Pars_Stats(t_node* d,t_tree* tree, phydbl* switches, phydbl* classl, int root);
 void Setup_Custom_Pars_Model(t_tree* tree);
 void Pars_Reconstructions(option* io);
-phydbl Score_Polytomy(t_node* d, t_node* b,phydbl thresh, int maxtrees, int sumscore,t_tree* tree);
-void Isolate_Polytomy(t_node* d, phydbl thresh, t_tree* tree);
+int Prune_Polytomy(t_node* d, t_node** nodes, int* scores, int* nums, int* edges, int index, int* numindex, int* edgeindex, int root, phydbl thresh, t_tree* tree);
+t_node* Join_Nodes(t_node* a, t_node* b, int nindex);
+void Join_Nodes_Balanced(t_node** nodes, int nnodes, int nindex);
+void printTree(t_node* node);
+int Fix_Node_Numbers(t_node* d, int* nums, int index, int root, phydbl thresh, t_tree* tree);
+int Fix_Edge_Numbers(t_node* d, int* edges, int index, int root, phydbl thresh, t_tree* tree);
+t_node* Resolve_Polytomy_Mono(t_node* b, phydbl thresh, t_tree* tree);
+phydbl Score_Polytomy(t_node* top,phydbl thresh, int maxtrees, int relative, t_tree* tree);
 void Score_Mono(t_node* d, int level, int* scores, int debug, t_tree* tree);
-int NNI_Paths_Search(t_node *c, t_node *d,t_edge* c_fcus,t_edge* d_fcus, int pars0, phydbl thresh,
-		t_tree* tree, int maxtrees,t_tree** trees,phydbl paths0,int iter);
-int NNI_PathsSwaps(t_node *a, t_node *b, t_node *c, t_node *d, t_tree *tree, phydbl thresh,
-		int maxtrees, t_tree** trees);
+void Isolate_Polytomy(t_node* d, phydbl thresh, t_tree* tree);
+void Attach_Edge(t_node* top, t_node* a, int topi, int ai, phydbl length);
+void Count_Polytomy_Switches(t_node* top, phydbl* switches, phydbl thresh, t_tree* tree);
+void Count_Polytomy_States(t_node* d, int* scores, int root, phydbl thresh, int mark, t_tree* tree);
 
 void Make_Tree_4_Pars(t_tree *tree, int n_site);
 int  Pars(t_tree *tree);
