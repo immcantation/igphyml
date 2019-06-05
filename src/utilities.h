@@ -319,6 +319,7 @@ typedef struct __Node {
   int* plc;
   int* llock;
   int* rlock;
+  int* polystates;
   int pstate;
 
 }t_node;

@@ -64,6 +64,7 @@ void Isolate_Polytomy(t_node* d, phydbl thresh, t_tree* tree);
 void Attach_Edge(t_node* top, t_node* a, int topi, int ai, phydbl length);
 void Count_Polytomy_Switches(t_node* top, phydbl* switches, phydbl thresh, t_tree* tree);
 void Count_Polytomy_States(t_node* d, int* scores, int root, phydbl thresh, int mark, t_tree* tree);
+void Get_Rand_Path_Polytomy(t_node *d, int* scores, int index, t_tree *tree, int root);
 
 void Make_Tree_4_Pars(t_tree *tree, int n_site);
 int  Pars(t_tree *tree);

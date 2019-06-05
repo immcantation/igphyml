@@ -151,11 +151,12 @@ void Pars_Reconstructions(option* io){
   		  int minroots=0;
   		  int minroot=-1;
   		  For(i,tree->nstate){
-  			if(r->sroot[i] == pars){
+  			 if(r->sroot[i] == pars){
   				minrootsar[minroots] = i;
   				minroots++;
   				minroot=i;
-  			}
+  			 }
+         printf("%s\t%d\t%d\t%d\n",tree->chars[i],r->sroot[i],pars,minroots);
   		  }
   		  if(tree->n_otu < maxotu){ //if too many taxa, don't bother trying to solve for all reconstructions
   			  npars=0;
@@ -168,7 +169,7 @@ void Pars_Reconstructions(option* io){
 					t_node* r2 = tree2->noeud[tree->mod->startnode];
 					tree2->io=tree->io;
 					Update_Ancestors_Edge(r2,r2->v[0],r2->b[0],tree);
-					Copy_Sankoff_Tree(tree,tree2);
+					Copy_Sankoff_Tree(tree,tree2);       
 					trees[npars]=tree2;
   					npars = Get_All_Paths(r2,i,tree2,trees,1,maxtrees,npars,j,i)+1;
   				}
@@ -196,7 +197,7 @@ void Pars_Reconstructions(option* io){
                   For(k,(trees[i]->n_otu-1)*2){
                     t_node* d = trees[i]->noeud[k];
                     printf("%d\n",d->num);
-                    if(!d->tax && !d->anc->tax && d->anc_edge->l < tree->io->thresh && d->y_rank == 0)
+                    if(!d->tax && !d->anc->tax && d->anc_edge->l < tree->io->thresh && d->y_rank == 2)
                        Count_Polytomy_Switches(d, switches, tree->io->thresh, trees[i]);
                   }
   		  	  		  Fill_Pars_Stats(trees[i]->noeud[trees[i]->mod->startnode],trees[i],switches,classl,1); //summarize statistics of the reconstruction
@@ -246,9 +247,13 @@ void Pars_Reconstructions(option* io){
 	  	  		  fprintf(treeout1,"Tree TREE%d = [&R] ",i+1);
 	  	  		  int n = rand() % minroots;
 	  	  		  int minroot = minrootsar[n];
-	  	  		  //printf("root %d %d\n",minroot,minroots);
+              //For(k,minroots)printf("\nminroots %d %d",k,minrootsar[k]);
+	  	  		  //printf("\nroot %s %d %d\n",tree->chars[minroot],minroot,n);
   			  	  Get_Rand_Path(r,minroot,tree,1);
-
+              For(k,(tree->n_otu-1)*2){
+                //printf("%d\t%d\n",k,tree->noeud[k]->y_rank);
+                tree->noeud[k]->y_rank = 0;
+              }
               For(k,(tree->n_otu-1)*2){
                  t_node* d = tree->noeud[k];
                  if(!d->tax && !d->anc->tax && d->anc_edge->l < tree->io->thresh && d->y_rank == 0)
@@ -300,6 +305,196 @@ void Pars_Reconstructions(option* io){
   		  free(trees);
   	}
 }
+
+
+/********************************************************
+ * Recurse down tree, randomly choosing ambiguous pointers
+ * TODO: Make descendant nodes from polytomies consider all possible 
+ * states within a polytomy as a possible ancestor
+ * if(d->anc->y_rank == 1) xyz...
+ * */
+void Get_Rand_Path(t_node *d, int index, t_tree *tree, int root){
+  int i,j,dir1,dir2;
+  int ldraw=0;
+  int rdraw=0;
+  int lfound=0;
+  int rfound=0;
+  if(d->y_rank == 0){
+    d->pstate=index;
+    //printf("\nassigning %d\t%d\t%s",d->num,index,tree->chars[d->pstate]);
+  }
+  if(!d->tax&&tree->mod->optDebug)printf("%s\t%d\n",tree->chars[index],index);
+  if(!d->tax || root){
+    if(!root){
+      t_node* a = d->anc;
+      dir1=dir2=-1;
+      For(i,3) if(d->v[i]->num != a->num) (dir1<0)?(dir1=i):(dir2=i);
+      if((d->y_rank == 0) && (d->b[dir1]->l < tree->io->thresh || 
+          d->b[dir2]->l < tree->io->thresh)){
+        int* scores = mCalloc(tree->nstate,sizeof(int));
+        scores[d->anc->pstate]++;
+        //printf("\n%d polytomy top %d\n",d->num,d->anc->pstate);
+        //scores[d->pstate]++;
+        Get_Rand_Path_Polytomy(d, scores, index, tree, 1);
+        /*For(i,tree->nstate)printf("%d\t",scores[i]);
+        printf("\n");*/
+        d->y_rank = 2;
+      }
+    }else{
+      dir1=0;
+    }
+    int* scores;
+    if(d->y_rank == 0){
+      //printf("\n%d not a polytomy",d->num);
+      scores = mCalloc(tree->nstate,sizeof(int));
+      scores[index] = 1;
+    }else{
+      //printf("\n%d a polytomy",d->num);
+      scores = d->polystates;
+      //printf("\n");
+      //For(i,tree->nstate)printf("%d\t",scores[i]);
+      //printf("\n");
+      //For(i,tree->nstate)printf("%s\t",tree->chars[i]);
+    }
+    int lmins=0;int rmins=0; //tally up number of minimal paths
+    For(j,tree->nstate){ //allow for any state in a polytomy to be used
+      if(scores[j] > 0){
+        For(i,tree->nstate){
+         if(d->pl[j*tree->nstate+i] == d->lmin[d->pstate])lmins++;
+         if(!root)if(d->pr[j*tree->nstate+i] == d->rmin[d->pstate])rmins++;
+        }
+      }
+    }
+    if(lmins>1)ldraw = rand() % lmins; //not perfectly random but probably okay
+    if(!root && rmins>1)rdraw = rand() % rmins;
+    For(j,tree->nstate){
+      if(scores[j] > 0){
+        For(i,tree->nstate){
+        if(d->num == 13){
+          //printf("\noptions %s\t%s\t%d\t%d\t%d\t%d",tree->chars[j],tree->chars[i],
+           // d->pl[j*tree->nstate+i],d->lmin[d->pstate],d->pr[j*tree->nstate+i],d->rmin[d->pstate]);
+        }
+         if(d->pl[j*tree->nstate+i] == d->lmin[d->pstate]){
+          //if(d->y_rank==1 && d->v[dir1]->y_rank == 0 && !d->v[dir1]->tax)
+          //  printf("\n!!!adjacent tip %d\t%s\t%s",d->num,tree->chars[j],tree->chars[i]);
+          
+          if(lfound == ldraw)Get_Rand_Path(d->v[dir1],i,tree,0);
+            lfound++;
+         }
+         if(d->pr[j*tree->nstate+i] == d->rmin[d->pstate] && !root ){
+          //if(!root)if(d->y_rank==1 && d->v[dir2]->y_rank == 0  && !d->v[dir2]->tax)
+          //  printf("\n!!!adjacent tip %d\t%s\t%s",d->num,tree->chars[j],tree->chars[i]);
+          
+          if(rfound == rdraw)Get_Rand_Path(d->v[dir2],i,tree,0);
+          rfound++;
+         }
+       }
+      }
+    }
+  }else{
+    if(tree->mod->optDebug)printf("%s\t%s\n",tree->chars[index],d->name);
+  }
+  /*if(!root)printf("\nTREE %d\t%d\t%s",d->anc->num,d->num,tree->chars[d->pstate]);
+  if(d->tax)printf("\t%s",d->name);*/
+}
+
+/********************************************************
+ * Recurse down polytomy, randomly choosing ambiguous pointers
+ * TODO: Make descendant nodes from polytomies consider all possible 
+ * states within a polytomy as a possible ancestor
+ * if(d->anc->y_rank == 1) xyz...
+ * */
+void Get_Rand_Path_Polytomy(t_node *d, int* scores, int index, t_tree *tree, int top){
+  int i,j,dir1,dir2;
+  int ldraw=0;
+  int rdraw=0;
+  int lfound=0;
+  int rfound=0;
+  int root = 0;
+  if(d->num == tree->mod->startnode)root=1;
+  //printf("\nhere %d\t%d\t%s\t%lf",d->num,index,tree->chars[index],tree->io->thresh);
+  d->pstate=index;
+  d->polystates = scores;
+  //if(!d->tax&&tree->mod->optDebug)printf("%s\t%d\n",tree->chars[index],index);
+  if((!d->tax && d->anc_edge->l < tree->io->thresh) || top){
+    d->y_rank = 1;
+    if(!root){
+      t_node* a = d->anc;
+      dir1=dir2=-1;
+      For(i,3) if(d->v[i]->num != a->num) (dir1<0)?(dir1=i):(dir2=i);
+    }else{
+      dir1=0;
+    }
+    int lmins=0;int rmins=0; //tally up number of minimal paths
+    For(i,tree->nstate){
+      if(d->pl[index*tree->nstate+i] == d->lmin[index])lmins++;
+      if(!root)if(d->pr[index*tree->nstate+i] == d->rmin[index])rmins++;
+    }
+    if(lmins>1)ldraw = rand() % lmins; //not perfectly random but probably okay
+    if(!root && rmins>1)rdraw = rand() % rmins;
+
+    For(i,tree->nstate){
+        if(d->pl[index*tree->nstate+i] == d->lmin[index]){
+          if(lfound == ldraw)Get_Rand_Path_Polytomy(d->v[dir1],scores,i,tree,0);
+          lfound++;
+        }
+        if(d->pr[index*tree->nstate+i] == d->rmin[index] && !root ){
+          if(rfound == rdraw)Get_Rand_Path_Polytomy(d->v[dir2],scores,i,tree,0);
+          rfound++;
+        }
+    }
+  }else{
+      //printf("\nadding %d %s",d->num,tree->chars[d->pstate]);
+      //if(d->tax)printf(" %s",d->name);
+      scores[d->pstate]++;
+      if(tree->mod->optDebug)printf("%s\t%s\n",tree->chars[index],d->name);
+  }
+}
+
+
+/********************************************************
+ * Count all possible switches along polytomies
+ * */
+void Count_Polytomy_Switches(t_node* d, phydbl* switches, phydbl thresh, t_tree* tree){
+  int i,j;
+ // printf("counting polytomy switches\n");
+  t_node* top = d;
+  while(top->anc_edge->l < thresh && top->anc->num != tree->mod->startnode){
+    top = top->anc;
+  }
+  //printf("top %d\n",top->num);
+  int ancstate = top->anc->pstate;
+  if(top->anc->y_rank != 0)ancstate = top->pstate;
+  //printf("anc state %s\n",tree->chars[ancstate]);
+  Count_Polytomy_States(top, NULL, 1, thresh, 0, tree);
+  int* scores = d->polystates;
+ // For(i,tree->nstate)printf("%d\t",d->polystates[i]);
+  //printf("\n");
+  phydbl nswitches = 0;
+  phydbl nsteps = 0; 
+  For(i,tree->nstate){
+    if(scores[i] > 0 && i != ancstate)nsteps++;
+    For(j,tree->nstate){
+      if(scores[i] > 0 && scores[j] > 0 && i != j){
+        if(tree->step_mat[i*tree->nstate+j] <= 1 && j != ancstate){
+          nswitches++;
+        }
+      }
+    }
+  }
+  For(i,tree->nstate){
+    For(j,tree->nstate){
+      if(scores[i] > 0 && scores[j] > 0 && i != j){
+        if(tree->step_mat[i*tree->nstate+j] <= 1 && j != ancstate){
+          //printf("switch counts %s\t%s\t%lf\n",tree->chars[i],tree->chars[j],nsteps/nswitches);
+          switches[i*tree->nstate+j] += nsteps/nswitches;
+        }
+      }
+    }
+  }
+}
+
+
 
 /*********************************************************
  * Initialize Sankoff dynamic programming tables at the tips of the tree
@@ -809,7 +1004,7 @@ t_node* Resolve_Polytomy_Mono(t_node* b, phydbl thresh, t_tree* tree){
   //!!TODO: detect if the underlying characters have changed with this rearrangement
   int redo = 0;
   int* nscores = mCalloc(tree->nstate,sizeof(int));
-  Count_Polytomy_States(newtop,nscores,1,thresh,0,tree);
+  Count_Polytomy_States(newtop,nscores,1,thresh,1,tree);
   For(i,tree->nstate)if(nscores[i] != -scores[i])redo=1;
   
   if(redo){
@@ -1019,10 +1214,13 @@ int Prune_Polytomy(t_node* d, t_node** nodes, int* scores, int* nums, int* edges
 void Count_Polytomy_States(t_node* d, int* scores, int root, phydbl thresh, int mark, t_tree* tree){
   int i;
   if((d->tax || d->anc_edge->l > thresh) && !root){
-    scores[d->pstate]++;
+    if(mark)scores[d->pstate]++;
   }else{
     d->y_rank = 1;
-    if(mark)d->y_rank = 1;
+    if(mark){
+      d->y_rank = 1;
+      d->polystates = scores;
+    }
     For(i,3){
       if(d->v[i]->num != d->anc->num){
         Count_Polytomy_States(d->v[i], scores, 0, thresh, mark, tree);
@@ -1309,47 +1507,6 @@ void Get_First_Path(t_node *d, int index, t_tree *tree,int root){
 }
 
 /********************************************************
- * Recurse down tree, randomly choosing ambiguous pointers
- * */
-void Get_Rand_Path(t_node *d, int index, t_tree *tree, int root){
-	int i,j,dir1,dir2;
-	int ldraw=0;
-	int rdraw=0;
-	int lfound=0;
-	int rfound=0;
-	d->pstate=index;
-	if(!d->tax&&tree->mod->optDebug)printf("%s\t%d\n",tree->chars[index],index);
-	if(!d->tax || root){
-		if(!root){
-			t_node* a = d->anc;
-			dir1=dir2=-1;
-			For(i,3) if(d->v[i]->num != a->num) (dir1<0)?(dir1=i):(dir2=i);
-		}else{
-			dir1=0;
-		}
-		int lmins=0;int rmins=0; //tally up number of minimal paths
-		For(i,tree->nstate){
-			if(d->pl[index*tree->nstate+i] == d->lmin[index])lmins++;
-			if(!root)if(d->pr[index*tree->nstate+i] == d->rmin[index])rmins++;
-		}
-		if(lmins>1)ldraw = rand() % lmins; //not perfectly random but probably okay
-		if(!root && rmins>1)rdraw = rand() % rmins;
-		For(i,tree->nstate){
-			if(d->pl[index*tree->nstate+i] == d->lmin[index]){
-				if(lfound == ldraw)Get_Rand_Path(d->v[dir1],i,tree,0);
-				lfound++;
-			}
-			if(d->pr[index*tree->nstate+i] == d->rmin[index] && !root ){
-				if(rfound == rdraw)Get_Rand_Path(d->v[dir2],i,tree,0);
-				rfound++;
-			}
-		}
-	}else{
-		if(tree->mod->optDebug)printf("%s\t%s\n",tree->chars[index],d->name);
-	}
-}
-
-/********************************************************
  * Set counters to "left most" option
  * */
 void Set_Pars_Counters(t_node *d, t_tree *tree,int root){
@@ -1509,47 +1666,6 @@ void Fill_Pars_Stats(t_node* d,t_tree* tree, phydbl* switches, phydbl* classl, i
 		if(!root)Fill_Pars_Stats(d->v[dir2],tree,switches,classl,0);
 	}
 }
-
-/********************************************************
- * Count all possible switches along polytomies
- * */
-void Count_Polytomy_Switches(t_node* d, phydbl* switches, phydbl thresh, t_tree* tree){
-  int i,j;
- // printf("counting polytomy switches\n");
-  t_node* top = d;
-  while(top->anc_edge->l < thresh && top->anc->num != tree->mod->startnode){
-    top = top->anc;
-  }
-  //printf("top %d\n",top->num);
-  int ancstate = top->anc->pstate;
- // printf("anc state %s\n",tree->chars[ancstate]);
-  int* scores = mCalloc(tree->nstate,sizeof(int));
-  Count_Polytomy_States(top, scores, 1, thresh, 1, tree);
-  scores[ancstate]++;
-  phydbl nswitches = 0;
-  phydbl nsteps = 0; 
-  For(i,tree->nstate){
-    if(scores[i] > 0 && i != ancstate)nsteps++;
-    For(j,tree->nstate){
-      if(scores[i] > 0 && scores[j] > 0 && i != j){
-        if(tree->step_mat[i*tree->nstate+j] <= 1 && j != ancstate){
-          nswitches++;
-        }
-      }
-    }
-  }
-  For(i,tree->nstate){
-    For(j,tree->nstate){
-      if(scores[i] > 0 && scores[j] > 0 && i != j){
-        if(tree->step_mat[i*tree->nstate+j] <= 1 && j != ancstate){
-          //printf("switch counts %s\t%s\t%lf\n",tree->chars[i],tree->chars[j],nsteps/nswitches);
-          switches[i*tree->nstate+j] += nsteps/nswitches;
-        }
-      }
-    }
-  }
-}
-
 
 /********************************************************
  * Print summary of states at each node. Used for debugging
