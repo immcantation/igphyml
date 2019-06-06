@@ -147,7 +147,8 @@ void Init_Node_Light(t_node *n, int num)
   n->ext_node               = NULL;
   n->name                   = NULL;
   n->ori_name               = NULL;
-  n->y_rank                 = 0;
+  n->polytomy                 = 0;
+  n->y_rank                 = 0.0;
   n->y_rank_ori             = 0.0;
   n->y_rank_max             = 0.0;
   n->y_rank_min             = 0.0;
@@ -3848,7 +3849,7 @@ void Hide_Ambiguities(calign *data)
 void Copy_Tree(t_tree *ori, t_tree *cpy)
 {
   int i,j;
-  
+  cpy->print_labels = ori->print_labels;
   
   For(i,2*ori->n_otu-2)
   {
@@ -3885,15 +3886,14 @@ void Copy_Tree(t_tree *ori, t_tree *cpy)
   {
     cpy->noeud[i]->tax = 1;
     strcpy(cpy->noeud[i]->name,ori->noeud[i]->name);
+    cpy->noeud[i]->b[0]->n_labels = ori->noeud[i]->b[0]->n_labels;
   }
   
   cpy->num_curr_branch_available = 0;
   /*   Connect_Edges_To_Nodes_Recur(cpy->noeud[0],cpy->noeud[0]->v[0],cpy); */
   /*   Update_Dirs(cpy); */
   
-  cpy->c_lnL=ori->c_lnL;//!< Added by Marcelo.
-  
-  
+  cpy->c_lnL=ori->c_lnL;//!< Added by Marcelo. 
 }
 
 /*********************************************************/

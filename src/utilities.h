@@ -303,7 +303,8 @@ typedef struct __Node {
   phydbl                     dist_to_root; /* distance to the root t_node */
 
   short int                        common;
-  int                              y_rank;
+  int                            polytomy;
+  phydbl                           y_rank;
   phydbl                       y_rank_ori;
   phydbl                       y_rank_min;
   phydbl                       y_rank_max;
@@ -321,6 +322,7 @@ typedef struct __Node {
   int* rlock;
   int* polystates;
   int pstate;
+  int pancstate;
 
 }t_node;
 
@@ -493,6 +495,7 @@ typedef struct __Arbre {
 
   int 							nstate; //number of states in pmatrix
   char**						chars;
+  int*              charindex;
 }t_tree;
 
 /*********************************************************/

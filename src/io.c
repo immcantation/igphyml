@@ -1166,7 +1166,6 @@ void R_wtree(t_node *pere, t_node *fils, int *available, char **s_tree, int *pos
 	    	  (*pos) += sprintf(*s_tree+*pos,"[%s]",tree->chars[fils->pstate]);
 	      }
 	    }
-
       strcat(*s_tree,":");
       (*pos)++;
 
