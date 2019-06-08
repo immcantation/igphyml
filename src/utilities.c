@@ -64,6 +64,7 @@ void Init_Tree(t_tree *tree, int n_otu)
   tree->num_curr_branch_available = 0;
   
   tree->tip_order_score           = .0;
+  tree->polytomies                = 0;
 }
 
 /*********************************************************/
@@ -153,6 +154,7 @@ void Init_Node_Light(t_node *n, int num)
   n->y_rank_max             = 0.0;
   n->y_rank_min             = 0.0;
   n->anc                    = NULL;
+  n->polytomy_leader        = 0;
 }
 
 /*********************************************************/
@@ -797,10 +799,16 @@ void Update_Dirs(t_tree *tree)
   
   b = NULL;
   buff = -1;
-  For(i,2*tree->n_otu-3)
-  {
+  For(i,2*tree->n_otu-3){
     b = tree->t_edges[i];
+    //printf("\nedge %d %d %d %d %d %d\n",i,b->num,b->left->num,b->rght->num,b->left->polytomy,b->rght->polytomy);
     
+    /*printf("\n%d left %d %d" ,b->num,b->left->num,b->left->tax);
+    if(!b->left->tax)printf("\n%d left1 %d",b->num,b->left->v[b->l_v1]->num);
+    if(!b->left->tax)printf("\n%d left2 %d",b->num,b->left->v[b->l_v2]->num);
+    printf("\n%d right %d %d" ,b->num,b->rght->num,b->rght->tax);
+    if(!b->rght->tax)printf("\n%d right1 %d",b->num,b->rght->v[b->r_v1]->num);
+    if(!b->rght->tax)printf("\n%d right2 %d",b->num,b->rght->v[b->r_v2]->num);*/
     if((!b->left->tax) && (b->left->v[b->l_v1]->num < b->left->v[b->l_v2]->num))
     {
       buff    = b->l_v1;

@@ -304,6 +304,7 @@ typedef struct __Node {
 
   short int                        common;
   int                            polytomy;
+  int                     polytomy_leader;
   phydbl                           y_rank;
   phydbl                       y_rank_ori;
   phydbl                       y_rank_min;
@@ -323,7 +324,7 @@ typedef struct __Node {
   int* polystates;
   int pstate;
   int pancstate;
-
+  struct __Node  **swaplist;
 }t_node;
 
 
@@ -496,6 +497,9 @@ typedef struct __Arbre {
   int 							nstate; //number of states in pmatrix
   char**						chars;
   int*              charindex;
+  int               polytomies;
+  t_node***          polytomy_swaps;
+  int*              polytomy_states;
 }t_tree;
 
 /*********************************************************/
