@@ -1096,13 +1096,14 @@ char *Write_Tree(t_tree *tree)
 	  tree->n_root=r;
 	  tree->e_root=blank;
 	  tree->n_root_pos=tree->mod->startnode;
-	  r->name = (char*)mCalloc(T_MAX_OPTION,sizeof(char*));
+	  //r->name = (char*)mCalloc(T_MAX_OPTION,sizeof(char*));
 	  strcpy(r->name,tree->noeud[tree->mod->startnode]->name);
 	  R_wtree(tree->noeud[tree->mod->startnode],tree->noeud[tree->mod->startnode]->v[0],&available,&s,&pos,tree);
 	  R_wtree(tree->noeud[tree->mod->startnode],tree->noeud[tree->mod->startnode]->v[1],&available,&s,&pos,tree);
 
-	  free(r->name);
-	  free(r);
+	  /*free(r->name);
+	  free(r);*/
+    Free_Node(r);
 	  free(blank);
 	  tree->noeud[tree->mod->startnode]->b[1]=NULL;
 	  tree->noeud[tree->mod->startnode]->v[1]=NULL;

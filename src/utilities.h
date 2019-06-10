@@ -498,7 +498,7 @@ typedef struct __Arbre {
   char**						chars;
   int*              charindex;
   int               polytomies;
-  t_node***          polytomy_swaps;
+  int**          polytomy_swaps;
   int*              polytomy_states;
 }t_tree;
 

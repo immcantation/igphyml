@@ -63,7 +63,7 @@ io->threads=0;
         io->thresh = 0.001;
         tree->charindex = mCalloc(tree->nstate,sizeof(int));
         tree->polytomy_states = mCalloc((tree->n_otu-1)*2,sizeof(int));
-        tree->polytomy_swaps = mCalloc((tree->n_otu-1)*2,sizeof(t_node**));
+        tree->polytomy_swaps = mCalloc((tree->n_otu-1)*2,sizeof(int*));
 	  	  int pars2 = Resolve_Polytomies_Pars(tree,io->thresh);
 	  	  #if defined OMP || defined BLAS_OMP
 		  #pragma omp critical
@@ -149,7 +149,7 @@ void Pars_Reconstructions(option* io){
   		  //Data structures for counting the number of type switches and branch lengths in each state
 
         tree->polytomy_states = mCalloc((tree->n_otu-1)*2,sizeof(int));
-        tree->polytomy_swaps = mCalloc((tree->n_otu-1)*2,sizeof(t_node**));
+        tree->polytomy_swaps = mCalloc((tree->n_otu-1)*2,sizeof(int*));
   	    phydbl* switches = mCalloc(tree->nstate*tree->nstate,sizeof(phydbl));
   	    phydbl* classl = mCalloc(tree->nstate,sizeof(phydbl));
         tree->charindex = mCalloc(tree->nstate,sizeof(int));
@@ -164,7 +164,7 @@ void Pars_Reconstructions(option* io){
   				minroots++;
   				minroot=i;
   			 }
-         printf("%s\t%d\t%d\t%d\n",tree->chars[i],r->sroot[i],pars,minroots);
+         //printf("%s\t%d\t%d\t%d\n",tree->chars[i],r->sroot[i],pars,minroots);
   		  }
   		  if(tree->n_otu < maxotu){ //if too many taxa, don't bother trying to solve for all reconstructions
   			  npars=0;
@@ -273,7 +273,7 @@ void Pars_Reconstructions(option* io){
               }
               For(k,(tree->n_otu-1)*2)tree->noeud[k]->polytomy = 0;
   			  For(i,sample){
-            printf("sample %d\n",i);
+            //printf("\nsample %d",i);
 	  	  		  fprintf(treeout1,"Tree TREE%d = [&R] ",i+1);
 	  	  		  int n = rand() % minroots;
 	  	  		  int minroot = minrootsar[n];
@@ -282,21 +282,21 @@ void Pars_Reconstructions(option* io){
               For(poly,tree->polytomies){
                 int states = tree->polytomy_states[poly];
                 if(states > 2){
-                  t_node** swaps = tree->polytomy_swaps[poly];
+                  int* swaps = tree->polytomy_swaps[poly];
                   For(k,states){
-                    printf("\n%d\t%d\t%d",k,swaps[k]->num,states);
-                    printf("\n%d\t%d\t%d",k,swaps[k]->anc->num,states);
+                    //printf("\n%d\t%d\t%d",k,swaps[k],states);
+                    //printf("\n%d\t%d\t%d",k,swaps[k]>anc->num,states);
                   }
                   int f = rand() % states;
                   int s;
-                  t_node* first = swaps[f];
+                  t_node* first = tree->noeud[swaps[f]];
                   t_node* second = first;
                   while(first->anc->num == second->anc->num){
                     s = rand() % states;
-                    second = swaps[s];
+                    second = tree->noeud[swaps[s]];
                   }
-                  printf("\nswapping %d %d %d %d",first->num,second->num,f,s);
-                  printf("\nswapping2 %d %d",first->anc->num,second->anc->num);
+                  //printf("\nswapping %d %d %d %d",first->num,second->num,f,s);
+                  //printf("\nswapping2 %d %d",first->anc->num,second->anc->num);
                   Swap(first,first->anc,second->anc,second,tree);
                 }
               }
@@ -322,6 +322,8 @@ void Pars_Reconstructions(option* io){
   			  }
   			  fprintf(treeout1,"END;\n");
   			  fclose(treeout1);
+          Clean_Tree(tree2);
+          Free_Tree(tree2);
   		  }
   		 int tposi, tposj;
        phydbl total = 0.0;
@@ -392,6 +394,7 @@ void Get_Rand_Path(t_node *d, int index, t_tree *tree, int root){
     }
     int* scores;
     if(d->polytomy == 0){
+      //free(d->polystates);
       scores = mCalloc(tree->nstate,sizeof(int));
       scores[index] = 1;
     }else{
@@ -931,6 +934,7 @@ void Clean_Sankoff_Node(t_node* node){
      free(node->plc);
      free(node->llock);
      free(node->rlock);
+     //free(node->polystates);
 }
 
 
@@ -1091,9 +1095,9 @@ t_node* Resolve_Polytomy_Mono(t_node* b, phydbl thresh, int randomize, t_tree* t
 		}
 	}
 
-  t_node** swaplist = mCalloc(tindex+1,sizeof(t_node*));
+  int* swaplist = mCalloc(tindex+1,sizeof(int));
   tree->polytomy_states[tree->polytomies] = tindex+1;
-  For(n,tindex+1)swaplist[n] = tops[n];
+  For(n,tindex+1)swaplist[n] = tops[n]->num;
   tree->polytomy_swaps[tree->polytomies] = swaplist;
   
   /*For(n,tindex+1){
@@ -1113,12 +1117,14 @@ t_node* Resolve_Polytomy_Mono(t_node* b, phydbl thresh, int randomize, t_tree* t
 		}
 	}
 
+  //printf("\npolytomy top %d\t%d\t%d",top->num,newtop->num,nums[0]);
+
 	Fix_Node_Numbers(newtop,nums,0,1,thresh,tree);
 	Fix_Edge_Numbers(newtop,edges,0,1,thresh,tree);
 
-  For(n,tindex+1){
-      printf("\nnodes to swap2: %d\t%d",n,tree->polytomy_swaps[tree->polytomies][n]->num);
-  }
+  /*For(n,tindex+1){
+      printf("\nnodes to swap2: %d\t%d",n,tree->polytomy_swaps[tree->polytomies][n]);
+  }*/
 
   //Clean_Tree(tree);
 	//Init_Class_Tips(tree,tree->io->precon);
@@ -1149,9 +1155,9 @@ t_node* Resolve_Polytomy_Mono(t_node* b, phydbl thresh, int randomize, t_tree* t
   Update_Ancestors_Edge(tree->noeud[tree->mod->startnode],tree->noeud[tree->mod->startnode]->v[0],tree->noeud[tree->mod->startnode]->b[0],tree);
   tree->polytomies++;
 
-  printf("printing tree\n");
+ /* printf("printing tree\n");
   printTree(tree->noeud[tree->mod->startnode]->v[0]);
-printf("printing tree\n");
+printf("printing tree\n");*/
 
 	if(rscore > 0){
 		printf("\n!! POLYTOMY NOT FULLY RESOLVED. Trying to resursively fix..");
@@ -1179,20 +1185,34 @@ int Fix_Node_Numbers(t_node* d, int* nums, int index, int root, phydbl thresh, t
 	int i;
 	if(!(d->tax || d->anc_edge->l > thresh) || root){
 		//printf("replacing %d %d\n",d->num, nums[index]);
-		d->num = nums[index++];
-    Clean_Sankoff_Node(tree->noeud[d->num]);
-		Free_Node(tree->noeud[d->num]);
-		tree->noeud[d->num] = d;
-    d->pl = (int *)mCalloc(tree->nstate*tree->nstate,sizeof(int ));
-    d->pr = (int *)mCalloc(tree->nstate*tree->nstate,sizeof(int ));
-    d->s = (int *)mCalloc(tree->nstate,sizeof(int));
-    d->sroot = (int *)mCalloc(tree->nstate,sizeof(int));
-    d->lmin = (int *)mCalloc(tree->nstate,sizeof(int));
-    d->rmin = (int *)mCalloc(tree->nstate,sizeof(int));
-    d->prc = (int *)mCalloc(tree->nstate,sizeof(int));
-    d->plc = (int *)mCalloc(tree->nstate,sizeof(int));
-    d->llock = (int *)mCalloc(tree->nstate,sizeof(int));
-    d->rlock = (int *)mCalloc(tree->nstate,sizeof(int));
+    //if(!root){
+      For(i,tree->polytomy_states[tree->polytomies]){
+        if(tree->polytomy_swaps[tree->polytomies][i] == d->num){
+          //printf("replacing swap %d %d\n",d->num, nums[index]);
+          tree->polytomy_swaps[tree->polytomies][i] = nums[index];
+        }
+      }
+		  d->num = nums[index++];
+      Clean_Sankoff_Node(tree->noeud[d->num]);
+		  Free_Node(tree->noeud[d->num]);
+		  tree->noeud[d->num] = d;
+      d->pl = (int *)mCalloc(tree->nstate*tree->nstate,sizeof(int ));
+      d->pr = (int *)mCalloc(tree->nstate*tree->nstate,sizeof(int ));
+      d->s = (int *)mCalloc(tree->nstate,sizeof(int));
+      d->sroot = (int *)mCalloc(tree->nstate,sizeof(int));
+      d->lmin = (int *)mCalloc(tree->nstate,sizeof(int));
+      d->rmin = (int *)mCalloc(tree->nstate,sizeof(int));
+      d->prc = (int *)mCalloc(tree->nstate,sizeof(int));
+      d->plc = (int *)mCalloc(tree->nstate,sizeof(int));
+      d->llock = (int *)mCalloc(tree->nstate,sizeof(int));
+      d->rlock = (int *)mCalloc(tree->nstate,sizeof(int));
+    /*}else{
+      if(d->num != nums[index]){
+        printf("\n POLYTOMY TOP NUMBER HAS CHANGED!\n");
+        exit(1);
+      }
+      index++;
+    }*/
 		For(i,3){
 			if(d->v[i]->num != d->anc->num){
 				index = Fix_Node_Numbers(d->v[i], nums, index, 0, thresh, tree);
@@ -1207,8 +1227,15 @@ int Fix_Node_Numbers(t_node* d, int* nums, int index, int root, phydbl thresh, t
  */
 int Fix_Edge_Numbers(t_node* d, int* edges, int index, int root, phydbl thresh, t_tree* tree){
   int i;
-  d->anc_edge->num = edges[index++];
-  tree->t_edges[d->anc_edge->num] = d->anc_edge;
+  //if(!root){
+    d->anc_edge->num = edges[index++];
+    tree->t_edges[d->anc_edge->num] = d->anc_edge;
+  /*}else{
+    if(d->anc_edge->num != edges[index]){
+        printf("\n POLYTOMY TOP EDGE NUMBER HAS CHANGED!\n");
+        exit(1);
+    }
+  }*/
   if(!(d->tax || d->anc_edge->l > thresh) || root){
     //printf("replacing edges %d %d\n",d->anc_edge->num, edges[index]);
   //  d->anc_edge->num = edges[index++];
