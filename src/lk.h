@@ -69,6 +69,7 @@ void Get_Lhood(t_node *a, t_node *d, t_tree *tree); //added by Ken 20/10/2016
 void Fill_UPP(t_tree *tree, t_edge *b, t_node *d, t_edge *u_e, t_edge *c_e, t_node *anc); //added by Ken 20/10/2016
 void Fill_UPP_single(t_tree *tree, t_edge *target); //added by Ken 20/10/2016
 void Fill_UPP_root(t_tree *tree, t_edge *b); //added by Ken 20/10/2016
+phydbl priorOmega(model* mod);
 
 void Site_Lk(t_tree *tree);
 phydbl Lk_At_Given_Edge(t_edge *b_fcus,t_tree *tree);

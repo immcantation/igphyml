@@ -337,7 +337,7 @@ phydbl dnorm(phydbl x, phydbl mu, phydbl sd){
 }
 
 
-/***********************************************************/
+/***********************************************************
 // Return prior probability of parameter set
 phydbl prior(model* mod){
 	int i;
@@ -378,11 +378,21 @@ phydbl prior(model* mod){
 	For(j,10){
 		printf("%d\t%lf\n",j,dnorm(j/2.0,2,0.5));
 	}
-	exit(1);*/
+	exit(1);
 	//printf("kappa: %lf\t%lf\n",mod->kappa,p);
 	return p;
 }
+***********************************************************/
 
+phydbl priorOmega(model* mod){
+	phydbl scale0 = mod->wPriorMean[0]/mod->wPriorShape;
+	phydbl scale1 = mod->wPriorMean[1]/mod->wPriorShape;
+	phydbl p0 = log(Dgamma(mod->omega_part[0],mod->wPriorShape,scale0));
+	phydbl p1 = log(Dgamma(mod->omega_part[1],mod->wPriorShape,scale1));
+	/*printf("omega0: %lf\t%lf\n",mod->omega_part[0],exp(p0));
+	printf("omega1: %lf\t%lf\n",mod->omega_part[1],exp(p1));*/
+	return p0+p1;
+}
 
 
 /*********************************************************
@@ -456,6 +466,9 @@ phydbl Lk_rep(option *io){
 		Lk(tree);
 	}
 	For(i,io->ntrees)replnL += io->tree_s[i]->c_lnL;
+	if(io->mod->prior){
+		replnL += priorOmega(io->mod);
+	}
 	io->replnL=replnL;
 	return replnL;
 }

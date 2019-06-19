@@ -892,6 +892,9 @@ typedef struct __Model {
  phydbl* cdr;
  phydbl* fwr;
 
+ phydbl 				wPriorShape;
+ phydbl* 				wPriorMean;
+
  char*				preconfile; //file used for custom parsimony model
 }model;
 

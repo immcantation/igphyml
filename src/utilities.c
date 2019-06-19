@@ -2342,6 +2342,9 @@ model *Copy_Partial_Model(model *ori, int num){
   cpy->omegaSiteVar = ori->omegaSiteVar;
   cpy->nomega_part = ori->nomega_part;
 
+  cpy->wPriorShape = ori->wPriorShape;
+  cpy->wPriorMean = ori->wPriorMean;
+
   cpy->omega_part=mCalloc(ori->nomega_part,sizeof(phydbl));
   cpy->omega_part_opt=mCalloc(ori->nomega_part,sizeof(int));
   cpy->omega_part_ci = (int*)mCalloc(cpy->nomega_part,sizeof(int ));
@@ -2772,7 +2775,6 @@ void Set_Defaults_Model(model *mod)
   mod->in_align_file=mCalloc(T_MAX_FILE,sizeof(char));
   For(c,12){mod->baseCounts[c]=0.0;}
   mod->optIter=0;
-
 
 }
 /*********************************************************/
