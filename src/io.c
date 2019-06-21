@@ -25,8 +25,9 @@ FILE *Openfile(char *filename, int mode)
   switch(mode){
     case 0 :{
       while(!(fp = (FILE *)fopen(s,"r")) && ++open_test<10){
-        PhyML_Printf("\n. Can't open file '%s', enter a new name : ",s);
-        Getstring_Stdin(s);
+        PhyML_Printf("\n. Can't open file '%s'",s);
+        exit(1);
+        //Getstring_Stdin(s);
       }
       break;
     }
