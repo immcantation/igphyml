@@ -718,16 +718,18 @@ void Init_Class_Tips(t_tree* tree, int precon){
 /*********************************************************
 * Permute tip names except for germline
 */
-void Permute_Tips(t_tree* tree){
+void Permute_MetaData(t_tree* tree, int pos){
 	int i, j;
 	int indexes[tree->n_otu-1];
 
+	//permute last element of tips and re-assign to sequence IDs
 	int count = 0;
 	//For(i,tree->n_otu)printf("1 %d\t%s\n",i,tree->noeud[i]->name);
 	int n = tree->n_otu;
 	char temp[T_MAX_NAME];
     For(i,n - 1) {
     		if(strcmp(tree->noeud[i]->name,tree->mod->rootname) != 0){
+    			printf("%s\n",tree->noeud[i]->name);
     			j = i + rand() / (RAND_MAX / (n - i) + 1);
     			while(strcmp(tree->noeud[j]->name,tree->mod->rootname) == 0)
     				j = i + rand() / (RAND_MAX / (n - i) + 1);
@@ -742,17 +744,17 @@ void Permute_Tips(t_tree* tree){
 /*********************************************************
 * Permute tip names except for germline
 */
-void Permute_MetaData(t_tree* tree, int pos){
+void Permute_Tips(t_tree* tree){
 	int i, j;
 	int indexes[tree->n_otu-1];
 
-	//permute last element of tips and re-assign to sequence IDs
 	int count = 0;
 	//For(i,tree->n_otu)printf("1 %d\t%s\n",i,tree->noeud[i]->name);
 	int n = tree->n_otu;
 	char temp[T_MAX_NAME];
     For(i,n - 1) {
     		if(strcmp(tree->noeud[i]->name,tree->mod->rootname) != 0){
+    			    			printf("%s\n",tree->noeud[i]->name);
     			j = i + rand() / (RAND_MAX / (n - i) + 1);
     			while(strcmp(tree->noeud[j]->name,tree->mod->rootname) == 0)
     				j = i + rand() / (RAND_MAX / (n - i) + 1);
@@ -762,7 +764,54 @@ void Permute_MetaData(t_tree* tree, int pos){
     		}
     }
 	//For(i,tree->n_otu)printf("2 %d\t%s\n",i,tree->noeud[i]->name);
+}
 
+/*********************************************************
+* Permute tip names except for germline
+*/
+void Permute_All_MetaData(option* io, int pos){
+	int i, j;
+	int n_otu = 0;
+	For(i,io->ntrees){
+		n_otu += io->tree_s[i]->n_otu-1;
+	}
+	int* indexes = mCalloc(n_otu,sizeof(int));
+	char** names = mCalloc(n_otu,sizeof(char*));
+
+	int index = 0;
+	For(i,io->ntrees){
+		For(j,io->tree_s[i]->n_otu){
+			if(strcmp(io->tree_s[i]->noeud[j]->name,io->mod_s[i]->rootname) != 0){
+				indexes[index] = index;
+				names[index] = mCalloc(T_MAX_NAME,sizeof(char));
+				strcpy(names[index],io->tree_s[i]->noeud[j]->name);
+				//printf("%d %s\n",index,names[index]);
+				index++;
+			}
+		}
+	}
+	int n = n_otu;
+	int temp;
+	For(i,n - 1){
+    	j = i + rand() / (RAND_MAX / (n - i) + 1);
+    	temp = indexes[i];
+    	indexes[i] = indexes[j];
+    	indexes[j] = temp;
+    }
+
+	index= 0;
+	For(i,io->ntrees){
+		For(j,io->tree_s[i]->n_otu){
+			if(strcmp(io->tree_s[i]->noeud[j]->name,io->mod_s[i]->rootname) != 0){
+				strcpy(io->tree_s[i]->noeud[j]->name,names[indexes[index++]]);
+				//printf("x %s\n",io->tree_s[i]->noeud[j]->name);
+			}
+		}
+	}
+
+    free(indexes);
+    For(i,n_otu)free(names[i]);
+	free(names);
 }
 
 
@@ -872,7 +921,7 @@ void Setup_Custom_Pars_Model(t_tree* tree){
 			 }while(fscn != EOF);
 		 }
 	 }
-	/* For(j,statecount){
+	 /*For(j,statecount){
 		 //printf("state %d\t%s\t%d\n",j,ambigstatesfrom[j],ambigstatesto[j]);
 	 }*/
 	 For(i,tree->n_otu){//read in information from the ends of the sequence names

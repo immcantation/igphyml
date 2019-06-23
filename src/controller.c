@@ -139,6 +139,7 @@ struct option longopts[] =
 	{"pars_samples",		  required_argument,NULL,177},  //!<Added by Ken
 	{"mdpos",		  required_argument,NULL,178},  //!<Added by Ken
 	{"permute",		  no_argument,NULL,179},  //!<Added by Ken
+	{"permuteAll",		  no_argument,NULL,180},  //!<Added by Ken
     {0,0,0,0}
 };
 
@@ -2932,6 +2933,12 @@ int mainOptionSwitch(int opt, char * optarg, option * io)
                 // --permute
         case 179:{
         		io->mod->permute_tips=1;
+            break;
+        }
+        //////////////////////////////////////////////////////////////////////////////////////
+                // --permuteAll
+        case 180:{
+        		io->mod->permute_tips=2;
             break;
         }
             //////////////////////////////////////////////////////////////////////////////////////
