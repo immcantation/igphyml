@@ -729,7 +729,7 @@ void Permute_MetaData(t_tree* tree, int pos){
 	char temp[T_MAX_NAME];
     For(i,n - 1) {
     		if(strcmp(tree->noeud[i]->name,tree->mod->rootname) != 0){
-    			printf("%s\n",tree->noeud[i]->name);
+    			//printf("%s\n",tree->noeud[i]->name);
     			j = i + rand() / (RAND_MAX / (n - i) + 1);
     			while(strcmp(tree->noeud[j]->name,tree->mod->rootname) == 0)
     				j = i + rand() / (RAND_MAX / (n - i) + 1);
@@ -754,7 +754,7 @@ void Permute_Tips(t_tree* tree){
 	char temp[T_MAX_NAME];
     For(i,n - 1) {
     		if(strcmp(tree->noeud[i]->name,tree->mod->rootname) != 0){
-    			    			printf("%s\n",tree->noeud[i]->name);
+    			 //   			printf("%s\n",tree->noeud[i]->name);
     			j = i + rand() / (RAND_MAX / (n - i) + 1);
     			while(strcmp(tree->noeud[j]->name,tree->mod->rootname) == 0)
     				j = i + rand() / (RAND_MAX / (n - i) + 1);
