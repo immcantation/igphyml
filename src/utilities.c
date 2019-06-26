@@ -2323,6 +2323,7 @@ model *Copy_Partial_Model(model *ori, int num){
   cpy->ambigfile = mCalloc(T_MAX_FILE,sizeof(char));
   cpy->prior=ori->prior;
   cpy->freqsTo=ori->freqsTo;
+  cpy->polytomyresolve = ori->polytomyresolve;
 
   cpy->in_tree_file = (char *)mCalloc(T_MAX_FILE,sizeof(char));
   cpy->in_align_file = (char *)mCalloc(T_MAX_FILE,sizeof(char));
@@ -2789,6 +2790,7 @@ void Set_Defaults_Model(model *mod)
 
   mod->mdpos = 0;
   mod->permute_tips = 0;
+  mod->polytomyresolve = 1;
 }
 /*********************************************************/
 

@@ -255,6 +255,7 @@ void Pars_Reconstructions(option* io){
             tree2->io = tree->io;
             Set_Pars_Counters(r,tree,1);
               Get_First_Path(tree->noeud[tree->mod->startnode],minrootsar[0],tree,1);
+              if(tree->mod->polytomyresolve){
               int iters = 0;
               int nnifound = 1;
               while(nnifound){ //execute if a rearrangement is found in a tree
@@ -271,6 +272,7 @@ void Pars_Reconstructions(option* io){
                 }
                 iters++;
               }
+              }
               For(k,(tree->n_otu-1)*2)tree->noeud[k]->polytomy = 0;
   			  For(i,sample){
             //printf("\nsample %d",i);
@@ -279,6 +281,7 @@ void Pars_Reconstructions(option* io){
 	  	  		  int minroot = minrootsar[n];
               For(k,(tree->n_otu-1)*2)tree->noeud[k]->polytomy = 0;
               int poly;
+              if(tree->mod->polytomyresolve){
               For(poly,tree->polytomies){
                 int states = tree->polytomy_states[poly];
                 if(states > 2){
@@ -299,6 +302,7 @@ void Pars_Reconstructions(option* io){
                   //printf("\nswapping2 %d %d",first->anc->num,second->anc->num);
                   Swap(first,first->anc,second->anc,second,tree);
                 }
+              }
               }
               //Init_Class_Tips(tree,io->precon);
               Fill_Sankoff(tree->noeud[tree->mod->startnode],tree,1);
@@ -383,7 +387,7 @@ void Get_Rand_Path(t_node *d, int index, t_tree *tree, int root){
       dir1=dir2=-1;
       For(i,3) if(d->v[i]->num != a->num) (dir1<0)?(dir1=i):(dir2=i);
       if((d->polytomy == 0) && (d->b[dir1]->l < tree->io->thresh || 
-          d->b[dir2]->l < tree->io->thresh)){
+          d->b[dir2]->l < tree->io->thresh) && tree->mod->polytomyresolve){
         int* scores = mCalloc(tree->nstate,sizeof(int));
         scores[d->pancstate]++;
         Get_Rand_Path_Polytomy(d, scores, index, tree, 1);
@@ -1045,6 +1049,8 @@ int Resolve_Polytomies_Pars(t_tree* tree, phydbl thresh){
 		}
 		iters++;
 	}
+
+	if(tree->mod->polytomyresolve){
 	t_node* r = tree->noeud[tree->mod->startnode];
 	int smin = INT_MAX;
 	int mins = 0;
@@ -1056,7 +1062,6 @@ int Resolve_Polytomies_Pars(t_tree* tree, phydbl thresh){
 	}
  	Set_Pars_Counters(r,tree,1);
 	Get_First_Path(tree->noeud[tree->mod->startnode],mins,tree,1);
-
 	iters = 0;
 	nnifound = 1;
 	while(nnifound){ //execute if a rearrangement is found in a tree
@@ -1073,7 +1078,8 @@ int Resolve_Polytomies_Pars(t_tree* tree, phydbl thresh){
 		}
 		iters++;
 	}
-  pars0 = Fill_Sankoff(tree->noeud[tree->mod->startnode],tree,1);
+	pars0 = Fill_Sankoff(tree->noeud[tree->mod->startnode],tree,1);
+	}
 	return pars0;
 }
 
