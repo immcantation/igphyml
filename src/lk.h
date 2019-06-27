@@ -71,6 +71,7 @@ void Fill_UPP_single(t_tree *tree, t_edge *target); //added by Ken 20/10/2016
 void Fill_UPP_root(t_tree *tree, t_edge *b); //added by Ken 20/10/2016
 phydbl prior(model* mod);
 phydbl dlnorm(phydbl x, phydbl mean, phydbl sd);
+phydbl dnorm(phydbl x, phydbl mean, phydbl sd);
 
 void Site_Lk(t_tree *tree);
 phydbl Lk_At_Given_Edge(t_edge *b_fcus,t_tree *tree);

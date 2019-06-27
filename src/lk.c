@@ -352,7 +352,6 @@ phydbl dlnorm(phydbl x, phydbl mean, phydbl sd){
 	return y;
 }
 
-
 /***********************************************************/
 // Return prior probability of parameter set
 phydbl prior(model* mod){
@@ -360,12 +359,12 @@ phydbl prior(model* mod){
 	if(mod->nhotness != 6){
 		Warn_And_Exit("Prior can only currently be used with 6 h values!");
 	}
-	phydbl p = log(dlnorm(mod->kappa, mod->kPriorMean, mod->priorSD));
+	phydbl p = log(dnorm(mod->kappa, mod->kPriorMean, mod->priorSD));
 	For(i,mod->nomega_part){
-		p += log(dlnorm(mod->omega_part[i], mod->wPriorMean[i], mod->priorSD));
+		p += log(dnorm(mod->omega_part[i], mod->wPriorMean[i], mod->priorSD));
 	}
 	For(i,mod->nhotness){
-		p += log(dlnorm(mod->hotness[i]+1, mod->hPriorMean[i]+1, mod->priorSD));
+		p += log(dnorm(mod->hotness[i]+1, mod->hPriorMean[i]+1, mod->priorSD));
 	}
 	return p;
 }
