@@ -54,7 +54,6 @@ int main(int argc, char **argv){
   best_lnL         = UNLIKELY;
   most_likely_size = -1.0;
   tree_size        = -1.0;
-  
 
   r_seed = abs(4*(int)time(NULL)*(int)time(NULL)+4*(int)time(NULL)+1); //!< Modified by Marcelo
   //r_seed=1234;

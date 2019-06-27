@@ -336,64 +336,39 @@ phydbl dnorm(phydbl x, phydbl mu, phydbl sd){
 	return fact * exp(-1*(x-mu)*(x-mu)/(2*sd*sd));
 }
 
+/***********************************************************/
+// return probability under normal
+phydbl dlnorm(phydbl x, phydbl mean, phydbl sd){
+	phydbl y = DBL_MIN;
+	if(x > 0.0){
+		phydbl mu = log(pow(mean,2) / sqrt(pow(sd,2) + pow(mean,2)));
+		phydbl s = sqrt(log(1 + (pow(sd,2) / pow(mean,2))));
+		phydbl fact = 1/(2.506628*s*x);
+		phydbl num = pow((log(x) - mu),2);
+		phydbl denom = (2*pow(s,2));
+		y = fact * exp(-1*(num/denom));
+	}
+	//printf("%lf\t%lf\t%lf\t%lf\n",x,mean,sd,y);
+	return y;
+}
 
-/***********************************************************
+
+/***********************************************************/
 // Return prior probability of parameter set
 phydbl prior(model* mod){
 	int i;
-	phydbl p=log(dnorm(mod->kappa,2.23,2));
-	if(mod->nomega_part == 1){
-		p+=log(dnorm(mod->omega_part[0],0.5,0.4));
-	}else{
-		p+=log(dnorm(mod->omega_part[0],0.42,0.4));
-		p+=log(dnorm(mod->omega_part[1],0.69,0.4));
+	if(mod->nhotness != 6){
+		Warn_And_Exit("Prior can only currently be used with 6 h values!");
 	}
-	p+=log(dnorm(mod->hotness[0], 3.11,3));
-	p+=log(dnorm(mod->hotness[1], 5.85,3));
-	p+=log(dnorm(mod->hotness[2], 3.24,3));
-	p+=log(dnorm(mod->hotness[3], 1.05,3));
-	p+=log(dnorm(mod->hotness[4],-0.68,1));
-	p+=log(dnorm(mod->hotness[5],-0.65,1));
-	phydbl betas[12];
-	betas[0] =19.60;
-	betas[1] =19.94;
-	betas[2] =10.99;
-	betas[3] =12.63;
-	betas[4] =13.31;
-	betas[5] =16.57;
-	betas[6] =13.70;
-	betas[7] =16.95;
-	betas[8] =14.75;
-	betas[9] =12.55;
-	betas[10]=18.00;
-	betas[11]=15.44;
-	//phydbl freqs[12];
-	Freq_to_UnsFreq(mod->base_freq,   mod->uns_base_freq,   4, 0);
-	Freq_to_UnsFreq(mod->base_freq+4, mod->uns_base_freq+4, 4, 0);
-	Freq_to_UnsFreq(mod->base_freq+8, mod->uns_base_freq+8, 4, 0);
-	For(i,12){
-		p+= log(dbeta(mod->base_freq[i],5,betas[i]));
+	phydbl p = log(dlnorm(mod->kappa, mod->kPriorMean, mod->priorSD));
+	For(i,mod->nomega_part){
+		p += log(dlnorm(mod->omega_part[i], mod->wPriorMean[i], mod->priorSD));
 	}
-	/*int j;
-	For(j,10){
-		printf("%d\t%lf\n",j,dnorm(j/2.0,2,0.5));
+	For(i,mod->nhotness){
+		p += log(dlnorm(mod->hotness[i]+1, mod->hPriorMean[i]+1, mod->priorSD));
 	}
-	exit(1);
-	//printf("kappa: %lf\t%lf\n",mod->kappa,p);
 	return p;
 }
-***********************************************************/
-
-phydbl priorOmega(model* mod){
-	phydbl scale0 = mod->wPriorMean[0]/mod->wPriorShape;
-	phydbl scale1 = mod->wPriorMean[1]/mod->wPriorShape;
-	phydbl p0 = log(Dgamma(mod->omega_part[0],mod->wPriorShape,scale0));
-	phydbl p1 = log(Dgamma(mod->omega_part[1],mod->wPriorShape,scale1));
-	/*printf("omega0: %lf\t%lf\n",mod->omega_part[0],exp(p0));
-	printf("omega1: %lf\t%lf\n",mod->omega_part[1],exp(p1));*/
-	return p0+p1;
-}
-
 
 /*********************************************************
  * Optimization code:
@@ -467,7 +442,7 @@ phydbl Lk_rep(option *io){
 	}
 	For(i,io->ntrees)replnL += io->tree_s[i]->c_lnL;
 	if(io->mod->prior){
-		replnL += priorOmega(io->mod);
+		replnL += prior(io->mod);
 	}
 	io->replnL=replnL;
 	return replnL;

@@ -136,8 +136,8 @@ struct option longopts[] =
 	{"eat",		  required_argument,NULL,174},  //!<Added by Ken
 	{"repwidefreqs",		  no_argument,NULL,175},  //!<Added by Ken
 	{"outname",		  required_argument,NULL,176},  //!<Added by Ken
-	{"wPriorShape",		  required_argument,NULL,177},  //!<Added by Ken
-	{"wPriorMean",		  required_argument,NULL,178},  //!<Added by Ken
+	{"priorSD",		  required_argument,NULL,177},  //!<Added by Ken
+	{"priorMeans",		  required_argument,NULL,178},  //!<Added by Ken
     {0,0,0,0}
 };
 
@@ -2915,23 +2915,31 @@ int mainOptionSwitch(int opt, char * optarg, option * io)
         	break;
         }
         	//////////////////////////////////////////////////////////////////////////////////////
-            // --wPriorShape <double>
+            // --priorSD <double>
         case 177:{
-        		io->mod->wPriorShape=atof(optarg);
-        		printf("omega prior shape %lf\n",io->mod->wPriorShape);
+        		io->mod->prior=1;
+        		io->mod->priorSD=atof(optarg);
+        		printf("omega prior shape %lf\n",io->mod->priorSD);
         		break;
         }
         	//////////////////////////////////////////////////////////////////////////////////////
-            // --wPriorMeans <double>
+            // --priorMeans <double>
         case 178:{
+        		io->mod->prior=1;
         		io->mod->wPriorMean = mCalloc(2,sizeof(phydbl));
+        		io->mod->hPriorMean = mCalloc(6,sizeof(phydbl));
         		io->mod->wPriorMean[0] = atof(strsep(&optarg, ","));
-        		io->mod->wPriorMean[1] = atof(optarg);
+        		io->mod->wPriorMean[1] = atof(strsep(&optarg, ","));
+        		io->mod->kPriorMean    = atof(strsep(&optarg, ","));
+        		io->mod->hPriorMean[0] = atof(strsep(&optarg, ","));
+        		io->mod->hPriorMean[1] = atof(strsep(&optarg, ","));
+        		io->mod->hPriorMean[2] = atof(strsep(&optarg, ","));
+        		io->mod->hPriorMean[3] = atof(strsep(&optarg, ","));
+        		io->mod->hPriorMean[4] = atof(strsep(&optarg, ","));
+        		io->mod->hPriorMean[5] = atof(optarg);
         		printf("omega prior mean %lf %lf\n",io->mod->wPriorMean[0],io->mod->wPriorMean[1]);
         		break;
         }
-
-
             //////////////////////////////////////////////////////////////////////////////////////
             // --multiple
             //
