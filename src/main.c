@@ -208,14 +208,6 @@ int main(int argc, char **argv){
   //Set up base frequencies and additional data structures
   Setup_Repertoire_Models(io);
 
-  	For(i,61){
-		char* s1=mCalloc(4,sizeof(char));
-		Sprint_codon(s1,tree->io->senseCodons[i]);
-		if(io->mod->whichrealmodel == HLP19)printf("\n%d\t%s\t%lf\t%lf",i,s1,tree->mod->root_pi[0][i],tree->mod->mid_pi[0][i]);
-		else printf("\n%d\t%s\t%lf",i,s1,tree->mod->pi[i]);
-	}
-
-
   //Do topology and parameter estimation if requested
   if(!io->testInitTree && !io->lkExperiment){
   	if(tree->mod->s_opt->opt_topo){ //Estimate topology?
