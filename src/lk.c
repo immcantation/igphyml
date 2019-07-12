@@ -348,7 +348,6 @@ phydbl dlnorm(phydbl x, phydbl mean, phydbl sd){
 		phydbl denom = (2*pow(s,2));
 		y = fact * exp(-1*(num/denom));
 	}
-	//printf("%lf\t%lf\t%lf\t%lf\n",x,mean,sd,y);
 	return y;
 }
 
