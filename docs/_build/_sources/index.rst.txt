@@ -13,10 +13,12 @@
     install
 
 .. toctree::
-	:maxdepth: 2
+	:maxdepth: 3
 	:caption: Using IgPhyML
 
 	usage/quickstart
+	usage/buildtrees
+	usage/standalone
 
 .. toctree::
     :maxdepth: 1

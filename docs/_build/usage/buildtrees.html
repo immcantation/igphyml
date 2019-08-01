@@ -1,0 +1,562 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>Controlling input &mdash; igphyml 1.0.7 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+    <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Standalone operation" href="standalone.html" />
+    <link rel="prev" title="Read this first" href="quickstart.html" /> 
+
+  
+  <script src="../_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> igphyml
+          
+
+          
+            
+            <img src="../_static/IgPhyML_logo9.png" class="logo" alt="Logo"/>
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Getting Started</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../overview.html">Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../install.html">Installation</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Using IgPhyML</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="quickstart.html">Read this first</a></li>
+<li class="toctree-l1"><a class="reference internal" href="quickstart.html#quick-start">Quick start</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Controlling input</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#subsampling-airr-datasets">Subsampling AIRR datasets</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#selecting-individual-clones">Selecting individual clones</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#cleaning-up-intermediates">Cleaning up intermediates</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#removing-the-cdr3-region">Removing the CDR3 region</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="#building-lineage-trees">Building lineage trees</a></li>
+<li class="toctree-l1"><a class="reference internal" href="#evolutionary-hypothesis-testing">Evolutionary hypothesis testing</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#the-hlp19-model">The HLP19 model</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#specifying-parameters">Specifying parameters</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#confidence-interval-estimation">Confidence interval estimation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#visualizing-results">Visualizing results</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="#optimizing-performance">Optimizing performance</a></li>
+<li class="toctree-l1"><a class="reference internal" href="standalone.html">Standalone operation</a></li>
+</ul>
+<p class="caption"><span class="caption-text">About</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../NEWS.html">Release Notes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../info.html">Contact</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../info.html#citation">Citation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../info.html#license">License</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Related Projects</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference external" href="http://immcantation.readthedocs.io">Immcantation Portal</a></li>
+<li class="toctree-l1"><a class="reference external" href="http://changeo.readthedocs.io">Change-O</a></li>
+<li class="toctree-l1"><a class="reference external" href="http://alakazam.readthedocs.io">Alakazam</a></li>
+<li class="toctree-l1"><a class="reference external" href="http://presto.readthedocs.io">pRESTO</a></li>
+<li class="toctree-l1"><a class="reference external" href="http://shazam.readthedocs.io">SHazaM</a></li>
+<li class="toctree-l1"><a class="reference external" href="http://tigger.readthedocs.io">TIgGER</a></li>
+<li class="toctree-l1"><a class="reference external" href="http://rdi.readthedocs.io">RDI</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">igphyml</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html">Docs</a> &raquo;</li>
+        
+      <li>Controlling input</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="../_sources/usage/buildtrees.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="controlling-input">
+<span id="buildtrees-processing"></span><h1>Controlling input<a class="headerlink" href="#controlling-input" title="Permalink to this headline">¶</a></h1>
+<p>The process begins with an AIRR formatted data file, in
+which each sequence has been clustered into a clonal group,
+which has subsequently had its unmutated V and J sequence predicted germlines.
+The following column names are required in the input file: fields: <code class="docutils literal notranslate"><span class="pre">sequence_id</span></code>,
+<code class="docutils literal notranslate"><span class="pre">sequence</span></code>, <code class="docutils literal notranslate"><span class="pre">sequence_alignment</span></code>, <code class="docutils literal notranslate"><span class="pre">germline_alignment_d_mask</span></code>,
+<code class="docutils literal notranslate"><span class="pre">v_call</span></code>, <code class="docutils literal notranslate"><span class="pre">j_call</span></code>, and <code class="docutils literal notranslate"><span class="pre">clone_id</span></code>. <code class="docutils literal notranslate"><span class="pre">productive</span></code> is recommended.</p>
+<p>Use BuildTrees.py to break this file into separate sequence
+alignment files that can be used with IgPhyML. This program will:</p>
+<ol class="arabic simple">
+<li>Filter out nonfunctional sequences.</li>
+<li>Mask codons split by insertions.</li>
+<li>Separate clonal groups into separate alignment files (aligned by IMGT site) and information files</li>
+<li>Create the repertoire files for this dataset.</li>
+</ol>
+<p>Create IgPhyML input files from <code class="docutils literal notranslate"><span class="pre">examples/example.tab</span></code> without running IgPhyML:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">cd</span> <span class="n">examples</span>
+<span class="n">BuildTrees</span><span class="o">.</span><span class="n">py</span> <span class="o">-</span><span class="n">d</span> <span class="n">example</span><span class="o">.</span><span class="n">tab</span> <span class="o">--</span><span class="n">outname</span> <span class="n">ex</span> <span class="o">--</span><span class="n">log</span> <span class="n">ex</span><span class="o">.</span><span class="n">log</span> <span class="o">--</span><span class="n">collapse</span>
+</pre></div>
+</div>
+<p>Here the <code class="docutils literal notranslate"><span class="pre">--collapse</span></code> flag is used to
+collapse identical sequences. This is highly recommended because
+identical sequences slow down calculations without actually affecting
+likelihood values in IgPhyML.</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">IgPhyML requires at least three sequences in a lineage, so in
+the case that there is only one observed sequence within a clone, that
+sequence is duplicated. This will not affect the likelihood
+calculation because these sequences will have a branch length of zero,
+but it will affect metrics that take sequence frequency into account.</p>
+</div>
+<div class="section" id="subsampling-airr-datasets">
+<span id="buildtrees-subsampling"></span><h2>Subsampling AIRR datasets<a class="headerlink" href="#subsampling-airr-datasets" title="Permalink to this headline">¶</a></h2>
+<p>IgPhyML runs slowly with more than a few thousand sequences. You can
+subsample your dataset using the <code class="docutils literal notranslate"><span class="pre">--sample</span></code> and <code class="docutils literal notranslate"><span class="pre">--minseq</span></code> options,
+which will subsample your dataset to the specified depth and then remove
+all clones below the specified size cutoff:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">BuildTrees</span><span class="o">.</span><span class="n">py</span> <span class="o">-</span><span class="n">d</span> <span class="n">example</span><span class="o">.</span><span class="n">tab</span> <span class="o">--</span><span class="n">collapse</span> <span class="o">--</span><span class="n">sample</span> <span class="mi">5</span> <span class="o">--</span><span class="n">minseq</span> <span class="mi">2</span> <span class="o">--</span><span class="n">igphyml</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="selecting-individual-clones">
+<span id="ind-clones"></span><h2>Selecting individual clones<a class="headerlink" href="#selecting-individual-clones" title="Permalink to this headline">¶</a></h2>
+<p>Often only particular clones are of interest for lineage tree analysis. To
+restrict IgPhyML analysis to particular clones, use the <code class="docutils literal notranslate"><span class="pre">--clones</span></code> option:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1">#Only use sequences from clone 2:</span>
+<span class="n">BuildTrees</span><span class="o">.</span><span class="n">py</span> <span class="o">-</span><span class="n">d</span> <span class="n">example</span><span class="o">.</span><span class="n">tab</span> <span class="o">--</span><span class="n">collapse</span> <span class="o">--</span><span class="n">clone</span> <span class="mi">2</span> <span class="o">--</span><span class="n">igphyml</span>
+
+<span class="c1">#Only use sequences from clones 1 and 2:</span>
+<span class="n">BuildTrees</span><span class="o">.</span><span class="n">py</span> <span class="o">-</span><span class="n">d</span> <span class="n">example</span><span class="o">.</span><span class="n">tab</span> <span class="o">--</span><span class="n">collapse</span> <span class="o">--</span><span class="n">clone</span> <span class="mi">1</span> <span class="mi">2</span> <span class="o">--</span><span class="n">igphyml</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="cleaning-up-intermediates">
+<h2>Cleaning up intermediates<a class="headerlink" href="#cleaning-up-intermediates" title="Permalink to this headline">¶</a></h2>
+<p>BuildTrees produces many intermediate files that are usually not useful to the user.
+To delete them after IgPhyML is run, use <code class="docutils literal notranslate"><span class="pre">--clean</span> <span class="pre">all</span></code>:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">BuildTrees</span><span class="o">.</span><span class="n">py</span> <span class="o">-</span><span class="n">d</span> <span class="n">example</span><span class="o">.</span><span class="n">tab</span> <span class="o">--</span><span class="n">log</span> <span class="n">ex</span><span class="o">.</span><span class="n">log</span> <span class="o">--</span><span class="n">collapse</span> <span class="o">--</span><span class="n">igphyml</span> <span class="o">--</span><span class="n">clean</span> <span class="nb">all</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="removing-the-cdr3-region">
+<span id="ncdr3"></span><h2>Removing the CDR3 region<a class="headerlink" href="#removing-the-cdr3-region" title="Permalink to this headline">¶</a></h2>
+<p>If you plan to analyze model parameters to study things such as SHM and
+selection, it’s important to remove
+the CDR3 region to avoid known model biases in estimating <span class="math notranslate nohighlight">\(\omega\)</span>. To
+do this, use <code class="docutils literal notranslate"><span class="pre">--ncdr3</span></code>:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">BuildTrees</span><span class="o">.</span><span class="n">py</span> <span class="o">-</span><span class="n">d</span> <span class="n">example</span><span class="o">.</span><span class="n">tab</span> <span class="o">--</span><span class="n">log</span> <span class="n">ex</span><span class="o">.</span><span class="n">log</span> <span class="o">--</span><span class="n">collapse</span> <span class="o">--</span><span class="n">ncdr3</span> <span class="o">--</span><span class="n">igphyml</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="building-lineage-trees">
+<span id="id1"></span><h1>Building lineage trees<a class="headerlink" href="#building-lineage-trees" title="Permalink to this headline">¶</a></h1>
+<p>If you’re simply interested in getting some tree topologies, the fastest
+option is to just use the GY94 (<code class="docutils literal notranslate"><span class="pre">REFERENCE</span></code>) and not estimate any parameters
+under HLP19. This is done using the <code class="docutils literal notranslate"><span class="pre">--optimize</span> <span class="pre">n</span></code> option:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">BuildTrees</span><span class="o">.</span><span class="n">py</span> <span class="o">-</span><span class="n">d</span> <span class="n">example</span><span class="o">.</span><span class="n">tab</span> <span class="o">--</span><span class="n">collapse</span> <span class="o">--</span><span class="n">igphyml</span> <span class="o">--</span><span class="n">clean</span> <span class="nb">all</span> <span class="o">--</span><span class="n">optimize</span> <span class="n">n</span>
+</pre></div>
+</div>
+<p>The trees can then be visualized using Alakazam (<code class="docutils literal notranslate"><span class="pre">REFERENCE</span></code>).
+Open an <code class="docutils literal notranslate"><span class="pre">R</span></code> session:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>library(alakazam)
+library(igraph)
+db = readIgphyml(&quot;ex_igphyml-pass.tab&quot;)
+
+#plot largest lineage tree
+plot(db$trees[[1]],layout=layout_as_tree)
+</pre></div>
+</div>
+<p>In these plots, edge labels represent the expected number of substitutions between
+nodes in the tree. See (<code class="docutils literal notranslate"><span class="pre">REFERENCE</span></code>) for plotting this style of trees.
+Alternatively, more traditional bifurcating tree topologies can
+be used:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>library(alakazam)
+library(ape)
+db = readIgphyml(&quot;ex_igphyml-pass.tab&quot;,format=&quot;phylo&quot;)
+
+#plot largest lineage tree
+plot(db$trees[[1]])
+</pre></div>
+</div>
+<p>Of course, these are quite simple trees. A more interesting tree can be
+visualized from a different provided dataset:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>library(alakazam)
+library(ape)
+db = readIgphyml(&quot;sample1_igphyml-pass.tab&quot;,format=&quot;phylo&quot;)
+#plot largest lineage tree
+plot(db$trees[[1]])
+</pre></div>
+</div>
+<p>Alternatively, to estimate ML tree topologies using the HLP19 model, use:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">BuildTrees</span><span class="o">.</span><span class="n">py</span> <span class="o">-</span><span class="n">d</span> <span class="n">example</span><span class="o">.</span><span class="n">tab</span> <span class="o">--</span><span class="n">collapse</span> <span class="o">--</span><span class="n">igphyml</span> <span class="o">--</span><span class="n">clean</span> <span class="nb">all</span> <span class="o">--</span><span class="n">optimize</span> <span class="n">tlr</span>
+</pre></div>
+</div>
+<p>This will be slower than using the GY94 model but does return meaningful HLP19 parameter estimates.
+These results can be visualized in the same manner using Alakazam (<code class="docutils literal notranslate"><span class="pre">REFERNECE</span></code>).</p>
+</div>
+<div class="section" id="evolutionary-hypothesis-testing">
+<span id="igphyml-parameters"></span><h1>Evolutionary hypothesis testing<a class="headerlink" href="#evolutionary-hypothesis-testing" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="the-hlp19-model">
+<h2>The HLP19 model<a class="headerlink" href="#the-hlp19-model" title="Permalink to this headline">¶</a></h2>
+<p>The HLP19 model is the heart of IgPhyML and adjusts for features of
+affinity maturation that violate the assumptions of most other
+phylogenetic models. It uses four sets of parameters to characterize
+the types of mutations the occurred over a lineage’s development, and
+to help build the tree.</p>
+<p><span class="math notranslate nohighlight">\(\omega\)</span>: Also called dN/dS, or the ratio of nonsynonymous
+(amino acid replacement) and synonymous (silent) mutation rates. This
+parameter generally relates to clonal selection, with totally neutral
+amino acid evolution having an <span class="math notranslate nohighlight">\(\omega \approx 1\)</span>, negative
+selection indicated by <span class="math notranslate nohighlight">\(\omega &lt; 1\)</span> and diversifying selection
+indicated by <span class="math notranslate nohighlight">\(\omega &gt; 1\)</span>. Generally, we find a lower <span class="math notranslate nohighlight">\(\omega\)</span>
+for FWRs than CDRs, presumably because FWRs are more structurally
+constrained.</p>
+<p><span class="math notranslate nohighlight">\(\kappa\)</span>: Ratio of transitions (within purines/pyrimidines) to
+transversions (between purines/pyrimidines). For normal somatic
+hypermutation this ratio is usually <span class="math notranslate nohighlight">\(\approx 2\)</span>.</p>
+<p>Motif mutability (e.g. <span class="math notranslate nohighlight">\(h^{WRC}\)</span>): Mutability parameters for
+specified hot- and coldspot motifs. These estimates are equivalent to
+the fold-change in mutability for that motif compared to regular
+motifs, minus one. So, <span class="math notranslate nohighlight">\(h^{WRC} &gt; 0\)</span> indicates at hotspot,
+<span class="math notranslate nohighlight">\(h^{WRC} &lt; 0\)</span> indicates a coldspot, and <span class="math notranslate nohighlight">\(h^{WRC} = 2\)</span>
+indicates a 3x increase in <em>WRC</em> substitution rate. The HLP19 model
+by default estimates six motif mutability parameters: four hotspots
+(WRC, GYW, WA, and TW) and two coldspots (SYC and GRS).</p>
+</div>
+<div class="section" id="specifying-parameters">
+<span id="parameter-specification"></span><h2>Specifying parameters<a class="headerlink" href="#specifying-parameters" title="Permalink to this headline">¶</a></h2>
+<p>Substitution parameters are specified using the <code class="docutils literal notranslate"><span class="pre">-t</span></code> for <span class="math notranslate nohighlight">\(\kappa\)</span>
+(transition/transverion rate), <code class="docutils literal notranslate"><span class="pre">--omega</span></code> for <span class="math notranslate nohighlight">\(\omega\)</span>
+(nonsynonymous/synonymous mutation rate), and <code class="docutils literal notranslate"><span class="pre">--motifs</span></code> and
+<code class="docutils literal notranslate"><span class="pre">--hotness</span></code> for specifying the motif mutability models. The default
+for all of these is to estimate shared parameter values across all
+lineages, which is also specified by <code class="docutils literal notranslate"><span class="pre">e</span></code>.</p>
+<p>Due to default parameter settings, the following two commands are equivalent:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">BuildTrees</span><span class="o">.</span><span class="n">py</span> <span class="o">-</span><span class="n">d</span> <span class="n">example</span><span class="o">.</span><span class="n">tab</span> <span class="o">--</span><span class="n">collapse</span> <span class="o">--</span><span class="n">igphyml</span>
+
+<span class="n">BuildTrees</span><span class="o">.</span><span class="n">py</span> <span class="o">-</span><span class="n">d</span> <span class="n">example</span><span class="o">.</span><span class="n">tab</span> <span class="o">--</span><span class="n">collapse</span> <span class="o">--</span><span class="n">igphyml</span> <span class="o">-</span><span class="n">t</span> <span class="n">e</span> <span class="o">--</span><span class="n">omega</span> <span class="n">e</span><span class="p">,</span><span class="n">e</span> \
+ <span class="o">--</span><span class="n">motifs</span> <span class="n">WRC_2</span><span class="p">:</span><span class="mi">0</span><span class="p">,</span><span class="n">GYW_0</span><span class="p">:</span><span class="mi">1</span><span class="p">,</span><span class="n">WA_1</span><span class="p">:</span><span class="mi">2</span><span class="p">,</span><span class="n">TW_0</span><span class="p">:</span><span class="mi">3</span><span class="p">,</span><span class="n">SYC_2</span><span class="p">:</span><span class="mi">4</span><span class="p">,</span><span class="n">GRS_0</span><span class="p">:</span><span class="mi">5</span> \
+ <span class="o">--</span><span class="n">hotness</span> <span class="n">e</span><span class="p">,</span><span class="n">e</span><span class="p">,</span><span class="n">e</span><span class="p">,</span><span class="n">e</span><span class="p">,</span><span class="n">e</span><span class="p">,</span><span class="n">e</span> <span class="o">--</span><span class="n">optimize</span> <span class="n">lr</span>
+</pre></div>
+</div>
+<p>Note that here we use <code class="docutils literal notranslate"><span class="pre">--optimize</span> <span class="pre">lr</span></code>, which will keep tree topologies the
+same and only estimate branch lengths and substitution parameters. This will keep topologies
+the same as the GY94, but will estimate substitution parameters much
+more quickly. Using <code class="docutils literal notranslate"><span class="pre">--optimize</span> <span class="pre">tlr</span></code> will also optimize tree topology, using
+<code class="docutils literal notranslate"><span class="pre">--optimize</span> <span class="pre">r</span></code> will only optimize model parameters, and <code class="docutils literal notranslate"><span class="pre">--optimize</span> <span class="pre">n</span></code> will not
+optimize topology, branch lengths, or model parameters.</p>
+<p>The default setting is to estimate a separate <span class="math notranslate nohighlight">\(\omega\)</span> parameter for FWR
+and CDR regions. If you want one <span class="math notranslate nohighlight">\(\omega\)</span> for all regions, use:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">BuildTrees</span><span class="o">.</span><span class="n">py</span> <span class="o">-</span><span class="n">d</span> <span class="n">example</span><span class="o">.</span><span class="n">tab</span> <span class="o">--</span><span class="n">collapse</span> <span class="o">--</span><span class="n">igphyml</span> <span class="o">--</span><span class="n">omega</span> <span class="n">e</span>
+</pre></div>
+</div>
+<p>You can also constrain motifs to have the same mutabilities
+by altering the indexes after the ‘:’ in the <code class="docutils literal notranslate"><span class="pre">--motifs</span></code> option.
+For motif mutability, each value
+in the <code class="docutils literal notranslate"><span class="pre">--hotness</span></code> option corresponds to the index specified in
+the <code class="docutils literal notranslate"><span class="pre">--motifs</span></code> option. For example, to estimate a model in
+which WRC/GYW, WA/TW, and SYC/GRS motifs are respectively constrained
+to have the same mutabilities, use:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">BuildTrees</span><span class="o">.</span><span class="n">py</span> <span class="o">-</span><span class="n">d</span> <span class="n">example</span><span class="o">.</span><span class="n">tab</span> <span class="o">--</span><span class="n">collapse</span> <span class="o">--</span><span class="n">igphyml</span> \
+ <span class="o">--</span><span class="n">motifs</span> <span class="n">WRC_2</span><span class="p">:</span><span class="mi">0</span><span class="p">,</span><span class="n">GYW_0</span><span class="p">:</span><span class="mi">0</span><span class="p">,</span><span class="n">WA_1</span><span class="p">:</span><span class="mi">1</span><span class="p">,</span><span class="n">TW_0</span><span class="p">:</span><span class="mi">1</span><span class="p">,</span><span class="n">SYC_2</span><span class="p">:</span><span class="mi">2</span><span class="p">,</span><span class="n">GRS_0</span><span class="p">:</span><span class="mi">2</span> \
+ <span class="o">--</span><span class="n">hotness</span> <span class="n">e</span><span class="p">,</span><span class="n">e</span><span class="p">,</span><span class="n">e</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="confidence-interval-estimation">
+<span id="ci-estimation"></span><h2>Confidence interval estimation<a class="headerlink" href="#confidence-interval-estimation" title="Permalink to this headline">¶</a></h2>
+<p>It is possible to estimate 95% confidence intervals for any of these
+parameters by adding a ‘c’ to the parameter specification. For example,
+to estimate a 95% confidence interval for <span class="math notranslate nohighlight">\(\omega\)</span> in the CDRs
+but not the FWRs, use:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">BuildTrees</span><span class="o">.</span><span class="n">py</span> <span class="o">-</span><span class="n">d</span> <span class="n">example</span><span class="o">.</span><span class="n">tab</span> <span class="o">--</span><span class="n">collapse</span> <span class="o">--</span><span class="n">ncdr3</span> <span class="o">--</span><span class="n">clean</span> <span class="nb">all</span> <span class="o">--</span><span class="n">igphyml</span> <span class="o">--</span><span class="n">omega</span> <span class="n">e</span><span class="p">,</span><span class="n">ce</span>
+</pre></div>
+</div>
+<p>To estimate a 95% confidence interval for <span class="math notranslate nohighlight">\(\omega\)</span> in the FWRs
+but not the CDRs, use:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">BuildTrees</span><span class="o">.</span><span class="n">py</span> <span class="o">-</span><span class="n">d</span> <span class="n">example</span><span class="o">.</span><span class="n">tab</span> <span class="o">--</span><span class="n">collapse</span> <span class="o">--</span><span class="n">ncdr3</span> <span class="o">--</span><span class="n">clean</span> <span class="nb">all</span> <span class="o">--</span><span class="n">igphyml</span> <span class="o">--</span><span class="n">omega</span> <span class="n">ce</span><span class="p">,</span><span class="n">e</span>
+</pre></div>
+</div>
+<p>Any combination of confidence interval specifications can be used
+for the above parameter options. For instance, to estimate confidence
+intervals for GYW mutability, use:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">BuildTrees</span><span class="o">.</span><span class="n">py</span> <span class="o">-</span><span class="n">d</span> <span class="n">example</span><span class="o">.</span><span class="n">tab</span> <span class="o">--</span><span class="n">collapse</span> <span class="o">--</span><span class="n">ncdr3</span> <span class="o">--</span><span class="n">clean</span> <span class="nb">all</span> <span class="o">--</span><span class="n">igphyml</span> <span class="o">--</span><span class="n">hotness</span> <span class="n">e</span><span class="p">,</span><span class="n">ce</span><span class="p">,</span><span class="n">e</span><span class="p">,</span><span class="n">e</span><span class="p">,</span><span class="n">e</span><span class="p">,</span><span class="n">e</span>
+</pre></div>
+</div>
+<p>which is equivalent to:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">BuildTrees</span><span class="o">.</span><span class="n">py</span> <span class="o">-</span><span class="n">d</span> <span class="n">example</span><span class="o">.</span><span class="n">tab</span> <span class="o">--</span><span class="n">collapse</span> <span class="o">--</span><span class="n">ncdr3</span> <span class="o">--</span><span class="n">clean</span> <span class="nb">all</span> <span class="o">--</span><span class="n">igphyml</span> \
+ <span class="o">--</span><span class="n">motifs</span> <span class="n">WRC_2</span><span class="p">:</span><span class="mi">0</span><span class="p">,</span><span class="n">GYW_0</span><span class="p">:</span><span class="mi">1</span><span class="p">,</span><span class="n">WA_1</span><span class="p">:</span><span class="mi">2</span><span class="p">,</span><span class="n">TW_0</span><span class="p">:</span><span class="mi">3</span><span class="p">,</span><span class="n">SYC_2</span><span class="p">:</span><span class="mi">4</span><span class="p">,</span><span class="n">GRS_0</span><span class="p">:</span><span class="mi">5</span> \
+ <span class="o">--</span><span class="n">hotness</span> <span class="n">e</span><span class="p">,</span><span class="n">ce</span><span class="p">,</span><span class="n">e</span><span class="p">,</span><span class="n">e</span><span class="p">,</span><span class="n">e</span><span class="p">,</span><span class="n">e</span>
+</pre></div>
+</div>
+<p>Remember it is important to <a class="reference internal" href="#ncdr3"><span class="std std-ref">remove the CDR3 region</span></a> for this kind of analysis.
+You can find further explanation of the different options in the
+commandline help page of BuildTrees, including controlling output
+directories and file names.</p>
+</div>
+<div class="section" id="visualizing-results">
+<h2>Visualizing results<a class="headerlink" href="#visualizing-results" title="Permalink to this headline">¶</a></h2>
+<p>Model hypothesis testing can be easily accomplished with Alakazam (<code class="docutils literal notranslate"><span class="pre">REFERENCE</span></code>). In this example,
+we first run IgPhyML on an example file and estimate confidence intervals on <span class="math notranslate nohighlight">\(\omega\)</span> CDR:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">BuildTrees</span><span class="o">.</span><span class="n">py</span> <span class="o">-</span><span class="n">d</span> <span class="n">example</span><span class="o">.</span><span class="n">tab</span> <span class="o">--</span><span class="n">collapse</span> <span class="o">--</span><span class="n">nproc</span> <span class="mi">2</span> <span class="o">--</span><span class="n">ncdr3</span> <span class="o">--</span><span class="n">clean</span> <span class="nb">all</span> <span class="o">--</span><span class="n">igphyml</span> <span class="o">--</span><span class="n">omega</span> <span class="n">e</span><span class="p">,</span><span class="n">ce</span>
+</pre></div>
+</div>
+<p>Then, open an <code class="docutils literal notranslate"><span class="pre">R</span></code> session, where we load the example result and two other samples.
+To compare maximum likelihood parameter estimates for all samples, use:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>#!/usr/bin/R
+library(alakazam)
+library(ggplot2)
+#read in three different samples
+ex = readIgphyml(&quot;example_igphyml-pass.tab&quot;,id=&quot;EX&quot;)
+s1 = readIgphyml(&quot;sample1_igphyml-pass.tab&quot;,id=&quot;S1&quot;)
+s2 = readIgphyml(&quot;sample2_igphyml-pass.tab&quot;,id=&quot;S2&quot;)
+
+#print out parameter values
+print(ex$param[1,])
+
+#combine objects into a dataframe
+comb = combineIgphyml(list(ex,s1,s2),format=&quot;long&quot;)
+
+ggplot(comb[grepl(&quot;MLE&quot;,comb$variable),],
+   aes(x=ID,y=variable,fill=value)) + geom_tile() +
+   theme_bw() + scale_fill_distiller(palette=&quot;RdYlBu&quot;)
+</pre></div>
+</div>
+<p>Maximum likelihood point estimates of each parameter are specified with “_MLE”, while
+upper and lower confidence interval bounds of a parameter are specified with “_UCI” and
+“_LCI” respectively. Which estimates are available is controlled
+<a class="reference internal" href="#parameter-specification"><span class="std std-ref">by the model specified</span></a> and whether <a class="reference internal" href="#ci-estimation"><span class="std std-ref">confidence intervals</span></a>
+were estimated when running IgPhyML.</p>
+<p>properly test the hypothesis that <span class="math notranslate nohighlight">\(\omega\)</span> CDR parameter estimates are significantly
+different among these datasets, use:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="ch">#!/usr/bin/R</span>
+<span class="n">library</span><span class="p">(</span><span class="n">alakazam</span><span class="p">)</span>
+<span class="n">library</span><span class="p">(</span><span class="n">ggplot2</span><span class="p">)</span>
+<span class="c1">#read in three different samples</span>
+<span class="n">ex</span> <span class="o">=</span> <span class="n">readIgphyml</span><span class="p">(</span><span class="s2">&quot;example_igphyml-pass.tab&quot;</span><span class="p">,</span><span class="nb">id</span><span class="o">=</span><span class="s2">&quot;EX&quot;</span><span class="p">)</span>
+<span class="n">s1</span> <span class="o">=</span> <span class="n">readIgphyml</span><span class="p">(</span><span class="s2">&quot;sample1_igphyml-pass.tab&quot;</span><span class="p">,</span><span class="nb">id</span><span class="o">=</span><span class="s2">&quot;S1&quot;</span><span class="p">)</span>
+<span class="n">s2</span> <span class="o">=</span> <span class="n">readIgphyml</span><span class="p">(</span><span class="s2">&quot;sample2_igphyml-pass.tab&quot;</span><span class="p">,</span><span class="nb">id</span><span class="o">=</span><span class="s2">&quot;S2&quot;</span><span class="p">)</span>
+
+<span class="c1">#combine objects into a dataframe</span>
+<span class="n">comb</span> <span class="o">=</span> <span class="n">combineIgphyml</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">ex</span><span class="p">,</span><span class="n">s1</span><span class="p">,</span><span class="n">s2</span><span class="p">),</span><span class="nb">format</span><span class="o">=</span><span class="s2">&quot;wide&quot;</span><span class="p">)</span>
+
+<span class="c1">#compare CDR dN/dS for three samples</span>
+<span class="n">ggplot</span><span class="p">(</span><span class="n">comb</span><span class="p">,</span><span class="n">aes</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="n">ID</span><span class="p">,</span><span class="n">y</span><span class="o">=</span><span class="n">OMEGA_CDR_MLE</span><span class="p">,</span> <span class="n">ymin</span><span class="o">=</span><span class="n">OMEGA_CDR_LCI</span><span class="p">,</span>
+  <span class="n">ymax</span><span class="o">=</span><span class="n">OMEGA_CDR_UCI</span><span class="p">))</span> <span class="o">+</span> <span class="n">geom_point</span><span class="p">()</span> <span class="o">+</span>
+  <span class="n">geom_errorbar</span><span class="p">(</span><span class="n">width</span><span class="o">=</span><span class="mf">0.1</span><span class="p">)</span> <span class="o">+</span> <span class="n">theme_bw</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>Where we can see that the confidence interval for Sample 1 does not overlap with the confidence
+interval for Sample 2, meanging we conclude Sample 1 has significantly lower <span class="math notranslate nohighlight">\(\omega\)</span> CDR
+than Sample 2. However, the confidence intervals for our example file (ex) are too wide to reach
+any firm conclusion.</p>
+</div>
+</div>
+<div class="section" id="optimizing-performance">
+<h1>Optimizing performance<a class="headerlink" href="#optimizing-performance" title="Permalink to this headline">¶</a></h1>
+<p>IgPhyML is a computationally intensive program. There are some ways to
+make calculations more practical, detailed below.</p>
+<p>Data subsampling: IgPhyML runs slowly with more than a few thousand sequences. You can
+subsample your dataset using the <code class="docutils literal notranslate"><span class="pre">--sample</span></code> and <code class="docutils literal notranslate"><span class="pre">--minseq</span></code> options in
+BuildTrees.py, which will subsample your dataset to the specified depth and
+then remove all clones below the specified size cutoff (see <a class="reference internal" href="#buildtrees-subsampling"><span class="std std-ref">Subsampling
+Change-O datasets</span></a>).</p>
+<p>Analyzing specific clones: The <code class="docutils literal notranslate"><span class="pre">--clone</span></code> option can be used to analyze <a class="reference internal" href="#ind-clones"><span class="std std-ref">only the
+specified clones</span></a>.</p>
+<p>Parallelizing computations: It is possible to parallelize likelihood
+calculations by splitting computations across multiple cores using the
+<code class="docutils literal notranslate"><span class="pre">--nproc</span></code> option. Currently, calculations are parallelized by tree,
+so there is no use in using more threads than lineages.</p>
+<p>Enforcing minimum lineage size: Many repertoires often contain huge
+numbers of small lineages that can make computations impractical. To
+limit the size of lineages being analyzed, specify a cutoff with
+<code class="docutils literal notranslate"><span class="pre">--minseq</span></code> when running BuildTrees.py.</p>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="standalone.html" class="btn btn-neutral float-right" title="Standalone operation" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="quickstart.html" class="btn btn-neutral" title="Read this first" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2019, Kenneth B. Hoehn.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../',
+            VERSION:'1.0.7',
+            LANGUAGE:'None',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true,
+            SOURCELINK_SUFFIX: '.txt'
+        };
+    </script>
+      <script type="text/javascript" src="../_static/jquery.js"></script>
+      <script type="text/javascript" src="../_static/underscore.js"></script>
+      <script type="text/javascript" src="../_static/doctools.js"></script>
+      <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          
+          SphinxRtdTheme.Navigation.enableSticky();
+          
+      });
+  </script> 
+
+</body>
+</html>

@@ -1,0 +1,381 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>Standalone operation &mdash; igphyml 1.0.7 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+    <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Release Notes" href="../NEWS.html" />
+    <link rel="prev" title="Controlling input" href="buildtrees.html" /> 
+
+  
+  <script src="../_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> igphyml
+          
+
+          
+            
+            <img src="../_static/IgPhyML_logo9.png" class="logo" alt="Logo"/>
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Getting Started</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../overview.html">Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../install.html">Installation</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Using IgPhyML</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="quickstart.html">Read this first</a></li>
+<li class="toctree-l1"><a class="reference internal" href="quickstart.html#quick-start">Quick start</a></li>
+<li class="toctree-l1"><a class="reference internal" href="buildtrees.html">Controlling input</a></li>
+<li class="toctree-l1"><a class="reference internal" href="buildtrees.html#building-lineage-trees">Building lineage trees</a></li>
+<li class="toctree-l1"><a class="reference internal" href="buildtrees.html#evolutionary-hypothesis-testing">Evolutionary hypothesis testing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="buildtrees.html#optimizing-performance">Optimizing performance</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Standalone operation</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#analyzing-a-single-lineage">Analyzing a single lineage</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#analyzing-repertoires">Analyzing repertoires</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#controlling-output-format">Controlling output format</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption"><span class="caption-text">About</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../NEWS.html">Release Notes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../info.html">Contact</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../info.html#citation">Citation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../info.html#license">License</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Related Projects</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference external" href="http://immcantation.readthedocs.io">Immcantation Portal</a></li>
+<li class="toctree-l1"><a class="reference external" href="http://changeo.readthedocs.io">Change-O</a></li>
+<li class="toctree-l1"><a class="reference external" href="http://alakazam.readthedocs.io">Alakazam</a></li>
+<li class="toctree-l1"><a class="reference external" href="http://presto.readthedocs.io">pRESTO</a></li>
+<li class="toctree-l1"><a class="reference external" href="http://shazam.readthedocs.io">SHazaM</a></li>
+<li class="toctree-l1"><a class="reference external" href="http://tigger.readthedocs.io">TIgGER</a></li>
+<li class="toctree-l1"><a class="reference external" href="http://rdi.readthedocs.io">RDI</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">igphyml</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html">Docs</a> &raquo;</li>
+        
+      <li>Standalone operation</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="../_sources/usage/standalone.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="standalone-operation">
+<span id="igphyml-standalone"></span><h1>Standalone operation<a class="headerlink" href="#standalone-operation" title="Permalink to this headline">¶</a></h1>
+<p>While IgPhyML is easiest to use when run indirectly through the Change-O program BuildTrees.py (<code class="docutils literal notranslate"><span class="pre">REFERENCE</span></code>), this is not always possible or desirable. This
+section details how IgPhyML may be run directly as a standalone program. As before,
+this section requires IgPhyML to be installed, with the executable in your <code class="docutils literal notranslate"><span class="pre">PATH</span></code> variable.</p>
+<p><a class="reference internal" href="buildtrees.html#parameter-specification"><span class="std std-ref">Model specification</span></a> and <a class="reference internal" href="buildtrees.html#ci-estimation"><span class="std std-ref">confidence interval estimation</span></a> are the same as when running IgPhyML from
+<a class="reference internal" href="buildtrees.html#buildtrees-processing"><span class="std std-ref">BuildTrees</span></a>. The means of specifying input, however,
+are different.</p>
+<p>To view all options for IgPhyML directly, run the command:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">igphyml</span> <span class="o">--</span><span class="n">help</span>
+</pre></div>
+</div>
+<div class="section" id="analyzing-a-single-lineage">
+<span id="single-lineage"></span><h2>Analyzing a single lineage<a class="headerlink" href="#analyzing-a-single-lineage" title="Permalink to this headline">¶</a></h2>
+<p>In its most basic and flexible operation, IgPhyML operates on single lineage. Its only required
+input is an in-frame multiple sequence alignment, without any stop codons, in FASTA
+or PHYLIP format. The model must be specified. The most basic is GY94, which is fast
+but doesn’t account for SHM context sensitivity. The HLP19 model corrects for SHM
+context sensitivity but is slower requires the root sequence be specified:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">cd</span> <span class="n">examples</span>
+
+<span class="c1">#Estimate parameters and topology using GY94 model</span>
+<span class="n">igphyml</span> <span class="o">-</span><span class="n">i</span> <span class="n">example</span><span class="o">.</span><span class="n">fasta</span> <span class="o">-</span><span class="n">m</span> <span class="n">GY</span> <span class="o">--</span><span class="n">run_id</span> <span class="n">gy</span>
+
+<span class="c1">#Estimate parameters and topology using HLP19 model</span>
+<span class="n">igphyml</span> <span class="o">-</span><span class="n">i</span> <span class="n">example</span><span class="o">.</span><span class="n">fasta</span> <span class="o">-</span><span class="n">m</span> <span class="n">HLP</span> <span class="o">--</span><span class="n">root</span> <span class="n">V4</span><span class="o">-</span><span class="mi">59</span> <span class="o">--</span><span class="n">run_id</span> <span class="n">hlp</span>
+</pre></div>
+</div>
+<p>It is also possible to use a fixed tree topology:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">igphyml</span> <span class="o">-</span><span class="n">i</span> <span class="n">example</span><span class="o">.</span><span class="n">fasta</span> <span class="o">-</span><span class="n">m</span> <span class="n">HLP</span> <span class="o">--</span><span class="n">root</span> <span class="n">V4</span><span class="o">-</span><span class="mi">59</span> <span class="o">-</span><span class="n">u</span> <span class="n">example</span><span class="o">.</span><span class="n">fasta_igphyml_tree_gy</span><span class="o">.</span><span class="n">txt</span>
+</pre></div>
+</div>
+<p>Or estimate separate <span class="math notranslate nohighlight">\(\omega\)</span> values for CDR and FWR partitions:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">igphyml</span> <span class="o">-</span><span class="n">i</span> <span class="n">example</span><span class="o">.</span><span class="n">fasta</span> <span class="o">-</span><span class="n">m</span> <span class="n">HLP</span> <span class="o">--</span><span class="n">root</span> <span class="n">V4</span><span class="o">-</span><span class="mi">59</span> <span class="o">--</span><span class="n">partfile</span> <span class="n">part</span><span class="o">.</span><span class="n">example</span><span class="o">.</span><span class="n">txt</span>
+</pre></div>
+</div>
+<p>Generally, all the following features of repertoire-wide phylogenetic analysis
+can also be performed on single lineages by specifying input files in the above
+manner.</p>
+</div>
+<div class="section" id="analyzing-repertoires">
+<h2>Analyzing repertoires<a class="headerlink" href="#analyzing-repertoires" title="Permalink to this headline">¶</a></h2>
+<p>These commands should work as a first pass on many reasonably sized
+datasets, but if you really want to understand what’s going on or make
+sure what you’re doing makes sense, please check out the rest of the
+manual.</p>
+<p><strong>Convert Change-O files into IgPhyML inputs</strong></p>
+<p>Move to the <code class="docutils literal notranslate"><span class="pre">examples</span></code> subfolder and run, in order:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">BuildTrees</span><span class="o">.</span><span class="n">py</span> <span class="o">-</span><span class="n">d</span> <span class="n">example</span><span class="o">.</span><span class="n">tab</span> <span class="o">--</span><span class="n">outname</span> <span class="n">ex</span> <span class="o">--</span><span class="n">log</span> <span class="n">ex</span><span class="o">.</span><span class="n">log</span> <span class="o">--</span><span class="n">collapse</span>
+</pre></div>
+</div>
+<p>This will create the directory <code class="docutils literal notranslate"><span class="pre">ex</span></code> and the file
+<code class="docutils literal notranslate"><span class="pre">ex_lineages.tsv</span></code>. Each <code class="docutils literal notranslate"><span class="pre">ex/&lt;clone</span> <span class="pre">ID&gt;.fasta</span></code> contains the IMGT
+mutliple sequence alignemt for a particular clone, and each
+<code class="docutils literal notranslate"><span class="pre">ex/&lt;clone</span> <span class="pre">ID&gt;.part.txt</span></code> file contains information about V and J
+germline assignments, as well as IMGT unique numbering for each site.
+The file <code class="docutils literal notranslate"><span class="pre">ex.log</span></code> will contain information about whether or not each
+sequence was included in the analysis. The file <code class="docutils literal notranslate"><span class="pre">ex_lineages.tsv</span></code> is
+the direct input to IgPhyML. Each line represents a clone and shows
+the multiple sequence alignment, starting tree topology (N if
+ignored), germline sequence ID in alignment file, and partition file
+(N if ignored). These repertoire files start with the number of
+lineages in the repertoire, and lineages are arranged from most to
+least number of sequences. Here, it is important to not use
+<code class="docutils literal notranslate"><span class="pre">--igphyml</span></code> or <code class="docutils literal notranslate"><span class="pre">--clean</span> <span class="pre">all</span></code> to prevent IgPhyML from being run
+by BuildTrees, and to prevent these intermediate files from being deleted.</p>
+<p><strong>Build lineage trees using the GY94 model</strong></p>
+<p>This option is fast and makes good starting topologies, but doesn’t correct
+for SHM mutation biases. Use the <code class="docutils literal notranslate"><span class="pre">--outrep</span></code> option to make a modified</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">igphyml</span> <span class="o">--</span><span class="n">repfile</span> <span class="n">ex_lineages</span><span class="o">.</span><span class="n">tsv</span> <span class="o">-</span><span class="n">m</span> <span class="n">GY</span> <span class="o">--</span><span class="n">outrep</span> <span class="n">ex_lineages_gy</span><span class="o">.</span><span class="n">tsv</span> <span class="o">--</span><span class="n">run_id</span> <span class="n">gy</span>
+</pre></div>
+</div>
+<p><strong>Build lineage trees using the HLP19 model with GY94 starting trees</strong></p>
+<p>This option is slower but corrects for mutation biases of SHM:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1">#HLP topology, branch lengths, and parameters (slow)</span>
+<span class="n">igphyml</span> <span class="o">--</span><span class="n">repfile</span> <span class="n">ex_lineages_gy</span><span class="o">.</span><span class="n">tsv</span> <span class="o">-</span><span class="n">m</span> <span class="n">HLP</span> <span class="o">--</span><span class="n">threads</span> <span class="mi">1</span>
+
+<span class="c1">#GY94 topology, HLP19 branch lengths and parameters (faster)</span>
+<span class="n">igphyml</span> <span class="o">--</span><span class="n">repfile</span> <span class="n">ex_lineages_gy</span><span class="o">.</span><span class="n">tsv</span> <span class="o">-</span><span class="n">m</span> <span class="n">HLP</span> <span class="o">--</span><span class="n">optimize</span> <span class="n">lr</span> <span class="o">--</span><span class="n">threads</span> <span class="mi">1</span>
+</pre></div>
+</div>
+<p>Both of these can be parallelized by modifying the
+<code class="docutils literal notranslate"><span class="pre">--threads</span> <span class="pre">&lt;thread</span> <span class="pre">count&gt;</span></code> option. Trees files are listed as
+<code class="docutils literal notranslate"><span class="pre">ex/&lt;clone</span> <span class="pre">id&gt;.fasta_igphyml_tree.txt</span></code>, and can be viewed with most
+tree viewers (I recommend
+<a class="reference external" href="http://tree.bio.ed.ac.uk/software/figtree/">FigTree</a>). Parameter
+estimates are in <code class="docutils literal notranslate"><span class="pre">ex_lineages.tsv_igphyml_stats.txt</span></code>.</p>
+</div>
+<div class="section" id="controlling-output-format">
+<h2>Controlling output format<a class="headerlink" href="#controlling-output-format" title="Permalink to this headline">¶</a></h2>
+<p>Alternatively, run using <code class="docutils literal notranslate"><span class="pre">--oformat</span> <span class="pre">tab</span></code> to create input readable by
+Alakazam (<code class="docutils literal notranslate"><span class="pre">REFERENCE</span></code>):</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1">#Output can be read using readIgphyml function</span>
+<span class="n">igphyml</span> <span class="o">--</span><span class="n">repfile</span> <span class="n">ex_lineages_gy</span><span class="o">.</span><span class="n">tsv</span> <span class="o">-</span><span class="n">m</span> <span class="n">HLP</span> <span class="o">--</span><span class="n">optimize</span> <span class="n">lr</span> <span class="o">--</span><span class="n">threads</span> <span class="mi">1</span> <span class="o">--</span><span class="n">oformat</span> <span class="n">tab</span>
+</pre></div>
+</div>
+<p>Open an <code class="docutils literal notranslate"><span class="pre">R</span></code> session, and run the following commands. Note the results are the same as in the <a class="reference internal" href="quickstart.html#igphyml-quickstart"><span class="std std-ref">quickstart example</span></a></p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>library(alakazam)
+library(igraph)
+db = readIgphyml(&quot;ex_lineages_gy.tsv_igphyml_stats.tab&quot;)
+
+#plot largest lineage tree
+plot(db$trees[[1]],layout=layout_as_tree)
+
+#show HLP10 parameters
+print(t(db$param[1,]))
+CLONE         &quot;REPERTOIRE&quot;
+NSEQ          &quot;4&quot;
+NSITE         &quot;107&quot;
+TREE_LENGTH   &quot;0.286&quot;
+LHOOD         &quot;-290.7928&quot;
+KAPPA_MLE     &quot;2.266&quot;
+OMEGA_FWR_MLE &quot;0.5284&quot;
+OMEGA_CDR_MLE &quot;2.3324&quot;
+WRC_2_MLE     &quot;4.8019&quot;
+GYW_0_MLE     &quot;3.4464&quot;
+WA_1_MLE      &quot;5.972&quot;
+TW_0_MLE      &quot;0.8131&quot;
+SYC_2_MLE     &quot;-0.99&quot;
+GRS_0_MLE     &quot;0.2583&quot;
+</pre></div>
+</div>
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="../NEWS.html" class="btn btn-neutral float-right" title="Release Notes" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="buildtrees.html" class="btn btn-neutral" title="Controlling input" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2019, Kenneth B. Hoehn.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../',
+            VERSION:'1.0.7',
+            LANGUAGE:'None',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true,
+            SOURCELINK_SUFFIX: '.txt'
+        };
+    </script>
+      <script type="text/javascript" src="../_static/jquery.js"></script>
+      <script type="text/javascript" src="../_static/underscore.js"></script>
+      <script type="text/javascript" src="../_static/doctools.js"></script>
+      <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          
+          SphinxRtdTheme.Navigation.enableSticky();
+          
+      });
+  </script> 
+
+</body>
+</html>
