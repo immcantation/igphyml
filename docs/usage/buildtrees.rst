@@ -118,7 +118,7 @@ Open an ``R`` session::
  library(alakazam)
  library(igraph)
  
- db = readIgphyml("ex_igphyml-pass.tab")
+ db = readIgphyml("example_igphyml-pass.tab")
 
  #plot largest lineage tree
  plot(db$trees[[1]],layout=layout_as_tree)
@@ -131,6 +131,7 @@ Open an ``R`` session::
 
    Graph-formatted lineage tree of example clone 1.
 
+Run ``dev.off()`` after plotting if using the Docker image to create a pdf. 
 In these plots, edge labels represent the expected number of substitutions between
 nodes in the tree. See the Alakazam 
 `documentation <https://alakazam.readthedocs.io/en/stable/vignettes/Lineage-Vignette/#plotting-of-the-lineage-tree>`__ for plotting this style of trees.
@@ -140,7 +141,7 @@ be used::
  library(alakazam)
  library(ape)
 
- db = readIgphyml("ex_igphyml-pass.tab",format="phylo")
+ db = readIgphyml("example_igphyml-pass.tab",format="phylo")
 
  #plot largest lineage tree
  plot(db$trees[[1]])
@@ -306,7 +307,8 @@ we first run IgPhyML on an example file and estimate confidence intervals on :ma
  BuildTrees.py -d example.tab --collapse --nproc 2 --ncdr3 --clean all --igphyml --omega e,ce
 
 Then, open an ``R`` session, where we load the example result and two other samples. 
-To compare maximum likelihood parameter estimates for all samples, use::
+To compare maximum likelihood parameter estimates for all samples, use (run 
+``dev.off()`` after plotting if using the Docker image to create a pdf)::
 
  #!/usr/bin/R
  library(alakazam)

@@ -46,7 +46,9 @@ The output file of the above command can be read using the
 `readIgphyml <https://alakazam.readthedocs.io/en/stable/topics/readIgphyml>`__ 
 function of 
 `Alakazam <https://alakazam.readthedocs.io>`__.
-After opening an ``R`` session, enter the commands::
+After opening an ``R`` session, enter the following commands. Note that 
+when using the Docker container, you'll need to run ``dev.off()`` after 
+plotting the tree to create a pdf plot in the ``examples`` directory::
 
  library(alakazam)
  library(igraph)
