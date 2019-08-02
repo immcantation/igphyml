@@ -17,6 +17,7 @@ import os
 import sphinx_rtd_theme
 from unittest.mock import MagicMock
 
+sys.path.insert(0, os.path.abspath('..'))
 
 # -- Project information -----------------------------------------------------
 
