@@ -25,6 +25,5 @@ License
 --------------------------------------------------------------------------------
 
 This work is licensed under the
-`Creative Commons Attribution-ShareAlike 4.0 International (CC BY-SA 4.0) <https://creativecommons.org/licenses/by-sa/4.0/>`__
-license.
+`GNU General Public License, verion 2 (GNU GLP v2.0) <https://www.gnu.org/licenses/old-licenses/gpl-2.0.en.html>`__.
 
