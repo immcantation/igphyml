@@ -97,6 +97,8 @@ html_theme_path = [sphinx_rtd_theme.get_html_theme_path()]
 # of the sidebar.
 html_logo = "_static/IgPhyML_logo9.png"
 
+html_favicon = "_static/IgPhyML_logo9.png"
+
 # Custom sidebar templates, must be a dictionary that maps document names
 # to template names.
 #
