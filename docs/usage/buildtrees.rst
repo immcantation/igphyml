@@ -1,3 +1,18 @@
+Using BuildTrees
+===============================================================================
+
+IgPhyML is easiest to use when run indirectly through the Change-O program 
+`BuildTrees <https://changeo.readthedocs.io/en/stable/tools/BuildTrees.html>`__
+by specifying the ``--igphyml`` option.
+Most of these instructions require Change-O 0.4.6 or higher, Alakazam 0.3.0 or higher,
+and IgPhyML to be installed, with the executable in your ``PATH`` variable. 
+If these aren't possible, see :ref:`IgPhyML standalone operation <igphyml-standalone>`
+
+To view all options for `BuildTrees <https://changeo.readthedocs.io/en/stable/tools/BuildTrees.html>`__
+, run the command::
+
+ BuildTrees.py --help
+
 .. _BuildTrees-processing:
 
 Controlling input
@@ -91,48 +106,78 @@ Building lineage trees
 ===============================================================================
 
 If you're simply interested in getting some tree topologies, the fastest
-option is to just use the GY94 (``REFERENCE``) and not estimate any parameters
+option is to just use the GY94 and not estimate any parameters
 under HLP19. This is done using the ``--optimize n`` option::
 
  BuildTrees.py -d example.tab --collapse --igphyml --clean all --optimize n
 
-The trees can then be visualized using Alakazam (``REFERENCE``). 
+The trees can then be visualized using 
+`igraph and Alakazam <https://alakazam.readthedocs.io/en/stable/vignettes/Lineage-Vignette/#plotting-of-the-lineage-tree>`__. 
 Open an ``R`` session::
 
  library(alakazam)
  library(igraph)
+ 
  db = readIgphyml("ex_igphyml-pass.tab")
 
  #plot largest lineage tree
  plot(db$trees[[1]],layout=layout_as_tree)
 
+
+.. figure:: ../_static/t1.png
+   :scale: 20 %
+   :align: center
+   :alt: graph
+
+   Graph-formatted lineage tree of example clone 1.
+
 In these plots, edge labels represent the expected number of substitutions between
-nodes in the tree. See (``REFERENCE``) for plotting this style of trees.
+nodes in the tree. See the Alakazam 
+`documentation <https://alakazam.readthedocs.io/en/stable/vignettes/Lineage-Vignette/#plotting-of-the-lineage-tree>`__ for plotting this style of trees.
 Alternatively, more traditional bifurcating tree topologies can
 be used::
 
  library(alakazam)
  library(ape)
+
  db = readIgphyml("ex_igphyml-pass.tab",format="phylo")
 
  #plot largest lineage tree
  plot(db$trees[[1]])
+
+
+.. figure:: ../_static/t2.png
+   :scale: 20 %
+   :align: center
+   :alt: phylo
+
+   Phylo-formatted lineage tree of example clone 1.
 
 Of course, these are quite simple trees. A more interesting tree can be 
 visualized from a different provided dataset::
 
  library(alakazam)
  library(ape)
+
  db = readIgphyml("sample1_igphyml-pass.tab",format="phylo")
+ 
  #plot largest lineage tree
- plot(db$trees[[1]])
+ plot(ladderize(db$trees[[1]]),cex=0.7,no.margin=TRUE)
+
+
+.. figure:: ../_static/t4.png
+   :scale: 30 %
+   :align: center
+   :alt: phylo
+
+   Phylo-formatted lineage tree of a larger B cell clone.
 
 Alternatively, to estimate ML tree topologies using the HLP19 model, use::
  
  BuildTrees.py -d example.tab --collapse --igphyml --clean all --optimize tlr
  
 This will be slower than using the GY94 model but does return meaningful HLP19 parameter estimates.
-These results can be visualized in the same manner using Alakazam (``REFERNECE``).
+These results can be visualized in the same manner using Alakazam.
 
 .. _igphyml-parameters:
 
@@ -221,13 +266,13 @@ Confidence interval estimation
 
 It is possible to estimate 95% confidence intervals for any of these
 parameters by adding a 'c' to the parameter specification. For example,
-to estimate a 95% confidence interval for :math:`\omega` in the CDRs
-but not the FWRs, use::
+to estimate a 95% confidence interval for :math:`\omega _{CDR}` 
+but not :math:`\omega _{FWR}`, use::
 
  BuildTrees.py -d example.tab --collapse --ncdr3 --clean all --igphyml --omega e,ce
 
-To estimate a 95% confidence interval for :math:`\omega` in the FWRs
-but not the CDRs, use::
+To estimate a 95% confidence interval for :math:`\omega _{FWR}` 
+but not :math:`\omega _{CDR}`, use::
 
  BuildTrees.py -d example.tab --collapse --ncdr3 --clean all --igphyml --omega ce,e
 
@@ -252,8 +297,11 @@ directories and file names.
 Visualizing results
 -------------------------------------------------------------------------------
 
-Model hypothesis testing can be easily accomplished with Alakazam (``REFERENCE``). In this example,
-we first run IgPhyML on an example file and estimate confidence intervals on :math:`\omega` CDR::
+Model hypothesis testing can be easily accomplished with the `Alakazam <https://alakazam.readthedocs.io>`__
+functions `readIgphyml <https://alakazam.readthedocs.io/en/stable/topics/readIgphyml/>`__ and 
+`combineIgphyml <https://alakazam.readthedocs.io/en/stable/topics/combineIgphyml/>`__.
+In this example,
+we first run IgPhyML on an example file and estimate confidence intervals on :math:`\omega _{CDR}`::
 
  BuildTrees.py -d example.tab --collapse --nproc 2 --ncdr3 --clean all --igphyml --omega e,ce
 
@@ -263,6 +311,7 @@ To compare maximum likelihood parameter estimates for all samples, use::
  #!/usr/bin/R
  library(alakazam)
  library(ggplot2)
+
  #read in three different samples
  ex = readIgphyml("example_igphyml-pass.tab",id="EX")
  s1 = readIgphyml("sample1_igphyml-pass.tab",id="S1")
@@ -278,18 +327,26 @@ To compare maximum likelihood parameter estimates for all samples, use::
     aes(x=ID,y=variable,fill=value)) + geom_tile() +
     theme_bw() + scale_fill_distiller(palette="RdYlBu")
 
+.. figure:: ../_static/p2.png
+   :scale: 35 %
+   :alt: phylo
+   :align: center
+
+   Maximum likelihood HLP19 parameter estimates for three samples.
+
 Maximum likelihood point estimates of each parameter are specified with "_MLE", while
 upper and lower confidence interval bounds of a parameter are specified with "_UCI" and
 "_LCI" respectively. Which estimates are available is controlled 
 :ref:`by the model specified <parameter-specification>` and whether :ref:`confidence intervals<ci-estimation>`
 were estimated when running IgPhyML.
 
-properly test the hypothesis that :math:`\omega` CDR parameter estimates are significantly
+properly test the hypothesis that :math:`\omega _{CDR}` parameter estimates are significantly
 different among these datasets, use::
     
  #!/usr/bin/R
  library(alakazam)
  library(ggplot2)
+
  #read in three different samples
  ex = readIgphyml("example_igphyml-pass.tab",id="EX")
  s1 = readIgphyml("sample1_igphyml-pass.tab",id="S1")
@@ -303,10 +360,19 @@ different among these datasets, use::
    ymax=OMEGA_CDR_UCI)) + geom_point() + 
    geom_errorbar(width=0.1) + theme_bw()
 
+
+.. figure:: ../_static/p1.png
+   :scale: 35 %
+   :alt: phylo
+   :align: center
+
+   95% confidence intervals for :math:`\omega _{CDR}` of three samples.
+
 Where we can see that the confidence interval for Sample 1 does not overlap with the confidence
-interval for Sample 2, meanging we conclude Sample 1 has significantly lower :math:`\omega` CDR
+interval for Sample 2, meanging we conclude Sample 1 has significantly lower :math:`\omega _{CDR}`
 than Sample 2. However, the confidence intervals for our example file (ex) are too wide to reach 
 any firm conclusion.          
+
 
 Optimizing performance
 ===============================================================================

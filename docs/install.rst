@@ -4,13 +4,14 @@ Installation
 Docker Image
 --------------------------------------------------------------------------------
 
-The simplest way to use IgPhyML is via the Immcantation Docker image:
-<https://immcantation.readthedocs.io/en/version-2.7.0/docker/intro.html>
+The simplest way to use IgPhyML is via the 
+`Immcantation Docker image <https://immcantation.readthedocs.io/en/stable/docker/intro.html>`__.
 
 
 Building from source
 --------------------------------------------------------------------------------
-The source code of the current development version can be downloaded using git::
+If using the Docker image is not possible or preferable, t
+he source code of the current development version can be downloaded using git::
 
     > git clone https://bitbucket.org/kbhoehn/igphyml
     > cd igphyml

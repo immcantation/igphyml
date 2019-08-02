@@ -3,7 +3,9 @@
 Standalone operation
 =============================================================================== 
 
-While IgPhyML is easiest to use when run indirectly through the Change-O program BuildTrees.py (``REFERENCE``), this is not always possible or desirable. This 
+While IgPhyML is easiest to use when run indirectly through the Change-O program 
+`BuildTrees <https://changeo.readthedocs.io/en/stable/tools/BuildTrees.html>`__, 
+this is not always possible or desirable. This 
 section details how IgPhyML may be run directly as a standalone program. As before,
 this section requires IgPhyML to be installed, with the executable in your ``PATH`` variable.
 
@@ -106,7 +108,10 @@ Controlling output format
 ------------------------------------------------------------------------
 
 Alternatively, run using ``--oformat tab`` to create input readable by 
-Alakazam (``REFERENCE``)::
+the 
+`readIgphyml <https://alakazam.readthedocs.io/en/stable/topics/readIgphyml>`__ 
+function of 
+`Alakazam <https://alakazam.readthedocs.io>`__.::
 
  #Output can be read using readIgphyml function
  igphyml --repfile ex_lineages_gy.tsv -m HLP --optimize lr --threads 1 --oformat tab
@@ -115,6 +120,7 @@ Open an ``R`` session, and run the following commands. Note the results are the 
 
  library(alakazam)
  library(igraph)
+ 
  db = readIgphyml("ex_lineages_gy.tsv_igphyml_stats.tab")
 
  #plot largest lineage tree
@@ -137,7 +143,10 @@ Open an ``R`` session, and run the following commands. Note the results are the 
  SYC_2_MLE     "-0.99"     
  GRS_0_MLE     "0.2583"
 
+.. figure:: ../_static/t1.png
+   :scale: 25 %
+   :align: center
+   :alt: map to buried treasure
 
-
-
+   Lineage tree of example clone.
 
