@@ -10,25 +10,27 @@ The simplest way to use IgPhyML is via the
 Briefly, all the example commands on rest of this site can be run by first installing Docker,
 downloading the Immcantation Docker image, and then, in a Linux/Max OS X command terminal::
 
- #pull Immcantation Docker image
+ # pull Immcantation Docker image
  docker pull kleinstein/immcantation:devel
 
- #clone IgPhyML repository to get example files
+ # clone IgPhyML repository to get example files
  git clone https://bitbucket.org/kbhoehn/igphyml
 
- #move to examples directory
+Then, move to the examples directory and load it into the Docker image::
+ 
+ # move to examples directory
  cd igphyml/examples
 
- #run run Docker image while loading current directory with pwd
+ # load Docker image
  docker run -it --workdir /data -v $(pwd):/data:z kleinstein/immcantation:devel bash
 
 Once inside the container, check everything is properly configured::
 
- ls
  # should give example.fasta  example.tab  part.example.txt
+ ls
 
- igphyml --version
  # should be IgPhyML 1.0.7 201902.19
+ igphyml --version
 
 Use this command to load the Docker image on the current directory of a Linux/Max OS X system::
 
