@@ -8,7 +8,7 @@ The simplest way to use IgPhyML is via the
 `Immcantation Docker image <https://immcantation.readthedocs.io/en/stable/docker/intro.html>`__.
 
 Briefly, all the example commands on rest of this site can be run by first installing Docker,
-downloading the Immcantation Docker image, and then, in a Linux/Max OS X command terminal::
+downloading the Immcantation Docker image. In a Linux/Max OS X command terminal::
 
  # pull Immcantation Docker image
  docker pull kleinstein/immcantation:devel
