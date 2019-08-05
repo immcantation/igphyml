@@ -8,6 +8,7 @@ While IgPhyML is easiest to use when run indirectly through the Change-O program
 this is not always possible or desirable. This 
 section details how IgPhyML may be run directly as a standalone program. As before,
 this section requires IgPhyML to be installed, with the executable in your ``PATH`` variable.
+This is already done in the :ref:`Docker image <docker-image>`.
 
 :ref:`Model specification<parameter-specification>` and :ref:`confidence interval estimation<ci-estimation>` are the same as when running IgPhyML from 
 :ref:`BuildTrees<BuildTrees-processing>`. The means of specifying input, however,

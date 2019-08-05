@@ -22,8 +22,8 @@ A phylogenetic codon substitution model for antibody lineages.
 *Genetics, 206(1), 417-427. doi: http://dx.doi.org/10.1534/genetics.116.196303*
 
 
-Source
---------------------------------------------------------------------------------
+References
+...............................................................................
 
 IgPhyML is build using the source code of codonPhyML:
 
@@ -41,7 +41,7 @@ The HLP17 and HLP19 models are based off of the GY94 model:
 
 **Nielsen R, Yang, Z**
 Likelihood models for detecting positively selected amino acid sites and applications to the HIV-1 envelope gene.
-Genetics. 1998 Mar;148(3):929-36
+*Genetics. 1998 Mar;148(3):929-36*
 
 License
 --------------------------------------------------------------------------------

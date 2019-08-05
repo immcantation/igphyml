@@ -26,7 +26,7 @@ Build trees and estimate model parameters
 Move to the ``examples`` subfolder and run::
 
     BuildTrees.py -d example.tab --outname ex --log ex.log --collapse \
-        --sample 3000 --minseq 2 --igphyml --clean all --nproc 1
+        --sample 3000 --igphyml --clean all --nproc 1
  
 This command processes an AIRR-formatted dataset of BCR sequences that have been
 `clonally clustered <https://changeo.readthedocs.io/en/stable/examples/cloning.html>`__

@@ -1,28 +1,33 @@
 Installation
 ================================================================================
 
+.. _docker-image: 
+
 Docker Image (recommended)
 --------------------------------------------------------------------------------
 
 The simplest way to use IgPhyML is via the 
 `Immcantation Docker image <https://immcantation.readthedocs.io/en/stable/docker/intro.html>`__.
 
-Briefly, all the example commands on rest of this site can be run by first installing Docker,
-downloading the Immcantation Docker image. In a Linux/Max OS X command terminal::
+Briefly, all the example commands on rest of this site can be run by first installing Docker and
+downloading the Immcantation Docker image. In a terminal, enter::
 
- # pull Immcantation Docker image
+ # pull Immcantation development Docker image
  docker pull kleinstein/immcantation:devel
 
  # clone IgPhyML repository to get example files
  git clone https://bitbucket.org/kbhoehn/igphyml
 
-Then, move to the examples directory and load it into the Docker image::
+Then, move to the examples directory and load it into the Docker image depending on your operating system::
  
  # move to examples directory
  cd igphyml/examples
 
- # load Docker image
+ # load Docker, Linux/ Mac OS X:
  docker run -it --workdir /data -v $(pwd):/data:z kleinstein/immcantation:devel bash
+
+ # or load Docker, Windows:
+ docker run -it --workdir /data -v %cd%:/data:z kleinstein/immcantation:devel bash
 
 Once inside the container, check everything is properly configured::
 
@@ -32,17 +37,23 @@ Once inside the container, check everything is properly configured::
  # should be IgPhyML 1.0.7 201902.19
  igphyml --version
 
-Use this command to load the Docker image on the current directory of a Linux/Max OS X system::
+Note for some operating systems it may be necessary to have 
+`Docker Desktop <https://hub.docker.com/editions/community/docker-ce-desktop-windows>`__
+running before entering these commands. More generally, use this command to load the Docker image on the current directory of a Linux/Max OS X system::
 
  docker run -it --workdir /data -v $(pwd):/data:z kleinstein/immcantation:devel bash
+
+or for a Windows Command Prompt::
+
+ docker run -it --workdir /data -v %cd%:/data:z kleinstein/immcantation:devel bash
 
 For further information on using the Immcantation Docker image, see 
 `Immcantation Docker image <https://immcantation.readthedocs.io/en/stable/docker/intro.html>`__.
 
 Building from source
 --------------------------------------------------------------------------------
-If using the Docker image is not possible or preferable, t
-he source code of the current development version can be downloaded using git::
+If using the Docker image is not possible or preferable, the 
+source code of the current development version can be downloaded using git::
 
     > git clone https://bitbucket.org/kbhoehn/igphyml
     > cd igphyml
