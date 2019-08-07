@@ -18,7 +18,7 @@ To view all options for `BuildTrees <https://changeo.readthedocs.io/en/stable/to
 The following commands should work as a first pass on many reasonably sized
 datasets, but if you really want to understand what’s going on or make
 sure what you’re doing makes sense, please check out the rest of the
-manual.
+website.
  
 Build trees and estimate model parameters
 -------------------------------------------------------------------------------

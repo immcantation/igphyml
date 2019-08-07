@@ -29,7 +29,9 @@ Then, move to the examples directory and load it into the Docker image depending
  # or load Docker, Windows:
  docker run -it --workdir /data -v %cd%:/data:z kleinstein/immcantation:devel bash
 
-Once inside the container, check everything is properly configured::
+Note for some operating systems it may be necessary to have 
+`Docker Desktop <https://hub.docker.com/editions/community/docker-ce-desktop-windows>`__
+running before entering these commands. Once inside the container, check everything is properly configured::
 
  # should give example.fasta  example.tab  part.example.txt
  ls
@@ -37,9 +39,7 @@ Once inside the container, check everything is properly configured::
  # should be IgPhyML 1.0.7 201902.19
  igphyml --version
 
-Note for some operating systems it may be necessary to have 
-`Docker Desktop <https://hub.docker.com/editions/community/docker-ce-desktop-windows>`__
-running before entering these commands. More generally, use this command to load the Docker image on the current directory of a Linux/Max OS X system::
+More generally, use this command to load the Docker image on the current directory of a Linux/Max OS X system::
 
  docker run -it --workdir /data -v $(pwd):/data:z kleinstein/immcantation:devel bash
 
