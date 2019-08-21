@@ -64,6 +64,7 @@ io->threads=0;
         tree->charindex = mCalloc(tree->nstate,sizeof(int));
         tree->polytomy_states = mCalloc((tree->n_otu-1)*2,sizeof(int));
         tree->polytomy_swaps = mCalloc((tree->n_otu-1)*2,sizeof(int*));
+        if(io->mod->polytomyresolve >= 1){
 	  	  int pars2 = Resolve_Polytomies_Pars(tree,io->thresh);
 	  	  #if defined OMP || defined BLAS_OMP
 		  #pragma omp critical
@@ -71,6 +72,7 @@ io->threads=0;
 	  	  {
 	  		  printf("\n. %d Initial/resolved maximum parsimony score: %d %d %s",tree->mod->num,pars1,pars2,tree->mod->rootname);
 	  	  }
+        }
 	  }
 }
 
@@ -255,7 +257,7 @@ void Pars_Reconstructions(option* io){
             tree2->io = tree->io;
             Set_Pars_Counters(r,tree,1);
               Get_First_Path(tree->noeud[tree->mod->startnode],minrootsar[0],tree,1);
-              if(tree->mod->polytomyresolve){
+              if(tree->mod->polytomyresolve >= 2){
               int iters = 0;
               int nnifound = 1;
               while(nnifound){ //execute if a rearrangement is found in a tree
@@ -281,7 +283,7 @@ void Pars_Reconstructions(option* io){
 	  	  		  int minroot = minrootsar[n];
               For(k,(tree->n_otu-1)*2)tree->noeud[k]->polytomy = 0;
               int poly;
-              if(tree->mod->polytomyresolve){
+              if(tree->mod->polytomyresolve >= 2){
               For(poly,tree->polytomies){
                 int states = tree->polytomy_states[poly];
                 if(states > 2){
@@ -387,7 +389,7 @@ void Get_Rand_Path(t_node *d, int index, t_tree *tree, int root){
       dir1=dir2=-1;
       For(i,3) if(d->v[i]->num != a->num) (dir1<0)?(dir1=i):(dir2=i);
       if((d->polytomy == 0) && (d->b[dir1]->l < tree->io->thresh || 
-          d->b[dir2]->l < tree->io->thresh) && tree->mod->polytomyresolve){
+          d->b[dir2]->l < tree->io->thresh) && tree->mod->polytomyresolve >= 2){
         int* scores = mCalloc(tree->nstate,sizeof(int));
         scores[d->pancstate]++;
         Get_Rand_Path_Polytomy(d, scores, index, tree, 1);
@@ -1050,7 +1052,7 @@ int Resolve_Polytomies_Pars(t_tree* tree, phydbl thresh){
 		iters++;
 	}
 
-	if(tree->mod->polytomyresolve){
+	if(tree->mod->polytomyresolve >= 2){
 	t_node* r = tree->noeud[tree->mod->startnode];
 	int smin = INT_MAX;
 	int mins = 0;
@@ -1652,6 +1654,7 @@ int NNI_ParsSwaps(t_node *a, t_node *b, t_node *c, t_node *d, t_tree *tree){
 	  //printf("pars score %d\t%d\t%d\n",pars0,pars1,pars2);
 	  if(pars0 != pars2){
 		  printf("pars score %d\t%d\t%d\n",pars0,pars1,pars2);
+      printf("tree %d\t%s\n",tree->mod->num,tree->mod->rootname);
 		  printf("\n.\tParsimony reconstruction swap inconsistent!\n");
 		  exit(EXIT_FAILURE);
 	  }

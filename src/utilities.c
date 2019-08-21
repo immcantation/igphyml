@@ -2790,7 +2790,7 @@ void Set_Defaults_Model(model *mod)
 
   mod->mdpos = 0;
   mod->permute_tips = 0;
-  mod->polytomyresolve = 1;
+  mod->polytomyresolve = 2;
 }
 /*********************************************************/
 

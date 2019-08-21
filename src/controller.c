@@ -140,7 +140,7 @@ struct option longopts[] =
 	{"mdpos",		  required_argument,NULL,178},  //!<Added by Ken
 	{"permute",		  no_argument,NULL,179},  //!<Added by Ken
 	{"permuteAll",		  no_argument,NULL,180},  //!<Added by Ken
-	{"nniresolve",		  no_argument,NULL,181},  //!<Added by Ken
+	{"polyresolve",		  required_argument,NULL,181},  //!<Added by Ken
     {0,0,0,0}
 };
 
@@ -2945,7 +2945,7 @@ int mainOptionSwitch(int opt, char * optarg, option * io)
         //////////////////////////////////////////////////////////////////////////////////////
         // --polytomyresolve
         case 181:{
-        		io->mod->polytomyresolve=0;
+        		io->mod->polytomyresolve=atoi(optarg);
             break;
         }
             //////////////////////////////////////////////////////////////////////////////////////
