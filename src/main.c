@@ -146,6 +146,7 @@ int main(int argc, char **argv){
    }else{
 	   mod->fp_in_tree = Openfile(mod->in_tree_file,0);
 	   tree = Read_User_Tree(cdata,mod,io); //read in user tree topology
+	   fclose(mod->fp_in_tree);
    }
    if(io->mod->optDebug)printf("read tree\n");
    if(!tree) continue;
