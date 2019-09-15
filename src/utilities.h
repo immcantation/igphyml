@@ -891,6 +891,12 @@ typedef struct __Model {
  phydbl** 	mid_pi;//midpoint pi
  phydbl* cdr;
  phydbl* fwr;
+ phydbl					priorSD;
+ phydbl					kPriorMean;
+ phydbl* 				wPriorMean;
+ phydbl* 				hPriorMean;
+
+ char*				preconfile; //file used for custom parsimony model
 }model;
 
 /*********************************************************/
@@ -1071,6 +1077,7 @@ typedef struct __Option {
   int							GRv;
   phydbl 					roughCI;
   char*						outrep;
+  char*						outname;
   int						outrepspec;
   int							CIest;
   phydbl 			min_diff_lk_global;
@@ -1080,7 +1087,11 @@ typedef struct __Option {
   //Options for recon
   int					precon;
   int 					flux; //do full flux adjustment?
- }option;
+
+  char*					asrfile;
+  int					bmatorder;
+  int 					repwidefreqs;
+}option;
 
 /*********************************************************/
 //! Parameters to be optimized by maximum likelihood algorithm.
@@ -1434,6 +1445,7 @@ typedef struct __OutputToken {
 #define OUTTXT      0
 #define OUTYAML     1
 #define OUTDARWIN   2
+#define OUTTAB		3
 
 #define TFNUMERIC   0
 #define TFSTRING    1
@@ -1454,9 +1466,8 @@ typedef struct __DarwinToken {
 /*********************************************************/
 
 void copyIOtoMod(option* io, model* mod);
+void Get_Root_Pos(model* mod,t_tree* tree,option* io);
 void Plim_Binom(phydbl pH0,int N,phydbl *pinf,phydbl *psup);
-void Make_All_Edges_Light(t_node *a,t_node *d);
-void Make_All_Edges_Lk(t_node *a,t_node *d,t_tree *tree);
 void Init_Tree(t_tree *tree, int n_otu);
 t_edge *Make_Edge_Light(t_node *a, t_node *d, int num);
 void Init_Edge_Light(t_edge *b, int num);
@@ -1465,11 +1476,9 @@ void Make_Edge_Lk(t_edge *b, t_tree *tree);
 t_node *Make_Node_Light(int num);
 void Make_Node_Lk(t_node *n);
 void Uppercase(char *ch);
-void Lowercase(char *ch);
 calign *Compact_Data(align **data,option *input,model* mod);
 calign *Compact_Cdata(calign *data, option *io, model* mod);
 void Get_Base_Freqs(calign *data);
-void Get_AA_Freqs(calign *data);
 t_tree *Read_Tree_File(option *io);
 t_tree *Read_Tree_File_Phylip(FILE *fp_input_tree);
 void Connect_Edges_To_Nodes(t_node *a,t_node *d,t_tree *tree,int *cur);
@@ -1479,24 +1488,13 @@ void *mRealloc(void *p,int nb,size_t size);
 /* t_tree *Make_Light_Tree_Struct(int n_otu); */
 int Sort_Phydbl_Decrease(const void *a, const void *b);
 void Qksort(phydbl *A, phydbl *B, int ilo,int ihi);
-void Qksort_Int(int *A, int *B, int ilo,int ihi);
 void Print_Site(calign *cdata,int num,int n_otu,char *sep,int stepsize);
-void Print_Seq(align **data,int n_otu);
-void Print_CSeq(FILE *fp,calign *cdata);
-void Order_Tree_Seq(t_tree *tree,align **data);
 void Order_Tree_CSeq(t_tree *tree,calign *data);
 matrix *Make_Mat(int n_otu);
 void Init_Mat(matrix *mat,calign *data);
-void Print_Dist(matrix *mat);
-void Print_Node(t_node *a,t_node *d,t_tree *tree);
-void Share_Lk_Struct(t_tree *t_full,t_tree *t_empt);
-void Init_Constant();
-void Print_Mat(matrix *mat);
 int Sort_Edges_NNI_Score(t_tree *tree, t_edge **sorted_edges, int n_elem);
 void NNI(t_tree *tree, t_edge *b_fcus, int do_swap);
 void Swap(t_node *a,t_node *b,t_node *c,t_node *d,t_tree *tree);
-void Update_All_Partial_Lk(t_edge *b_fcus,t_tree *tree);
-void Update_SubTree_Partial_Lk(t_edge *b_fcus,t_node *a,t_node *d,t_tree *tree);
 calign *Make_Cseq(int n_otu, int crunch_len, int state_len, int init_len, char **sp_names, option *io);
 calign *Copy_Cseq(calign *ori, option *io,model* mod);
 optimiz *Make_Optimiz();
@@ -1510,7 +1508,6 @@ void Bootstrap(t_tree *tree);
 void Br_Len_Involving_Invar(t_tree *tree);
 void Br_Len_Not_Involving_Invar(t_tree *tree);
 void Getstring_Stdin(char *file_name);
-void Print_Freq(t_tree *tree);
 phydbl Num_Derivatives_One_Param(phydbl(*func)(t_tree *tree),t_tree *tree,phydbl f0,phydbl *param,phydbl stepsize,phydbl *err,int precise);
 int Num_Derivative_Several_Param(t_tree *tree,phydbl *param,int n_param,phydbl stepsize,phydbl(*func)(t_tree *tree),phydbl *derivatives);
 int Compare_Two_States(char *state1,char *state2,int state_size);
@@ -1542,120 +1539,65 @@ void Connect_Edges_To_Nodes_Recur(t_node *a, t_node *d, t_tree *tree);
 void Connect_One_Edge_To_Two_Nodes(t_node *a, t_node *d, t_edge *b, t_tree *tree);
 t_tree *Make_Tree_From_Scratch(int n_otu, calign *data);
 t_treelist *Make_Treelist(int list_size);
-void Put_Subtree_In_Dead_Objects(t_node *a, t_node *d, t_tree *tree);
 void Prune_Subtree(t_node *a, t_node *d, t_edge **target, t_edge **residual, t_tree *tree);
-void Reassign_Node_Nums(t_node *a, t_node *d, int *curr_ext_node, int *curr_int_node, t_tree *tree);
 void Copy_Tree(t_tree *ori, t_tree *cpy);
-void Reassign_Edge_Nums(t_node *a, t_node *d, int *curr_br, t_tree *tree);
 void Init_Node_Light(t_node *n, int num);
-void Make_All_Edge_Dirs(t_node *a, t_node *d, t_tree *tree);
 void Graft_Subtree(t_edge *target, t_node *link, t_edge *add_br, t_tree *tree);
 int Get_Subtree_Size(t_node *a, t_node *d);
-void Pull_Subtree_From_Dead_Objects(t_node *a, t_node *d, t_tree *tree);
 void Make_Edge_NNI(t_edge *b);
 nni *Make_NNI();
 void Init_NNI(nni *a_nni);
 void Insert(t_tree *tree);
-void Connect_Two_Nodes(t_node *a, t_node *d);
-void Get_List_Of_Target_Edges(t_node *a, t_node *d, t_edge **list, int *list_size, t_tree *tree);
 void Fix_All(t_tree *tree);
 void Record_Br_Len(phydbl *where, t_tree *tree);
 void Restore_Br_Len(phydbl *from, t_tree *tree);
-void Get_Dist_Btw_Edges(t_node *a, t_node *d, t_tree *tree);
-void Detect_Polytomies(t_edge *b, phydbl l_thresh, t_tree *tree);
 void Find_Mutual_Direction(t_node *n1, t_node *n2, short int *dir_n1_to_n2, short int *dir_n2_to_n1);
 void Fill_Dir_Table(t_tree *tree);
-void Get_List_Of_Nodes_In_Polytomy(t_node *a, t_node *d, t_node ***list, int *size_list);
-void NNI_Polytomies(t_tree *tree, t_edge *b_fcus, int do_swap);
-void Check_Path(t_node *a, t_node *d, t_node *target, t_tree *tree);
-void Get_List_Of_Adjacent_Targets(t_node *a, t_node *d, t_node ***node_list, t_edge ***edge_list, int *list_size);
-void Sort_List_Of_Adjacent_Targets(t_edge ***list, int list_size);
 t_node *Common_Nodes_Btw_Two_Edges(t_edge *a, t_edge *b);
-void Make_Site_Lk_Backup(t_tree *tree);
 int KH_Test(phydbl *site_lk_m1, phydbl *site_lk_M2, t_tree *tree);
-void Store_P_Lk(phydbl ****ori, phydbl ****cpy, t_tree *tree);
 phydbl Triple_Dist(t_node *a, t_tree *tree, int approx);
-void Make_Symmetric(phydbl **F, int n);
-void Round_Down_Freq_Patt(phydbl **F, t_tree *tree);
 phydbl Get_Sum_Of_Cells(phydbl *F, t_tree *tree);
-void Divide_Cells(phydbl **F, phydbl div, t_tree *tree);
-void Divide_Mat_By_Vect(phydbl **F, phydbl *vect, int size);
-void Multiply_Mat_By_Vect(phydbl **F, phydbl *vect, int size);
-void Triple_Dist_Recur(t_node *a, t_node *d, t_tree *tree);
 triplet *Make_Triplet_Struct(model *mod);
 void Fast_Br_Len(t_edge *b, t_tree *tree, int approx);
-void Fast_Br_Len_Recur(t_node *a, t_node *d, t_edge *b, t_tree *tree);
 void Print_Tree(FILE *fp, t_tree *tree);
-void Found_In_Subtree(t_node *a, t_node *d, t_node *target, int *match, t_tree *tree);
 void Random_Tree(t_tree *tree);
 void Copy_Dist(phydbl **cpy, phydbl **orig, int n);
 eigen *Make_Eigen_Struct(model *mod); //!< Changed by Marcelo.
-void Random_NNI(int n_moves, t_tree *tree);
 void Make_Edge_Pars(t_edge *b, t_tree *tree);
 void Make_Tree_Path(t_tree *tree);
-void Share_Pars_Struct(t_tree *t_full, t_tree *t_empt);
-void Share_Spr_Struct(t_tree *t_full, t_tree *t_empt);
 void Clean_Tree_Connections(t_tree *tree);
 void Fill_Missing_Dist(matrix *mat);
 void Fill_Missing_Dist_XY(int x, int y, matrix *mat);
 phydbl Least_Square_Missing_Dist_XY(int x, int y, phydbl dxy, matrix *mat);
 void Update_Dirs(t_tree *tree);
-void Print_Banner(FILE *fp);
-void Qksort_matrix(phydbl **A, int col, int ilo, int ihi);
 void Check_Memory_Amount(t_tree *tree);
 int Get_State_From_P_Lk(phydbl *p_lk, int pos, t_tree *tree);
 int Get_State_From_P_Pars(short int *p_pars, int pos, t_tree *tree);
-void Unroot_Tree(char **subtrees);
 void Print_Lk(t_tree *tree, char *string);
 void Print_Lk_rep(option* io, char *string);
 void Lazy_Exit(char*,char*,int);
 void Print_Pars(t_tree *tree);
-void Print_Lk_And_Pars(t_tree *tree);
 void Check_Dirs(t_tree *tree);
 void Warn_And_Exit(char *s);
-void Print_Data_Set_Number(option *input, FILE *fp);
 phydbl Compare_Bip_On_Existing_Edges(phydbl thresh_len, t_tree *tree1, t_tree *tree2);
-void Evaluate_One_Regraft_Pos_Triple(spr *move, t_tree *tree);
 int Get_State_From_Ui(int ui, int datatype);
-void Read_Qmat(phydbl *daa, phydbl *pi, FILE *fp);
 void Traverse_Prefix_Tree(int site, int seqnum, int *patt_num, int *n_patt, align **data, option *input, pnode *n, model* mod);
 pnode *Create_Pnode(int size);
 int Assign_State_With_Ambiguity(char *c, int datatype, int stepsize);
-void Randomize_Sequence_Order(calign *data);
-void Dist_To_Node_Pre(t_node *a, t_node *d, t_edge *b, t_tree *tree);
-void Add_Root(t_edge *target, t_tree *tree);
 int Is_Invar(int patt_num, int stepsize, int datatype, calign *data);
-void Update_Root_Pos(t_tree *tree);
 t_tree *Generate_Random_Tree_From_Scratch(int n_otu, int rooted);
-void Random_Lineage_Rates(t_node *a, t_node *d, t_edge *b, phydbl stick_prob, phydbl *rates, int curr_rate, int n_rates, t_tree *tree);
 t_edge *Find_Edge_With_Label(char *label, t_tree *tree);
-void Print_Square_Matrix_Generic(int n, phydbl *mat);
 char Reciproc_Assign_State(int i_state, int datatype);
-void Evolve(calign *data, model *mod, t_tree *tree);
 int Pick_State(int n, phydbl *prob);
-void Evolve_Recur(t_node *a, t_node *d, t_edge *b, int a_state, int r_class, int site_num, calign *gen_data, model *mod, t_tree *tree);
-void Site_Diversity(t_tree *tree);
-void Site_Diversity_Post(t_node *a, t_node *d, t_edge *b, t_tree *tree);
-void Site_Diversity_Pre(t_node *a, t_node *d, t_edge *b, t_tree *tree);
-void Subtree_Union(t_node *n, t_edge *b_fcus, t_tree *tree);
-void Binary_Decomposition(int value, int *bit_vect, int size);
-void Print_Diversity(FILE *fp, t_tree *tree);
-void Print_Diversity_Header(FILE *fp, t_tree *tree);
-void Print_Diversity_Pre(t_node *a, t_node *d, t_edge *b, FILE *fp, t_tree *tree);
 void Make_New_Edge_Label(t_edge *b);
-void Print_Qmat_AA(phydbl *daa, phydbl *pi);
 trate *Make_Rate_Struct(t_tree *tree);
-void Init_Rate_Struct(trate *rates, t_tree *tree);
 phydbl Var(phydbl *x, int n);
 phydbl Mean(phydbl *x, int n);
 phydbl Multivariate_Kernel_Density_Estimate(phydbl *where, phydbl **x, int sample_size, int vect_size);
-void Record_Partial_Model(model *ori, model *cpy);
 void Record_Model(model *ori, model *cpy);
 void Best_Of_NNI_And_SPR(t_tree *tree);
 int Polint(phydbl *xa, phydbl *ya, int n, phydbl x, phydbl *y, phydbl *dy);
-void Reset_Model_Parameters(model *mod);
 token *Print_Banner_Small(token *t);
-void JF(t_tree *tree);
 t_tree *Dist_And_BioNJ(calign *cdata, model *mod, option *io);
 void Add_BioNJ_Branch_Lengths(t_tree *tree, calign *cdata, model *mod);
 t_tree *Read_User_Tree(calign *cdata, model *mod, option *io);
@@ -1670,43 +1612,21 @@ void PhyML_Fprintf(FILE *fp, char *format, ...);
 //Added/Updated by Ken 3/8/2016
 void Update_Ancestors(t_node *a, t_node *d, t_tree *tree);
 void Update_Ancestors_Edge(t_node *a, t_node *d, t_edge *e, t_tree *tree);
-void Update_Ancestors_Edge_Prune(t_node *a, t_node *d, t_edge *e, t_node *stop, int prunedir, t_tree *tree);
-
-void Down_All(t_node *d, t_tree *tree);
-void Up_All(t_node *d, t_tree *tree);
-void Up_Above(t_node *d, t_tree *tree);
-void Down_Above(t_node *d, t_tree *tree);
-void Node_Stats(t_node *a,t_node *d, t_tree *tree);
 void Print_Ambig_States(t_node *d, t_tree *tree, FILE *ambigfile);
 
-
-void Find_Common_Tips(t_tree *tree1, t_tree *tree2);
 phydbl Get_Tree_Size(t_tree *tree);
 int Find_Bipartition(char **target_bip, int bip_size, t_tree *tree);
 int Find_Duplication_Node(char **tax_set, int n_tax, t_tree *tree);
-void Get_Rid_Of_Prefix(char delim, t_tree *tree);
-void Dist_To_Root_Pre(t_node *a, t_node *d, t_edge *b, t_tree *tree);
-void Dist_To_Root(t_node *n_root, t_tree *tree);
 int Is_Duplication_Node(t_node *n, char **tax_set, int n_tax, t_tree *tree);
 int Sort_Edges_Depth(t_tree *tree, t_edge **sorted_edges, int n_elem);
 char *Basename(char *path);
-void Get_List_Of_Ancestors(t_node *ref_nod, t_node **list, int *size, t_tree *tree);
 t_node *Find_Lca(t_node *n1, t_node *n2, t_tree *tree);
 int Edge_Num_To_Node_Num(int edge_num, t_tree *tree);
-void Branch_Lengths_To_Time_Lengths(t_tree *tree);
-void Branch_Lengths_To_Time_Lengths_Pre(t_node *a, t_node *d, t_tree *tree);
 int Find_Clade(char **tax_name_list, int list_size, t_tree *tree);
-void Find_Clade_Pre(t_node *a, t_node *d, int *tax_num_list, int list_size, int *num, t_tree *tree);
-void Read_Clade_Priors(char *file_name, t_tree *tree);
 t_edge *Find_Root_Edge(FILE *fp_input_tree, t_tree *tree);
-void Copy_Tree_Topology_With_Labels(t_tree *ori, t_tree *cpy);
-void Make_Custom_Model(model *mod);
 option *Get_Input(int argc, char **argv);
 nexcom **Make_Nexus_Com();
 void Free_Nexus_Com(nexcom **com);
-void Init_Nexus_Format(nexcom **com);
-void Find_Nexus_Com(char *token, nexcom **found_com, nexparm **default_parm, nexcom **com_list);
-void Find_Nexus_Parm(char *token, nexparm **found_parm, nexcom *curr_com);
 int Read_Nexus_Dimensions(char *token, nexparm *curr_parm, option *io);
 int Read_Nexus_Format(char *token, nexparm *curr_parm, option *io);
 int Read_Nexus_Eliminate(char *token, nexparm *curr_parm, option *io);
@@ -1721,18 +1641,14 @@ int Read_Nexus_Translate(char *token, nexparm *curr_parm, option *io);
 int Read_Nexus_Tree(char *token, nexparm *curr_parm, option *io);
 int Read_Nexus_Taxa(char *token, nexparm *curr_parm, option *io);
 void Detect_Align_File_Format(option *io, model* mod);
-void Detect_Tree_File_Format(option *io);
 int Get_Token(FILE *fp, char *token);
 nexparm *Make_Nexus_Parm();
 void Free_Nexus_Parm(nexparm *parm);
 void Set_Model_Name(model *mod);
 void Adjust_Min_Diff_Lk(t_tree *tree);
 void Match_Tip_Numbers(t_tree *tree1, t_tree *tree2);
-void Get_Nexus_Data(FILE *fp, option *io);
-void Translate_Tax_Names(char **tax_names, t_tree *tree);
 void Skip_Comment(FILE *fp);
 void Update_Dir_To_Tips(t_node *a, t_node *d, t_tree *tree);
-void Test_Node_Table_Consistency(t_tree *tree);
 
 void Genetic_code_index_stopCodons(int gencode); //!< Added by Marcelo.
 int  Genetic_code_ns(); //!< Added by Marcelo.
@@ -1746,15 +1662,11 @@ phydbl my2norm(phydbl *x,int len); //!< Added by Marcelo.
 int MyGaussElimination_gNxRHS(double *A, double *B, int n, int rhs); //!< Added by Marcelo.
 void Sprint_codon(char *inout,int codon); //!< Added by Marcelo.
 void Make_Ts_and_Tv_Matrix(option *io,model* mod); //!< Added by Marcelo.
-void Change_Tree_Data(int n_otu, calign *data, t_tree * tree); //!< Added by Marcelo.
 void Scale_freqs(phydbl *f, int n); //!< Added by Marcelo.
 void Freq_to_UnsFreq(phydbl *f, phydbl *uf, int n, int f2U); //!< Added by Marcelo.
 void lkExperiment(t_tree * tree, int num_tree); //!< Added by Marcelo.
 void Scale_freqs_tol(phydbl *f, int n, phydbl tolmin, phydbl tolmax); //!< Added by Marcelo.
-void rel_lk_dimension_reduction(t_tree *tree); //!< Added by Marcelo.
 int findAA(char theAA);//!< Added by Marcelo.
-void Conv_CD_seq_to_AA_seq(option *io_codon, option *io_aa, option *io);//!< Added by Marcelo.
-void Conv_NT_seq_to_AA_seq(option *io);//!< Added by Marcelo.
 char Translate_CD_to_AA(char * codon, option * io);//!< Added by Marcelo.
 char Translate_CD_to_AA_2(char codon, option * io);//!< Added by Marcelo.
 void SetSeed (unsigned int seed);//!< Added by Marcelo.
@@ -1778,12 +1690,8 @@ extern int  indexSenseCodons[64]; //!< Added by Marcelo.
 token *Emit_Root_Token();
 token *Emit_Out_Token(token *currTkn, char *full, char *tag, int type, int f, char *format, ...);
 token *Del_Last_Token(token *r);
-void Output_Tokens(token *root, int format, FILE *out);
-void Print_Txt_Tokenlist(FILE *fp_out, token *t);
 #ifdef USEYAML
-void Print_YAML_Tokenlist(FILE *fp_out, token *t);
 #endif
-void Print_Darwin_Tokenlist(FILE *fp_out, token *t);
 char *getDarwinTable(token *r);
 // end added stefan
 
@@ -1801,7 +1709,7 @@ void Set_Genetic_Code(int gencode);
 #define YAP -3
 #define PCM -4
 #define HLP17 -100 //added by Ken
-#define HLP18 -101
+#define HLP19 -101
 
 /*! Opt freq scheme */ //!
 #define NOFEQ     -1

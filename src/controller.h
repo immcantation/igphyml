@@ -34,7 +34,6 @@ void setupGeneticCode(option * io);
 void setupFreqs(option * io);
 void setupInitialRateMats(option * io);
 void setupOmegaCats(option * io);
-void setupPCM(option * io);
 void setupModelIdentifier(option * io);
 void setupFreqHandling(option * io);
 void setupKappa(option * io);

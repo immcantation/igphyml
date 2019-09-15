@@ -32,18 +32,10 @@ the GNU public licence.  See http://www.opensource.org for details.
 #include "stats.h"
 
 void PMat(phydbl l, model *mod, int pos, phydbl *Pij);
-void PMat_K80(phydbl l,phydbl kappa, int pos, phydbl *Pij);
-void PMat_TN93(phydbl l, model *mod, int pos, phydbl *Pij);
-void PMat_Empirical(phydbl l, model *mod, int pos, phydbl *Pij);
 void PMat_Zero_Br_Len(model  *mod, int pos, phydbl *Pij);
-void PMat_Gamma(phydbl l, model *mod, int pos, phydbl *Pij);
 
 int GetDaa (phydbl *daa, phydbl *pi, char *file_name);
 void Init_Model(calign *data, model *mod, option *io);
-void Update_Qmat_GTR(phydbl *rr, phydbl *rr_val, int *rr_num, phydbl *pi, phydbl *qmat);
-void Update_Qmat_HKY(phydbl kappa, phydbl *pi, phydbl *qmat);
-void Update_Qmat_Generic(phydbl *rr, phydbl *pi, int ns, phydbl *qmat);
-void Translate_Custom_Mod_String(model *mod);
 void Set_Model_Parameters(model *mod);
 phydbl GTR_Dist(phydbl *F, phydbl alpha, eigen *eigen_struct);
 phydbl General_Dist(phydbl *F, model *mod, eigen *eigen_struct);
@@ -59,8 +51,6 @@ int Init_Qmat_MtMam(phydbl *daa, phydbl *pi);
 int Init_Qmat_MtArt(phydbl *daa, phydbl *pi); // Added by Federico Abascal
 int Init_Qmat_HIVb(phydbl *daa, phydbl *pi);  // Added by Federico Abascal
 int Init_Qmat_HIVw(phydbl *daa, phydbl *pi);  // Added by Federico Abascal
-void Switch_From_Mod_To_M4mod(model *mod);
-void Switch_From_M4mod_To_Mod(model *mod);
 void PMat_JC69(phydbl l, int pos, phydbl *Pij, model *mod);
 
 phydbl F1x4(int codon, phydbl *f); //!<Added by Marcelo.
@@ -71,23 +61,20 @@ void EqFrequencies(int modfreq, phydbl *pi, phydbl *freq, int numSensecodons); /
 void  PMat_CODON(phydbl l, model *mod, int pos, phydbl *Pij); //!<Added by Marcelo.
 void  PMat_CODON_part(phydbl l, model *mod, int pos, phydbl *Qmat, phydbl *Pij,int modeli); //!<Added by Marcelo. //updated by Ken  22/8
 void PMat_CODON_Pairwise(phydbl l, phydbl *Pij,  phydbl *U, phydbl *V, phydbl *R, int n, phydbl *uexpt, phydbl *expt); //!<Added by Marcelo.
+void Setup_Repertoire_Models(option* io); //added by Ken 4/Feb/2019
 void PadeApprox(int n, int nn, phydbl *A, model *mod, phydbl *F, int pos, phydbl len, int m, int modeli); //!<Added by Marcelo. Updated by Ken 22/8
 
 // stefan:
 phydbl Update_Qmat_Codons(model *mod, int cat, int modeli, phydbl* freqs);
 void Update_Qmat_HLP17( phydbl *mat, phydbl *qmat, phydbl * freqs, int cat, model *mod,phydbl omega,int modeli);
 void Setup_CBmat(model* mod, int uniform, phydbl* pis);
+void Setup_CBmat_Custom(model* mod, int uniform, phydbl* pis);
 void Update_Qmat_GY( phydbl *mat, phydbl *qmat, phydbl * freqs, int cat, model *mod);
-void Update_Qmat_MG( phydbl *mat, phydbl *qmat, phydbl * freqs, int cat, model *mod);
-void Update_Qmat_YAP( phydbl *mat, phydbl *qmat, phydbl * freqs, int cat, model *mod);
 phydbl Kappa_Omega_Factor( int senseCodoni, int senseCodonj, model *mod, int cat,phydbl omega);
 
-void Update_Rate_Matrix_PCAModel( model *mod ); //!<Added by Marcelo.
 
 phydbl Scale_P_MatrixManyOmegaModels(phydbl *Pij,  phydbl *pi, phydbl *freq, int n_w_catg, int numSenseCodons, model *mod); //!< Added by Marcelo.
 
-void print_matrix(phydbl *mat, int ns, char *s,int row); //!< Added by Marcelo.
-void print_array(phydbl *array, int ns, char *s); //!< Added by Marcelo.
 extern phydbl ecmK07[61][61]; //!<Added by Marcelo.
 extern phydbl ecmK07freq[61]; //!<Added by Marcelo.
 extern phydbl ecmS05[64][64]; //!<Added by Marcelo.

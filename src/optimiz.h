@@ -33,6 +33,7 @@ the GNU public licence.  See http://www.opensource.org for details.
 /* unused ken 5/1
 #include "mg.h"
 */
+void CI_Wrapper(option* io);
 void findCIs(model*,option*,FILE*);
 phydbl binarySearchCI(phydbl* param,option* io,phydbl tol,phydbl delta,phydbl lowerb,phydbl upperb,FILE*,char*);
 int storeParams(option* io, int reseto, phydbl* ar);
@@ -40,8 +41,6 @@ int restoreParams(option* io, int reseto, phydbl* ar);
 int resetSubstParams(option* io);
 
 
-void Set_Ancestors(t_node *a, t_node *d, t_tree *tree); //added by ken
-void Set_Ancestors_Root(t_tree *tree);
 void      Optimiz_Ext_Br(t_tree *tree);
 void      Optimize_Alpha(t_tree *tree);
 void      Optimize_Kappa(t_tree *tree);
@@ -124,7 +123,6 @@ void BFGS(t_tree *tree,
 	  int *failed);
 int Lnsrch_RR_Param(t_tree *tree, int n, phydbl *xold, phydbl fold, phydbl *g, phydbl *p, phydbl *x,
 		     phydbl *f, phydbl stpmax, int *check);
-void Optimize_Single_Param_Generic(t_tree *tree, phydbl *param, phydbl lim_inf, phydbl lim_sup, phydbl tol, int n_max_iter, int quickdirty);
 int Generic_Brak(phydbl *param,
 		 phydbl *ax, phydbl *bx, phydbl *cx, 
 		 phydbl *fa, phydbl *fb, phydbl *fc,
@@ -137,10 +135,8 @@ int Lnsrch_Nucleotide_Frequencies(t_tree *tree, int n, phydbl *xold,
 				   phydbl fold, phydbl *g, phydbl *p, phydbl *x,
 				   phydbl *f, phydbl stpmax, int *check);
 
-void Optimize_Global_Rate(t_tree *tree);
 phydbl Br_Len_Brent_Default(t_edge *b_fcus, t_tree *tree);
 
-void EM_Dist(model *mod, calign *data);
 phydbl Dist_F_Brent(phydbl ax, phydbl bx, phydbl cx, phydbl tol, int n_iter_max, 
 		    phydbl *param, phydbl *F, model *mod);
 int Dist_F_Brak(phydbl *ax, phydbl *bx, phydbl *cx, phydbl *F, phydbl *param, model *mod);
@@ -148,7 +144,6 @@ void Opt_Dist_F(phydbl *dist, phydbl *F, model *mod);
 phydbl Missing_Dist_Brent(phydbl ax, phydbl bx, phydbl cx, phydbl tol, int n_iter_max, 
 			  int x, int y, matrix *mat);
 int Missing_Dist_Brak(phydbl *ax, phydbl *bx, phydbl *cx, int x, int y, matrix *mat);
-void Opt_Missing_Dist(int x, int y, matrix *mat);
 int Optimiz_Alpha_And_Pinv(t_tree *tree);
 int Lnsrch_RR_Cov_Param(t_tree *tree, int n, phydbl *xold, phydbl fold, 
 			 phydbl *g, phydbl *p, phydbl *x,
@@ -182,7 +177,7 @@ void      Round_Optimize_New(t_tree *tree, calign *data, int n_round_max); //!Ad
 
 phydbl Br_Len_Brent_Codon_Pairwise(phydbl ax, phydbl bx, phydbl cx, phydbl tol, phydbl *b_fcus, phydbl *Pij, phydbl *pi, eigen *eigenStruct, calign *data, int ns, int n_iter_max, int quickdirty, phydbl *uexpt, phydbl *expt); //!< Added by Marcelo.
 
-int gradientB (int n, phydbl x[], phydbl f0, phydbl g[], option* io, phydbl space[], int xmark[]);//changed to io by Ken 17/1/2018
+phydbl gradientB (int n, phydbl x[], phydbl f0, phydbl g[], option* io, phydbl space[], int xmark[]);//changed to io by Ken 17/1/2018
 extern phydbl SIZEp;
 extern int noisy, Iround,NFunCall;
 extern int AlwaysCenter;

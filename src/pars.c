@@ -33,8 +33,6 @@ extern char aminoAcidmap[65];
 extern int indexSenseCodons[64];
 
 
-
-
 /*********************************************************/
 void parsReconstructions(option* io){
 	int j,i;

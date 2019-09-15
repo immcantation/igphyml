@@ -107,9 +107,9 @@ struct option longopts[] =
    
     {"logtree",           required_argument,NULL,146},  //!<Added by Stefan
     {"hotness",           required_argument,NULL,147},  //!<Added by Ken
-    {"root",           required_argument,NULL,148},  //!<Added by Ken
-    {"motifs",           required_argument,NULL,149},  //!<Added by Ken
-    {"partfile",           required_argument,NULL,150},  //!<Added by Ken
+    {"root",              required_argument,NULL,148},  //!<Added by Ken
+    {"motifs",            required_argument,NULL,149},  //!<Added by Ken
+    {"partfile",          required_argument,NULL,150},  //!<Added by Ken
 	{"ambigfile",		  required_argument,NULL,151},  //!<Added by Ken
 	{"threads",		  required_argument,NULL,152},  //!<Added by Ken
 	{"slowSPR",		  required_argument,NULL,153},  //!<Added by Ken
@@ -122,7 +122,7 @@ struct option longopts[] =
 	{"optDebug",		  no_argument,NULL,160},  //!<Added by Ken
 	{"ASR",		  no_argument,NULL,161},  //!<Added by Ken
 	{"ASRc",		  required_argument,NULL,162},  //!<Added by Ken
-	{"minSeq",		  required_argument,NULL,163},  //!<Added by Ken
+	{"minseq",		  required_argument,NULL,163},  //!<Added by Ken
 	{"GR",		  required_argument,NULL,164},  //!<Added by Ken
 	{"rootpi",		  no_argument,NULL,165},  //!<Added by Ken
 	{"roughCI",		  required_argument,NULL,166},  //!<Added by Ken
@@ -133,85 +133,50 @@ struct option longopts[] =
 	{"freqsTo",		  no_argument,NULL,171},  //!<Added by Ken
 	{"recon",		  required_argument,NULL,172},  //!<Added by Ken
 	{"flux",		  no_argument,NULL,173},  //!<Added by Ken
-    {0,0,0,0}
+	{"eat",		  required_argument,NULL,174},  //!<Added by Ken
+	{"repwidefreqs",		  no_argument,NULL,175},  //!<Added by Ken
+	{"outname",		  required_argument,NULL,176},  //!<Added by Ken
+	{"priorSD",		  required_argument,NULL,177},  //!<Added by Ken
+	{"priorMeans",		  required_argument,NULL,178},  //!<Added by Ken
+  {0,0,0,0}
 };
 
 
 void finishOptions(option * io)
 {
 	if(io->modeltypeOpt==0){
-		Warn_And_Exit("\n\nModel must be specified using -m\nSet to 'GY' or 'HLP17'.\n"
-				"Use GY for quick topologies.\nUse HLP17 for B cell specific features (SHM motifs, CDR/FWR omegas).\n");
+		Warn_And_Exit("\n\nModel must be specified using -m\nSet to 'GY' or 'HLP'.\n"
+				"Use GY for quick topologies.\nUse HLP for B cell specific features (SHM motifs, CDR/FWR omegas).\n");
 	}
-    int i,j;
-	checkForRandStartTree(io);
+    int i,j,c;
     checkModelCombinations(io);
-    adaptForM4(io);
     createOutFiles(io);
-    cleanupParameters(io);
     setupGeneticCode(io);
     setupFreqs(io);
     if(io->datatype == CODON) {
-        setupKappa(io);
-        setupInitialRateMats(io);
         setupOmegaCats(io);
     }
-    setupModelIdentifier(io);
-    
-    io->mod->expm=io->expm; /*!< 0 Eigenvalue; 1 scaling and squaring Pade. approx. COPIED FROM OPTION*/ //!< Added by Marcelo.
-        io->mod->datatype=io->datatype; //copied from option
-        io->mod->init_DistanceTreeCD=io->init_DistanceTreeCD; /*!< 0: ML JC69; 1: ML M0; 2: Schneider 2005 CodonPam; 3: Kosiol 2007 Empirical. COPIED FROM OPTION*/ //!<Added by Marcelo.
-        io->mod->kappaECM=io->kappaECM; /*!< According to Kosiol 2007.COPIED FROM OPTION*///!<Added by Marcelo.
-        io->mod->n_termsTaylor=io->n_termsTaylor; //! Added by Marcelo. COPIED FROM OPTION
-        io->mod->heuristicExpm=io->heuristicExpm; /*!< TAYLOR in parameter opt?.COPIED FROM OPTION*/
-        io->mod->modeltypeOpt=io->modeltypeOpt; //COPIED FROM OPTION
-        io->mod->freqmodelOpt=io->freqmodelOpt; //COPIED FROM OPTION
-        io->mod->omegaOpt=io->omegaOpt; //COPIED FROM OPTION
-        io->mod->eq_freq_handling=io->eq_freq_handling; //COPIED FROM OPTION
-        io->mod->quiet=io->quiet;
 
-#if defined OMP || defined BLAS_OMP
-           	omp_set_dynamic(0);
-           	omp_set_num_threads(io->threads);
-           	/*if(threads==1)io->nthreads=threads;
-           	else io->nthreads=threads-1;*/
+    //Copy values from input to main model
+	io->mod->whichrealmodel = io->modeltypeOpt;
+    copyIOtoMod(io,io->mod);
 
-#else
-           	if(io->threads > 1){
-           		printf("\n. Can't specify number of threads unless compiled with OMP!\n");
-           		//exit(EXIT_FAILURE);
-           		io->threads=1;
-           	}
-#endif
-
-
+    //set model name
     Set_Model_Name(io->mod);
-	
-	//io->fp_out_tree  = Openfile(io->out_tree_file, io->writemode);
-	io->fp_out_stats = Openfile(io->out_stats_file, io->writemode);
-    setupFreqHandling(io);
-    if(io->mod->ASRcut==0)io->mod->ASRcut=0.95;
-    /*if(io->ntrees==1){
-    	io->mod->splitByTree=0;
-    	io->splitByTree=0;
-    }*/
+    if(io->mod->optDebug)printf("\nmodel type opt %d\n",io->mod->modeltypeOpt);
 
+    //set some defaults
+    io->mod->primary=1;
+    if(io->mod->ASRcut < 0)io->mod->ASRcut=1.92;
+
+
+    //Check for partition model errors
     if(io->mod->partfilespec){
-    	if(io->ntrees > 1){
-    		printf("Can't specify partfile manually if using more than one dataset\n");
-    		exit(EXIT_FAILURE);
-    	}
+    	if(io->ntrees > 1)Warn_And_Exit("Can't specify partfile manually if using more than one dataset\n");
     	strcpy(io->partfs[0],io->mod->partfile);
     }
-    //set up HLP17 model
-    //Added by Ken 12/7/2016
-    io->mod->primary=1;
     int Npart=0;
-        	For(i,io->ntrees){
-        		if(strcmp(io->partfs[i],"N")==0){
-        			Npart++;
-        	  	}
-        	}
+    For(i,io->ntrees)if(strcmp(io->partfs[i],"N")==0)Npart++;
     if(!io->mod->omega_opt_spec){
     	if(Npart == io->ntrees || io->mod->modeltypeOpt == GY){ //if no partition files specified, use single omega
     		strcpy(io->mod->omega_opt_string,"e");
@@ -220,29 +185,22 @@ void finishOptions(option * io)
     	}
     }else{
     	if(strcmp(io->mod->omega_opt_string,"e,e")==0){
-    		if(Npart==io->ntrees){
-    			printf("\nNo partition files specified so can't partition omega!\n");
-    			exit(1);
-    		}
-    		if(io->mod->modeltypeOpt==GY){
-    		    printf("\nIgPhyML can't partition omega with GY model.\n");
-    		    exit(1);
-    		}
+    		if(Npart==io->ntrees)Warn_And_Exit("\nNo partition files specified so can't partition omega!\n");
+    		if(io->mod->modeltypeOpt==GY)Warn_And_Exit("\nIgPhyML can't partition omega with GY model.\n");
     	}
     }
+
+
+    //set options if flux-based codon frequency prediction desired
     if(io->flux){
     	io->eq_freq_handling      = ROOT; // optimize eq freqs
         io->mod->freq_model       = ROOT;
         io->freqmodelOpt		  = ROOT;
     }
 
+    //special options for setting up HLP-type models
+    if(io->modeltypeOpt <= HLP17)setUpHLP17(io, io->mod);
 
-    if(io->mod->optDebug)printf("\nmodel type opt %d\n",io->mod->modeltypeOpt);
-    if(io->modeltypeOpt <= HLP17){
-    	setUpHLP17(io, io->mod);
-    }
-
-    int c;
 	char* minfo1 = strdup(io->mod->omega_opt_string);
 	if(io->mod->optDebug)printf("%s\t%d\n",io->mod->omega_opt_string,io->mod->nomega_part);
    	io->mod->omega_part_opt = (int*)mCalloc(io->mod->nomega_part,sizeof(int ));
@@ -270,6 +228,20 @@ void finishOptions(option * io)
    	        io->mod->omega_part[c]=atof(mtemp1);
    	      }
    	 }
+   	if(io->mod->whichrealmodel==HLP17 && io->mod->s_opt->opt_state_freq==YES){
+   		io->repwidefreqs=1;
+   	}
+
+   	    //set thread counts
+#if defined OMP || defined BLAS_OMP
+           	omp_set_dynamic(0);
+           	omp_set_num_threads(io->threads);
+#else
+           	if(io->threads > 1){
+           		printf("\n. Can't specify number of threads unless compiled with OMP!\n");
+           		io->threads=1;
+           	}
+#endif
 }
 
 
@@ -315,8 +287,6 @@ void setUpHLP17(option* io, model *mod){
    		strcpy(mod->partfile,io->mod->partfile);
    		mod->partfilespec=io->mod->partfilespec;
    		strcpy(mod->ambigfile,io->mod->ambigfile);
-   		//strcpy(mod->rootname,io->mod->rootname);
-   		//strcpy(mod->partfile,io->partfs[mod->num]);
    		strcpy(mod->partfile,io->partfs[mod->num]);
    		if(strcmp(mod->partfile,"N")==0)mod->partfilespec=0;
    		else mod->partfilespec=1;
@@ -325,33 +295,24 @@ void setUpHLP17(option* io, model *mod){
    		if(strcmp(mod->partfile,"N")==0)mod->partfilespec=0;
    		else mod->partfilespec=1;
    	}
-   //	printf("mod: %d %d %s\n",mod->primary,mod->partfilespec,mod->partfile);
-
    	//Default values
-   	if(io->mod->motifstringopt==0){
-   		mod->motifstring = "WRC_2:0,GYW_0:0";
-   		//mod->motifstring = "WRC_2:0,GYW_0:1,WA_1:2,TW_0:3,SYC_2:4,GRS_0:5";
-   		/*if(mod->primary)printf("\nDEFAULT: Assuming FCH motif model. Bad call if you only have a few sequences."
-   				"\n........ Use '--motifs' and '--hotness' options to change this.\n\n");*/
-   	}
-   	if(io->mod->hotnessstringopt==0){
-   	    mod->hotnessstring = "e";
-   	    //mod->hotnessstring = "e,e,e,e,e,e";
-   	}
+   	if(io->mod->motifstringopt==0)mod->motifstring = "WRC_2:0,GYW_0:1,WA_1:2,TW_0:3,SYC_2:4,GRS_0:5";
+   	if(io->mod->hotnessstringopt==0)mod->hotnessstring = "e,e,e,e,e,e";
     if((strcmp(io->mod->motifstring,"FCH")==0)){
         mod->motifstring = "WRC_2:0,GYW_0:1,WA_1:2,TW_0:3,SYC_2:4,GRS_0:5";
         if(io->mod->hotnessstringopt==0)mod->hotnessstring = "e,e,e,e,e,e";
     }
    	if(io->mod->rootfound==0 && io->repMode==0){
-   		printf("\nError: Root sequence ID must be specified using --root\n\n");
-   		exit(EXIT_FAILURE);
+   		Warn_And_Exit("\nError: Root sequence ID must be specified using --root\n\n");
    	}
 
+   	//Don't comment this out
    	minfo1 = strdup(io->mod->omega_opt_string);
    	mod->nomega_part=0;
 	while ((mtemp1 = strsep(&minfo1, ",")) != NULL){mod->nomega_part++;}
-	//printf("omega: %d\n",mod->nomega_part);
-   	//parse motif string
+	if(strcmp(io->mod->omega_opt_string,"e")==0)mod->nomega_part=1; //correct for single omega case
+
+	// parse --motif string
    	minfo1 = strdup(io->mod->motifstring);
    	minfo2 = strdup(io->mod->motifstring);
   	mod->nmotifs=0;    	//determine number of motifs
@@ -367,14 +328,15 @@ void setUpHLP17(option* io, model *mod){
   	   	   if(mod->motif_hotness[c] > nh){nh=mod->motif_hotness[c];}
  	}
  	nh = nh + 1;
-    //parse hotness string
+
+ 	//parse --hotness string
    	minfo1 = strdup(io->mod->hotnessstring);
    	minfo2 = strdup(io->mod->hotnessstring);
    	mod->nhotness=0;//determine number of h parameters
    	while ((mtemp1 = strsep(&minfo1, ",")) != NULL){mod->nhotness++;}
    	mod->hotness = (phydbl*)mCalloc(mod->nhotness,sizeof(phydbl));
    	mod->hoptindex = (int*)mCalloc(mod->nhotness,sizeof(int ));
-   	mod->hoptci= (int*)mCalloc(mod->nhotness,sizeof(int ));
+   	mod->hoptci = (int*)mCalloc(mod->nhotness,sizeof(int ));
    	mod->hoptuci= (phydbl*)mCalloc(mod->nhotness,sizeof(phydbl));
    	mod->hoptlci=(phydbl*)mCalloc(mod->nhotness,sizeof(phydbl));
    	for(c=0;c<mod->nhotness;c++){
@@ -416,344 +378,350 @@ void setUpHLP17(option* io, model *mod){
    			exit(EXIT_FAILURE);
    		}
    	}
+
    	//Read in hotspot tables
    	int mot;
   	if(mod->primary){
-   	printf(". Loading hotspot tables..\n");
-   	mod->hotspotcmps = (phydbl**)mCalloc(mod->nmotifs,sizeof(phydbl *));
-   	for(mot = 0; mot < mod->nmotifs; mot++){
-   	    char *infile = mCalloc(strlen(HTABLE)+strlen(mod->motifs[mot])+1,sizeof(char));
-   	    strcpy(infile, HTABLE);
-   	    strcat(infile, mod->motifs[mot]);
-   	    if(mod->primary)printf("%s\n",infile);
-   	    FILE *file = fopen(infile, "r");
-   	    if(file == NULL){
-   	    	printf("\n\nCouldn't open %s\n\n",infile);
-   	    	exit(EXIT_FAILURE);
-   	    }
-   	    phydbl *hot;
-   	    int combinations = 13845841;
-   	    hot = (phydbl *)mCalloc(combinations,sizeof(phydbl));//checked 15/7/2016
-   	    int i=0;
-   	    double num;
-   	    while(i < combinations && io->precon > -5) {
-   	        int fscn = fscanf(file, "%lf\n",&num);
-   	        hot[i] = num;
-   	        i++;
-   	    }
-   	    fclose(file);
-   	    mod->hotspotcmps[mot] = hot;
-   	}
+  		printf(". Loading hotspot tables..\n");
+  		mod->hotspotcmps = (phydbl**)mCalloc(mod->nmotifs,sizeof(phydbl *));
+  		For(mot, mod->nmotifs){
+  			char *infile = mCalloc(T_MAX_FILE+strlen(io->mod->motifs[mot])+1,sizeof(char));
+  			strcpy(infile, HTABLE);
+  			strcat(infile, io->mod->motifs[mot]);
+  			FILE *file = fopen(infile, "r");
+  			if(file == NULL){
+  				const char* igpath = getenv("IGPHYML_PATH");
+  				if(igpath==NULL){
+  					printf("Hotspot tables not found in install directory and IGPHYML_PATH not set.\n");
+  					printf("Try specifying their location with the IGPHYML_PATH environment variable.\n");
+  					exit(1);
+  				}
+  				strcpy(infile, igpath);
+  				strcat(infile, "/HTABLE_");
+  				strcat(infile, io->mod->motifs[mot]);
+  				file = fopen(infile, "r");
+  				if(file == NULL){
+  					printf("\n\nCouldn't open %s\n\n",infile);
+  					exit(EXIT_FAILURE);
+  				}
+  			}
+  			printf("%s\n",infile);
+  			phydbl *hot;
+  			int combinations = 13845841;
+  			mod->hotspotcmps[mot] = (phydbl *)mCalloc(combinations,sizeof(phydbl));//checked 15/7/2016
+  			For(c,combinations){
+  				int fscn = fscanf(file, "%lf\n",&mod->hotspotcmps[mot][c]);
+  			}
+  			fclose(file);
+  		}
    	}
 
-
-  	//partition model stuff
-   	if(mod->partfilespec==1){
-   	int imgt=0;
-   	if(!Filexists(mod->partfile)){
-   		printf("\nPartition file %s does not exist\n",mod->partfile);
-   		exit(1);
-   	}
-    FILE *file = fopen(mod->partfile, "r");
-    int npart;
-    int fscn1 =  fscanf(file, "%d",&mod->nparts);
+  	// set up omega indexes based on partition model
+   if(mod->partfilespec==1){
+       int imgt=0;
+       if(!Filexists(mod->partfile)){
+          printf("\nPartition file %s does not exist\n",mod->partfile);
+          exit(1);
+       }
+       FILE *file = fopen(mod->partfile, "r");
+       int npart;
+       int fscn1 =  fscanf(file, "%d",&mod->nparts);
        int nsite;
        int fscn2 = fscanf(file, " %d\n",&nsite);
        if(fscn1 != 1 || fscn2 != 1){
-    	   printf("\nError in reading partition count and/or sequence lengths (first line): %s\n",mod->partfile);
-    	   exit(1);
+         printf("\nError in reading partition count and/or sequence lengths (first line): %s\n",mod->partfile);
+         exit(1);
        }
        mod->partIndex = (int *)mCalloc(nsite,sizeof(int));
        mod->partNames = (char**)mCalloc(mod->nparts,sizeof(char*));
        mod->omega_part = (phydbl*)mCalloc(mod->nomega_part,sizeof(phydbl));
-       for(c=0;c<mod->nomega_part;c++){
-       	mod->omega_part[c]=0.4;
+       if(!mod->primary){
+       	   mod->omega_part_ci = (int*)mCalloc(io->mod->nomega_part,sizeof(int ));
+       	   mod->omega_part_uci = (phydbl*)mCalloc(io->mod->nomega_part,sizeof(phydbl ));
+       	   mod->omega_part_lci = (phydbl*)mCalloc(io->mod->nomega_part,sizeof(phydbl ));
+       	   /*For(c,mod->nomega_part){
+       		   mod->omega_part_ci[c] = io->mod->omega_part_ci[c];
+       		   mod->omega_part_lci[c] = io->mod->omega_part_lci[c];
+       		   mod->omega_part_uci[c] = io->mod->omega_part_uci[c];
+       	   }*/
        }
-       int indexi;
-       for(indexi=0;indexi<nsite;indexi++){
-       	mod->partIndex[indexi]=-1;
-       }
+       For(c,mod->nomega_part)mod->omega_part[c]=0.4;
+       For(c,nsite)mod->partIndex[c]=-1;
+
        ssize_t read;
        size_t len=0;
        char *linepart = NULL;
-   	int parti;
-   	for(parti=0;parti<mod->nparts;parti++){
-   		read = getline(&linepart,&len,file);
-   		if(read == -1){
-   			printf("\nError in reading  region definitions: %s\n",mod->partfile);
-   			exit(1);
-   		}
-   		char* l1 = strsep(&linepart,":");
-   		if(l1 == NULL){
-   			printf("\nError in reading  region definitions: %s\n",mod->partfile);
-   			exit(1);
-   		}
-   		if(mod->primary && mod->optDebug)printf("%s\t",l1);
-   		mod->partNames[parti] = (char*)mCalloc(T_MAX_OPTION,sizeof(char));
-   		strcpy(mod->partNames[parti],l1);
-   		//io->mod->partNames[parti] = l1;
-   		char* l2 = strsep(&linepart,"\n");
-   		if(l2 == NULL){
-   			printf("\nError in reading  region definitions: %s\n",mod->partfile);
-   			exit(1);
-   		}
-   		//if(mod->primary)printf("%s\n",l2);
-   		//printf("%s\n",l2);
-   		if(strcmp(l2,"IMGT")!=0){
-   			char *ltemp1;
-   			while ((ltemp1 = strsep(&l2, ",")) != NULL){
-   				int start = atoi((strsep(&ltemp1,".")));
-   				(strsep(&ltemp1,"."));
-   				int end = atoi((strsep(&ltemp1,"\n")));
-   				int tempcount;
-   				for(tempcount=start;tempcount<=end;tempcount++){
-   					if(mod->partIndex[tempcount]!=-1){
-					 	 printf("\nPosition %d specified more than once in partition file!\n",tempcount);
-					 	 exit(EXIT_FAILURE);
-   					}
-   					mod->partIndex[tempcount]=parti;
-   				}
-   			}
-   		}else{
-   			if(mod->optDebug)printf("Doing IMGT CDR and FWR assignments\n");
-   			imgt=1;
-   		}
-   	}
+       For(c,mod->nparts){
+            read = getline(&linepart,&len,file);
+            if(read == -1){
+               printf("\nError in reading region definitions: %s\n",mod->partfile);
+               exit(1);
+            }
+            char* l1 = strsep(&linepart,":");
+            if(l1 == NULL){
+               printf("\nError in reading region definitions: %s\n",mod->partfile);
+               exit(1);
+            }
+            if(mod->primary && mod->optDebug)printf("%s\t",l1);
+            mod->partNames[c] = (char*)mCalloc(T_MAX_OPTION,sizeof(char));
+            strcpy(mod->partNames[c],l1);
+            char* l2 = strsep(&linepart,"\n");
+            if(l2 == NULL){
+               printf("\nError in reading region definitions: %s\n",mod->partfile);
+               exit(1);
+            }
+            if(strcmp(l2,"IMGT")!=0){
+               char *ltemp1;
+               while ((ltemp1 = strsep(&l2, ",")) != NULL){
+                  int start = atoi((strsep(&ltemp1,".")));
+                  (strsep(&ltemp1,"."));
+                  int end = atoi((strsep(&ltemp1,"\n")));
+                  int tempcount;
+                  for(tempcount=start;tempcount<=end;tempcount++){
+                     if(mod->partIndex[tempcount]!=-1){
+                      printf("\nPosition %d specified more than once in partition file!\n",tempcount);
+                      exit(EXIT_FAILURE);
+                     }
+                     mod->partIndex[tempcount]=c;
+                  }
+               }
+            }else{
+               if(mod->optDebug)printf("Doing IMGT CDR and FWR assignments\n");
+               imgt=1;
+            }
+       }
 
-   	if(imgt||io->GR){
-   	char* nline=NULL;
-   	char* nline2=NULL;
-	char* nline3=NULL;
-   	len=0;
-   	mod->germlineV=mCalloc(T_MAX_OPTION,sizeof(char));
-   	mod->germlineJ=mCalloc(T_MAX_OPTION,sizeof(char));
-   	read = getline(&nline2,&len,file);
-   	if(read == -1){
-   	   printf("\nError in reading  V segment: %s\n",mod->partfile);
-   	   exit(1);
-   	 }
-   	char* v=strsep(&nline2,"\n");
-   	strcpy(mod->germlineV,v);
-   	if(mod->optDebug)printf("\nGermlineV: %s",mod->germlineV);
-   	read = getline(&nline3,&len,file);
-   	if(read == -1){
-   	   printf("\nError in reading  J segment: %s\n",mod->partfile);
-   	   exit(1);
-   	}
-   	char* j=strsep(&nline3,"\n");
-   	strcpy(mod->germlineJ,j);
-   	if(mod->optDebug)	printf("\nGermlineJ: %s\n",mod->germlineJ);
+       if(imgt||io->GR){
+         char* nline=NULL;
+         char* nline2=NULL;
+         char* nline3=NULL;
+         len=0;
+         mod->germlineV=mCalloc(T_MAX_OPTION,sizeof(char));
+         mod->germlineJ=mCalloc(T_MAX_OPTION,sizeof(char));
+         read = getline(&nline2,&len,file);
+         if(read == -1){
+            printf("\nError in reading  V segment: %s\n",mod->partfile);
+            exit(1);
+          }
+         char* v=strsep(&nline2,"\n");
+         strcpy(mod->germlineV,v);
+         if(mod->optDebug)printf("\nGermlineV: %s",mod->germlineV);
+         read = getline(&nline3,&len,file);
+         if(read == -1){
+            printf("\nError in reading  J segment: %s\n",mod->partfile);
+            exit(1);
+         }
+         char* j=strsep(&nline3,"\n");
+         strcpy(mod->germlineJ,j);
+         if(mod->optDebug) printf("\nGermlineJ: %s\n",mod->germlineJ);
 
-   	mod->imgt=mCalloc(nsite,sizeof(int));
-   	len=0;
-   	read = getline(&nline,&len,file);
-   	if(read == -1){
-   	   printf("\nError in reading IMGT line: %s\n",mod->partfile);
-   	   exit(1);
-   	}
-   	For(c,nsite){
-   		char* l1 = strsep(&nline,",");
-   		if(l1 == NULL){
-   		   	printf("\nError in reading IMGT numbers: %s\n",mod->partfile);
-   		   	exit(1);
-   		}
-   		mod->imgt[c]=atoi(l1);
-   	}
+         mod->imgt=mCalloc(nsite,sizeof(int));
+         len=0;
+         read = getline(&nline,&len,file);
+         if(read == -1){
+            printf("\nError in reading IMGT line: %s\n",mod->partfile);
+            exit(1);
+         }
+         For(c,nsite){
+            char* l1 = strsep(&nline,",");
+            if(l1 == NULL){
+                  printf("\nError in reading IMGT numbers: %s\n",mod->partfile);
+                  exit(1);
+            }
+            mod->imgt[c]=atoi(l1);
+         }
 
-   	if(imgt){
-   		int cdr=0;
-   		if(mod->nomega_part>1)cdr=1;
-   		For(c,nsite){
-   			int s =mod->imgt[c];
-   			if(s >= 26 && s <= 38)mod->partIndex[c]=cdr;
-   			else if(s >= 56 && s <= 65)mod->partIndex[c]=cdr;
-   			else if(s >= 105 && s <= 118)mod->partIndex[c]=cdr;
-   			else mod->partIndex[c]=0;
-   		}
-   	}
-   	}
+         if(imgt){
+            int cdr=0;
+            if(mod->nomega_part==1){
+               cdr=1;
+               For(c,nsite)mod->partIndex[c]=0;
+            }else if(mod->nomega_part==2){
+               cdr=1;
+               For(c,nsite){
+                  int s =mod->imgt[c];
+                  if(s >= 26 && s <= 38)mod->partIndex[c]=cdr;
+                  else if(s >= 56 && s <= 65)mod->partIndex[c]=cdr;
+                  else if(s >= 105 && s <= 118)mod->partIndex[c]=cdr;
+                  else mod->partIndex[c]=0;
+               }
+            }else if(mod->nomega_part>2){
+               For(c,nsite){
+                  int s =mod->imgt[c];
+                  if(s < 26)mod->partIndex[c]=0;
+                  else if(s <= 38)mod->partIndex[c]=1;
+                  else if(s < 56)mod->partIndex[c]=2;
+                  else if(s <= 65)mod->partIndex[c]=1;
+                  else if(s < 105)mod->partIndex[c]=3;
+                  else if(s <= 118)mod->partIndex[c]=1;
+                  else mod->partIndex[c]=4;
+               }
+             }
+           }
+         }
 
-   	if(io->mod->optDebug){
-   	for(indexi=0;indexi<nsite;indexi++){
-   		//printf("%d\n",indexi);
-   	   	if(mod->partIndex[indexi] == -1){
-   	   		printf("\nPosition %d not specified in partition file!\n",indexi);
-   	   		exit(EXIT_FAILURE);
-   	   	}
-   	 if(mod->primary){
-   		 printf("%d ",mod->partIndex[indexi]);
-   	 }
-   	}
-   	}
-   	fclose(file);
-   	if(mod->primary)printf("\n");
-   	//if(mod->primary)printf("\nDone!\n");
+         if(io->mod->optDebug){
+        	 For(c, nsite){
+               if(mod->partIndex[c] == -1){
+                  printf("\nPosition %d not specified in partition file!\n",c);
+                  exit(EXIT_FAILURE);
+               }
+               if(mod->primary)printf("%d ",mod->partIndex[c]);
+             }
+         }
+         fclose(file);
+         if(mod->primary)printf("\n");
 
-   	//set up midpoint pi frequencies
-   	if(mod->freq_model==MROOT){
-		mod->mid_pi = mCalloc(mod->nomega_part,sizeof(phydbl*));
-		For(indexi,mod->nomega_part){
-			mod->mid_pi[indexi] = mCalloc(mod->ns,sizeof(phydbl));
-		}
-   	}
+         //set up midpoint pi frequencies
+         if(mod->freq_model==MROOT){
+        	 mod->mid_pi = mCalloc(mod->nomega_part,sizeof(phydbl*));
+        	 For(c, mod->nomega_part)mod->mid_pi[c] = mCalloc(mod->ns,sizeof(phydbl));
+         }
     }else{
-   	 mod->nparts=1;
-   	 mod->nomega_part=mod->nparts;
-   	 mod->omega_part[0]=0.4;
-   	 if(mod->freq_model==MROOT){
-		 mod->mid_pi = mCalloc(mod->nomega_part,sizeof(phydbl*));
-		 mod->mid_pi[0] = mCalloc(mod->ns,sizeof(phydbl));
-   	 }
+        mod->nparts=1;
+        mod->nomega_part=mod->nparts;
+        mod->omega_part[0]=0.4;
+        mod->partNames = (char**)mCalloc(mod->nomega_part,sizeof(char*));
+	  	mod->partNames[0]=(char*)mCalloc(T_MAX_OPTION,sizeof(char));
+	  	strcpy(mod->partNames[0],"SINGLE");
+        if(mod->freq_model==MROOT){
+        	mod->mid_pi = mCalloc(mod->nomega_part,sizeof(phydbl*));
+        	mod->mid_pi[0] = mCalloc(mod->ns,sizeof(phydbl));
+        }
     }//partfilespec==1
    	if(io->mod->constB)Setup_CBmat(mod,1,mod->pi);
-   	//setupRootFreqs(mod);
-   	//printf("set up\n");
+  	setupRootFreqs(mod);
 }
 
 void setupRootFreqs(model* mod){
-	mod->cdr=mCalloc(mod->ns,sizeof(phydbl));
+   	mod->cdr=mCalloc(mod->ns,sizeof(phydbl));
 	mod->fwr=mCalloc(mod->ns,sizeof(phydbl));
-	mod->cdr[0] = 0.0260114281110946;
-	mod->cdr[0] = 0.0260114281110946;
-	mod->cdr[1] = 0.0423267517826354;
-	mod->cdr[2] = 0.00349646046314395;
-	mod->cdr[3] = 0.00288220228897882;
-	mod->cdr[4] = 0.00393281872894431;
-	mod->cdr[5] = 0.0102644890524424;
-	mod->cdr[6] = 0.00572188761872581;
-	mod->cdr[7] = 0.00457840518885921;
-	mod->cdr[8] = 0.0491742199536565;
-	mod->cdr[9] = 0.0818708804702823;
-	mod->cdr[10] = 0.00271884765614074;
-	mod->cdr[11] = 0.00260696092132013;
-	mod->cdr[12] = 0.0206106554213039;
-	mod->cdr[13] = 0.00325590398327965;
-	mod->cdr[14] = 0.00481448619933069;
-	mod->cdr[15] = 0.00341142654468029;
-	mod->cdr[16] = 0.00267073636016788;
-	mod->cdr[17] = 0.00971176858242864;
-	mod->cdr[18] = 0.0102812720626655;
-	mod->cdr[19] = 0.00315744365663751;
-	mod->cdr[20] = 0.00360387172857173;
-	mod->cdr[21] = 0.00430875815794155;
-	mod->cdr[22] = 0.00395519607590844;
-	mod->cdr[23] = 0.00285311173792546;
-	mod->cdr[24] = 0.00361282266735738;
-	mod->cdr[25] = 0.00283968532974699;
-	mod->cdr[26] = 0.0021403932371182;
-	mod->cdr[27] = 0.00296276073804966;
-	mod->cdr[28] = 0.00540189155713888;
-	mod->cdr[29] = 0.017016853498866;
-	mod->cdr[30] = 0.0246419344768904;
-	mod->cdr[31] = 0.0148294678331232;
-	mod->cdr[32] = 0.0128602613002805;
-	mod->cdr[33] = 0.00888492561210436;
-	mod->cdr[34] = 0.0401774076067316;
-	mod->cdr[35] = 0.0169620289988039;
-	mod->cdr[36] = 0.00409729222913061;
-	mod->cdr[37] = 0.0135405326479898;
-	mod->cdr[38] = 0.0147455527820077;
-	mod->cdr[39] = 0.0159718313956416;
-	mod->cdr[40] = 0.00414876012714809;
-	mod->cdr[41] = 0.0776348486899742;
-	mod->cdr[42] = 0.056577765196736;
-	mod->cdr[43] = 0.0213972191670928;
-	mod->cdr[44] = 0.00574762156773455;
-	mod->cdr[45] = 0.00511769925069454;
-	mod->cdr[46] = 0.0126711727184337;
-	mod->cdr[47] = 0.00551265942461128;
-	mod->cdr[48] = 0.0068452304363247;
-	mod->cdr[49] = 0.0182028528879645;
-	mod->cdr[50] = 0.0110935697574631;
-	mod->cdr[51] = 0.0105016889302621;
-	mod->cdr[52] = 0.0278844120519915;
-	mod->cdr[53] = 0.0367905961437118;
-	mod->cdr[54] = 0.0345282463656391;
-	mod->cdr[55] = 0.0051288879241766;
-	mod->cdr[56] = 0.00725585475311633;
-	mod->cdr[57] = 0.0596434617308207;
-	mod->cdr[58] = 0.0211074325239074;
-	mod->cdr[59] = 0.0384286179414855;
-	mod->cdr[60] = 0.0248757777526654;
-	mod->fwr[0]  = 0.000495560751588474;
-	mod->fwr[1]  = 0.0103687787927196;
-	mod->fwr[2]  = 0.000126389989912799;
-	mod->fwr[3]  = 0.00641189217813949;
-	mod->fwr[4]  = 0.0269750635749649;
-	mod->fwr[5]  = 0.0509323661566004;
-	mod->fwr[6]  = 0.0213619081368756;
-	mod->fwr[7]  = 0.00411967372184123;
-	mod->fwr[8]  = 0.0213223112729472;
-	mod->fwr[9]  = 0.0279605855216267;
-	mod->fwr[10] = 0.0175190124942105;
-	mod->fwr[11] = 0.00442724936185054;
-	mod->fwr[12] = 0.0368158841819728;
-	mod->fwr[13] = 0.0038292967196998;
-	mod->fwr[14] = 0.0109999288056386;
-	mod->fwr[15] = 0.000693945039552867;
-	mod->fwr[16] = 0.0641257212428776;
-	mod->fwr[17] = 0.0127649890128702;
-	mod->fwr[18] = 0.00371850549436485;
-	mod->fwr[19] = 0.00984082060700792;
-	mod->fwr[20] = 0.00194424601571556;
-	mod->fwr[21] = 9.67923340471435e-05;
-	mod->fwr[22] = 0.00391329006742666;
-	mod->fwr[23] = 0.0137973072532655;
-	mod->fwr[24] = 0.0513215353344015;
-	mod->fwr[25] = 0.00133469429221206;
-	mod->fwr[26] = 0.00747420804272302;
-	mod->fwr[27] = 0.00858092039110502;
-	mod->fwr[28] = 0.0025289997032235;
-	mod->fwr[29] = 0.00278897911285426;
-	mod->fwr[30] = 0.0132189530589177;
-	mod->fwr[31] = 0.00236501269099487;
-	mod->fwr[32] = 0.0220622526695886;
-	mod->fwr[33] = 0.00223382308121197;
-	mod->fwr[34] = 0.0420998656906373;
-	mod->fwr[35] = 0.00646388806006564;
-	mod->fwr[36] = 0.0219498615709636;
-	mod->fwr[37] = 0.00366170999256859;
-	mod->fwr[38] = 0.0232525583973749;
-	mod->fwr[39] = 0.00352172107969049;
-	mod->fwr[40] = 0.0421598609390136;
-	mod->fwr[41] = 0.00332013704514602;
-	mod->fwr[42] = 0.0203683868237636;
-	mod->fwr[43] = 0.0226554056918692;
-	mod->fwr[44] = 0.00555635993629305;
-	mod->fwr[45] = 0.00418966817828028;
-	mod->fwr[46] = 0.0431773803514762;
-	mod->fwr[47] = 0.00609271745677742;
-	mod->fwr[48] = 0.047821012575804;
-	mod->fwr[49] = 0.0190824886668976;
-	mod->fwr[50] = 0.0272202441566628;
-	mod->fwr[51] = 0.0170546492717777;
-	mod->fwr[52] = 0.0038428956426651;
-	mod->fwr[53] = 0.00117070727998343;
-	mod->fwr[54] = 0.0285917355345457;
-	mod->fwr[55] = 0.00235981310280226;
-	mod->fwr[56] = 0.0369238756290502;
-	mod->fwr[57] = 0.00181385634257767;
-	mod->fwr[58] = 0.0341764932217368;
-	mod->fwr[59] = 0.0211183274284677;
-	mod->fwr[60] = 0.04188348282816;
+	mod->cdr[0] = 0.0258858823758596;
+	mod->cdr[1] = 0.00316755303605868;
+	mod->cdr[2] = 0.0169462139364541;
+	mod->cdr[3] = 0.00513315021526114;
+	mod->cdr[4] = 0.00389612919564413;
+	mod->cdr[5] = 0.0100052597744141;
+	mod->cdr[6] = 0.00835330099546101;
+	mod->cdr[7] = 0.0185767440048312;
+	mod->cdr[8] = 0.0496249975649193;
+	mod->cdr[9] = 0.0040441821050786;
+	mod->cdr[10] = 0.0136948941226891;
+	mod->cdr[11] = 0.036041143124306;
+	mod->cdr[12] = 0.00284027818362457;
+	mod->cdr[13] = 0.00280326495626595;
+	mod->cdr[14] = 0.0778388171351762;
+	mod->cdr[15] = 0.0586581731050202;
+	mod->cdr[16] = 0.0426294975941402;
+	mod->cdr[17] = 0.00472600471431633;
+	mod->cdr[18] = 0.0247715894259054;
+	mod->cdr[19] = 0.0132955408801356;
+	mod->cdr[20] = 0.0100422730017727;
+	mod->cdr[21] = 0.0106481210916954;
+	mod->cdr[22] = 0.0403210410457211;
+	mod->cdr[23] = 0.0108546159390645;
+	mod->cdr[24] = 0.0819083240800265;
+	mod->cdr[25] = 0.00390781758323106;
+	mod->cdr[26] = 0.0141974947889272;
+	mod->cdr[27] = 0.0344846395106462;
+	mod->cdr[28] = 0.00269806946798356;
+	mod->cdr[29] = 0.00212339041162605;
+	mod->cdr[30] = 0.0566263417294917;
+	mod->cdr[31] = 0.0208209144215222;
+	mod->cdr[32] = 0.00354547756803616;
+	mod->cdr[33] = 0.00338963240021039;
+	mod->cdr[34] = 0.0148656809459802;
+	mod->cdr[35] = 0.00604484444704186;
+	mod->cdr[36] = 0.00626497574659576;
+	mod->cdr[37] = 0.00338378820641692;
+	mod->cdr[38] = 0.0170825784583017;
+	mod->cdr[39] = 0.0101766894590225;
+	mod->cdr[40] = 0.00289677205696141;
+	mod->cdr[41] = 0.0159371164747823;
+	mod->cdr[42] = 0.00488379794673991;
+	mod->cdr[43] = 0.00299417528685251;
+	mod->cdr[44] = 0.0216313092942162;
+	mod->cdr[45] = 0.039008045506789;
+	mod->cdr[46] = 0.00289872012155923;
+	mod->cdr[47] = 0.00261235462567939;
+	mod->cdr[48] = 0.0132448912005922;
+	mod->cdr[49] = 0.00674419963765998;
+	mod->cdr[50] = 0.00450197728556679;
+	mod->cdr[51] = 0.00362340015194904;
+	mod->cdr[52] = 0.00420392340210001;
+	mod->cdr[53] = 0.0280209611750726;
+	mod->cdr[54] = 0.00347924337171021;
+	mod->cdr[55] = 0.00411236436600238;
+	mod->cdr[56] = 0.00739485321333255;
+	mod->cdr[57] = 0.0199851947090566;
+	mod->cdr[58] = 0.00535522957941285;
+	mod->cdr[59] = 0.00566107572127092;
+	mod->cdr[60] = 0.024491068123819;
+	mod->fwr[0] = 0.000449878693423738;
+	mod->fwr[1] = 0.00375411195412914;
+	mod->fwr[2] = 0.00279357902950548;
+	mod->fwr[3] = 0.00430528321051319;
+	mod->fwr[4] = 0.0267740693833099;
+	mod->fwr[5] = 0.0128900025637497;
+	mod->fwr[6] = 0.00214181377956084;
+	mod->fwr[7] = 0.019203672798476;
+	mod->fwr[8] = 0.0210367189033578;
+	mod->fwr[9] = 4.82012885811147e-05;
+	mod->fwr[10] = 0.00378694471591628;
+	mod->fwr[11] = 0.00111002677616509;
+	mod->fwr[12] = 0.0175508575987236;
+	mod->fwr[13] = 0.00132099473488243;
+	mod->fwr[14] = 0.00316661508895932;
+	mod->fwr[15] = 0.00172057643152588;
+	mod->fwr[16] = 0.010324157158555;
+	mod->fwr[17] = 0.0108823141089363;
+	mod->fwr[18] = 0.0132728185947997;
+	mod->fwr[19] = 0.0431157033511073;
+	mod->fwr[20] = 0.0512721996623116;
+	mod->fwr[21] = 0.0036123023659847;
+	mod->fwr[22] = 0.041870852680795;
+	mod->fwr[23] = 0.0270185686732141;
+	mod->fwr[24] = 0.0283821761414799;
+	mod->fwr[25] = 0.00397485988444265;
+	mod->fwr[26] = 0.0229955075001904;
+	mod->fwr[27] = 0.028754513631534;
+	mod->fwr[28] = 0.00438841296908062;
+	mod->fwr[29] = 0.00747608971587087;
+	mod->fwr[30] = 0.0206685728297021;
+	mod->fwr[31] = 0.0341314023012273;
+	mod->fwr[32] = 0.000125043922551008;
+	mod->fwr[33] = 0.000752359243505226;
+	mod->fwr[34] = 0.00223681921792361;
+	mod->fwr[35] = 0.00581768596092063;
+	mod->fwr[36] = 0.0210171589601655;
+	mod->fwr[37] = 0.00969265042120242;
+	mod->fwr[38] = 0.00626826322374409;
+	mod->fwr[39] = 0.0174048565941808;
+	mod->fwr[40] = 0.013905023901552;
+	mod->fwr[41] = 0.00325463483332483;
+	mod->fwr[42] = 0.00240447587385793;
+	mod->fwr[43] = 0.00871116041458697;
+	mod->fwr[44] = 0.0229025977700268;
+	mod->fwr[45] = 0.0210227475153633;
+	mod->fwr[46] = 0.00615509498098843;
+	mod->fwr[47] = 0.0640029284029237;
+	mod->fwr[48] = 0.022143951401924;
+	mod->fwr[49] = 0.0484171465256302;
+	mod->fwr[50] = 0.0041250523053838;
+	mod->fwr[51] = 0.00188334310166211;
+	mod->fwr[52] = 0.0224995232263847;
+	mod->fwr[53] = 0.00370171924914967;
+	mod->fwr[54] = 0.0512484483027209;
+	mod->fwr[55] = 0.0421705389532776;
+	mod->fwr[56] = 0.0370961308336657;
+	mod->fwr[57] = 0.0366937548594234;
+	mod->fwr[58] = 0.00238142308366696;
+	mod->fwr[59] = 0.00554244961742847;
+	mod->fwr[60] = 0.0422292187828546;
 }
 
 
-
-
-
-
-void checkForRandStartTree(option * io)
-{
-    if((io->mod->s_opt->n_rand_starts)           && 
-       (io->mod->s_opt->topo_search == NNI_MOVE) && 
-       (io->mod->s_opt->random_input_tree)) {
-        Warn_And_Exit("\n. The random starting tree option is only compatible with SPR based search options.\n"); 
-    }
-}
-
-void checkModelCombinations(option * io)
-{
+void checkModelCombinations(option * io){
     if((io->datatype == NT) && (io->modeltypeOpt > 10)) {
         Warn_And_Exit("\n. Err: model incompatible with the data type. Please use JC69, K80, F81, HKY, F84, TN93 or GTR\n");
     } else if((io->datatype == AA) && ((io->modeltypeOpt < 11) || io->modeltypeOpt < 0)) {
@@ -763,84 +731,36 @@ void checkModelCombinations(option * io)
     }
 }
 
-void adaptForM4(option * io)
-{
-    if(io->m4_model == YES) {
-#ifdef M4
-        io->mod->ns *= io->mod->m4mod->n_h;
-        io->mod->use_m4mod = 1;
-        M4_Make_Complete(io->mod->m4mod->n_h,
-                         io->mod->m4mod->n_o,
-                         io->mod->m4mod);
-#endif
-    } else {
-        io->mod->s_opt->opt_cov_delta      = 0;
-        io->mod->s_opt->opt_cov_alpha      = 0;
-        io->mod->s_opt->opt_cov_free_rates = 0;
-    }
-    
-    if((io->mod->s_opt->opt_cov_free_rates) && (io->mod->s_opt->opt_cov_alpha))
-    {
-        io->mod->s_opt->opt_cov_free_rates = 0;
-        io->mod->m4mod->use_cov_alpha      = 0;
-        io->mod->m4mod->use_cov_free       = 1;
-    }
-}
-
-void createOutFiles(option * io)
-{
-    if(io->print_site_lnl) {
-        char *ext;
-#ifdef USEYAML
-        if(io->out_stats_format == OUTYAML) {
-            ext = ".yml";
-        } else
-#endif
-        if(io->out_stats_format == OUTDARWIN) {
-            ext = ".drw";
-        } else {
-            ext = ".txt";
-        }
-        io->fp_out_lk = openOutputFile(io->out_lk_file, "_igphyml_lk", ext, io);
-    }
-    /*if(io->mod->print_trace) {
-        io->mod->fp_out_tree_trace = openOutputFile(io->mod->out_trace_tree_file, "_igphyml_tree_trace", ".txt", io);
-        io->mod->fp_out_stats_trace = openOutputFile(io->mod->out_trace_stats_file, "_igphyml_stats_trace", ".txt", io);
-    }*/
-    if(io->mod->s_opt->random_input_tree) {
-        io->fp_out_trees = openOutputFile(io->out_trees_file, "_igphyml_rand_trees", ".txt", io);
-    }
-    if((io->print_boot_trees) && (io->mod->bootstrap > 0)) {
-        io->fp_out_boot_tree = openOutputFile(io->out_boot_tree_file, "_igphyml_boot_trees", ".txt", io);
-        io->fp_out_boot_stats = openOutputFile(io->out_boot_stats_file, "_igphyml_boot_stats", ".txt", io);
-    }
-    
-    if(io->append_run_ID) {
-        //strcat(io->out_tree_file, "_");
+/* Create output files */
+void createOutFiles(option * io){
+    if(io->append_run_ID){
     	strcat(io->out_stats_file, "_igphyml_stats");
         strcat(io->out_stats_file, "_");
-        //strcat(io->out_tree_file, io->run_id_string);
         strcat(io->out_stats_file, io->run_id_string);
-        strcat(io->out_stats_file, ".txt");
+        if(io->out_stats_format == OUTTXT)strcat(io->out_stats_file, ".txt");
+        else strcat(io->out_stats_file, ".tab");
     }else{
-    	strcat(io->out_stats_file, "_igphyml_stats.txt");
+    	if(io->out_stats_format == OUTTXT)strcat(io->out_stats_file, "_igphyml_stats.txt");
+    	else strcat(io->out_stats_file, "_igphyml_stats.tab");
     }
-    
-#ifdef USEYAML
-    if(io->out_stats_format == OUTYAML) {
-        strcat(io->out_stats_file, ".yml");
-    } else
-#endif
-    if(io->out_stats_format == OUTDARWIN) {
-        strcat(io->out_stats_file, ".drw");
-    } else {
-        strcat(io->out_stats_file, "");
+    if(strcmp(io->outname,"NULL") != 0){
+    	strcpy(io->out_stats_file,io->outname);
     }
-    //strcat(io->out_tree_file, "");
+    io->fp_out_stats = Openfile(io->out_stats_file, io->writemode);
 }
 
-void cleanupParameters(option * io)
-{
+
+/*****************************************************
+ *  deprecated methods - potentially add back in?
+void checkForRandStartTree(option * io){
+    if((io->mod->s_opt->n_rand_starts)           &&
+       (io->mod->s_opt->topo_search == NNI_MOVE) &&
+       (io->mod->s_opt->random_input_tree)) {
+        Warn_And_Exit("\n. The random starting tree option is only compatible with SPR based search options.\n");
+    }
+}
+
+void cleanupParameters(option * io){
     if(io->datatype == NT) {
         io->mod->ns         = 4;
         io->mod->state_len  = 1;
@@ -877,15 +797,198 @@ void cleanupParameters(option * io)
 }
 
 // we are already using codon models at this point
-void setupKappa(option *io)
-{
+void setupKappa(option *io){
     if(io->userWantsKappa == NO) {
         io->mod->s_opt->opt_kappa      = 0;
     }
 }
 
-void setupGeneticCode(option * io)
+void setupModelIdentifier(option * io)
 {
+    // THIS SHOULD NOT BE HERE. THIS SHOULD NOT BE NEEDED - BETTER TO GET RID OF THIS
+    // SOONER THAN LATER. BUT IT HAS CONSEQUENCES IN LOTS OF OTHER PLACES, SO...
+    //
+    if(io->datatype == CODON) {
+        io->mod->whichrealmodel = io->modeltypeOpt;
+        /*if(io->modeltypeOpt == GY) {
+            io->mod->whichmodel = GYSIMP;
+            if(io->mod->initqrates == KOSI07) {
+                io->mod->whichmodel -= 3;
+            } else if(io->mod->initqrates == SCHN05) {
+                io->mod->whichmodel -= 7;
+            } else if(io->mod->initqrates == ECMUSR) {
+                io->mod->whichmodel -= 31;
+            }
+        } else if(io->modeltypeOpt == MG) {
+            io->mod->whichmodel = MGSIMP;
+            if(io->mod->initqrates == KOSI07) {
+                io->mod->whichmodel -= 10;
+            } else if(io->mod->initqrates == SCHN05) {
+                io->mod->whichmodel -= 14;
+            } else if(io->mod->initqrates == ECMUSR) {
+                io->mod->whichmodel -= 34;
+            }
+        } else if(io->modeltypeOpt == YAP) {
+            io->mod->whichmodel = YAPSIMP;
+            if(io->mod->initqrates == KOSI07) {
+                io->mod->whichmodel -= 17;
+            } else if(io->mod->initqrates == SCHN05) {
+                io->mod->whichmodel -= 21;
+            } else if(io->mod->initqrates == ECMUSR) {
+                io->mod->whichmodel -= 25;
+            }
+        }
+        if(io->mod->initqrates != NOINITMAT) {
+            if(io->mod->freq_model != FMODEL) {
+                io->mod->whichmodel -= 2;
+            }
+            if(io->mod->s_opt->opt_omega == 1) {
+                io->mod->whichmodel -= 1;
+            }
+        }
+        if(io->modeltypeOpt == PCM) {
+            io->mod->whichmodel = GYECMUSRF;
+            io->mod->pcaModel = YES;
+        }//else {
+            io->mod->pcaModel = NO;
+        //}
+    } else {
+        io->mod->whichmodel = io->modeltypeOpt;
+        io->mod->genetic_code = io->genCode;
+    }
+}
+
+
+void adaptForM4(option * io){
+    if(io->m4_model == YES) {
+#ifdef M4
+        io->mod->ns *= io->mod->m4mod->n_h;
+        io->mod->use_m4mod = 1;
+        M4_Make_Complete(io->mod->m4mod->n_h,
+                         io->mod->m4mod->n_o,
+                         io->mod->m4mod);
+#endif
+    } else {
+        io->mod->s_opt->opt_cov_delta      = 0;
+        io->mod->s_opt->opt_cov_alpha      = 0;
+        io->mod->s_opt->opt_cov_free_rates = 0;
+    }
+
+    if((io->mod->s_opt->opt_cov_free_rates) && (io->mod->s_opt->opt_cov_alpha))
+    {
+        io->mod->s_opt->opt_cov_free_rates = 0;
+        io->mod->m4mod->use_cov_alpha      = 0;
+        io->mod->m4mod->use_cov_free       = 1;
+    }
+}
+
+void setupFreqHandling(option * io)
+{
+    if(io->datatype==NT) {
+        switch(io->eq_freq_handling) {
+            case EMPIRICAL:
+                io->mod->s_opt->opt_state_freq = NO;
+                break;
+
+            case OPTIMIZE:
+                io->mod->s_opt->opt_state_freq = YES;
+                break;
+
+            case MODEL:
+                io->mod->freq_model = FMODEL;
+                io->mod->s_opt->opt_state_freq = NO;
+                io->mod->s_opt->user_state_freq = NO;
+                break;
+
+            case USER:
+                break;
+
+            default:
+                PhyML_Printf("\nOption for frequency (-f option) not set; assume empirical frequencies.\n");
+                io->eq_freq_handling = EMPIRICAL;
+                io->mod->s_opt->opt_state_freq = NO;
+                break;
+        }
+	} else if(io->datatype==AA) {
+        switch(io->eq_freq_handling) {
+            case EMPIRICAL:
+                io->mod->s_opt->opt_state_freq = YES;
+                io->mod->s_opt->opt_state_freq_AAML = NO;
+                break;
+
+            case OPTIMIZE:
+                io->mod->s_opt->opt_state_freq = YES;
+                io->mod->s_opt->opt_state_freq_AAML = YES;
+                break;
+
+            case MODEL:
+                io->mod->s_opt->opt_state_freq = NO;
+                io->mod->s_opt->user_state_freq = NO;
+                break;
+
+            case USER:
+                io->mod->s_opt->opt_state_freq = NO;
+                io->mod->s_opt->user_state_freq = YES;
+                break;
+
+            default:
+                PhyML_Printf("\nOption for frequency (-f option) not set; assume empirical frequencies.\n");
+                io->eq_freq_handling = EMPIRICAL;
+                io->mod->s_opt->opt_state_freq = YES;
+                io->mod->s_opt->opt_state_freq_AAML = NO;
+                break;
+        }
+	}
+}
+
+void setupInitialRateMats(option * io)
+{
+    if((io->mod->initqrates == KOSI07 || io->mod->initqrates == SCHN05) &&
+       (io->mod->genetic_code != STANDARD)) {
+        PhyML_Printf("This init rate matrix demands for STANDARD genetic code (changed).\n");
+        io->mod->genetic_code = STANDARD;
+    }
+
+    if(io->mod->initqrates == ECMUSR) {
+        // read user defined matrix
+        int i,j;
+        if (!Filexists ("usermatrix.ecm")) {
+            char tmp[256];
+            char choix;
+            strcpy (tmp, "\n. The file '");
+            strcat (tmp, "usermatrix.ecm");
+            strcat (tmp, "' does not exist.\n");
+            PhyML_Printf("%s",tmp);
+            PhyML_Printf("\n. Type any key to exit.\n");
+            if(!scanf("%c",&choix)) Exit("\n");
+            Exit("\n");
+        } else {
+            io->fp_in_usrECM = Openfile("usermatrix.ecm", 0);
+        }
+
+        For(i, 64) {
+            For(j,64) io->mod->userRates[i][j] = 0.0;
+            io->mod->userfreq[i] = 0.0;
+            io->mod->userbfreq[i] = 0.0;
+        }
+
+        if(io->modeltypeOpt == MG && io->mod->freq_model == FMODEL) { //is this correct? Ken 4/1/2017
+            Read_userRatesAndFreqs((phydbl*)io->mod->userRates, (phydbl*)io->mod->userfreq, 64, io->fp_in_usrECM);
+        } else {
+            Read_userRatesAndFreqsMG((phydbl*)io->mod->userRates, (phydbl*)io->mod->userfreq, (phydbl*)io->mod->userbfreq, 12, 64, io->fp_in_usrECM);
+        }
+
+        For(i,64) {
+            For(j,64) io->mod->userRatesT[i][j] = io->mod->userRates[i][j];
+            io->mod->userfreqT[i] = io->mod->userfreq[i];
+        }
+    }
+}
+
+
+*/
+
+void setupGeneticCode(option * io){
     if(io->datatype == CODON) {
         if((io->mod->initqrates == KOSI07)   ||
            (io->mod->initqrates == SCHN05)  ||
@@ -904,7 +1007,6 @@ void setupGeneticCode(option * io)
 		if(!io->quiet) PhyML_Printf("\n. [Warning] Use --dist_tree_model ECMUSR if you need to use your own model to estimate initial pairwise distances under a non-standard genetic code.\n");  
 		}
         } 
-        
         Genetic_code_index_stopCodons(io->mod->genetic_code); 
         io->mod->ns = Genetic_code_ns();
     } else if(io->datatype == NT) {
@@ -918,8 +1020,7 @@ void setupGeneticCode(option * io)
     }
 }
 
-void setupFreqs(option * io)
-{
+void setupFreqs(option * io){
     if(io->freqmodelOpt == FUNDEFINED) { 
         io->freqmodelOpt = FMODEL;
     }
@@ -981,14 +1082,11 @@ void setupFreqs(option * io)
                     }
                     if(!stopCodons[i]) io->mod->user_b_freq[++j] = freqs[i];
                 }
-                
-
-
                 break;
             }
-                
             case F1X4: {
-                k = sscanf(io->userFreqs,"%lf,%lf,%lf,%lf",&val1,&val2,&val3,&val4); //!< FT FC FA FG.
+            	Warn_And_Exit("\n. F1X4 not supported in IgPhyML yet.\n");
+                /*k = sscanf(io->userFreqs,"%lf,%lf,%lf,%lf",&val1,&val2,&val3,&val4); //!< FT FC FA FG.
                 if(k!=4) {
                     PhyML_Printf("Too few codon frequencies provided. Expected 4 given %d", k);
                     Warn_And_Exit("");
@@ -1019,10 +1117,9 @@ void setupFreqs(option * io)
                    io->mod->user_b_freq[2] > 1. ||
                    io->mod->user_b_freq[3] > 1.) {
                     Warn_And_Exit("\n. Invalid base frequencies.\n");
-                }
+                }*/
                 break;
             }
-                
             case F3X4: case CF3X4: {
                 k=sscanf(io->userFreqs, "%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf",
                          &val11, &val12, &val13, &val14, 
@@ -1062,7 +1159,6 @@ void setupFreqs(option * io)
                         Warn_And_Exit("\n. Invalid base frequencies.\n");
                     }
                 }
-                
                 break;
             }		
             default:
@@ -1100,50 +1196,6 @@ void setupFreqs(option * io)
     }
     
     free(io->userFreqs);  
-}
-
-void setupInitialRateMats(option * io)
-{ 
-    if((io->mod->initqrates == KOSI07 || io->mod->initqrates == SCHN05) &&
-       (io->mod->genetic_code != STANDARD)) {
-        PhyML_Printf("This init rate matrix demands for STANDARD genetic code (changed).\n");
-        io->mod->genetic_code = STANDARD;
-    }
-    
-    if(io->mod->initqrates == ECMUSR) {
-        // read user defined matrix
-        int i,j;
-        if (!Filexists ("usermatrix.ecm")) {
-            char tmp[256];
-            char choix;
-            strcpy (tmp, "\n. The file '");
-            strcat (tmp, "usermatrix.ecm");
-            strcat (tmp, "' does not exist.\n");
-            PhyML_Printf("%s",tmp);
-            PhyML_Printf("\n. Type any key to exit.\n");
-            if(!scanf("%c",&choix)) Exit("\n");
-            Exit("\n");
-        } else {
-            io->fp_in_usrECM = Openfile("usermatrix.ecm", 0);
-        }
-        
-        For(i, 64) {
-            For(j,64) io->mod->userRates[i][j] = 0.0;
-            io->mod->userfreq[i] = 0.0;
-            io->mod->userbfreq[i] = 0.0;
-        }
-        
-        if(io->modeltypeOpt == MG && io->mod->freq_model == FMODEL) { //is this correct? Ken 4/1/2017
-            Read_userRatesAndFreqs((phydbl*)io->mod->userRates, (phydbl*)io->mod->userfreq, 64, io->fp_in_usrECM);
-        } else {
-            Read_userRatesAndFreqsMG((phydbl*)io->mod->userRates, (phydbl*)io->mod->userfreq, (phydbl*)io->mod->userbfreq, 12, 64, io->fp_in_usrECM);
-        }
-        
-        For(i,64) {
-            For(j,64) io->mod->userRatesT[i][j] = io->mod->userRates[i][j];
-            io->mod->userfreqT[i] = io->mod->userfreq[i];
-        }
-    }
 }
 
 void setupOmegaCats(option * io)
@@ -1300,119 +1352,8 @@ void setupOmegaCats(option * io)
     }
     free(io->userOmega);
 }
-void setupModelIdentifier(option * io)
-{
-    // THIS SHOULD NOT BE HERE. THIS SHOULD NOT BE NEEDED - BETTER TO GET RID OF THIS
-    // SOONER THAN LATER. BUT IT HAS CONSEQUENCES IN LOTS OF OTHER PLACES, SO...
-    //
-    if(io->datatype == CODON) {
-        io->mod->whichrealmodel = io->modeltypeOpt;
-        if(io->modeltypeOpt == GY) {
-            io->mod->whichmodel = GYSIMP;
-            if(io->mod->initqrates == KOSI07) {
-                io->mod->whichmodel -= 3;
-            } else if(io->mod->initqrates == SCHN05) {
-                io->mod->whichmodel -= 7;
-            } else if(io->mod->initqrates == ECMUSR) {
-                io->mod->whichmodel -= 31;
-            }
-        } else if(io->modeltypeOpt == MG) {
-            io->mod->whichmodel = MGSIMP;
-            if(io->mod->initqrates == KOSI07) {
-                io->mod->whichmodel -= 10;
-            } else if(io->mod->initqrates == SCHN05) {
-                io->mod->whichmodel -= 14;
-            } else if(io->mod->initqrates == ECMUSR) {
-                io->mod->whichmodel -= 34;
-            }
-        } else if(io->modeltypeOpt == YAP) {
-            io->mod->whichmodel = YAPSIMP;
-            if(io->mod->initqrates == KOSI07) {
-                io->mod->whichmodel -= 17;
-            } else if(io->mod->initqrates == SCHN05) {
-                io->mod->whichmodel -= 21;
-            } else if(io->mod->initqrates == ECMUSR) {
-                io->mod->whichmodel -= 25;
-            }
-        }
-        if(io->mod->initqrates != NOINITMAT) {
-            if(io->mod->freq_model != FMODEL) {
-                io->mod->whichmodel -= 2;
-            }
-            if(io->mod->s_opt->opt_omega == 1) {
-                io->mod->whichmodel -= 1;
-            }
-        }
-        if(io->modeltypeOpt == PCM) {
-            io->mod->whichmodel = GYECMUSRF;
-            io->mod->pcaModel = YES;
-        } else {
-            io->mod->pcaModel = NO;
-        }
-    } else {
-        io->mod->whichmodel = io->modeltypeOpt;
-        io->mod->genetic_code = io->genCode;
-    }
-}
 
-void setupFreqHandling(option * io)
-{
-    if(io->datatype==NT) { 
-        switch(io->eq_freq_handling) {
-            case EMPIRICAL: 
-                io->mod->s_opt->opt_state_freq = NO; 
-                break;
-                
-            case OPTIMIZE:  
-                io->mod->s_opt->opt_state_freq = YES; 
-                break;
-                
-            case MODEL:   
-                io->mod->freq_model = FMODEL;
-                io->mod->s_opt->opt_state_freq = NO; 
-                io->mod->s_opt->user_state_freq = NO;
-                break;
-                
-            case USER: 
-                break;
-                
-            default:
-                PhyML_Printf("\nOption for frequency (-f option) not set; assume empirical frequencies.\n");
-                io->eq_freq_handling = EMPIRICAL;
-                io->mod->s_opt->opt_state_freq = NO;
-                break;
-        }	  
-	} else if(io->datatype==AA) {
-        switch(io->eq_freq_handling) {
-            case EMPIRICAL: 
-                io->mod->s_opt->opt_state_freq = YES; 
-                io->mod->s_opt->opt_state_freq_AAML = NO;
-                break;
-                
-            case OPTIMIZE:  
-                io->mod->s_opt->opt_state_freq = YES; 
-                io->mod->s_opt->opt_state_freq_AAML = YES;
-                break;
-                
-            case MODEL:   
-                io->mod->s_opt->opt_state_freq = NO; 
-                io->mod->s_opt->user_state_freq = NO;
-                break;
-                
-            case USER: 
-                io->mod->s_opt->opt_state_freq = NO; 
-                io->mod->s_opt->user_state_freq = YES;
-                break;
-                
-            default:
-                PhyML_Printf("\nOption for frequency (-f option) not set; assume empirical frequencies.\n");
-                io->eq_freq_handling = EMPIRICAL;
-                io->mod->s_opt->opt_state_freq = YES; 
-                io->mod->s_opt->opt_state_freq_AAML = NO;
-                break;
-        }	
-	}
-}
+
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 //
@@ -1443,7 +1384,7 @@ int mainOptionSwitch(int opt, char * optarg, option * io)
             break;
         }
            
-                //////////////////////////////////////////////////////////////////////////////////////
+            //////////////////////////////////////////////////////////////////////////////////////
             // --NOBL ignore given branch lengths
             //!< Added by Marcelo.
             //
@@ -1651,6 +1592,8 @@ int mainOptionSwitch(int opt, char * optarg, option * io)
                 io->wclasses = 4;
             } else {  // single omega value, default case
             	io->omegaOpt = DM0;
+            	strcpy(io->mod->omega_opt_string,optarg);
+            	io->mod->omega_opt_spec=1;
             }
             break;
         }
@@ -1963,8 +1906,8 @@ int mainOptionSwitch(int opt, char * optarg, option * io)
         case 27 : {
             io->r_seed = (int)atoi(optarg);
             srand(io->r_seed);
-	    SetSeed(io->r_seed);
-	    break;
+            SetSeed(io->r_seed);
+            break;
         }
             
             //////////////////////////////////////////////////////////////////////////////////////
@@ -2211,7 +2154,6 @@ int mainOptionSwitch(int opt, char * optarg, option * io)
         case 'm': case 5 : {
             int i;
             For(i,strlen(optarg)) Uppercase(optarg+i);
-            
             if(!isalpha(optarg[0])) {
                 strcpy(io->mod->custom_mod_string,optarg);
                 
@@ -2309,7 +2251,9 @@ int mainOptionSwitch(int opt, char * optarg, option * io)
                 strcpy(io->nt_or_cd, "codons");
                 io->datatype              = CODON;       
                 io->modeltypeOpt          = PCM;
-            }else if(strcmp(optarg, "HLP17") == 0 || strcmp(optarg, "HLP18") == 0) { //set up HLP17 model with default params
+            }else if(strcmp(optarg, "HLP17") == 0 ||
+            		strcmp(optarg, "HLP19") == 0 ||
+					strcmp(optarg, "HLP") == 0) { //set up HLP17 model with default params
                 strcpy(io->nt_or_cd, "codons");      //Added by Ken
                 io->datatype              = CODON;
                 io->modeltypeOpt          = HLP17;
@@ -2322,13 +2266,13 @@ int mainOptionSwitch(int opt, char * optarg, option * io)
                 io->mod->freq_model       = CF3X4;
                 io->mod->whichmodel       = HLP17;
                 io->freqmodelOpt		  = CF3X4;
-                if( strcmp(optarg, "HLP18") == 0){
-                    io->modeltypeOpt          = HLP18;
+                if( strcmp(optarg, "HLP19") == 0 || strcmp(optarg, "HLP") == 0){
+                    io->modeltypeOpt          = HLP19;
                     io->eq_freq_handling      = MROOT; // optimize eq freqs
                     io->mod->freq_model       = MROOT;
-                    io->mod->whichmodel       = HLP18;
+                    io->mod->whichmodel       = HLP19;
                     io->freqmodelOpt		  = MROOT;
-                    //io->mod->constB 		  = 1; //uniform freqs for HLP18
+                    io->mod->constB 		  = 1; //uniform freqs for HLP19
                 }
 
                 //Initialize Bmat
@@ -2473,7 +2417,11 @@ int mainOptionSwitch(int opt, char * optarg, option * io)
             	printf("here %d\n",optarg[0]);
                 phydbl sum;
                 double val1, val2, val3, val4;
-                phydbl freqs[64] = {0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0}; 
+                phydbl freqs[64] = {0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,
+                		0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,
+						0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,
+						0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,
+						0.0,0.0,0.0,0.0,0.0,0.0,0.0};
                 int i, j, k;
                 
                 io->mod->s_opt->opt_state_freq  = NO;
@@ -2510,14 +2458,13 @@ int mainOptionSwitch(int opt, char * optarg, option * io)
                         errorMsg = "\n. Invalid base frequencies.\n";
                     }
                 } else if(io->datatype == CODON) {
-                    //for(i=0; optarg[i] != 0; i++) {
-                        //io->userFreqs[i] = optarg[i];
-                    	k=sscanf(optarg,"%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf",&freqs[0],&freqs[1],&freqs[2],&freqs[3],&freqs[4],&freqs[5],&freqs[6],&freqs[7],&freqs[8],&freqs[9],&freqs[10],&freqs[11]);
-                    	//printf("Here! %lf\t%lf\t%lf\n",freqs[0],freqs[1],freqs[2]);
+                    	k=sscanf(optarg,"%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf",
+                    			&freqs[0],&freqs[1],&freqs[2],&freqs[3],&freqs[4],&freqs[5],&freqs[6],&freqs[7],
+								&freqs[8],&freqs[9],&freqs[10],&freqs[11]);
+                    	if(io->mod->optDebug)printf("Here! %lf\t%lf\t%lf\n",freqs[0],freqs[1],freqs[2]);
                     	For(i,12)io->mod->user_b_freq[i]=freqs[i];
                     	if(k != 12) {printf("error!");}
                         io->eq_freq_handling = USER;
-                    //}
                 } else if(io->datatype==AA) {
                     k=sscanf(optarg,"%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf",&freqs[0],&freqs[1],&freqs[2],&freqs[3],&freqs[4],&freqs[5],&freqs[6],&freqs[7],&freqs[8],&freqs[9],&freqs[10],&freqs[11],&freqs[12],&freqs[13],&freqs[14],&freqs[15],&freqs[16],&freqs[17],&freqs[18],&freqs[19]);
                     if(k != 20) {
@@ -2581,19 +2528,7 @@ int mainOptionSwitch(int opt, char * optarg, option * io)
             	printf("trees: %d\n",io->ntrees);
 
                 strcpy(io->mod->in_align_file, optarg);
-                //io->mod->fp_in_align = Openfile(io->mod->in_align_file, 0);
-                //strcpy(io->out_tree_file, optarg);
-#ifdef PHYML
-                //strcat(io->out_tree_file, "_igphyml_tree.txt");
-#else
-                //strcat(io->out_tree_file, "_mc_tree.txt");
-#endif
                 strcpy(io->out_stats_file, optarg);
-#ifdef PHYML
-                //strcat(io->out_stats_file, "_igphyml_stats.txt");
-#else
-                strcat(io->out_stats_file, "_mc_stats.txt");
-#endif
             }
             break;
         }
@@ -2616,15 +2551,15 @@ int mainOptionSwitch(int opt, char * optarg, option * io)
                     	io->mod->kappaci=1;
                     	io->CIest++;
                     }
-                }else if ((strcmp(optarg, "i") == 0) || (strcmp(optarg, "ci") == 0)) {
-                        io->mod->kappa                 = 1.0;
-                        io->mod->s_opt->opt_kappa      = 1;
-                        io->userWantsKappa             = YES;
-                        io->mod->optKappa=2;//added by Ken 25/1/2018
-                        if(strcmp(optarg, "ci") == 0){
-                        	io->mod->kappaci=-1;
-                        	io->CIest++;
-                        }
+                } else if ((strcmp(optarg, "i") == 0) || (strcmp(optarg, "ci") == 0)) {
+                    io->mod->kappa                 = 1.0;
+                    io->mod->s_opt->opt_kappa      = 1;
+                    io->userWantsKappa             = YES;
+                    io->mod->optKappa=2;//added by Ken 25/1/2018
+                    if(strcmp(optarg, "ci") == 0){
+                      	io->mod->kappaci=-1;
+                       	io->CIest++;
+                    }
                 } else if(strcmp(optarg, "KAP1") == 0 || strcmp(optarg,"kap1") == 0) { //!< For all KAPn, See Kosiol 2007.
                     io->kappaECM              = kap1;
                     io->mod->s_opt->opt_kappa = 0;
@@ -2655,14 +2590,14 @@ int mainOptionSwitch(int opt, char * optarg, option * io)
                     io->mod->s_opt->opt_kappa = 1;
                     io->userWantsKappa        = YES;
                     io->mod->nkappa           = 9;
-                    int i;                                            
-                    For(i, 9) io->mod->pkappa[i] = 1.0/9.0;              
+                    int i;
+                    For(i, 9) io->mod->pkappa[i] = 1.0/9.0;
                 } else if(strcmp(optarg, "KAP6") == 0 || strcmp(optarg,"kap6") == 0) {
                     io->kappaECM              = kap6;
                     io->mod->s_opt->opt_kappa = 1;
                     io->userWantsKappa        = YES;
                     io->mod->nkappa           = 1;
-                    io->mod->pkappa[0]        = 1.0;              
+                    io->mod->pkappa[0]        = 1.0;
                 } else if (atof(optarg) < .0) {
                     errorMsg =  "\n. The ts/tv ratio must be a positive number\n";
                 } else {
@@ -2696,55 +2631,79 @@ int mainOptionSwitch(int opt, char * optarg, option * io)
             break;
         }
 
-        //Added by Kenneth Hoehn 3/6/2016
-        //--hotness
+        	//Added by Kenneth Hoehn 3/6/2016
+            //////////////////////////////////////////////////////////////////////////////////////
+            // --hotness
+            //
         case 147: {
         	strcpy(io->mod->hotnessstring,optarg);
         	io->mod->hotnessstringopt=1;
         	break;
         }
-        //--root
+
+            //////////////////////////////////////////////////////////////////////////////////////
+            // --root
+            //
         case 148: {
            //strcpy(io->mod->rootname,optarg);
            strcpy(io->rootids[0], optarg);
            io->mod->rootfound=1;
            break;
         }
-        //--motifs
-        //1 split first by , and then by : to get information on the
-        //type, hotspot position, and number of h parameters
-        //strand symmetry e.g. WRC_2:0,GYW_0:0
-        //strand asymetry e.g. WRC_2:0,GYW_0:1
+
+            //////////////////////////////////////////////////////////////////////////////////////
+            // --motifs
+        	//1 split first by , and then by : to get information on the
+        	//type, hotspot position, and number of h parameters
+        	//strand symmetry e.g. WRC_2:0,GYW_0:0
+        	//strand asymetry e.g. WRC_2:0,GYW_0:1
         case 149: {
         	strcpy(io->mod->motifstring,optarg);
         	io->mod->motifstringopt=1;
         	break;
         }
+
+            //////////////////////////////////////////////////////////////////////////////////////
+            // --partfile <infile>
         case 150: {
            	strcpy(io->mod->partfile,optarg);
            	io->mod->partfilespec=1;
           	break;
         }
+
+            //////////////////////////////////////////////////////////////////////////////////////
+            // --ambigfile <outfile>
         case 151: {
            	strcpy(io->mod->ambigfile,optarg);
            	io->mod->ambigprint=1;
           	break;
         }
+
+            //////////////////////////////////////////////////////////////////////////////////////
+            // --threads <int>
         case 152: {
            	int threads = atoi(strdup(optarg));
            	io->threads=threads;
            	break;
         }
+            //////////////////////////////////////////////////////////////////////////////////////
+            // --slowSPR
         case 153: {
         	io->mod->slowSPR=1;
         	break;
         }
+
+            //////////////////////////////////////////////////////////////////////////////////////
+            // --stretch <double>
         case 154: {
            	io->mod->stretch=atof(strdup(optarg));
            	printf("stretch by %lf\n",io->mod->stretch);
            	break;
         }
-        case 155: {//--repfile
+
+            //////////////////////////////////////////////////////////////////////////////////////
+            // --repfile <infile>
+        case 155: {
            	 tmp = (char *) mCalloc (T_MAX_FILE, sizeof(char));
            	if(strlen (optarg) > T_MAX_FILE -16) {
            	      strcpy(tmp, "\n. The file name'");
@@ -2758,11 +2717,7 @@ int mainOptionSwitch(int opt, char * optarg, option * io)
            	      errorMsg = tmp;
            	      Warn_And_Exit(tmp);
            	 } else {
-           	     //strcpy(io->in_align_file, optarg);
-           	     //strcpy(io->out_tree_file, optarg);
-           	     //strcat(io->out_tree_file, "_igphyml_tree.txt");
            		strcpy(io->out_stats_file, optarg);
-                //strcat(io->out_stats_file, "_igphyml_stats.txt");
            	}
            	io->repMode=1;
            	strcpy(io->mod->in_align_file,optarg);
@@ -2796,35 +2751,54 @@ int mainOptionSwitch(int opt, char * optarg, option * io)
             break;
         }
 
+            //////////////////////////////////////////////////////////////////////////////////////
+            // --splitByTree <int>
         case 156: {
            	io->splitByTree=atoi(strdup(optarg));
            	io->mod->splitByTree=io->splitByTree;
                   	break;
             }
 
+            //////////////////////////////////////////////////////////////////////////////////////
+            // --omegaOpt <value> (deprecated - see "omega")
         case 157: {
         	strcpy(io->mod->omega_opt_string,optarg);
         	io->mod->omega_opt_spec=1;
             break;
         }
+
+            //////////////////////////////////////////////////////////////////////////////////////
+            // --optDebug
         case 160: {
            	io->mod->optDebug=1;
              break;
          }
+
+            //////////////////////////////////////////////////////////////////////////////////////
+            // --ASR
         case 161: {
            	io->mod->ASR=1;
              break;
          }
+
+            //////////////////////////////////////////////////////////////////////////////////////
+            // --ASRc <double>
         case 162: {
            	io->mod->ASR=1;
            	io->mod->ASRcut=atof(optarg);
             break;
           }
+
+            //////////////////////////////////////////////////////////////////////////////////////
+            // --minseq <int>
         case 163:{
         	io->min_otu=atoi(optarg);
         	printf("\nLimiting analysis to clones with at least %d sequences! Assumes repfile is in decreasing order\n",io->min_otu);
         	break;
         }
+
+            //////////////////////////////////////////////////////////////////////////////////////
+            // --GR
         case 164:{
         	io->GR=1;
         	strcpy(io->GRstring,optarg);
@@ -2844,36 +2818,54 @@ int mainOptionSwitch(int opt, char * optarg, option * io)
         		strcpy(io->GRgenes[i],strsep(&temp3,","));
         		printf("%s\n",io->GRgenes[i]);
         	}
-//exit(EXIT_FAILURE);
         	break;
         }
+
+            //////////////////////////////////////////////////////////////////////////////////////
+            // --rootpi (use frequencies at root)
         case 165:{
         	io->mod->rootpi=1;
         	break;
         }
+        	//////////////////////////////////////////////////////////////////////////////////////
+            // --roughCI <double>
         case 166:{
         	io->roughCI=atof(optarg);
         	break;
         }
-        case 167:{ //if rep
+
+        	//////////////////////////////////////////////////////////////////////////////////////
+            // --outrep <outfile>
+        case 167:{
         	strcpy(io->outrep,optarg);
         	io->outrepspec=1;
         	break;
         }
+
+        	//////////////////////////////////////////////////////////////////////////////////////
+            // --cbmat
         case 168:{ //if rep
         	printf("Using uniform frequencies in B matrix\n");
              io->mod->constB=1;
              break;
          }
+
+        	//////////////////////////////////////////////////////////////////////////////////////
+            // --prior
         case 169:{
         	io->mod->prior=1;
         	break;
         }
+        	//////////////////////////////////////////////////////////////////////////////////////
+            // --mindiff <double>
         case 170:{
         		io->min_diff_lk_global=atof(optarg);
         		printf("new mindiff %lf\n",io->min_diff_lk_global);
         		break;
         }
+
+        	//////////////////////////////////////////////////////////////////////////////////////
+            // --freqTo
         case 171:{
             io->mod->freqsTo=0;
             printf("\nOnly using frequencies for scaling!\n");
@@ -2890,6 +2882,54 @@ int mainOptionSwitch(int opt, char * optarg, option * io)
            	break;
         }
 
+        	//////////////////////////////////////////////////////////////////////////////////////
+            // --eat <infile>
+        case 174:{
+            strcpy(io->asrfile,optarg);
+            printf("\nEating asr file %s\n",io->asrfile);
+            io->bmatorder=2;
+            //printf("preconfile: \t %s\n",io->mod->preconfile);
+            break;
+        }
+                	//////////////////////////////////////////////////////////////////////////////////////
+            // --outname <outfile>
+        case 176:{
+        	strcpy(io->outname,optarg);
+        	break;
+        }
+        	//////////////////////////////////////////////////////////////////////////////////////
+            // --repwidefreqs
+        case 175:{
+        	printf("\nUsing repertoire-wide codon frequencies\n");
+        	io->repwidefreqs=1;
+        	break;
+        }
+        	//////////////////////////////////////////////////////////////////////////////////////
+            // --priorSD <double>
+        case 177:{
+        		io->mod->prior=1;
+        		io->mod->priorSD=atof(optarg);
+        		printf("omega prior shape %lf\n",io->mod->priorSD);
+        		break;
+        }
+        	//////////////////////////////////////////////////////////////////////////////////////
+            // --priorMeans <double>
+        case 178:{
+        		io->mod->prior=1;
+        		io->mod->wPriorMean = mCalloc(2,sizeof(phydbl));
+        		io->mod->hPriorMean = mCalloc(6,sizeof(phydbl));
+        		io->mod->wPriorMean[0] = atof(strsep(&optarg, ","));
+        		io->mod->wPriorMean[1] = atof(strsep(&optarg, ","));
+        		io->mod->kPriorMean    = atof(strsep(&optarg, ","));
+        		io->mod->hPriorMean[0] = atof(strsep(&optarg, ","));
+        		io->mod->hPriorMean[1] = atof(strsep(&optarg, ","));
+        		io->mod->hPriorMean[2] = atof(strsep(&optarg, ","));
+        		io->mod->hPriorMean[3] = atof(strsep(&optarg, ","));
+        		io->mod->hPriorMean[4] = atof(strsep(&optarg, ","));
+        		io->mod->hPriorMean[5] = atof(optarg);
+        		printf("omega prior mean %lf %lf\n",io->mod->wPriorMean[0],io->mod->wPriorMean[1]);
+        		break;
+        }
             //////////////////////////////////////////////////////////////////////////////////////
             // --multiple
             //
@@ -2951,7 +2991,9 @@ int mainOptionSwitch(int opt, char * optarg, option * io)
             if ((strcmp (optarg, "darwin") == 0) ||
                        (strcmp (optarg, "Darwin") == 0)) {
                 io->out_stats_format = OUTDARWIN;
-            } else {
+            }else if(strcmp (optarg, "tab") == 0){
+            	io->out_stats_format = OUTTAB;
+            }else {
                 io->out_stats_format = OUTTXT;
             }
             break;

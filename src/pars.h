@@ -32,11 +32,11 @@ the GNU public licence.  See http://www.opensource.org for details.
 #include "models.h"
 #include "free.h"
 
+void Prepars_Wrapper(option* io);
 void Make_Tree_4_Pars(t_tree *tree, int n_site);
 int  Pars(t_tree *tree);
 void Post_Order_Pars(t_node *a, t_node *d, t_tree *tree);
 void Pre_Order_Pars(t_node *a, t_node *d, t_tree *tree);
-void Get_Partial_Pars(t_tree *tree, t_edge *b_fcus, t_node *a, t_node *d);
 void Site_Pars(t_tree *tree);
 void Init_Ui_Tips(t_tree *tree);
 void Update_P_Pars(t_tree *tree, t_edge *b_fcus, t_node *n);
