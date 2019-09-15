@@ -409,10 +409,12 @@ void setUpHLP17(option* io, model *mod){
   			phydbl *hot;
   			int combinations = 13845841;
   			mod->hotspotcmps[mot] = (phydbl *)mCalloc(combinations,sizeof(phydbl));//checked 15/7/2016
-  			For(c,combinations){
-  				int fscn = fscanf(file, "%lf\n",&mod->hotspotcmps[mot][c]);
+  			if(!io->precon){
+  				For(c,combinations){
+  					int fscn = fscanf(file, "%lf\n",&mod->hotspotcmps[mot][c]);
+  				}
+  				fclose(file);
   			}
-  			fclose(file);
   		}
    	}
 
@@ -2252,7 +2254,8 @@ int mainOptionSwitch(int opt, char * optarg, option * io)
                 io->datatype              = CODON;       
                 io->modeltypeOpt          = PCM;
             }else if(strcmp(optarg, "HLP17") == 0 ||
-            		strcmp(optarg, "HLP19") == 0 ||
+            		strcmp(optarg, "HLP19") == 0 ||  
+                strcmp(optarg, "HLP18") == 0 ||
 					strcmp(optarg, "HLP") == 0) { //set up HLP17 model with default params
                 strcpy(io->nt_or_cd, "codons");      //Added by Ken
                 io->datatype              = CODON;
@@ -2266,7 +2269,8 @@ int mainOptionSwitch(int opt, char * optarg, option * io)
                 io->mod->freq_model       = CF3X4;
                 io->mod->whichmodel       = HLP17;
                 io->freqmodelOpt		  = CF3X4;
-                if( strcmp(optarg, "HLP19") == 0 || strcmp(optarg, "HLP") == 0){
+                if( strcmp(optarg, "HLP19") == 0 || strcmp(optarg, "HLP") == 0 ||
+                   strcmp(optarg, "HLP18") == 0){
                     io->modeltypeOpt          = HLP19;
                     io->eq_freq_handling      = MROOT; // optimize eq freqs
                     io->mod->freq_model       = MROOT;

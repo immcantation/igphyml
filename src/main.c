@@ -208,11 +208,11 @@ int main(int argc, char **argv){
 		  "\n........ Use the '--threads' option to specify more (might speed things up).\n");
 
   //Set up base frequencies and additional data structures
-  Setup_Repertoire_Models(io);
+  if(!io->precon)Setup_Repertoire_Models(io);
 
 
   //Do topology and parameter estimation if requested
-  if(!io->testInitTree && !io->lkExperiment){
+  if(!io->testInitTree && !io->lkExperiment && !io->precon){
   	if(tree->mod->s_opt->opt_topo){ //Estimate topology?
 	  if(tree->mod->s_opt->topo_search   == NNI_MOVE)
 		  Simu_Loop(io);
@@ -283,7 +283,13 @@ io->threads=0;
   #else
   time(&t_end);
   #endif
-  Print_IgPhyML_Out(io);
+
+  //output data!
+  if(io->out_stats_format != OUTTXT){
+	  Print_Tab_Out(io);
+  }else{
+	  Print_IgPhyML_Out(io);
+  }
 
   if(io->precon){
 	  parsReconstructions(io);
