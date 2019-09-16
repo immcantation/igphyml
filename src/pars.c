@@ -98,9 +98,7 @@ void parsReconstructions(option* io){
   		  t_node* r = tree->noeud[tree->mod->startnode]; //root node
   		  Init_Class_Tips(tree,io->precon); //initialize tip states and data structures
   		  int pars = Fill_Sankoff(r,tree,1); //max parsimony score
-  		  //printf("\n. %d Maximum parsimony score: %d\n",j,pars);
   		  Set_Pars_Counters(r,tree,1); //set counters to their first minimum position
-  		  //Get_First_Path(r,0,tree,1);
 
   		  //Data structures for counting the number of type switches and branch lengths in each state
   	      phydbl* switches = mCalloc(tree->nstate*tree->nstate,sizeof(phydbl));
@@ -123,7 +121,6 @@ void parsReconstructions(option* io){
   				}
   				if(pars >= maxtrees)break; //unless you get too many trees, then just sample
   			  }
-  		  	 // printf("\n. %d Found %d maximum parsimony trees",j,npars);
 
   		  	  if(npars < maxtrees){ //if not too many trees found, record stats
   		  	  	  FILE* treeout = Openfile(fout, 1 );
@@ -187,7 +184,6 @@ void parsReconstructions(option* io){
   		 				tswitch+=switches[tposi*tree->nstate+tposj];
   		 			}
   		 		}
-  		 // printf("\n. Switches: %lf. Length: %lf\n",tswitch,tlen);
   		  fclose(io->mod_s[j]->fp_in_tree);
   	}
 }
@@ -669,8 +665,6 @@ int Get_All_Paths(t_node *d, int index, t_tree *tree, t_tree** btrees, int root,
 		int lc = d->plc[index];
 		int rc = d->prc[index];
 
-		//printf("Left tree! %s\t%d\t%d\t%d\n",tree->chars[lc],treeindex,d->llock[index],d->plc[index]);
-		//exit(EXIT_FAILURE);
 		if(d->llock[index]){ //if left node pointer is locked, move down with that assignment
 			treeindex=Get_All_Paths(d->v[dir1],d->plc[index],tree,btrees,0,maxtrees,treeindex,repindex,rootstate);
 		}else{
@@ -699,7 +693,6 @@ int Get_All_Paths(t_node *d, int index, t_tree *tree, t_tree** btrees, int root,
 			treeindex=Get_All_Paths(d->v[dir1],d->plc[index],tree,btrees,0,maxtrees,treeindex,repindex,rootstate);
 		}
 		if(!root){
-			//printf("Right tree! %s\t%d\t%d\t%d\n",tree->chars[rc],treeindex,d->rlock[index],d->prc[index]);
 			if(d->rlock[index]){ //right node
 				treeindex=Get_All_Paths(d->v[dir2],d->prc[index],tree,btrees,0,maxtrees,treeindex,repindex,rootstate);
 			}else{
@@ -732,36 +725,6 @@ int Get_All_Paths(t_node *d, int index, t_tree *tree, t_tree** btrees, int root,
 		if(tree->mod->optDebug)printf("%s\t%s\n",tree->chars[index],d->name);
 	}
 	return treeindex;
-}
-/*********************************************************
-void Get_Pars_Stats(t_tree** trees, int ntrees, int index, FILE* pstatf){
-	int i,j;
-	phydbl* switches = mCalloc(trees[0]->nstate*trees[0]->nstate,sizeof(phydbl));
-	phydbl* classl = mCalloc(trees[0]->nstate,sizeof(phydbl));
-	For(i,ntrees){
-		t_tree* tree = trees[i];
-		tree->nstate=trees[0]->nstate;
-		Fill_Pars_Stats(tree->noeud[trees[0]->mod->startnode],tree,switches,classl,1);
-	}
-	For(i,trees[0]->nstate){
-		classl[i] = classl[i]/(ntrees*1.0);
-		For(j,trees[0]->nstate){
-			switches[i*trees[0]->nstate+j]=switches[i*trees[0]->nstate+j]/(ntrees*1.0);
-		}
-	}
-	For(i,trees[0]->nstate){
-		fprintf(pstatf,"%d\t%s\tN\t%lf\n",index,trees[0]->chars[i],classl[i]);
-	}
-	phydbl tswitch=0;
-	For(i,trees[0]->nstate){
-		For(j,trees[0]->nstate){
-			fprintf(pstatf,"%d\t%s\t%s\t%lf\n",index,trees[0]->chars[i],trees[0]->chars[j],switches[i*trees[0]->nstate+j]);
-			tswitch+=switches[i*trees[0]->nstate+j];
-		}
-	}
-	printf(". Switches: %lf\n",tswitch);
-	free(switches);
-	free(classl);
 }
 
 /********************************************************

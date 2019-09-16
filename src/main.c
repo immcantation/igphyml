@@ -250,7 +250,7 @@ int main(int argc, char **argv){
   if(io->precon==2 || io->precon==-2 || io->precon==4 || io->precon==-4 || io->precon==-6){
 	  int precon = io->precon;
 
-io->threads=0;
+	io->threads=0;
 #if defined OMP || defined BLAS_OMP
 #pragma omp parallel for if(io->splitByTree)
 #endif
@@ -269,12 +269,6 @@ io->threads=0;
 	  	  Set_Pars_Counters(r,tree,1); //set initial parsimony counters
 	  	  if(tree->mod->optDebug)printf("\n. Resolving polytomies using isotype information");
 	  	  int pars2 = Resolve_Polytomies_Pars(tree,0.001);
-	  	  #if defined OMP || defined BLAS_OMP
-		  #pragma omp critical
-		  #endif
-	  	  {
-	  	//	  printf("\n. %d Initial/resolved maximum parsimony score: %d %d %s",tree->mod->num,pars1,pars2,tree->mod->rootname);
-	  	  }
 	  }
   }
 
