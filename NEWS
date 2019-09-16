@@ -1,6 +1,14 @@
 Release Notes
 ===============================================================================
 
+Version 1.1.0:  Sept. 16, 2019
+-------------------------------------------------------------------------------
+
++ Added parsimony reconstruction methods for cell subsets. Information for 
+Austin, Buckner et al. (2019) hardcoded. More general methods and documentation
+to follow.
+
+
 Version 1.0.7:  Feb. 19, 2019
 -------------------------------------------------------------------------------
 
