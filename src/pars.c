@@ -265,7 +265,7 @@ void Pars_Reconstructions(option* io){
                 For(k,nedges){ //if no taxa on either side of edge and length is below threshold, search for NNIs
                   t_node* node = tree->noeud[k];
                   if(!node->tax && !node->anc->tax && node->anc_edge->l < tree->io->thresh && node->polytomy == 0){
-                    Resolve_Polytomy_Mono(node,tree->io->thresh,1,tree);
+                    Resolve_Polytomy_Mono(node,tree->io->thresh,1,0,tree);
                     nnifound++;
                     if(nnifound){
                       break;
@@ -1072,7 +1072,7 @@ int Resolve_Polytomies_Pars(t_tree* tree, phydbl thresh){
 		For(i,nedges){ //if no taxa on either side of edge and length is below threshold, search for NNIs
 			t_node* node = tree->noeud[i];
 			if(!node->tax && !node->anc->tax && node->anc_edge->l < thresh && node->polytomy == 0){
-				Resolve_Polytomy_Mono(node,thresh,1,tree);
+				Resolve_Polytomy_Mono(node,thresh,1,0,tree);
         nnifound++;
 				if(nnifound){
 					break;
@@ -1089,7 +1089,7 @@ int Resolve_Polytomies_Pars(t_tree* tree, phydbl thresh){
 
 /*********************************************************/
 
-t_node* Resolve_Polytomy_Mono(t_node* b, phydbl thresh, int randomize, t_tree* tree){
+t_node* Resolve_Polytomy_Mono(t_node* b, phydbl thresh, int randomize, int level, t_tree* tree){
 	int i,j;
 	int nedges = (tree->n_otu-1)*2;
 	t_node* top = b;
@@ -1194,8 +1194,8 @@ t_node* Resolve_Polytomy_Mono(t_node* b, phydbl thresh, int randomize, t_tree* t
   Count_Polytomy_States(newtop,nscores,1,thresh,1,tree);
   For(i,tree->nstate)if(nscores[i] != -scores[i])redo=1;
   
-  if(redo){
-    printf("\nstate change detected at node %d - recursively fixing\n",newtop->num);
+  if(redo && level < 10){
+    printf("\nstate change detected at node %d - recursively fixing, level %d\n",newtop->num,level);
     For(i,tree->nstate)printf("%s\t",tree->chars[i]);
     printf("\n");
     For(i,tree->nstate)printf("%d\t",-scores[i]);
@@ -1203,7 +1203,11 @@ t_node* Resolve_Polytomy_Mono(t_node* b, phydbl thresh, int randomize, t_tree* t
     For(i,tree->nstate)printf("%d\t",nscores[i]);
     printf("\n");
     For(i,nnodes-1)tree->noeud[i]->polytomy = 0;
-    newtop = Resolve_Polytomy_Mono(newtop,thresh,0,tree);
+    level++;
+    newtop = Resolve_Polytomy_Mono(newtop,thresh,0,level,tree);
+  }
+  if(level >= 10){
+	  printf("WARNING! Failed to recursively resolve node! Stopping at 10th iteration");
   }
 
 	int score = Score_Polytomy(newtop,thresh,1000,0,tree);

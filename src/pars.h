@@ -59,7 +59,7 @@ void Join_Nodes_Balanced(t_node** nodes, int nnodes, int nindex);
 void printTree(t_node* node);
 int Fix_Node_Numbers(t_node* d, int* nums, int index, int root, phydbl thresh, t_tree* tree);
 int Fix_Edge_Numbers(t_node* d, int* edges, int index, int root, phydbl thresh, t_tree* tree);
-t_node* Resolve_Polytomy_Mono(t_node* b, phydbl thresh, int randomize, t_tree* tree);
+t_node* Resolve_Polytomy_Mono(t_node* b, phydbl thresh, int randomize, int level, t_tree* tree);
 phydbl Score_Polytomy(t_node* top,phydbl thresh, int maxtrees, int relative, t_tree* tree);
 void Score_Mono(t_node* d, int level, int* scores, int debug, t_tree* tree);
 void Isolate_Polytomy(t_node* d, phydbl thresh, t_tree* tree);
