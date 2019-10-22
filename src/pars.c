@@ -1195,7 +1195,7 @@ t_node* Resolve_Polytomy_Mono(t_node* b, phydbl thresh, int randomize, int level
   For(i,tree->nstate)if(nscores[i] != -scores[i])redo=1;
   
   if(redo && level < 10){
-    printf("\nstate change detected at node %d - recursively fixing, level %d\n",newtop->num,level);
+    printf("\nstate change detected at tree %s node %d level %d, recursively fixing\n",tree->mod->rootname,newtop->num,level);
     For(i,tree->nstate)printf("%s\t",tree->chars[i]);
     printf("\n");
     For(i,tree->nstate)printf("%d\t",-scores[i]);
@@ -1227,7 +1227,7 @@ printf("printing tree\n");*/
 		tree->io->precon *= 10;
     printf("%s\n",Write_Tree(tree));
     tree->io->precon /= 10;
-    exit(1);
+    //exit(1);
 	}
   free(nodes);
   free(tops);
