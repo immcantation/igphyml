@@ -2296,6 +2296,7 @@ model *Copy_Partial_Model(model *ori, int num){
 
   cpy->mdpos 		 = ori->mdpos;
   cpy->permute_tips 		 = ori->permute_tips;
+  cpy->maxtrunkl 		 = ori->maxtrunkl;
 
   //optimization parameters
   cpy->s_opt = Make_Optimiz();
@@ -2791,6 +2792,7 @@ void Set_Defaults_Model(model *mod)
   mod->mdpos = 0;
   mod->permute_tips = 0;
   mod->polytomyresolve = 2;
+  mod->maxtrunkl = BL_MAX;
 }
 /*********************************************************/
 

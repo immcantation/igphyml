@@ -141,6 +141,7 @@ struct option longopts[] =
 	{"permute",		  no_argument,NULL,179},  //!<Added by Ken
 	{"permuteAll",		  no_argument,NULL,180},  //!<Added by Ken
 	{"polyresolve",		  required_argument,NULL,181},  //!<Added by Ken
+	{"maxtrunkl",		  required_argument,NULL,182},  //!<Added by Ken
     {0,0,0,0}
 };
 
@@ -2946,6 +2947,16 @@ int mainOptionSwitch(int opt, char * optarg, option * io)
         // --polytomyresolve
         case 181:{
         		io->mod->polytomyresolve=atoi(optarg);
+            break;
+        }
+        //////////////////////////////////////////////////////////////////////////////////////
+        // --maxtrunkl
+        case 182:{
+        	io->mod->maxtrunkl=atof(optarg);
+        	if(io->mod->maxtrunkl < SMALL){
+        		io->mod->maxtrunkl = SMALL;
+        	}
+        	printf("maxtrunkl %lf\n",io->mod->maxtrunkl);
             break;
         }
             //////////////////////////////////////////////////////////////////////////////////////

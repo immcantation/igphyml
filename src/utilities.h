@@ -904,6 +904,7 @@ typedef struct __Model {
  int					mdpos; //position (from the left of the sequence ID) of the metadata of interest. Rightmost is 0, increasing to the left
  int						permute_tips;
  int        			polytomyresolve;
+ phydbl        			maxtrunkl;
 
 }model;
 
