@@ -525,7 +525,7 @@ void Optimize_Br_Len_Serie(t_node *a, t_node *d, t_edge *b_fcus, t_tree *tree, c
   if(a->num == tree->mod->startnode){
 	  l_infa = tree->mod->maxtrunkl;
 	  if(b_fcus->l > tree->mod->maxtrunkl){
-		   printf("\n%d\t%d\t%lf",a->num,tree->mod->startnode,b_fcus->l);
+		  // printf("\n%d\t%d\t%lf",a->num,tree->mod->startnode,b_fcus->l);
 		  b_fcus->l = tree->mod->maxtrunkl;
 		  l_max = b_fcus->l;
 		  Lk(tree);
