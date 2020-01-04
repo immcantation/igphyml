@@ -2312,6 +2312,7 @@ model *Copy_Partial_Model(model *ori, int num){
   cpy->ambigfile = mCalloc(T_MAX_FILE,sizeof(char));
   cpy->prior=ori->prior;
   cpy->freqsTo=ori->freqsTo;
+  cpy->maxtrunkl = ori->maxtrunkl;
 
   cpy->in_tree_file = (char *)mCalloc(T_MAX_FILE,sizeof(char));
   cpy->in_align_file = (char *)mCalloc(T_MAX_FILE,sizeof(char));
@@ -2776,6 +2777,7 @@ void Set_Defaults_Model(model *mod)
   mod->in_align_file=mCalloc(T_MAX_FILE,sizeof(char));
   For(c,12){mod->baseCounts[c]=0.0;}
   mod->optIter=0;
+  mod->maxtrunkl = BL_MAX;
 
 }
 /*********************************************************/

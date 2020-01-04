@@ -897,6 +897,7 @@ typedef struct __Model {
  phydbl* 				hPriorMean;
 
  char*				preconfile; //file used for custom parsimony model
+ phydbl 			maxtrunkl;
 }model;
 
 /*********************************************************/

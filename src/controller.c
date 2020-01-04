@@ -138,6 +138,7 @@ struct option longopts[] =
 	{"outname",		  required_argument,NULL,176},  //!<Added by Ken
 	{"priorSD",		  required_argument,NULL,177},  //!<Added by Ken
 	{"priorMeans",		  required_argument,NULL,178},  //!<Added by Ken
+	{"maxtrunkl",		  required_argument,NULL,182},  //!<Added by Ken
   {0,0,0,0}
 };
 
@@ -2933,6 +2934,16 @@ int mainOptionSwitch(int opt, char * optarg, option * io)
         		io->mod->hPriorMean[5] = atof(optarg);
         		printf("omega prior mean %lf %lf\n",io->mod->wPriorMean[0],io->mod->wPriorMean[1]);
         		break;
+        }
+        //////////////////////////////////////////////////////////////////////////////////////
+        // --maxtrunkl
+                case 182:{
+                	io->mod->maxtrunkl=atof(optarg);
+                	if(io->mod->maxtrunkl < SMALL){
+               		io->mod->maxtrunkl = SMALL;
+               	}
+               	printf("maxtrunkl %lf\n",io->mod->maxtrunkl);
+                break;
         }
             //////////////////////////////////////////////////////////////////////////////////////
             // --multiple
