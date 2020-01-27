@@ -8,8 +8,8 @@
 # llvm through homebrew, yours will probably look similar.
 
 #CC=/usr/local/Cellar/llvm/5.0.1/bin/clang
-#MACOMP = /usr/local/Cellar/llvm/5.0.1/lib/clang/5.0.1/include/omp.h
-#MACLLVM = /usr/local/Cellar/llvm/5.0.1/lib
+#MACOMP=/usr/local/Cellar/llvm/5.0.1/lib/clang/5.0.1/include/omp.h
+#MACLLVM=/usr/local/Cellar/llvm/5.0.1/lib
 
 DEFS=-DUNIX -D$(PROG) -DDEBUG -D$(OPT)
 

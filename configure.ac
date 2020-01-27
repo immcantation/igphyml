@@ -61,6 +61,7 @@ esac
 
 # Recommended settings
 CFLAGS="-O3 -fomit-frame-pointer -funroll-loops -fopenmp"
+#CFLAGS="-O3 -fomit-frame-pointer -funroll-loops"
 
 AC_ARG_ENABLE([blas_omp],[  --enable-blas_omp    Compile blas_omp],[blas_omp=yes])
 AM_CONDITIONAL([WANT_BLAS_OMP], [test "$blas_omp" = yes]) 
