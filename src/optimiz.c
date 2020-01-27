@@ -465,6 +465,7 @@ void Round_Optimize(option *io, int n_round_max){
 				if(tree->mod->whichrealmodel > HLP17)(!((n_roundt+2)%2))?(root=tree->noeud[0]):(root=tree->noeud[tree->n_otu-1]);
 				Lk(tree);
 				if(tree->mod->whichrealmodel <= HLP17){Get_UPP(root, root->v[0], tree);}
+				//printf("startnode %d %d\n",root->num, root->v[0]->num);
 				Optimize_Br_Len_Serie(root,root->v[0],root->b[0],tree,tree->data);
 			}
 			Lk_rep(io);
@@ -534,7 +535,6 @@ void Optimize_Br_Len_Serie(t_node *a, t_node *d, t_edge *b_fcus, t_tree *tree, c
   }
   //printf("\np %d\t%d\t%lf",b_fcus->anc_node->num,tree->mod->startnode,b_fcus->l);
 
-
   if(tree->mod->optDebug)printf("\n%d\t%lf\t%lf",b_fcus->num,b_fcus->l,tree->c_lnL);
   Br_Len_Brent(l_infa,l_max,l_infb,
 	       tree->mod->s_opt->min_diff_lk_local,
@@ -551,15 +551,15 @@ void Optimize_Br_Len_Serie(t_node *a, t_node *d, t_edge *b_fcus, t_tree *tree, c
 	  }
   }
   //Lk(tree);
-
-  /*if(b_fcus->anc_node->num == tree->mod->startnode){
-	  if(b_fcus->l > tree->mod->maxtrunkl){
-		  b_fcus->l = tree->mod->maxtrunkl;
-	  }
+    /*if(b_fcus->anc_node->num == tree->mod->startnode){
+  	  if(b_fcus->l > tree->mod->maxtrunkl){
+  		  b_fcus->l = tree->mod->maxtrunkl;
+  	  }
   }*/
   //printf("\na %d\t%d\t%lf",b_fcus->anc_node->num,tree->mod->startnode,b_fcus->l);
 
   if(d->tax) return;
+
   else For(i,3) if(d->v[i] != a){
 	   if(tree->mod->freq_model!=ROOT){
 		   Update_P_Lk(tree,d->b[i],d);

@@ -375,6 +375,7 @@ phydbl Update_Qmat_Codons(model *mod, int cat, int modeli, phydbl* freqs) {
             break;
         }
         case ROOT:
+
         	if(mod->tree_loaded) freqs=mod->tree->noeud[mod->freq_node]->partfreqs[modeli];
         	else freqs = mod->root_pi[modeli];
         	break;
@@ -451,6 +452,7 @@ phydbl Update_Qmat_Codons(model *mod, int cat, int modeli, phydbl* freqs) {
         	For(i, numSensecodons) freqs[i] = 1.0;
         }
     }
+
     // deal with frequency models. Usefd in GY and HLP17
     if((mod->freq_model != FMODEL && mod->freq_model != FUNDEFINED) && mod->freq_model < ROOT) {
         if((mod->initqrates == NOINITMAT && mod->pcaModel == NO) || mod->initqrates == SCHN05) {
@@ -463,6 +465,7 @@ phydbl Update_Qmat_Codons(model *mod, int cat, int modeli, phydbl* freqs) {
         	if(mod->freq_model < ROOT) mod->pi[i] = freqs[i];
         }
     }
+
     For(i, numSensecodons*numSensecodons) qmat[i] = 0.0;
     
     // calculate the actual Q matrix

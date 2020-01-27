@@ -35,7 +35,6 @@ extern int indexSenseCodons[64];
 
 
 
-
 /*********************************************************/
 
 void Prepars_Wrapper(option* io){
@@ -593,8 +592,6 @@ void Count_Polytomy_Switches(t_node* d, phydbl* switches, phydbl thresh, t_tree*
   }
 }
 
-
-
 /*********************************************************
  * Initialize Sankoff dynamic programming tables at the tips of the tree
  * -6, -5 : GC/Mem model.
@@ -992,7 +989,6 @@ void Clean_Sankoff_Node(t_node* node){
      free(node->rlock);
      //free(node->polystates);
 }
-
 
 /*********************************************************
 * Copy all tree structures and values to a new trees
@@ -1562,8 +1558,6 @@ void Isolate_Polytomy(t_node* d, phydbl thresh, t_tree* tree){
 	}
 }
 
-
-
 /*********************************************************
  * Starting from an intitial small length branch, check for NNI moves that would increase parsimony score, then recursively search across
  * all adjacent branches (spreading c and d f) connected with at most thresh length
@@ -1741,6 +1735,7 @@ void Get_First_Path(t_node *d, int index, t_tree *tree,int root){
 }
 
 /********************************************************
+
  * Set counters to "left most" option
  * */
 void Set_Pars_Counters(t_node *d, t_tree *tree,int root){
@@ -1783,7 +1778,6 @@ void Set_Pars_Counters(t_node *d, t_tree *tree,int root){
  * Get all possible maximum parsimony labels of internal nodes
  * */
 int Get_All_Paths(t_node *d, int index, t_tree *tree, t_tree** btrees, int root,int maxtrees,int treeindex, int repindex, int rootstate){
-	//printf("ti %d\n",treeindex);
 	int i,j,dir1,dir2;
 	int lfound=0;
 	int rfound=0;

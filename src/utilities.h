@@ -899,13 +899,16 @@ typedef struct __Model {
  phydbl** 	mid_pi;//midpoint pi
  phydbl* cdr;
  phydbl* fwr;
+ phydbl					priorSD;
+ phydbl					kPriorMean;
+ phydbl* 				wPriorMean;
+ phydbl* 				hPriorMean;
 
  char*				preconfile; //file used for custom parsimony model
  int					mdpos; //position (from the left of the sequence ID) of the metadata of interest. Rightmost is 0, increasing to the left
  int						permute_tips;
  int        			polytomyresolve;
  phydbl        			maxtrunkl;
-
 }model;
 
 /*********************************************************/
@@ -1086,6 +1089,7 @@ typedef struct __Option {
   int							GRv;
   phydbl 					roughCI;
   char*						outrep;
+  char*						outname;
   int						outrepspec;
   int							CIest;
   phydbl 			min_diff_lk_global;
@@ -1099,11 +1103,13 @@ typedef struct __Option {
   int					maxparsotu;
 
   int 					flux; //do full flux adjustment?
+
   char*					asrfile;
   int					bmatorder;
   int 					repwidefreqs;
   phydbl        		thresh;
  }option;
+
 
 /*********************************************************/
 //! Parameters to be optimized by maximum likelihood algorithm.

@@ -142,6 +142,7 @@ struct option longopts[] =
 	{"permuteAll",		  no_argument,NULL,180},  //!<Added by Ken
 	{"polyresolve",		  required_argument,NULL,181},  //!<Added by Ken
 	{"maxtrunkl",		  required_argument,NULL,182},  //!<Added by Ken
+  {"outname",     required_argument,NULL,183},  //!<Added by Ken
     {0,0,0,0}
 };
 
@@ -171,7 +172,7 @@ void finishOptions(option * io)
 
     //set some defaults
     io->mod->primary=1;
-    if(io->mod->ASRcut==0)io->mod->ASRcut=0.95;
+    if(io->mod->ASRcut < 0)io->mod->ASRcut=1.92;
 
 
     //Check for partition model errors
@@ -193,6 +194,7 @@ void finishOptions(option * io)
     		if(io->mod->modeltypeOpt==GY)Warn_And_Exit("\nIgPhyML can't partition omega with GY model.\n");
     	}
     }
+
 
     //set options if flux-based codon frequency prediction desired
     if(io->flux){
@@ -416,8 +418,8 @@ void setUpHLP17(option* io, model *mod){
   				For(c,combinations){
   					int fscn = fscanf(file, "%lf\n",&mod->hotspotcmps[mot][c]);
   				}
+  				fclose(file);
   			}
-  			fclose(file);
   		}
    	}
 
@@ -726,7 +728,6 @@ void setupRootFreqs(model* mod){
 }
 
 
-
 void checkModelCombinations(option * io){
     if((io->datatype == NT) && (io->modeltypeOpt > 10)) {
         Warn_And_Exit("\n. Err: model incompatible with the data type. Please use JC69, K80, F81, HKY, F84, TN93 or GTR\n");
@@ -739,14 +740,18 @@ void checkModelCombinations(option * io){
 
 /* Create output files */
 void createOutFiles(option * io){
-    if(io->append_run_ID) {
+    if(io->append_run_ID){
     	strcat(io->out_stats_file, "_igphyml_stats");
         strcat(io->out_stats_file, "_");
         strcat(io->out_stats_file, io->run_id_string);
         if(io->out_stats_format == OUTTXT)strcat(io->out_stats_file, ".txt");
         else strcat(io->out_stats_file, ".tab");
     }else{
-    	strcat(io->out_stats_file, "_igphyml_stats.txt");
+    	if(io->out_stats_format == OUTTXT)strcat(io->out_stats_file, "_igphyml_stats.txt");
+    	else strcat(io->out_stats_file, "_igphyml_stats.tab");
+    }
+    if(strcmp(io->outname,"NULL") != 0){
+    	strcpy(io->out_stats_file,io->outname);
     }
     io->fp_out_stats = Openfile(io->out_stats_file, io->writemode);
 }
@@ -754,8 +759,6 @@ void createOutFiles(option * io){
 
 /*****************************************************
  *  deprecated methods - potentially add back in?
-
-
 void checkForRandStartTree(option * io){
     if((io->mod->s_opt->n_rand_starts)           &&
        (io->mod->s_opt->topo_search == NNI_MOVE) &&
@@ -2256,7 +2259,8 @@ int mainOptionSwitch(int opt, char * optarg, option * io)
                 io->datatype              = CODON;       
                 io->modeltypeOpt          = PCM;
             }else if(strcmp(optarg, "HLP17") == 0 ||
-            		strcmp(optarg, "HLP19") == 0 ||
+            		strcmp(optarg, "HLP19") == 0 ||  
+                strcmp(optarg, "HLP18") == 0 ||
 					strcmp(optarg, "HLP") == 0) { //set up HLP17 model with default params
                 strcpy(io->nt_or_cd, "codons");      //Added by Ken
                 io->datatype              = CODON;
@@ -2270,7 +2274,8 @@ int mainOptionSwitch(int opt, char * optarg, option * io)
                 io->mod->freq_model       = CF3X4;
                 io->mod->whichmodel       = HLP17;
                 io->freqmodelOpt		  = CF3X4;
-                if( strcmp(optarg, "HLP19") == 0 || strcmp(optarg, "HLP") == 0){
+                if( strcmp(optarg, "HLP19") == 0 || strcmp(optarg, "HLP") == 0 ||
+                   strcmp(optarg, "HLP18") == 0){
                     io->modeltypeOpt          = HLP19;
                     io->eq_freq_handling      = MROOT; // optimize eq freqs
                     io->mod->freq_model       = MROOT;
@@ -2875,9 +2880,6 @@ int mainOptionSwitch(int opt, char * optarg, option * io)
             printf("\nOnly using frequencies for scaling!\n");
           	break;
          }
-
-        	//////////////////////////////////////////////////////////////////////////////////////
-            // --precon <infile>
         case 172:{
             io->precon=7;//atoi(optarg);
             //printf("\nDoing pars recon\n");
@@ -2885,9 +2887,6 @@ int mainOptionSwitch(int opt, char * optarg, option * io)
             printf("preconfile: \t %s\n",io->mod->preconfile);
            	break;
         }
-
-        	//////////////////////////////////////////////////////////////////////////////////////
-            // --flux
         case 173:{
         	printf("Doing full flux adjustment. Might take a while with branch length optimization!\n");
             io->flux=1;
@@ -2903,7 +2902,6 @@ int mainOptionSwitch(int opt, char * optarg, option * io)
             //printf("preconfile: \t %s\n",io->mod->preconfile);
             break;
         }
-
         	//////////////////////////////////////////////////////////////////////////////////////
             // --repwidefreqs
         case 175:{
@@ -2911,14 +2909,13 @@ int mainOptionSwitch(int opt, char * optarg, option * io)
         	io->repwidefreqs=1;
         	break;
         }
-           	//////////////////////////////////////////////////////////////////////////////////////
+          	//////////////////////////////////////////////////////////////////////////////////////
             // --max_pars_trees <int>
         case 176:{
         		io->maxparstrees=atoi(optarg);
         		//printf("new mindiff %lf\n",io->min_diff_lk_global);
         		break;
         }
-
             //////////////////////////////////////////////////////////////////////////////////////
             // --pars_sample <int>
         case 177:{
@@ -2958,6 +2955,12 @@ int mainOptionSwitch(int opt, char * optarg, option * io)
         	}
         	printf("maxtrunkl %lf\n",io->mod->maxtrunkl);
             break;
+        }
+        //////////////////////////////////////////////////////////////////////////////////////
+        // --outname <outfile>
+        case 183:{
+          strcpy(io->outname,optarg);
+          break;
         }
             //////////////////////////////////////////////////////////////////////////////////////
             // --multiple

@@ -2046,6 +2046,7 @@ void Make_Model_Complete(model *mod){
       }
     }
   }
+
   mod->tree_loaded=0;
   mod->midpoint_div=SMALL;
 
@@ -2325,6 +2326,7 @@ model *Copy_Partial_Model(model *ori, int num){
   cpy->prior=ori->prior;
   cpy->freqsTo=ori->freqsTo;
   cpy->polytomyresolve = ori->polytomyresolve;
+  cpy->maxtrunkl = ori->maxtrunkl;
 
   cpy->in_tree_file = (char *)mCalloc(T_MAX_FILE,sizeof(char));
   cpy->in_align_file = (char *)mCalloc(T_MAX_FILE,sizeof(char));
@@ -2355,6 +2357,9 @@ model *Copy_Partial_Model(model *ori, int num){
   cpy->constB = ori->constB;
   cpy->omegaSiteVar = ori->omegaSiteVar;
   cpy->nomega_part = ori->nomega_part;
+
+  //cpy->wPriorShape = ori->wPriorShape;
+  //cpy->wPriorMean = ori->wPriorMean;
 
   cpy->omega_part=mCalloc(ori->nomega_part,sizeof(phydbl));
   cpy->omega_part_opt=mCalloc(ori->nomega_part,sizeof(int));
@@ -2655,6 +2660,8 @@ void Set_Defaults_Input(option* io,model * mod)
   io->omegaOpt=DM0;
   io->userWantsKappa             = YES;
   io->outrep=mCalloc(T_MAX_FILE,sizeof(char));
+  io->outname=mCalloc(T_MAX_FILE,sizeof(char));
+  strcpy(io->outname,"NULL");
   io->asrfile=mCalloc(T_MAX_FILE,sizeof(char));
   io->GRstring=mCalloc(T_MAX_OPTION,sizeof(char));
   io->bmatorder=1;
@@ -2767,7 +2774,7 @@ void Set_Defaults_Model(model *mod)
   mod->nhotness=0;
   mod->kappaci=0;
   mod->ASR=0;
-  mod->ASRcut=0;
+  mod->ASRcut=-1;
   mod->rootpi=0;
   mod->constB=0;
   mod->prior=0;
@@ -2788,7 +2795,6 @@ void Set_Defaults_Model(model *mod)
   mod->in_align_file=mCalloc(T_MAX_FILE,sizeof(char));
   For(c,12){mod->baseCounts[c]=0.0;}
   mod->optIter=0;
-
   mod->mdpos = 0;
   mod->permute_tips = 0;
   mod->polytomyresolve = 2;
@@ -5236,7 +5242,9 @@ void Add_BioNJ_Branch_Lengths(t_tree *tree, calign *cdata, model *mod)
 t_tree *Read_User_Tree(calign *cdata, model *mod, option *io){
   t_tree *tree;
   if(!mod->quiet)PhyML_Printf("\n. Reading user tree...\n"); fflush(NULL);
+  //printf("reqinding\n");
   if(io->n_trees == 1) rewind(mod->fp_in_tree);
+  //printf("reqounding\n");
   tree = Read_Tree_File_Phylip(mod->fp_in_tree);
   if(!tree) Warn_And_Exit("\n. Input tree not found...\n");
   if(!tree->has_branch_lengths || io->nobl){ // Add branch lengths if necessary
