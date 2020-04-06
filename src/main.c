@@ -72,7 +72,6 @@ int main(int argc, char **argv){
   //declare data structures for upper model
   Make_Model_Complete(io->mod);
 
-
   //read in each dataset and set up respective model
   int last_otu=0;
   For(num_data_set,io->ntrees){

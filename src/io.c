@@ -1159,7 +1159,10 @@ void R_wtree(t_node *pere, t_node *fils, int *available, char **s_tree, int *pos
 	      if(fils->b[0]->n_labels < 10)
           For(i,fils->b[0]->n_labels){
           //(*pos) += sprintf(*s_tree+*pos,"#%s",fils->b[0]->labels[i]);
-	      (*pos) += sprintf(*s_tree+*pos,"[%d_%s]",tree->mod->num,fils->b[0]->labels[i]);
+	      //(*pos) += sprintf(*s_tree+*pos,"[%d_%s]",tree->mod->num,fils->b[0]->labels[i]);
+	    	  int num = atoi(fils->b[0]->labels[i]);
+	    	  tree->mod->mlCodon[num][tree->mod->init_len]='\0';
+	    	  (*pos) += sprintf(*s_tree+*pos,"[%s]",tree->mod->mlCodon[num]);
 	      //printf("%d\t%lf\th\n",fils->b[0]->num,fils->b[0]->l);
 	      }else{
 	    	  (*pos) += sprintf(*s_tree+*pos,"#%d_labels",fils->b[0]->n_labels);
@@ -1239,7 +1242,10 @@ void R_wtree(t_node *pere, t_node *fils, int *available, char **s_tree, int *pos
 	      if(fils->b[p]->n_labels < 10)
 
         For(i,fils->b[p]->n_labels){
-	    	  (*pos) += sprintf(*s_tree+*pos,"[%d_%s]",tree->mod->num,fils->b[p]->labels[i]);
+	    	  //(*pos) += sprintf(*s_tree+*pos,"[%d_%s]",tree->mod->num,fils->b[p]->labels[i]);
+	    	   int num = atoi(fils->b[p]->labels[i]);
+	    	  tree->mod->mlCodon[num][tree->mod->init_len]='\0';
+	    	  (*pos) += sprintf(*s_tree+*pos,"[%s]",tree->mod->mlCodon[num]);
 	      }else{
 	    	  (*pos) += sprintf(*s_tree+*pos,"#%d_labels",fils->b[p]->n_labels);
 	      }
