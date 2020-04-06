@@ -274,7 +274,7 @@ int main(int argc, char **argv){
   //parsimony reconstructions, if desired
   if(io->precon)Pars_Reconstructions(io);
 
-  //TODO: METHODS FOR FREEING DATA STRUCTURES
+  //TODO: Free data structures
 
   #if defined OMP || defined BLAS_OMP
      
