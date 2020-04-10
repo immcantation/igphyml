@@ -16,3 +16,8 @@ model parameter estimates.
 IgPhyML is integrated into the Immcantation framework, meaning users can easily 
 build and visualize B cell lineage trees and test hypotheses about mutation and 
 selection in B cell repertoires.
+
+.. note::
+
+    IgPhyML recently changed source code location. Please see the 
+    :ref:`install page <install>` for details.
