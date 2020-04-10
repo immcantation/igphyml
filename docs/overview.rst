@@ -2,7 +2,7 @@ Overview
 ===============================
 
 This is the instruction guide for using the new, repertoire-wide
-version of `IgPhyML <https://bitbucket.org/kbhoehn/igphyml>`_. 
+version of `IgPhyML <https://bitbucket.org/kleinstein/igphyml>`_. 
 
 The most up-to-date description of IgPhyML can be found here:
 

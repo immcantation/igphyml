@@ -16,7 +16,7 @@ downloading the Immcantation Docker image. In a terminal, enter::
  docker pull kleinstein/immcantation:devel
 
  # clone IgPhyML repository to get example files
- git clone https://bitbucket.org/kbhoehn/igphyml
+ git clone https://bitbucket.org/kleinstein/igphyml
 
 Then, move to the examples directory and load it into the Docker image depending on your operating system::
  
@@ -55,7 +55,7 @@ Building from source
 If using the Docker image is not possible or preferable, the 
 source code of the current development version can be downloaded using git::
 
-    > git clone https://bitbucket.org/kbhoehn/igphyml
+    > git clone https://bitbucket.org/kleinstein/igphyml
     > cd igphyml
 
 Requirements
