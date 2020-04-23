@@ -1370,12 +1370,21 @@ void Print_Tab_Out(option *io){
 	//print information for all subtrees
 	For(i,io->ntrees){
 		model* mod = io->mod_s[i];
-		int cloneid;
-		sscanf(mod->rootname,"%d_GERM",&cloneid);
-		fprintf(f,"\n%d\t%d\t%d\t%.4f\t%.4f",cloneid,mod->n_otu-1,mod->tree->n_pattern,Get_Tree_Size(io->tree_s[i]),mod->tree->c_lnL);
+		char* root = strdup(mod->rootname);
+		char* cloneid = mCalloc(T_MAX_LABEL,sizeof(char));
+		char* fragment = strsep(&root, "_");
+		strcat(cloneid,fragment);
+		fragment = strsep(&root, "_");
+		while(strcmp(fragment,"GERM") != 0){
+			strcat(cloneid,"_");
+			strcat(cloneid,fragment);
+			fragment = strsep(&root, "_");
+		}
+		fprintf(f,"\n%s\t%d\t%d\t%.4f\t%.4f",cloneid,mod->n_otu-1,mod->tree->n_pattern,Get_Tree_Size(io->tree_s[i]),mod->tree->c_lnL);
 		Print_Params_Tab(mod,f);
 		char* s_tree = (char *)Write_Tree(mod->tree);
 		fprintf(f,"\t%s",s_tree);
+		free(cloneid);
 	}
 	fprintf(f,"\n");
 }
