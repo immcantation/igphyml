@@ -2808,6 +2808,10 @@ int mainOptionSwitch(int opt, char * optarg, option * io)
         case 162: {
            	io->mod->ASR=1;
            	io->mod->ASRcut=atof(optarg);
+           	if(io->mod->ASRcut > 1){
+           		Warn_And_Exit("\n. ASRc must be between 0 and 1!");
+           		io->mod->ASRcut = 1;
+           	}
             break;
           }
 

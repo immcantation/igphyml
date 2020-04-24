@@ -949,6 +949,15 @@ char* printThreeNum(phydbl G1p){
 	return s1;
 }
 
+
+// from https://cboard.cprogramming.com/c-programming/1293-qsort-doesnt-work-floats.html
+int floatcomp(const void* elem1, const void* elem2)
+{
+    if(*(const phydbl*)elem1 > *(const phydbl*)elem2)
+        return -1;
+    return *(const phydbl*)elem1 < *(const phydbl*)elem2;
+}
+
 /********************************************************
  * Wrapper for calculating ASR
  * */
@@ -1025,7 +1034,7 @@ phydbl ASR_Core(t_edge *b, t_tree *tree, t_node *anc, t_node *d)
 	      sum_scale_down = b->sum_scale_left;
 	      sum_scale_down_cat = b->sum_scale_left_cat;
 	     if((d->tax) && (!tree->mod->s_opt->greedy)){
-	    	 if(site==16){printf("left taxa %d %s\n",b->num,d->name);}
+	    	 //if(site==16){printf("left taxa %d %s\n",b->num,d->name);}
 	    	 exit(EXIT_FAILURE);
 	        ambiguity_check = tree->data->c_seq[d->num]->is_ambigu[site];
 	        if(!ambiguity_check)state = Get_State_From_P_Pars(b->p_lk_tip_l,site*dim2,tree);
@@ -1083,35 +1092,60 @@ phydbl ASR_Core(t_edge *b, t_tree *tree, t_node *anc, t_node *d)
 	  //find ML codon
 	  int maxc=-1;
   	  phydbl max=-DBL_MAX;
+  	  phydbl threshold = tree->io->mod->ASRcut;
+  	  phydbl cutoff = 0;
+  	  phydbl cumsum = 0.0;
 	  For(k,ns){
+		  probc[k] /= tree->site_lk_cat[0];
 		  if(probc[k]>max){
 			  max=probc[k];
 			  maxc=k;
 		  }
 	  }
 
-	  //count number of codons within the significance threshold
-	  int ncodons=0;
-	  For(k,61){
-		  if(probc[k]==0)probc[k]=-DBL_MAX;
-		  else{
-			  probc[k]=log(probc[k]);
-		  }
-		  if(probc[k]>=(log(max)-tree->mod->ASRcut))ncodons++;
-	  }
+	  //make copy of probc array
+	  	  phydbl probc_copy[61];
+	  	  For(k,ns){
+	  		  probc_copy[k] = probc[k];
+	  		  //if(tree->curr_site==88)printf("\n%.5f",probc_copy[k]);
+	  	  }
+	  	  qsort(probc_copy, 61, sizeof(phydbl), floatcomp);
+	  	  For(k,ns){
+	  	  	//  printf("\n%.5f",probc_copy[k]);
+	  	  	  cumsum += probc_copy[k];
+	  	  	  if(cumsum >= threshold){
+	  	  		  cutoff = probc_copy[k];
+	  	  		  break;
+	  	  	  }
+	  	  }
 
-	  //get set of codons within the significance threshold
-	  char** codonset=malloc(ncodons*sizeof(char*));
-	  int c=0;
-	  For(k,61){
-		  if(probc[k]>=(log(max)-tree->mod->ASRcut)){
-			  codonset[c]=mCalloc(4,sizeof(char));
-		  	  char* s1=mCalloc(4,sizeof(char));
-		  	  Sprint_codon(s1,tree->io->senseCodons[k]);
-		  	  strcpy(codonset[c],s1);
-		  	  c++;
-		  }
-	  }
+	  	  //exit(1);
+	  	  int ncodons=0;
+	  	  For(k,61){
+	  		  /*if(probc[k]==0)probc[k]=-DBL_MAX;
+	  		  else{
+	  			  probc[k]=log(probc[k]);
+	  		  }
+	  		  if(probc[k]>=(log(max)-tree->mod->ASRcut))ncodons++;*/
+	  		  //if(probc[k]/max >= ratio)ncodons++;
+	  		  if(probc[k] >= cutoff)ncodons++;
+	  	  }
+	  	  //printf("\ncutoff: %lf %d %d",cutoff,ncodons,tree->curr_site);
+
+	  	  //get set of codons within the significance threshold
+	  	  char** codonset=malloc(ncodons*sizeof(char*));
+	  	  int c=0;
+	  	  For(k,61){
+	  		  //if(probc[k]>=(log(max)-tree->mod->ASRcut)){
+	  		  if(probc[k] >= cutoff){
+	  			  codonset[c]=mCalloc(4,sizeof(char));
+	  		  	  char* s1=mCalloc(4,sizeof(char));
+	  		  	  Sprint_codon(s1,tree->io->senseCodons[k]);
+	  		  	  strcpy(codonset[c],s1);
+	  		  	  //if(tree->curr_site == 88)printf("\n%d %s %lf %lf",k,s1,probc[k],tree->io->mod->cdr[k]);
+	  		  	  c++;
+	  		  }
+	  	  }
 
 	  //collapse each of the three codon sites using ambiguous characters
 	  For(k,3){
@@ -1355,36 +1389,66 @@ phydbl ASR_Core_root(t_edge *b, t_tree *tree, t_node *anc, t_node *d)
 	      tree->site_lk_cat[catg] = site_lk_cat;
 	    }
 
+
+
 	  //find ML codon
 	  int maxc=-1;
   	  phydbl max=-DBL_MAX;
+  	  phydbl threshold = tree->io->mod->ASRcut;
+  	  phydbl cutoff = 0;
+  	  phydbl cumsum = 0.0;
 	  For(k,ns){
+		  probc[k] /= tree->site_lk_cat[0];
 		  if(probc[k]>max){
 			  max=probc[k];
 			  maxc=k;
 		  }
 	  }
-	  tree->mod->mlASR[tree->mod->nedges][site]=maxc;
-	  tree->mod->probASR[tree->mod->nedges][site]=max/tree->site_lk_cat[0];
 
+	  tree->mod->mlASR[tree->mod->nedges][site]=maxc;
+	  tree->mod->probASR[tree->mod->nedges][site]=max;//tree->site_lk_cat[0];
+
+	  //make copy of probc array
+	  phydbl probc_copy[61];
+	  For(k,ns){
+		  probc_copy[k] = probc[k];
+		  //if(tree->curr_site==88)printf("\n%.5f",probc_copy[k]);
+	  }
+	  qsort(probc_copy, 61, sizeof(phydbl), floatcomp);
+	  For(k,ns){
+	  	  //if(tree->curr_site==0)printf("\n%.5f %.5f",probc_copy[k],probc[k]);
+	  	  cumsum += probc_copy[k];
+	  	  if(cumsum >= threshold){
+	  		  cutoff = probc_copy[k];
+	  		  break;
+	  	  }
+	  }
+
+	  //exit(1);
 	  int ncodons=0;
 	  For(k,61){
-		  if(probc[k]==0)probc[k]=-DBL_MAX;
+		  /*if(probc[k]==0)probc[k]=-DBL_MAX;
 		  else{
 			  probc[k]=log(probc[k]);
 		  }
-		  if(probc[k]>=(log(max)-tree->mod->ASRcut))ncodons++;
+		  if(probc[k]>=(log(max)-tree->mod->ASRcut))ncodons++;*/
+		  //if(probc[k]/max >= ratio)ncodons++;
+		  if(probc[k] >= cutoff)ncodons++;
 	  }
+	  //printf("\ncutoff: %lf %d %d",cutoff,ncodons,tree->curr_site);
 
 	  //get set of codons within the significance threshold
 	  char** codonset=malloc(ncodons*sizeof(char*));
 	  int c=0;
 	  For(k,61){
-		  if(probc[k]>=(log(max)-tree->mod->ASRcut)){
+		  //if(probc[k]>=(log(max)-tree->mod->ASRcut)){
+		  if(probc[k] >= cutoff){
 			  codonset[c]=mCalloc(4,sizeof(char));
 		  	  char* s1=mCalloc(4,sizeof(char));
 		  	  Sprint_codon(s1,tree->io->senseCodons[k]);
 		  	  strcpy(codonset[c],s1);
+		  	  //if(tree->curr_site == 88)
+		  	 //	  printf("\n%d %s %lf %lf %lf",k,s1,probc[k],tree->io->mod->cdr[k],tree->mod->root_pi[tree->mod->partIndex[site]][k]);
 		  	  c++;
 		  }
 	  }

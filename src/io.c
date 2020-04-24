@@ -1171,10 +1171,6 @@ void R_wtree(t_node *pere, t_node *fils, int *available, char **s_tree, int *pos
 	    	  //(*pos) += sprintf(*s_tree+*pos,"[%s]",tree->mod->mlCodon[num]);
 	    	  if(!fils->b[0]->des_node->tax){
 	    		  (*pos) += sprintf(*s_tree+*pos,"%d_%s",tree->mod->num,fils->b[0]->labels[i]);
-	    		  /*if(tree->io->mod->ASR){
-	    			  fprintf(tree->io->fp_out_seqs,">%d_%s\n%s\n",
-	    					  tree->mod->num,fils->b[0]->labels[i],tree->mod->mlCodon[num]);
-	    		  }*/
 	    	  }
 	      //printf("%d\t%lf\th\n",fils->b[0]->num,fils->b[0]->l);
 	      }else{
@@ -1261,10 +1257,6 @@ void R_wtree(t_node *pere, t_node *fils, int *available, char **s_tree, int *pos
 	    	  //(*pos) += sprintf(*s_tree+*pos,"[%s]",tree->mod->mlCodon[num]);
 	    	  if(!fils->b[p]->des_node->tax){
 	    		  (*pos) += sprintf(*s_tree+*pos,"%d_%s",tree->mod->num,fils->b[p]->labels[i]);
-	    		  /*if(tree->io->mod->ASR){
-	    			  fprintf(tree->io->fp_out_seqs,">%d_%s\n%s\n",
-	    					  tree->mod->num,fils->b[p]->labels[i],tree->mod->mlCodon[num]);
-	    		  }*/
 	    	  }
 	      }else{
 	    	  (*pos) += sprintf(*s_tree+*pos,"#%d_labels",fils->b[p]->n_labels);
@@ -1409,7 +1401,7 @@ void Print_Tab_Out(option *io){
 	fprintf(f,"\n");
 
 	if(io->mod->ASR == 1){
-		printf("\n%s",io->out_seqs_file);
+		//printf("\n%s",io->out_seqs_file);
 		FILE* fastaout = io->fp_out_seqs;
 		For(i,io->ntrees){
 			model* mod = io->mod_s[i];
