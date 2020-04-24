@@ -1101,6 +1101,12 @@ char *Write_Tree(t_tree *tree)
 	  strcpy(r->name,tree->noeud[tree->mod->startnode]->name);
 	  R_wtree(tree->noeud[tree->mod->startnode],tree->noeud[tree->mod->startnode]->v[0],&available,&s,&pos,tree);
 	  R_wtree(tree->noeud[tree->mod->startnode],tree->noeud[tree->mod->startnode]->v[1],&available,&s,&pos,tree);
+	  /*if(tree->io->mod->ASR){
+		  int num = tree->noeud[tree->mod->startnode]->anc_edge->num;
+		  tree->mod->mlCodon[num][tree->mod->init_len]='\0';
+		  fprintf(tree->io->fp_out_seqs,">%s\n%s\n",
+		  	    	tree->mod->rootname,tree->mod->mlCodon[num]);
+	  }*/
 
 	  /*free(r->name);
 	  free(r);*/
@@ -1162,7 +1168,14 @@ void R_wtree(t_node *pere, t_node *fils, int *available, char **s_tree, int *pos
 	      //(*pos) += sprintf(*s_tree+*pos,"[%d_%s]",tree->mod->num,fils->b[0]->labels[i]);
 	    	  int num = atoi(fils->b[0]->labels[i]);
 	    	  tree->mod->mlCodon[num][tree->mod->init_len]='\0';
-	    	  (*pos) += sprintf(*s_tree+*pos,"[%s]",tree->mod->mlCodon[num]);
+	    	  //(*pos) += sprintf(*s_tree+*pos,"[%s]",tree->mod->mlCodon[num]);
+	    	  if(!fils->b[0]->des_node->tax){
+	    		  (*pos) += sprintf(*s_tree+*pos,"%d_%s",tree->mod->num,fils->b[0]->labels[i]);
+	    		  /*if(tree->io->mod->ASR){
+	    			  fprintf(tree->io->fp_out_seqs,">%d_%s\n%s\n",
+	    					  tree->mod->num,fils->b[0]->labels[i],tree->mod->mlCodon[num]);
+	    		  }*/
+	    	  }
 	      //printf("%d\t%lf\th\n",fils->b[0]->num,fils->b[0]->l);
 	      }else{
 	    	  (*pos) += sprintf(*s_tree+*pos,"#%d_labels",fils->b[0]->n_labels);
@@ -1245,7 +1258,14 @@ void R_wtree(t_node *pere, t_node *fils, int *available, char **s_tree, int *pos
 	    	  //(*pos) += sprintf(*s_tree+*pos,"[%d_%s]",tree->mod->num,fils->b[p]->labels[i]);
 	    	   int num = atoi(fils->b[p]->labels[i]);
 	    	  tree->mod->mlCodon[num][tree->mod->init_len]='\0';
-	    	  (*pos) += sprintf(*s_tree+*pos,"[%s]",tree->mod->mlCodon[num]);
+	    	  //(*pos) += sprintf(*s_tree+*pos,"[%s]",tree->mod->mlCodon[num]);
+	    	  if(!fils->b[p]->des_node->tax){
+	    		  (*pos) += sprintf(*s_tree+*pos,"%d_%s",tree->mod->num,fils->b[p]->labels[i]);
+	    		  /*if(tree->io->mod->ASR){
+	    			  fprintf(tree->io->fp_out_seqs,">%d_%s\n%s\n",
+	    					  tree->mod->num,fils->b[p]->labels[i],tree->mod->mlCodon[num]);
+	    		  }*/
+	    	  }
 	      }else{
 	    	  (*pos) += sprintf(*s_tree+*pos,"#%d_labels",fils->b[p]->n_labels);
 	      }
@@ -1338,7 +1358,7 @@ void Print_Param_Header(char* str,int ci, FILE* f){
 //Tabular output function
 void Print_Tab_Out(option *io){
 	FILE* f = io->fp_out_stats;
-	int i;
+	int i,j;
 	int nseq = 0;
 	phydbl treel = 0.0;
 	fprintf(f,"CLONE\tNSEQ\tNSITE\tTREE_LENGTH\tLHOOD");
@@ -1387,6 +1407,28 @@ void Print_Tab_Out(option *io){
 		free(cloneid);
 	}
 	fprintf(f,"\n");
+
+	if(io->mod->ASR == 1){
+		printf("\n%s",io->out_seqs_file);
+		FILE* fastaout = io->fp_out_seqs;
+		For(i,io->ntrees){
+			model* mod = io->mod_s[i];
+			t_tree* tree = io->tree_s[i];
+			For(j,mod->nedges+1){
+				if(j<mod->nedges){
+					if(tree->t_edges[j]->des_node->tax)continue;
+					if(!tree->t_edges[j]->des_node->name) fprintf(fastaout,">%d_%d\n",mod->num,j);
+					else if(strcmp(tree->t_edges[j]->des_node->name,"")!=0)fprintf(fastaout,">%s\n",tree->t_edges[j]->des_node->name);
+					else fprintf(fastaout,">%d_%d\n",mod->num,j);
+			}else{
+				fprintf(fastaout,">%s\n",tree->mod->rootname);
+			}
+			mod->mlCodon[j][mod->init_len]='\0';
+			fprintf(fastaout,"%s\n",mod->mlCodon[j]);
+			}
+		}
+		fclose(fastaout);
+	}
 }
 
 

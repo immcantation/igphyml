@@ -955,7 +955,9 @@ typedef struct __Option {
   FILE            *fp_out_boot_stats; /*!< pointer to the statistics file. */
 
   char               *out_stats_file; /*!< name of the statistics file.*/
+  char               *out_seqs_file; /*!< name of the intermediate sequences file.*/
   FILE                 *fp_out_stats;
+  FILE                 *fp_out_seqs;
   int               out_stats_format;
 
   //char               *out_trace_file; /*!< name of the file in which the likelihood of the model is written. */
