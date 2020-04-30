@@ -1398,8 +1398,6 @@ void Print_Tab_Out(option *io){
 		char* s_tree = (char *)Write_Tree(mod->tree);
 		fprintf(f,"\t%s",s_tree);
 		free(cloneid);
-		fflush(f);
-
 	}
 	fprintf(f,"\n");
 
