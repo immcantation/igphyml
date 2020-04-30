@@ -25,7 +25,7 @@ Build trees and estimate model parameters
  
 Move to the ``examples`` subfolder and run::
 
-    BuildTrees.py -d example.tab --outname ex --log ex.log --collapse \
+    BuildTrees.py -d example.tsv --outname ex --log ex.log --collapse \
         --sample 3000 --igphyml --clean all --nproc 1
  
 This command processes an AIRR-formatted dataset of BCR sequences that have been

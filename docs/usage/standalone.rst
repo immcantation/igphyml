@@ -62,7 +62,7 @@ manual.
  
 Move to the ``examples`` subfolder and run, in order::
 
-    BuildTrees.py -d example.tab --outname ex --log ex.log --collapse
+    BuildTrees.py -d example.tsv --outname ex --log ex.log --collapse
 
 This will create the directory ``ex`` and the file
 ``ex_lineages.tsv``. Each ``ex/<clone ID>.fasta`` contains the IMGT

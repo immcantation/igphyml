@@ -33,10 +33,10 @@ alignment files that can be used with IgPhyML. This program will:
 3. Separate clonal groups into separate alignment files (aligned by IMGT site) and information files
 4. Create the repertoire files for this dataset.
 
-Create IgPhyML input files from ``examples/example.tab`` without running IgPhyML::
+Create IgPhyML input files from ``examples/example.tsv`` without running IgPhyML::
  
  cd examples
- BuildTrees.py -d example.tab --outname ex --log ex.log --collapse
+ BuildTrees.py -d example.tsv --outname ex --log ex.log --collapse
  
 Here the ``--collapse`` flag is used to
 collapse identical sequences. This is highly recommended because
@@ -61,7 +61,7 @@ subsample your dataset using the ``--sample`` and ``--minseq`` options,
 which will subsample your dataset to the specified depth and then remove
 all clones below the specified size cutoff::
  
- BuildTrees.py -d example.tab --collapse --sample 5 --minseq 2 --igphyml
+ BuildTrees.py -d example.tsv --collapse --sample 5 --minseq 2 --igphyml
 
 .. _ind-clones:
 
@@ -72,10 +72,10 @@ Often only particular clones are of interest for lineage tree analysis. To
 restrict IgPhyML analysis to particular clones, use the ``--clones`` option::
 
  #Only use sequences from clone 2:
- BuildTrees.py -d example.tab --collapse --clone 2 --igphyml
+ BuildTrees.py -d example.tsv --collapse --clone 2 --igphyml
 
  #Only use sequences from clones 1 and 2:
- BuildTrees.py -d example.tab --collapse --clone 1 2 --igphyml
+ BuildTrees.py -d example.tsv --collapse --clone 1 2 --igphyml
 
 
 
@@ -85,7 +85,7 @@ Cleaning up intermediates
 BuildTrees produces many intermediate files that are usually not useful to the user. 
 To delete them after IgPhyML is run, use ``--clean all``::
  
- BuildTrees.py -d example.tab --log ex.log --collapse --igphyml --clean all
+ BuildTrees.py -d example.tsv --log ex.log --collapse --igphyml --clean all
 
 .. _ncdr3:
 
@@ -97,7 +97,7 @@ selection, it's important to remove
 the CDR3 region to avoid known model biases in estimating :math:`\omega`. To
 do this, use ``--ncdr3``::
  
- BuildTrees.py -d example.tab --log ex.log --collapse --ncdr3 --igphyml
+ BuildTrees.py -d example.tsv --log ex.log --collapse --ncdr3 --igphyml
 
 
 .. _building-lineage-trees:
@@ -109,7 +109,7 @@ If you're simply interested in getting some tree topologies, the fastest
 option is to just use the GY94 and not estimate any parameters
 under HLP19. This is done using the ``--optimize n`` option::
 
- BuildTrees.py -d example.tab --collapse --igphyml --clean all --optimize n
+ BuildTrees.py -d example.tsv --collapse --igphyml --clean all --optimize n
 
 The trees can then be visualized using 
 `igraph and Alakazam <https://alakazam.readthedocs.io/en/stable/vignettes/Lineage-Vignette/#plotting-of-the-lineage-tree>`__. 
@@ -175,7 +175,7 @@ visualized from a different provided dataset::
 
 Alternatively, to estimate ML tree topologies using the HLP19 model, use::
  
- BuildTrees.py -d example.tab --collapse --igphyml --clean all --optimize tlr
+ BuildTrees.py -d example.tsv --collapse --igphyml --clean all --optimize tlr
  
 This will be slower than using the GY94 model but does return meaningful HLP19 parameter estimates.
 These results can be visualized in the same manner using Alakazam.
@@ -230,9 +230,9 @@ lineages, which is also specified by ``e``.
 
 Due to default parameter settings, the following two commands are equivalent::
  
- BuildTrees.py -d example.tab --collapse --igphyml
+ BuildTrees.py -d example.tsv --collapse --igphyml
  
- BuildTrees.py -d example.tab --collapse --igphyml -t e --omega e,e \
+ BuildTrees.py -d example.tsv --collapse --igphyml -t e --omega e,e \
   --motifs WRC_2:0,GYW_0:1,WA_1:2,TW_0:3,SYC_2:4,GRS_0:5 \
   --hotness e,e,e,e,e,e --optimize lr
  
@@ -246,7 +246,7 @@ optimize topology, branch lengths, or model parameters.
 The default setting is to estimate a separate :math:`\omega` parameter for FWR
 and CDR regions. If you want one :math:`\omega` for all regions, use::
 
- BuildTrees.py -d example.tab --collapse --igphyml --omega e
+ BuildTrees.py -d example.tsv --collapse --igphyml --omega e
 
 You can also constrain motifs to have the same mutabilities
 by altering the indexes after the ':' in the ``--motifs`` option.
@@ -256,7 +256,7 @@ the ``--motifs`` option. For example, to estimate a model in
 which WRC/GYW, WA/TW, and SYC/GRS motifs are respectively constrained
 to have the same mutabilities, use::
 
- BuildTrees.py -d example.tab --collapse --igphyml \
+ BuildTrees.py -d example.tsv --collapse --igphyml \
   --motifs WRC_2:0,GYW_0:0,WA_1:1,TW_0:1,SYC_2:2,GRS_0:2 \
   --hotness e,e,e
 
@@ -270,22 +270,22 @@ parameters by adding a 'c' to the parameter specification. For example,
 to estimate a 95% confidence interval for :math:`\omega _{CDR}` 
 but not :math:`\omega _{FWR}`, use::
 
- BuildTrees.py -d example.tab --collapse --ncdr3 --clean all --igphyml --omega e,ce
+ BuildTrees.py -d example.tsv --collapse --ncdr3 --clean all --igphyml --omega e,ce
 
 To estimate a 95% confidence interval for :math:`\omega _{FWR}` 
 but not :math:`\omega _{CDR}`, use::
 
- BuildTrees.py -d example.tab --collapse --ncdr3 --clean all --igphyml --omega ce,e
+ BuildTrees.py -d example.tsv --collapse --ncdr3 --clean all --igphyml --omega ce,e
 
 Any combination of confidence interval specifications can be used
 for the above parameter options. For instance, to estimate confidence 
 intervals for GYW mutability, use::
 
- BuildTrees.py -d example.tab --collapse --ncdr3 --clean all --igphyml --hotness e,ce,e,e,e,e
+ BuildTrees.py -d example.tsv --collapse --ncdr3 --clean all --igphyml --hotness e,ce,e,e,e,e
 
 which is equivalent to::
 
- BuildTrees.py -d example.tab --collapse --ncdr3 --clean all --igphyml \
+ BuildTrees.py -d example.tsv --collapse --ncdr3 --clean all --igphyml \
   --motifs WRC_2:0,GYW_0:1,WA_1:2,TW_0:3,SYC_2:4,GRS_0:5 \
   --hotness e,ce,e,e,e,e
 
@@ -304,7 +304,7 @@ functions `readIgphyml <https://alakazam.readthedocs.io/en/stable/topics/readIgp
 In this example,
 we first run IgPhyML on an example file and estimate confidence intervals on :math:`\omega _{CDR}`::
 
- BuildTrees.py -d example.tab --collapse --nproc 2 --ncdr3 --clean all --igphyml --omega e,ce
+ BuildTrees.py -d example.tsv --collapse --nproc 2 --ncdr3 --clean all --igphyml --omega e,ce
 
 Then, open an ``R`` session, where we load the example result and two other samples. 
 To compare maximum likelihood parameter estimates for all samples, use (run 

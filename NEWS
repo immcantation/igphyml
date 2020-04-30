@@ -1,6 +1,9 @@
 Release Notes
 ===============================================================================
 
++ Added --ASR and --ASRc options to control intermediate sequence reconstruction
+
+
 Version 1.1.0:  Sept. 16, 2019
 -------------------------------------------------------------------------------
 

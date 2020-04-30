@@ -236,7 +236,6 @@ int main(int argc, char **argv){
    Freq_to_UnsFreq(io->mod->base_freq+4, io->mod->uns_base_freq+4, 4, 0);
    Freq_to_UnsFreq(io->mod->base_freq+8, io->mod->uns_base_freq+8, 4, 0);
   }
-
   io->both_sides = 1;
   io->mod->update_eigen=1;
   if(!io->precon){
@@ -246,6 +245,7 @@ int main(int argc, char **argv){
 
   //Estimate confidence intervals using profile likelihood curves
   if(io->CIest>0)CI_Wrapper(io);
+
 
     //ASR, if desired
   if(io->mod->ASR)ASR_Wrapper(io);

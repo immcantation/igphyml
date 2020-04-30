@@ -762,7 +762,7 @@ void createOutFiles(option * io){
     	io->out_seqs_file = mCalloc(T_MAX_FILE,sizeof(char));
     	strcpy(io->out_seqs_file,fragment);
     	strcat(io->out_seqs_file,".fasta");
-    	printf("\n%s",io->out_seqs_file);
+    	//printf("\n%s",io->out_seqs_file);
     	io->fp_out_seqs = Openfile(io->out_seqs_file, io->writemode);
     	//free(filetemp);
     	//free(fragment);

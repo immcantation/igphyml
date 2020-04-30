@@ -1363,6 +1363,7 @@ void Print_Tab_Out(option *io){
 	For(i,io->mod->nmotifs){
 		Print_Param_Header(io->mod->motifs[i],io->mod->hoptci[io->mod->motif_hotness[i]],f);
 	}
+
 	fprintf(f,"\tTREE");
 
 	//print repertoire-wide information
@@ -1397,6 +1398,8 @@ void Print_Tab_Out(option *io){
 		char* s_tree = (char *)Write_Tree(mod->tree);
 		fprintf(f,"\t%s",s_tree);
 		free(cloneid);
+		fflush(f);
+
 	}
 	fprintf(f,"\n");
 
