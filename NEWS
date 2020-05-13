@@ -3,6 +3,15 @@ Release Notes
 
 + Added --ASR and --ASRc options to control intermediate sequence reconstruction
 
+Version 1.1.2:  May 13, 2020
+-------------------------------------------------------------------------------
+
++ Added basic intermediate sequence reconstruction function using `--ASR` or `--ASRc 0.9`
+
+Version 1.1.1:  Jan. 27, 2020
+-------------------------------------------------------------------------------
+
++ Added more general maximum parsimony reconstruction methods.
 
 Version 1.1.0:  Sept. 16, 2019
 -------------------------------------------------------------------------------

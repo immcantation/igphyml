@@ -172,7 +172,7 @@ void finishOptions(option * io)
 
     //set some defaults
     io->mod->primary=1;
-    if(io->mod->ASRcut < 0)io->mod->ASRcut=1.92;
+    if(io->mod->ASRcut < 0)io->mod->ASRcut=0.9;
 
 
     //Check for partition model errors
