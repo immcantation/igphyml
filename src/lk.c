@@ -942,7 +942,6 @@ phydbl logAdd(phydbl a, phydbl b){
 char* printThreeNum(phydbl G1p){
 	char* s1=malloc(4*sizeof(char));
 	int per=roundf(G1p*100);
-	//printf("%d\n",per);
 	if(per == 100)sprintf(s1,"%d",per);
 	else if(per >=10)sprintf(s1," %d",per);
 	else sprintf(s1,"  %d",per);
@@ -969,11 +968,11 @@ void ASR_Wrapper(option* io){
 		model* mod = io->mod_s[j];
 		Get_UPP(tree->noeud[tree->mod->startnode],tree->noeud[tree->mod->startnode]->v[0],tree);
 		mod->mlASR=mCalloc(mod->nedges+1,sizeof(int*));
-		mod->probASR=mCalloc(61,sizeof(phydbl*));
+		//mod->probASR=mCalloc(61,sizeof(phydbl*));
 		mod->mlCodon=mCalloc(mod->nedges+1,sizeof(char*));
-  	  	For(i,61){
+  	  	/*For(i,61){
     	  	  mod->probASR[i]=mCalloc(mod->init_len/3,sizeof(phydbl));
-  	  	}
+  	  	}*/
   	  	For(i,mod->nedges+1){
   	  	  mod->mlASR[i]=mCalloc(mod->init_len/3,sizeof(int));
   		  mod->mlCodon[i]=mCalloc(mod->init_len+1,sizeof(char));
@@ -1014,7 +1013,6 @@ phydbl ASR_Core(t_edge *b, t_tree *tree, t_node *anc, t_node *d)
 	  phydbl inv_site_lk;
 
 	  logbig = LOG((phydbl)BIG);
-	  //printf("logbig: %lf\n",logbig);
 
 	  dim1 = tree->mod->n_catg * tree->mod->ns;
 	  dim2 = tree->mod->ns;
@@ -1035,7 +1033,6 @@ phydbl ASR_Core(t_edge *b, t_tree *tree, t_node *anc, t_node *d)
 	      sum_scale_down = b->sum_scale_left;
 	      sum_scale_down_cat = b->sum_scale_left_cat;
 	     if((d->tax) && (!tree->mod->s_opt->greedy)){
-	    	 //if(site==16){printf("left taxa %d %s\n",b->num,d->name);}
 	    	 exit(EXIT_FAILURE);
 	        ambiguity_check = tree->data->c_seq[d->num]->is_ambigu[site];
 	        if(!ambiguity_check)state = Get_State_From_P_Pars(b->p_lk_tip_l,site*dim2,tree);
@@ -1104,15 +1101,13 @@ phydbl ASR_Core(t_edge *b, t_tree *tree, t_node *anc, t_node *d)
 		  }
 	  }
 
-	  //make copy of probc array
+	   //make copy of probc array
 	  	  phydbl probc_copy[61];
 	  	  For(k,ns){
 	  		  probc_copy[k] = probc[k];
-	  		  //if(tree->curr_site==88)printf("\n%.5f",probc_copy[k]);
 	  	  }
 	  	  qsort(probc_copy, 61, sizeof(phydbl), floatcomp);
 	  	  For(k,ns){
-	  	  	//  printf("\n%.5f",probc_copy[k]);
 	  	  	  cumsum += probc_copy[k];
 	  	  	  if(cumsum >= threshold){
 	  	  		  cutoff = probc_copy[k];
@@ -1120,30 +1115,20 @@ phydbl ASR_Core(t_edge *b, t_tree *tree, t_node *anc, t_node *d)
 	  	  	  }
 	  	  }
 
-	  	  //exit(1);
 	  	  int ncodons=0;
 	  	  For(k,61){
-	  		  /*if(probc[k]==0)probc[k]=-DBL_MAX;
-	  		  else{
-	  			  probc[k]=log(probc[k]);
-	  		  }
-	  		  if(probc[k]>=(log(max)-tree->mod->ASRcut))ncodons++;*/
-	  		  //if(probc[k]/max >= ratio)ncodons++;
 	  		  if(probc[k] >= cutoff)ncodons++;
 	  	  }
-	  	  //printf("\ncutoff: %lf %d %d",cutoff,ncodons,tree->curr_site);
 
 	  	  //get set of codons within the significance threshold
 	  	  char** codonset=malloc(ncodons*sizeof(char*));
 	  	  int c=0;
 	  	  For(k,61){
-	  		  //if(probc[k]>=(log(max)-tree->mod->ASRcut)){
 	  		  if(probc[k] >= cutoff){
 	  			  codonset[c]=mCalloc(4,sizeof(char));
 	  		  	  char* s1=mCalloc(4,sizeof(char));
 	  		  	  Sprint_codon(s1,tree->io->senseCodons[k]);
 	  		  	  strcpy(codonset[c],s1);
-	  		  	  //if(tree->curr_site == 88)printf("\n%d %s %lf %lf",k,s1,probc[k],tree->io->mod->cdr[k]);
 	  		  	  c++;
 	  		  }
 	  	  }
@@ -1274,9 +1259,6 @@ phydbl ASR_Core(t_edge *b, t_tree *tree, t_node *anc, t_node *d)
 	         }
 	     }
 
-	   //printf("site_lk: %lf\n",site_lk);
-	   //printf("tree site lk: %lf\n",tree->site_lk_cat[0]);
-
 	  log_site_lk = LOG(site_lk) - (phydbl)LOG2 * fact_sum_scale;
 	  For(catg,tree->mod->n_catg) tree->log_site_lk_cat[catg][site] = LOG(tree->site_lk_cat[catg]) - (phydbl)LOG2 * fact_sum_scale;
 	  if(isinf(log_site_lk) || isnan(log_site_lk))
@@ -1314,7 +1296,6 @@ phydbl ASR_Core_root(t_edge *b, t_tree *tree, t_node *anc, t_node *d)
 	  phydbl inv_site_lk;
 
 	  logbig = LOG((phydbl)BIG);
-	  //printf("logbig: %lf\n",logbig);
 
 	  dim1 = tree->mod->n_catg * tree->mod->ns;
 	  dim2 = tree->mod->ns;
@@ -1407,20 +1388,17 @@ phydbl ASR_Core_root(t_edge *b, t_tree *tree, t_node *anc, t_node *d)
 	  }
 
 	  tree->mod->mlASR[tree->mod->nedges][site]=maxc;
-	  //tree->mod->probASR[tree->mod->nedges][site]=max;//tree->site_lk_cat[0];
-	  For(i,61){
+	  /*For(i,61){
 		  tree->mod->probASR[i][site]=probc[i];
-	  }
+	  }*/
 
 	  //make copy of probc array
 	  phydbl probc_copy[61];
 	  For(k,ns){
 		  probc_copy[k] = probc[k];
-		  //if(tree->curr_site==88)printf("\n%.5f",probc_copy[k]);
 	  }
 	  qsort(probc_copy, 61, sizeof(phydbl), floatcomp);
 	  For(k,ns){
-	  	  //if(tree->curr_site==0)printf("\n%.5f %.5f",probc_copy[k],probc[k]);
 	  	  cumsum += probc_copy[k];
 	  	  if(cumsum >= threshold){
 	  		  cutoff = probc_copy[k];
@@ -1428,36 +1406,24 @@ phydbl ASR_Core_root(t_edge *b, t_tree *tree, t_node *anc, t_node *d)
 	  	  }
 	  }
 
-	  //exit(1);
 	  int ncodons=0;
 	  For(k,61){
-		  /*if(probc[k]==0)probc[k]=-DBL_MAX;
-		  else{
-			  probc[k]=log(probc[k]);
-		  }
-		  if(probc[k]>=(log(max)-tree->mod->ASRcut))ncodons++;*/
-		  //if(probc[k]/max >= ratio)ncodons++;
 		  if(probc[k] >= cutoff)ncodons++;
 	  }
-	  //printf("\ncutoff: %lf %d %d",cutoff,ncodons,tree->curr_site);
 
 	  //get set of codons within the significance threshold
 	  char** codonset=malloc(ncodons*sizeof(char*));
 	  int c=0;
 	  For(k,61){
-		  //if(probc[k]>=(log(max)-tree->mod->ASRcut)){
 		  if(probc[k] >= cutoff){
 			  codonset[c]=mCalloc(4,sizeof(char));
 		  	  char* s1=mCalloc(4,sizeof(char));
 		  	  Sprint_codon(s1,tree->io->senseCodons[k]);
 		  	  strcpy(codonset[c],s1);
-		  	  //if(tree->curr_site == 88)
-		  	 //	  printf("\n%d %s %lf %lf %lf",k,s1,probc[k],tree->io->mod->cdr[k],tree->mod->root_pi[tree->mod->partIndex[site]][k]);
 		  	  c++;
 		  }
 	  }
 	  For(k,3){
-		// printf("\n%s\t%d\n",codonset[0],ncodons);
 		For(k,3)tree->mod->mlCodon[tree->mod->nedges][site*3+k]=ambigAssign(codonset,ncodons,k);
 	  }
 	  free(probc);
@@ -1570,9 +1536,6 @@ phydbl ASR_Core_root(t_edge *b, t_tree *tree, t_node *anc, t_node *d)
 	 	  site_lk *= (1. - tree->mod->pinvar);
 	         }
 	     }
-
-	   //printf("site_lk: %lf\n",site_lk);
-	   //printf("tree site lk: %lf\n",tree->site_lk_cat[0]);
 
 	  log_site_lk = LOG(site_lk) - (phydbl)LOG2 * fact_sum_scale;
 	  For(catg,tree->mod->n_catg) tree->log_site_lk_cat[catg][site] = LOG(tree->site_lk_cat[catg]) - (phydbl)LOG2 * fact_sum_scale;

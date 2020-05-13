@@ -755,14 +755,16 @@ void createOutFiles(option * io){
     	strcpy(io->out_stats_file,io->outname);
     }
     io->fp_out_stats = Openfile(io->out_stats_file, io->writemode);
-   // printf("\n STATS %s",io->out_stats_file);
     if(io->mod->ASR){
     	char* filetemp = strdup(io->out_stats_file);
     	char* fragment = strsep(&filetemp, ".");
     	io->out_seqs_file = mCalloc(T_MAX_FILE,sizeof(char));
     	strcpy(io->out_seqs_file,fragment);
-    	strcat(io->out_seqs_file,".fasta");
-    	//printf("\n%s",io->out_seqs_file);
+    	if(io->append_run_ID){
+    		 strcat(io->out_seqs_file, "_");
+    		 strcat(io->out_seqs_file, io->run_id_string);
+    	}
+    	strcat(io->out_seqs_file,"_asr.fasta");
     	io->fp_out_seqs = Openfile(io->out_seqs_file, io->writemode);
     	//free(filetemp);
     	//free(fragment);

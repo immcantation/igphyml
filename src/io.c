@@ -1379,19 +1379,24 @@ void Print_Tab_Out(option *io){
 	fprintf(f,"\nREPERTOIRE\t%d\t%.4f\t%.4f\t%.4f",nseq,msite,treel,io->replnL);
 	Print_Params_Tab(io->mod,f);
 	fprintf(f,"\t`%s`",io->command); //command is repertoire-wide "tree"
+  
 
 	//print information for all subtrees
 	For(i,io->ntrees){
 		model* mod = io->mod_s[i];
+		// if root formatted like <clone>_GERM, get clone id
+		// otherwise just use root as clone id
 		char* root = strdup(mod->rootname);
 		char* cloneid = mCalloc(T_MAX_LABEL,sizeof(char));
 		char* fragment = strsep(&root, "_");
 		strcat(cloneid,fragment);
-		fragment = strsep(&root, "_");
-		while(strcmp(fragment,"GERM") != 0){
-			strcat(cloneid,"_");
-			strcat(cloneid,fragment);
+		if(strcmp(fragment,mod->rootname) != 0){
 			fragment = strsep(&root, "_");
+			while(strcmp(fragment,"GERM") != 0){
+				strcat(cloneid,"_");
+				strcat(cloneid,fragment);
+				fragment = strsep(&root, "_");
+			}
 		}
 		fprintf(f,"\n%s\t%d\t%d\t%.4f\t%.4f",cloneid,mod->n_otu-1,mod->tree->n_pattern,Get_Tree_Size(io->tree_s[i]),mod->tree->c_lnL);
 		Print_Params_Tab(mod,f);
@@ -1421,7 +1426,7 @@ void Print_Tab_Out(option *io){
 		}
 		fclose(fastaout);
 
-		FILE* root_out = Openfile("root.tsv",1);
+		/*FILE* root_out = Openfile("root.tsv",1);
 		int site;
 		fprintf(root_out,"site\tcodon\tprob\n");
 		For(site,io->tree_s[0]->mod->init_len/3){
@@ -1430,7 +1435,7 @@ void Print_Tab_Out(option *io){
 				Sprint_codon(s1,io->senseCodons[i]);
 				fprintf(root_out,"%d\t%s\t%lf\n",site,s1,io->tree_s[0]->mod->probASR[i][site]);
 			}
-		}
+		}*/
 	}
 }
 
