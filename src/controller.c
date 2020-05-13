@@ -236,7 +236,6 @@ void finishOptions(option * io)
    	if(io->mod->whichrealmodel==HLP17 && io->mod->s_opt->opt_state_freq==YES){
    		io->repwidefreqs=1;
    	}
-
    	    //set thread counts
 #if defined OMP || defined BLAS_OMP
            	omp_set_dynamic(0);
@@ -247,6 +246,7 @@ void finishOptions(option * io)
            		io->threads=1;
            	}
 #endif
+
 }
 
 
@@ -746,7 +746,7 @@ void createOutFiles(option * io){
         strcat(io->out_stats_file, io->run_id_string);
         if(io->out_stats_format == OUTTXT)strcat(io->out_stats_file, ".txt");
         else strcat(io->out_stats_file, ".tab");
-        if(io->mod->ASR == OUTTXT)strcat(io->out_stats_file, ".txt");
+        //if(io->mod->ASR == OUTTXT)strcat(io->out_stats_file, ".txt");
     }else{
     	if(io->out_stats_format == OUTTXT)strcat(io->out_stats_file, "_igphyml_stats.txt");
     	else strcat(io->out_stats_file, "_igphyml_stats.tab");
@@ -755,7 +755,7 @@ void createOutFiles(option * io){
     	strcpy(io->out_stats_file,io->outname);
     }
     io->fp_out_stats = Openfile(io->out_stats_file, io->writemode);
-
+   // printf("\n STATS %s",io->out_stats_file);
     if(io->mod->ASR){
     	char* filetemp = strdup(io->out_stats_file);
     	char* fragment = strsep(&filetemp, ".");

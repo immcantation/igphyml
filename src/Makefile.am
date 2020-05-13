@@ -7,9 +7,9 @@
 # library directory. Examples are given below - if you've installed
 # llvm through homebrew, yours will probably look similar.
 
-#CC=/usr/local/Cellar/llvm/5.0.1/bin/clang
-#MACOMP=/usr/local/Cellar/llvm/5.0.1/lib/clang/5.0.1/include/omp.h
-#MACLLVM=/usr/local/Cellar/llvm/5.0.1/lib
+#CC=/usr/local/Cellar/llvm/10.0.0_3/bin/clang
+#MACOMP=/usr/local/Cellar/llvm/10.0.0_3/lib/clang/5.0.1/include/omp.h
+#MACLLVM=/usr/local/Cellar/llvm/10.0.0_3/lib
 
 DEFS=-DUNIX -D$(PROG) -DDEBUG -D$(OPT)
 

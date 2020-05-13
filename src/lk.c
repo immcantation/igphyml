@@ -969,13 +969,14 @@ void ASR_Wrapper(option* io){
 		model* mod = io->mod_s[j];
 		Get_UPP(tree->noeud[tree->mod->startnode],tree->noeud[tree->mod->startnode]->v[0],tree);
 		mod->mlASR=mCalloc(mod->nedges+1,sizeof(int*));
-		mod->probASR=mCalloc(mod->nedges+1,sizeof(phydbl*));
+		mod->probASR=mCalloc(61,sizeof(phydbl*));
 		mod->mlCodon=mCalloc(mod->nedges+1,sizeof(char*));
+  	  	For(i,61){
+    	  	  mod->probASR[i]=mCalloc(mod->init_len/3,sizeof(phydbl));
+  	  	}
   	  	For(i,mod->nedges+1){
   	  	  mod->mlASR[i]=mCalloc(mod->init_len/3,sizeof(int));
-  	  	  mod->probASR[i]=mCalloc(mod->init_len/3,sizeof(phydbl));
   		  mod->mlCodon[i]=mCalloc(mod->init_len+1,sizeof(char));
-
   	  	  if(i<mod->nedges)ASR_At_Given_Edge(tree->t_edges[i],tree,0);
   	  	  else ASR_At_Given_Edge(tree->noeud[tree->mod->startnode]->b[0],tree,1);
   	  	}
@@ -1307,7 +1308,7 @@ phydbl ASR_Core_root(t_edge *b, t_tree *tree, t_node *anc, t_node *d)
 	  int dim1,dim2,dim3;
 	  int *sum_scale_down_cat,*sum_scale_upp_cat,*sum_scale_down,*sum_scale_upp;
 	  phydbl multiplier;
-	  int exponent, piecewise_exponent;
+	  int exponent, piecewise_exponent,i;
 	  phydbl tmp;
 	  phydbl logbig;
 	  phydbl inv_site_lk;
@@ -1406,7 +1407,10 @@ phydbl ASR_Core_root(t_edge *b, t_tree *tree, t_node *anc, t_node *d)
 	  }
 
 	  tree->mod->mlASR[tree->mod->nedges][site]=maxc;
-	  tree->mod->probASR[tree->mod->nedges][site]=max;//tree->site_lk_cat[0];
+	  //tree->mod->probASR[tree->mod->nedges][site]=max;//tree->site_lk_cat[0];
+	  For(i,61){
+		  tree->mod->probASR[i][site]=probc[i];
+	  }
 
 	  //make copy of probc array
 	  phydbl probc_copy[61];

@@ -68,9 +68,11 @@ int main(int argc, char **argv){
 	  "\n. This is mostly due to laziness, so feel free to complain to Ken about this."
 	  "\n. In the meantime, try running -m HLP17 --hotness 0 -f empirical --rootpi instead of -m GY\n\n");
   }
-  
+
   //declare data structures for upper model
   Make_Model_Complete(io->mod);
+   //   printf("\n state_freq %d",io->mod->s_opt->opt_state_freq);
+
 
   //read in each dataset and set up respective model
   int last_otu=0;
@@ -124,6 +126,7 @@ int main(int argc, char **argv){
        	}
     }
 
+
     //declare data structures for sub-model
     Make_Model_Complete(mod);
     Set_Model_Name(mod);
@@ -131,7 +134,7 @@ int main(int argc, char **argv){
     //process data and count codons
     cdata = Compact_Data(mod->data,io,mod);
     Free_Seq(mod->data,cdata->n_otu);
-	
+
     if(cdata) Check_Ambiguities(cdata,mod->datatype,mod->state_len);
     else{
     	PhyML_Printf("\n. Err in file %s at line %d\n",__FILE__,__LINE__);
@@ -213,7 +216,6 @@ int main(int argc, char **argv){
   //Set up base frequencies and additional data structures
   if(!io->precon)Setup_Repertoire_Models(io);
 
-
   //Do topology and parameter estimation if requested
   if(!io->testInitTree && !io->lkExperiment && !io->precon){
   	if(tree->mod->s_opt->opt_topo){ //Estimate topology?
@@ -236,6 +238,7 @@ int main(int argc, char **argv){
    Freq_to_UnsFreq(io->mod->base_freq+4, io->mod->uns_base_freq+4, 4, 0);
    Freq_to_UnsFreq(io->mod->base_freq+8, io->mod->uns_base_freq+8, 4, 0);
   }
+
   io->both_sides = 1;
   io->mod->update_eigen=1;
   if(!io->precon){

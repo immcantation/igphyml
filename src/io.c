@@ -1402,7 +1402,6 @@ void Print_Tab_Out(option *io){
 	fprintf(f,"\n");
 
 	if(io->mod->ASR == 1){
-		//printf("\n%s",io->out_seqs_file);
 		FILE* fastaout = io->fp_out_seqs;
 		For(i,io->ntrees){
 			model* mod = io->mod_s[i];
@@ -1421,6 +1420,17 @@ void Print_Tab_Out(option *io){
 			}
 		}
 		fclose(fastaout);
+
+		FILE* root_out = Openfile("root.tsv",1);
+		int site;
+		fprintf(root_out,"site\tcodon\tprob\n");
+		For(site,io->tree_s[0]->mod->init_len/3){
+			For(i,61){
+				char s1[4];
+				Sprint_codon(s1,io->senseCodons[i]);
+				fprintf(root_out,"%d\t%s\t%lf\n",site,s1,io->tree_s[0]->mod->probASR[i][site]);
+			}
+		}
 	}
 }
 

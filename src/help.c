@@ -68,13 +68,9 @@ void Usage()
     
     //! Modified by Louis and Marcelo 25.10.2012
     PhyML_Printf("\n%sIgPhyML %s\n"
-    		     "\t%sKB Hoehn, G Lunter, OG Pybus.\n"
-    			 "%s\tPlease cite: 10.1534/genetics.116.196303\n",BOLD,VERSION,BOLD,FLAT);
-   // 			 "\t%sBased off of:\n"
-   //              "\t- CodonPhyML - MS Zanetti, M Gil, S Zoller, LD Plessis, M Anisimova.\n"
-   //              "\t- PhyML - S Guindon, O Gascuel\n",BOLD,VERSION,FLAT,BOLD,FLAT);
-    PhyML_Printf("%s\n\tFor latest version: https://bitbucket.org/kbhoehn/igphyml\n",BOLD);
-    PhyML_Printf("%s\n\tFor further detail and usage information see:\n\thttps://changeo.readthedocs.io/en/latest/examples/igphyml.html\n",BOLD);
+    		     "\t%sKB Hoehn, JA Vander Heiden, JQ Zhou, G Lunter, OG Pybus, SH Kleinstein.\n"
+    			 "%s\tPlease cite: https://doi.org/10.1073/pnas.1906020116 and 10.1534/genetics.116.196303\n",BOLD,VERSION,BOLD,FLAT);
+    PhyML_Printf("%s\n\tFor detail and usage information: https://igphyml.readthedocs.io\n",BOLD);
     
 
     PhyML_Printf("%s\nUsage:",BOLD);
