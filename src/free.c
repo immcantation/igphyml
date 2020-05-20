@@ -383,7 +383,7 @@ void Free_Model_Complete(model *mod)
 	      free(mod->A2_part[0]);
 	    }
 
-	    if(mod->io->expm==SSPADE){
+	    if(mod->io->expm==SSPADE && !mod->io->precon){
 	    for(modeli=0;modeli<mod->nomega_part;modeli++){
 	      if(mod->optDebug)printf("about to do this %d %d %d %d %d\n",modeli,mod->n_w_catg,mod->ns,mod->nomega_part,mod->nomega_part);
 	      if(mod->optDebug)printf("%lf\t%lf\t%lf\n",mod->U_part[modeli][0],mod->V_part[modeli][0],mod->A4_part[modeli][0]);
@@ -442,7 +442,7 @@ void Free_Model_Complete(model *mod)
 	    		free(mod->hotspotcmps[modeli]);
 	    	}
 	    }
-	    if(mod->whichrealmodel <= HLP17){
+	    if(mod->whichrealmodel <= HLP17 && !mod->io->precon){
 	    	free(mod->hotspotcmps);
 	      	free(mod->Bmat);
 	     	free(mod->rootname);
@@ -458,7 +458,7 @@ void Free_Model_Complete(model *mod)
 	       	free(mod->hoptuci);
 	       	free(mod->hoptlci);
 	    }
-	    if(mod->freq_model >= ROOT){
+	    if(mod->freq_model >= ROOT && !mod->io->precon){
 	      For(modeli,mod->nomega_part)free(mod->root_pi[modeli]);
 	      free(mod->root_pi);
 	    }

@@ -292,7 +292,7 @@ int main(int argc, char **argv){
   Print_Time_Info(t_beg,t_end);
 
   For(i,io->ntrees){
-	  Free_Tree(io->tree_s[i]);
+	  if(!io->precon)Free_Tree(io->tree_s[i]);
 	  Free_Model(io->mod_s[i]);
 	  free(io->datafs[i]);
 	  free(io->treefs[i]);
