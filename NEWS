@@ -1,7 +1,10 @@
 Release Notes
 ===============================================================================
 
-+ Added --ASR and --ASRc options to control intermediate sequence reconstruction
+Version 1.1.3:  May 20, 2020
+-------------------------------------------------------------------------------
+
++ Small bug fixes in preparation for Immcantation 4.0.0 release
 
 Version 1.1.2:  May 13, 2020
 -------------------------------------------------------------------------------

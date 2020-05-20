@@ -15,6 +15,7 @@
 import sys
 import os
 import sphinx_rtd_theme
+import datetime
 from unittest.mock import MagicMock
 
 sys.path.insert(0, os.path.abspath('..'))
@@ -179,3 +180,5 @@ intersphinx_mapping = {'https://docs.python.org/': None}
 
 # If true, `todo` and `todoList` produce output, else they produce nothing.
 todo_include_todos = True
+
+copyright = str(datetime.datetime.now().year) + ', Kenneth B. Hoehn'

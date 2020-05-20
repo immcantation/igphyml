@@ -962,7 +962,7 @@ int floatcomp(const void* elem1, const void* elem2)
  * */
 void ASR_Wrapper(option* io){
 	int i,j;
-	printf("\n\nDoing ASR - how'd you know IgPhyML could do this?\nIt's under development. Email Ken with questions or feedback\n");
+	//printf("\n\nDoing ASR - how'd you know IgPhyML could do this?\nIt's under development. Email Ken with questions or feedback\n");
 	For(j,io->ntrees){
 		t_tree* tree=io->tree_s[j];
 		model* mod = io->mod_s[j];

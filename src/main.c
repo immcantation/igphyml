@@ -128,7 +128,7 @@ int main(int argc, char **argv){
 
 
     //declare data structures for sub-model
-    Make_Model_Complete(mod);
+    //Make_Model_Complete(mod);
     Set_Model_Name(mod);
 
     //process data and count codons
@@ -290,6 +290,24 @@ int main(int argc, char **argv){
   #endif
     
   Print_Time_Info(t_beg,t_end);
+
+  For(i,io->ntrees){
+	  Free_Tree(io->tree_s[i]);
+	  Free_Model(io->mod_s[i]);
+	  free(io->datafs[i]);
+	  free(io->treefs[i]);
+	  free(io->rootids[i]);
+	  free(io->partfs[i]);
+  }
+  Free_Model(io->mod);
+  free(io->mod_s);
+  free(io->tree_s);
+  free(io->treefs);
+  free(io->datafs);
+  free(io->rootids);
+  free(io->partfs);
+  free(io->command);
+  Free_Input(io);
     
   return 0;
 }

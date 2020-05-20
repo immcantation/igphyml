@@ -2327,6 +2327,7 @@ model *Copy_Partial_Model(model *ori, int num){
   cpy->freqsTo=ori->freqsTo;
   cpy->polytomyresolve = ori->polytomyresolve;
   cpy->maxtrunkl = ori->maxtrunkl;
+  cpy->freq_model   = ori->freq_model;
 
   cpy->in_tree_file = (char *)mCalloc(T_MAX_FILE,sizeof(char));
   cpy->in_align_file = (char *)mCalloc(T_MAX_FILE,sizeof(char));
@@ -2357,9 +2358,6 @@ model *Copy_Partial_Model(model *ori, int num){
   cpy->constB = ori->constB;
   cpy->omegaSiteVar = ori->omegaSiteVar;
   cpy->nomega_part = ori->nomega_part;
-
-  //cpy->wPriorShape = ori->wPriorShape;
-  //cpy->wPriorMean = ori->wPriorMean;
 
   cpy->omega_part=mCalloc(ori->nomega_part,sizeof(phydbl));
   cpy->omega_part_opt=mCalloc(ori->nomega_part,sizeof(int));
@@ -2429,7 +2427,6 @@ model *Copy_Partial_Model(model *ori, int num){
 
   if(ori->io->datatype==CODON){
     int j;
-    cpy->freq_model   = ori->freq_model;
     cpy->genetic_code = ori->genetic_code;
     cpy->modelname=mCalloc(100,sizeof(char));
     strcpy(cpy->modelname,ori->modelname);
@@ -2452,6 +2449,36 @@ model *Copy_Partial_Model(model *ori, int num){
     	  cpy->Bmat = (phydbl *)mCalloc(3721,sizeof(phydbl));
     	  setUpHLP17(ori->io,cpy);
     }
+    if(!(ori->s_opt->user_state_freq)) {  //was io-> mod Ken 9/1/2018
+       switch(ori->freq_model) {
+          case F1XSENSECODONS:                                                                                 //!< Added by Marcelo.
+          case F1X4:
+          case F3X4:
+          case CF3X4: //Get_Base_Freqs_CODONS_FaXb(cdata_tmp, data, mod->freq_model, mod);                //!< Added by Marcelo. was io-> mod Ken 9/1/2018
+        	  For(i,ori->num_base_freq){
+        		  cpy->baseCounts[i] = ori->baseCounts[i];
+        		  cpy->base_freq[i] = ori->base_freq[i];
+        	  }
+             break;
+          case FMODEL:
+             break;
+          case ROOT: case MROOT:{
+          	 int modeli;
+          	 For(modeli,ori->nomega_part){
+          		 //Get_Base_Freqs_CODONS_FaXb(cdata_tmp, data, CF3X4, mod);
+          		 For(i,ori->ns){
+          			cpy->root_pi[modeli][i] = ori->root_pi[modeli][i];
+          		 }
+           	 }
+             break;
+          }
+          default:
+            PhyML_Printf("\n. Frequency model not implemented.\n",__FILE__,__LINE__);
+            Warn_And_Exit("");
+            break;
+          }
+    }
+
     if(ori->optDebug)printf("here\n");
   }
 
@@ -2461,6 +2488,7 @@ model *Copy_Partial_Model(model *ori, int num){
 
   return cpy;
 }
+
 
 
 /*********************************************************/

@@ -44,6 +44,9 @@ void Free_All_Edges_Light(t_tree *tree)
   int i;
   For(i,2*tree->n_otu-2) 
     if(tree->t_edges[i])
+       /*if(tree->io->mod->s_opt->opt_subst_param ||
+    	    		  tree->io->mod->s_opt->opt_bl || !tree->io->precon)
+    	   	Free_Edge_Lk(tree,tree->t_edges[i]);*/
       Free_Edge(tree->t_edges[i]);
   free(tree->t_edges);
 }
@@ -309,7 +312,7 @@ void Free_Node_Lk(t_node *n)
 
 void Free_Edge_Lk(t_tree *tree, t_edge *b)
 {
-  
+  int i;
   free(b->nni);
 
   free(b->div_post_pred_left);
@@ -336,68 +339,148 @@ void Free_Edge_Lk(t_tree *tree, t_edge *b)
   free(b->sum_scale_rght_cat);
 
   free(b->Pij_rr);
+
+  For(i,tree->n_pattern){
+  	  if(b->anc_node != NULL)free(b->upp[i]);
+  }
+  free(b->upp);
+  if(b->bPmat_part != NULL){
+  For(i,tree->mod->nomega_part){
+	  if(b->anc_node != NULL){
+		  free(b->bPmat_part[i]);
+	  }
+  }
+  free(b->bPmat_part);
+  }
 }
 
 /*********************************************************/
 
 void Free_Model_Complete(model *mod)
 {
-  if(mod->optDebug)printf("freeing model\n");
-  Free_Eigen(mod->eigen); 
-  free(mod->gamma_r_proba);
-  free(mod->gamma_rr);
-  //free(mod->qmat);
-  free(mod->Pij_rr);
-  free(mod->pi_unscaled);                           
-  free(mod->pi);                                   
-  if(mod->n_rr_branch)
-  {
-    free(mod->rr_branch);                           
-    free(mod->p_rr_branch);                         
-  }
-  if(mod->io->datatype==CODON) //!< Added by Marcelo. 
-  {
-    free(mod->prob_omegas_uns);                   
-    free(mod->base_freq);                           
-    free(mod->uns_base_freq);                        
-    
-    if(mod->io->heuristicExpm)
-    {
-      if(mod->optDebug)printf("freeing during heuristic expm?");
-      free(mod->A2_part[0]);
-    }
-    
-    if(mod->io->expm==SSPADE){
-    int modeli; //Added by Ken 22/8
-    for(modeli=0;modeli<mod->nomega_part;modeli++){
-      if(mod->optDebug)printf("about to do this %d %d %d %d %d\n",modeli,mod->n_w_catg,mod->ns,mod->nomega_part,mod->nomega_part);
-      if(mod->optDebug)printf("%lf\t%lf\t%lf\n",mod->U_part[modeli][0],mod->V_part[modeli][0],mod->A4_part[modeli][0]);
-      free(mod->U_part[modeli]);
-      free(mod->V_part[modeli]);
-      free(mod->ipiv_part[modeli]);
-      free(mod->A2_part[modeli]);
-      free(mod->A4_part[modeli]);
-      free(mod->A6_part[modeli]);
-      free(mod->A8_part[modeli]);
-      free(mod->matAux_part[modeli]);
-      free(mod->Apowers_part[modeli]);
-      free(mod->A0_part[modeli]);
-      free(mod->qmat_buff_part[modeli]);
-      if(mod->optDebug)printf("about to do this\n");
-     }
-    }
-    
-    free(mod->qmatScaled);
-    free(mod->mr_w);
-    
-//    if(mod->whichmodel<-27 && mod->whichmodel>-38) //!< Added by Marcelo. 
-//    {
-//      int i;
-//      For (i,64) free(mod->userRates[i]);
-//      free(mod->userRates);
-//      free(mod->userfreq);
-//    }
-  }
+	  int modeli,i,j; //Added by Ken 22/8
+	  if(mod->optDebug)printf("freeing model\n");
+	  Free_Eigen(mod->eigen);
+	  free(mod->gamma_r_proba);
+	  free(mod->gamma_rr);
+	  free(mod->Pij_rr);
+	  free(mod->pi_unscaled);
+	  free(mod->pi);
+	  if(mod->n_rr_branch)
+	  {
+	    free(mod->rr_branch);
+	    free(mod->p_rr_branch);
+	  }
+	  if(mod->io->datatype==CODON) //!< Added by Marcelo.
+	  {
+	    free(mod->prob_omegas_uns);
+	    free(mod->base_freq);
+	    free(mod->uns_base_freq);
+
+	    if(mod->io->heuristicExpm)
+	    {
+	      if(mod->optDebug)printf("freeing during heuristic expm?");
+	      free(mod->A2_part[0]);
+	    }
+
+	    if(mod->io->expm==SSPADE){
+	    for(modeli=0;modeli<mod->nomega_part;modeli++){
+	      if(mod->optDebug)printf("about to do this %d %d %d %d %d\n",modeli,mod->n_w_catg,mod->ns,mod->nomega_part,mod->nomega_part);
+	      if(mod->optDebug)printf("%lf\t%lf\t%lf\n",mod->U_part[modeli][0],mod->V_part[modeli][0],mod->A4_part[modeli][0]);
+	      free(mod->U_part[modeli]);
+	      free(mod->V_part[modeli]);
+	      free(mod->ipiv_part[modeli]);
+	      free(mod->A0_part[modeli]);
+	      free(mod->A2_part[modeli]);
+	      free(mod->A4_part[modeli]);
+	      free(mod->A6_part[modeli]);
+	      free(mod->A8_part[modeli]);
+	      free(mod->matAux_part[modeli]);
+	      free(mod->Apowers_part[modeli]);
+	      free(mod->qmat_buff_part[modeli]);
+	      free(mod->qmat_part[modeli]);
+	      free(mod->Pmat_part[modeli]);
+	      //free(mod->partNames[modeli]);
+	      if(mod->freq_model==MROOT){
+	    	  free(mod->mid_pi[modeli]);
+	      }
+	      if(mod->optDebug)printf("about to do this\n");
+	      if(mod->constB){
+	    	  For(i,61){
+	    		  For(j,61){
+	    			  free(mod->cBmat[modeli][i*61+j]);
+	    		  }
+	    	  }
+	      }
+	      if(mod->constB)free(mod->cBmat[modeli]);
+	     }
+	   if(mod->constB)free(mod->cBmat);
+	    if(mod->freq_model==MROOT)free(mod->mid_pi);
+	    free(mod->partNames);
+	    free(mod->partIndex);
+	    free(mod->qmat_part);
+	    free(mod->Pmat_part);
+	    free(mod->qmat_buff_part);
+	    free(mod->U_part);
+	    free(mod->V_part);
+	    free(mod->ipiv_part);
+	    free(mod->A0_part);
+	    free(mod->A2_part);
+	    free(mod->A4_part);
+	    free(mod->A6_part);
+	    free(mod->A8_part);
+	    free(mod->Apowers_part);
+	    free(mod->matAux_part);
+	    free(mod->omega_part);
+	    free(mod->omega_part_ci);
+	    free(mod->omega_part_uci);
+	    free(mod->omega_part_lci);
+	    }
+	    //if upper model, remove hotspot list
+	    if(mod->primary && mod->whichrealmodel <= HLP17){
+	    	For(modeli, mod->nmotifs){
+	    		free(mod->hotspotcmps[modeli]);
+	    	}
+	    }
+	    if(mod->whichrealmodel <= HLP17){
+	    	free(mod->hotspotcmps);
+	      	free(mod->Bmat);
+	     	free(mod->rootname);
+	       	free(mod->hotness);
+	      	free(mod->motif_hotness);
+	       	//free(mod->hotnessstring);
+	       	free(mod->aamodel);
+	       	free(mod->partfile);
+	       	//free(mod->motifstring);
+	       	free(mod->ambigfile);
+	       	free(mod->hoptindex);
+	       	free(mod->hoptci);
+	       	free(mod->hoptuci);
+	       	free(mod->hoptlci);
+	    }
+	    if(mod->freq_model >= ROOT){
+	      For(modeli,mod->nomega_part)free(mod->root_pi[modeli]);
+	      free(mod->root_pi);
+	    }
+	    free(mod->qmatScaled);
+	    free(mod->mr_w);
+	    free(mod->in_align_file);
+	    free(mod->in_tree_file);
+	    free(mod->preconfile);
+	    //free(mod->structTs_and_Tv);
+	    //free(mod->baseCounts);
+	    //free(mod->out_trace_stats_file);
+	    //free(mod->out_trace_tree_file);
+	//    if(mod->whichmodel<-27 && mod->whichmodel>-38) //!< Added by Marcelo.
+	//    {
+	//      int i;
+	//      For (i,64) free(mod->userRates[i]);
+	//      free(mod->userRates);
+	//      free(mod->userfreq);
+	//    }
+
+	  }
+
   
  
 }
