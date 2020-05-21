@@ -23,7 +23,7 @@ sys.path.insert(0, os.path.abspath('..'))
 # -- Project information -----------------------------------------------------
 
 project = 'igphyml'
-copyright = '2019, Kenneth B. Hoehn'
+copyright = str(datetime.datetime.now().year) + ', Kleinstein Lab, Yale University, and Kenneth B. Hoehn'
 author = 'Kenneth B. Hoehn'
 
 # The short X.Y version
@@ -180,5 +180,3 @@ intersphinx_mapping = {'https://docs.python.org/': None}
 
 # If true, `todo` and `todoList` produce output, else they produce nothing.
 todo_include_todos = True
-
-copyright = str(datetime.datetime.now().year) + ', Kenneth B. Hoehn'
