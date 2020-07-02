@@ -15,8 +15,8 @@ The simplest way to use IgPhyML is via the
 Briefly, all the example commands on rest of this site can be run by first installing Docker and
 downloading the Immcantation Docker image. In a terminal, enter::
 
- # pull Immcantation development Docker image
- docker pull kleinstein/immcantation:devel
+ # pull Immcantation Docker image
+ docker pull immcantation/suite:4.0.0
 
  # clone IgPhyML repository to get example files
  git clone https://bitbucket.org/kleinstein/igphyml
@@ -27,10 +27,10 @@ Then, move to the examples directory and load it into the Docker image depending
  cd igphyml/examples
 
  # load Docker, Linux/ Mac OS X:
- docker run -it --workdir /data -v $(pwd):/data:z kleinstein/immcantation:devel bash
+ docker run -it --workdir /data -v $(pwd):/data:z immcantation/suite:4.0.0 bash
 
  # or load Docker, Windows:
- docker run -it --workdir /data -v %cd%:/data:z kleinstein/immcantation:devel bash
+ docker run -it --workdir /data -v %cd%:/data:z immcantation/suite:4.0.0 bash
 
 Note for some operating systems it may be necessary to have 
 `Docker Desktop <https://hub.docker.com/editions/community/docker-ce-desktop-windows>`__
@@ -39,16 +39,16 @@ running before entering these commands. Once inside the container, check everyth
  # should give example.fasta  example.tab  part.example.txt
  ls
 
- # should be IgPhyML 1.0.7 201902.19
+ # should be IgPhyML 1.1.3 052020
  igphyml --version
 
 More generally, use this command to load the Docker image on the current directory of a Linux/Max OS X system::
 
- docker run -it --workdir /data -v $(pwd):/data:z kleinstein/immcantation:devel bash
+ docker run -it --workdir /data -v $(pwd):/data:z immcantation/suite:4.0.0 bash
 
 or for a Windows Command Prompt::
 
- docker run -it --workdir /data -v %cd%:/data:z kleinstein/immcantation:devel bash
+ docker run -it --workdir /data -v %cd%:/data:z immcantation/suite:4.0.0 bash
 
 For further information on using the Immcantation Docker image, see 
 `Immcantation Docker image <https://immcantation.readthedocs.io/en/stable/docker/intro.html>`__.
