@@ -81,7 +81,7 @@ On Linux operating systems, you can usually just run::
 If you have BLAS and LAPACK installed,
 which provide libraries for faster and more accurate matrix exponentiation
 operations. In Ubuntu Linux, these are provided in the packages
-``libblas-dev`` and ``liblapack-dev``. Other distros probably have
+``libblas-dev``, ``liblapack-dev``, and ``libatlas-base-dev``. Other distros probably have
 similar package names. To compile IgPhyML with BLAS and LAPACK 
 support, run::
  
