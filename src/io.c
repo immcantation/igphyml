@@ -1359,7 +1359,17 @@ void Print_Tab_Out(option *io){
 	else if(io->mod->nomega_part==2){
 		Print_Param_Header("OMEGA_FWR",io->mod->omega_part_ci[0],f);
 		Print_Param_Header("OMEGA_CDR",io->mod->omega_part_ci[1],f);
-	}
+	}else if(io->mod->nomega_part==3){
+    Print_Param_Header("OMEGA_1",io->mod->omega_part_ci[0],f);
+    Print_Param_Header("OMEGA_2",io->mod->omega_part_ci[1],f);
+    Print_Param_Header("OMEGA_3",io->mod->omega_part_ci[2],f);
+  }
+  else if(io->mod->nomega_part==4){
+    Print_Param_Header("OMEGA_1",io->mod->omega_part_ci[0],f);
+    Print_Param_Header("OMEGA_2",io->mod->omega_part_ci[1],f);
+    Print_Param_Header("OMEGA_3",io->mod->omega_part_ci[2],f);
+    Print_Param_Header("OMEGA_4",io->mod->omega_part_ci[3],f);
+  }
 	For(i,io->mod->nmotifs){
 		Print_Param_Header(io->mod->motifs[i],io->mod->hoptci[io->mod->motif_hotness[i]],f);
 	}

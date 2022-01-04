@@ -259,8 +259,6 @@ int main(int argc, char **argv){
 	  Prepars_Wrapper(io);
 
   t_tree* t = io->tree_s[0];
-  /*Init_Class_Tips(tree,io->precon);
-  printf("pars: %d\n",Fill_Sankoff(tree->noeud[tree->mod->startnode],tree,1));*/
 
   #if defined OMP || defined BLAS_OMP
   t_end=omp_get_wtime();
@@ -273,7 +271,7 @@ int main(int argc, char **argv){
   }else{
 	  Print_IgPhyML_Out(io);
   }
-  //exit(1);
+
   //parsimony reconstructions, if desired
   if(io->precon)Pars_Reconstructions(io);
 

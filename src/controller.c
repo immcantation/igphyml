@@ -143,6 +143,8 @@ struct option longopts[] =
 	{"polyresolve",		  required_argument,NULL,181},  //!<Added by Ken
 	{"maxtrunkl",		  required_argument,NULL,182},  //!<Added by Ken
   {"outname",     required_argument,NULL,183},  //!<Added by Ken
+  {"splitfreqs", no_argument,NULL,184},  //!<Added by Ken, split frequencies by partition?
+  {"force_resolve", no_argument,NULL,185},  //!<Added by Ken, split frequencies by partition?
     {0,0,0,0}
 };
 
@@ -452,6 +454,7 @@ void setUpHLP17(option* io, model *mod){
        		   mod->omega_part_uci[c] = io->mod->omega_part_uci[c];
        	   }*/
        }
+       //printf("\nnomega: %d\n",io->mod->nomega_part);
        For(c,mod->nomega_part)mod->omega_part[c]=0.4;
        For(c,nsite)mod->partIndex[c]=-1;
 
@@ -552,8 +555,17 @@ void setUpHLP17(option* io, model *mod){
                   else if(s >= 105 && s <= 118)mod->partIndex[c]=cdr;
                   else mod->partIndex[c]=0;
                }
-            }else if(mod->nomega_part>2){
+            }else if(mod->nomega_part==3){
+              //printf("\nhere!");
                For(c,nsite){
+                  int s =mod->imgt[c];
+                  if(s >= 26 && s <= 38)mod->partIndex[c]=1;
+                  else if(s >= 56 && s <= 65)mod->partIndex[c]=1;
+                  else if(s >= 105 && s <= 118)mod->partIndex[c]=1;
+                  else if(s == 200)mod->partIndex[c]=2;
+                  else mod->partIndex[c]=0;
+               }
+               /*For(c,nsite){
                   int s =mod->imgt[c];
                   if(s < 26)mod->partIndex[c]=0;
                   else if(s <= 38)mod->partIndex[c]=1;
@@ -562,6 +574,18 @@ void setUpHLP17(option* io, model *mod){
                   else if(s < 105)mod->partIndex[c]=3;
                   else if(s <= 118)mod->partIndex[c]=1;
                   else mod->partIndex[c]=4;
+               }*/
+             }
+             else if(mod->nomega_part==4){
+              //printf("\nhere!");
+               For(c,nsite){
+                  int s =mod->imgt[c];
+                  if(s >= 26 && s <= 38)mod->partIndex[c]=1;
+                  else if(s >= 56 && s <= 65)mod->partIndex[c]=1;
+                  else if(s >= 105 && s <= 118)mod->partIndex[c]=1;
+                  else if(s == 200)mod->partIndex[c]=2;
+                  else if(s == 300)mod->partIndex[c]=3;
+                  else mod->partIndex[c]=0;
                }
              }
            }
@@ -2981,6 +3005,19 @@ int mainOptionSwitch(int opt, char * optarg, option * io)
           strcpy(io->outname,optarg);
           break;
         }
+
+        //////////////////////////////////////////////////////////////////////////////////////
+        // --splitfreqs, split frequencies between partitions?
+        case 184: {
+          io->mod->splitfreqs=1;
+          break;
+        }
+        //////////////////////////////////////////////////////////////////////////////////////
+        // --force_resolve, Continue even if polytomy resolution fails?
+        case 185: {
+          io->mod->force_resolve=1;
+          break;
+         }
             //////////////////////////////////////////////////////////////////////////////////////
             // --multiple
             //

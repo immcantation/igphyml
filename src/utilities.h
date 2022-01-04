@@ -860,6 +860,7 @@ typedef struct __Model {
  char		*hotnessstring;
  int		startnode;
  int 		slowSPR;
+ int    splitfreqs;
 
  phydbl		**rootStates; //61xlength matrix of 1s and 0s describing the character state at the root
 
@@ -908,6 +909,7 @@ typedef struct __Model {
  int					mdpos; //position (from the left of the sequence ID) of the metadata of interest. Rightmost is 0, increasing to the left
  int						permute_tips;
  int        			polytomyresolve;
+ int                    force_resolve;
  phydbl        			maxtrunkl;
 }model;
 

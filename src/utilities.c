@@ -2316,6 +2316,7 @@ model *Copy_Partial_Model(model *ori, int num){
   cpy->ambigprint=0;
   cpy->startnode=0;
   cpy->slowSPR=0;
+  cpy->splitfreqs=ori->splitfreqs;
   cpy->stretch=1.0;
   cpy->rootname = mCalloc(T_MAX_OPTION,sizeof(char));
   cpy->hotnessstring = mCalloc(T_MAX_OPTION,sizeof(char));
@@ -2326,6 +2327,7 @@ model *Copy_Partial_Model(model *ori, int num){
   cpy->prior=ori->prior;
   cpy->freqsTo=ori->freqsTo;
   cpy->polytomyresolve = ori->polytomyresolve;
+  cpy->force_resolve = ori->force_resolve;
   cpy->maxtrunkl = ori->maxtrunkl;
   cpy->freq_model   = ori->freq_model;
 
@@ -2793,6 +2795,7 @@ void Set_Defaults_Model(model *mod)
   mod->ambigprint=0;
   mod->startnode=0;
   mod->slowSPR=0;
+  mod->splitfreqs=0;
   mod->stretch=1.0;
   mod->splitByTree=1;
   mod->omega_opt_spec=0;
@@ -2826,6 +2829,7 @@ void Set_Defaults_Model(model *mod)
   mod->mdpos = 0;
   mod->permute_tips = 0;
   mod->polytomyresolve = 2;
+  mod->force_resolve = 0;
   mod->maxtrunkl = BL_MAX;
 }
 /*********************************************************/
@@ -6009,7 +6013,9 @@ void Get_Root_Freqs(calign *cdata, align **data, char* root, phydbl* freqs, mode
  For(i,cdata->n_otu){
    if(strcmp(data[i]->name,root)!=0)continue; //only include root sequence
    For(j,data[0]->len){
-   if(mod->nomega_part > 1)if(mod->partIndex[j] != modeli)continue;
+   
+   if(mod->splitfreqs && mod->nomega_part > 1 && mod->partIndex[j] != modeli)continue;
+   
    curr_state=data[i]->state[j];
    if(curr_state>=(char)0 && curr_state<(char)64){
         codons[indexSenseCodons[(int)curr_state]]++;
@@ -6018,7 +6024,7 @@ void Get_Root_Freqs(calign *cdata, align **data, char* root, phydbl* freqs, mode
            l=-1;
            while(data[i]->alternativeCodons[j][++l]<64); //get number of alternative codons
            sumf=0;
-           if(modeli!=1){
+           if(modeli!=1 && mod->splitfreqs){
            	For(m,l) sumf+=mod->fwr[indexSenseCodons[data[i]->alternativeCodons[j][m]]]; //total frequency of alternative codons
            	For(m,l) codons[indexSenseCodons[data[i]->alternativeCodons[j][m]]] //split alternatives equally among alternates
 					+=mod->fwr[indexSenseCodons[data[i]->alternativeCodons[j][m]]]/sumf;
