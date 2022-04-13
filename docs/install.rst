@@ -65,7 +65,7 @@ source code of the current development version can be downloaded using git and c
     ./make_phyml_omp 
 
 If compilation (the last step) was successful, you should see the executable file ``src/igphyml``.
-If this step fails, there is still hope. See sections below for more detailed requirements and
+If this step fails, there is still hope. See below for more detailed requirements and
 options.
 
 Requirements
