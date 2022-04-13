@@ -17,6 +17,7 @@
 	:caption: Using IgPhyML
 
 	usage/quickstart
+    usage/dowser
 	usage/buildtrees
 	usage/standalone
 

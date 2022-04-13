@@ -1,7 +1,7 @@
 Using BuildTrees
 ===============================================================================
 
-IgPhyML is easiest to use when run indirectly through the Change-O program 
+IgPhyML can be run indirectly through the Change-O program 
 `BuildTrees <https://changeo.readthedocs.io/en/stable/tools/BuildTrees.html>`__
 by specifying the ``--igphyml`` option.
 Most of these instructions require Change-O 0.4.6 or higher, Alakazam 0.3.0 or higher,

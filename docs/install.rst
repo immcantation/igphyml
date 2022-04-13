@@ -6,7 +6,7 @@ Installation
 
 .. _docker-image: 
 
-Docker Image (recommended)
+Docker Image (recommended for non-Linux systems)
 --------------------------------------------------------------------------------
 
 The simplest way to use IgPhyML is via the 
