@@ -71,10 +71,16 @@ Requirements
 + (optional) OpenMP-enabled C compiler (e.g. gcc or LLVM)
 + (optional) BLAS and LAPACK optimization libraries
 
+For Ubuntu systems, you can install automake tools and BLAS/LAPACK packages using::
+
+    apt-get install automake autoconf libblas-dev liblapack-dev libatlas-base-dev
+
+This make require `sudo` permission. Other Linux distros should have similar pacakges.
+
 Linux
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-On Linux operating systems, you can usually just run::
+On Linux operating systems with the above requirements installed, you can usually just run::
 
     ./make_phyml_omp
 
