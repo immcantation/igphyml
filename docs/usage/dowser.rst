@@ -12,8 +12,8 @@ once formatting steps are complete.
 In either case, IgPhyML will need to either have already been compiled from
 source code or contained within the Docker container.
 
-While :ref:`BuildTrees <BuildTrees-processing>` currently offers more direct options, 
-and masks codons split by V-gene reference alignment, these features under in development
-within Dowser.
+While :ref:`BuildTrees <igphyml-buildtrees>` currently offers more building and model options, 
+and also masks codons split by V-gene reference alignment, these features also under in development
+within Dowser and should be available soon.
 
 

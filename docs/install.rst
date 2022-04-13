@@ -10,31 +10,33 @@ Docker Image (recommended for non-Linux systems)
 --------------------------------------------------------------------------------
 
 The simplest way to use IgPhyML is via the 
-`Immcantation Docker image <https://immcantation.readthedocs.io/en/stable/docker/intro.html>`__.
+`Immcantation Docker image <https://immcantation.readthedocs.io/en/stable/docker/intro.html>`__. 
+``4.3.0`` is used for these instructions, but you should use the latest version on the Immcantation site.
 
 Briefly, all the example commands on rest of this site can be run by first installing Docker and
-downloading the Immcantation Docker image. In a terminal, enter::
+downloading the Immcantation Docker image. Note for some operating systems it may be necessary to have 
+`Docker Desktop <https://hub.docker.com/editions/community/docker-ce-desktop-windows>`__
+running before entering these commands.
+In a terminal, enter::
 
  # pull Immcantation Docker image
- docker pull immcantation/suite:4.0.0
+ docker pull immcantation/suite:4.3.0
 
  # clone IgPhyML repository to get example files
  git clone https://bitbucket.org/kleinstein/igphyml
 
-Then, move to the examples directory and load it into the Docker image depending on your operating system::
+You may also need to install ``git`` to complete the last command. Then, move to the examples directory and load it into the Docker image depending on your operating system::
  
  # move to examples directory
  cd igphyml/examples
 
  # load Docker, Linux/ Mac OS X:
- docker run -it --workdir /data -v $(pwd):/data:z immcantation/suite:4.0.0 bash
+ docker run -it --workdir /data -v $(pwd):/data:z immcantation/suite:4.3.0 bash
 
  # or load Docker, Windows:
- docker run -it --workdir /data -v %cd%:/data:z immcantation/suite:4.0.0 bash
+ docker run -it --workdir /data -v %cd%:/data:z immcantation/suite:4.3.0 bash
 
-Note for some operating systems it may be necessary to have 
-`Docker Desktop <https://hub.docker.com/editions/community/docker-ce-desktop-windows>`__
-running before entering these commands. Once inside the container, check everything is properly configured::
+Once inside the container, check everything is properly configured::
 
  # should give example.fasta  example.tab  part.example.txt
  ls
@@ -44,30 +46,35 @@ running before entering these commands. Once inside the container, check everyth
 
 More generally, use this command to load the Docker image on the current directory of a Linux/Max OS X system::
 
- docker run -it --workdir /data -v $(pwd):/data:z immcantation/suite:4.0.0 bash
+ docker run -it --workdir /data -v $(pwd):/data:z immcantation/suite:4.3.0 bash
 
 or for a Windows Command Prompt::
 
- docker run -it --workdir /data -v %cd%:/data:z immcantation/suite:4.0.0 bash
+ docker run -it --workdir /data -v %cd%:/data:z immcantation/suite:4.3.0 bash
 
 For further information on using the Immcantation Docker image, see 
 `Immcantation Docker image <https://immcantation.readthedocs.io/en/stable/docker/intro.html>`__.
 
-Building from source
+Compiling from source (recommended for Linux)
 --------------------------------------------------------------------------------
-If using the Docker image is not possible or preferable, the 
-source code of the current development version can be downloaded using git::
+If using Linux, or if the Docker image is not possible or preferable, the 
+source code of the current development version can be downloaded using git and compiled::
 
-    > git clone https://bitbucket.org/kleinstein/igphyml
-    > cd igphyml
+    git clone https://bitbucket.org/kleinstein/igphyml
+    cd igphyml
+    ./make_phyml_omp 
+
+If compilation (the last step) was successful, you should see the executable file ``src/igphyml``.
+If this step fails, there is still hope. See sections below for more detailed requirements and
+options.
 
 Requirements
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 + GNU autoconf
 + GNU automake
-+ (optional) `Change-O 0.4.6 <https://changeo.readthedocs.io>`__
-+ (optional) `Alakazam 0.3.0 <https://alakazam.readthedocs.io>`__
++ (optional) `Change-O >0.4.6 <https://changeo.readthedocs.io>`__
++ (optional) `Alakazam >0.3.0 <https://alakazam.readthedocs.io>`__
 + (optional) OpenMP-enabled C compiler (e.g. gcc or LLVM)
 + (optional) BLAS and LAPACK optimization libraries
 
