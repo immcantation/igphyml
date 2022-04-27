@@ -401,6 +401,7 @@ void setUpHLP17(option* io, model *mod){
   				if(igpath==NULL){
   					printf("Hotspot tables not found in install directory and IGPHYML_PATH not set.\n");
   					printf("Try specifying their location with the IGPHYML_PATH environment variable.\n");
+                    printf("e.g. export IGPHYML_PATH=<path to directory>/igphyml/src/motifs/\n");
   					exit(1);
   				}
   				strcpy(infile, igpath);
