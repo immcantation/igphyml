@@ -1475,7 +1475,7 @@ void Isolate_Polytomy(t_node* d, phydbl thresh, t_tree* tree){
 int NNI_Pars_Search(t_node *c, t_node *d,t_edge* c_fcus,t_edge* d_fcus, int pars0, phydbl thresh,t_tree* tree){
 
 	int dir1,dir2,dir3,dir4,i;
-	dir1=dir2=dir3=dir4-1;
+	dir1=dir2=dir3=dir4=-1;
 	For(i,3) if(d->b[i]->num != d_fcus->num) (dir1<0)?(dir1=i):(dir2=i);
 	For(i,3) if(c->b[i]->num != c_fcus->num) (dir3<0)?(dir3=i):(dir4=i);
 	t_node* e = d->v[dir1];

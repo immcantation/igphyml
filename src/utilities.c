@@ -1365,7 +1365,7 @@ void Swap(t_node *a, t_node *b, t_node *c, t_node *d, t_tree *tree)
 #ifdef DEBUG
   if(!a || !b || !c || !d)
   {
-    PhyML_Printf("\n. Err in file %s at line %d\n",__FILE__,__LINE__);
+    PhyML_Printf("\n. Err in file %s at line %d, tree %d \n",__FILE__,__LINE__,tree->mod->num);
     Warn_And_Exit("");
   }
 #endif
