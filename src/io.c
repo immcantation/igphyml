@@ -1325,6 +1325,9 @@ void Print_Params_Tab(model* mod, FILE* f){
 			fprintf(f,"\t%.4f",mod->omega_part[i]);
 		}
 	}
+	For(i,mod->nomega_part){
+		fprintf(f,"\t%.4f",mod->part_rates[mod->part_index[i]]);
+	}
 	For(i,mod->nmotifs){
 		if(mod->io->mod->hoptci[mod->io->mod->motif_hotness[i]] == 2){
 			fprintf(f,"\t%.4f\t%.4f\t%.4f",mod->hotness[mod->motif_hotness[i]],mod->hoptlci[mod->motif_hotness[i]],mod->hoptuci[mod->motif_hotness[i]]);
@@ -1355,20 +1358,32 @@ void Print_Tab_Out(option *io){
 	phydbl treel = 0.0;
 	fprintf(f,"CLONE\tNSEQ\tNSITE\tTREE_LENGTH\tLHOOD");
 	Print_Param_Header("KAPPA",io->mod->kappaci,f);
-	if(io->mod->nomega_part==1)Print_Param_Header("OMEGA",io->mod->omega_part_ci[0],f);
+	if(io->mod->nomega_part==1){
+		Print_Param_Header("OMEGA",io->mod->omega_part_ci[0],f);
+		Print_Param_Header("RATE",io->mod->part_rates[io->mod->part_index[0]],f);
+	}
 	else if(io->mod->nomega_part==2){
 		Print_Param_Header("OMEGA_FWR",io->mod->omega_part_ci[0],f);
 		Print_Param_Header("OMEGA_CDR",io->mod->omega_part_ci[1],f);
+		Print_Param_Header("RATE_FWR",0,f);
+		Print_Param_Header("RATE_CDR",0,f);
 	}else if(io->mod->nomega_part==3){
     Print_Param_Header("OMEGA_1",io->mod->omega_part_ci[0],f);
     Print_Param_Header("OMEGA_2",io->mod->omega_part_ci[1],f);
     Print_Param_Header("OMEGA_3",io->mod->omega_part_ci[2],f);
+    Print_Param_Header("RATE_1",0,f);
+	Print_Param_Header("RATE_2",0,f);
+	Print_Param_Header("RATE_3",0,f);
   }
   else if(io->mod->nomega_part==4){
     Print_Param_Header("OMEGA_1",io->mod->omega_part_ci[0],f);
     Print_Param_Header("OMEGA_2",io->mod->omega_part_ci[1],f);
     Print_Param_Header("OMEGA_3",io->mod->omega_part_ci[2],f);
     Print_Param_Header("OMEGA_4",io->mod->omega_part_ci[3],f);
+    Print_Param_Header("RATE_1",0,f);
+	Print_Param_Header("RATE_2",0,f);
+	Print_Param_Header("RATE_3",0,f);
+	Print_Param_Header("RATE_4",0,f);
   }
 	For(i,io->mod->nmotifs){
 		Print_Param_Header(io->mod->motifs[i],io->mod->hoptci[io->mod->motif_hotness[i]],f);

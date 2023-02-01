@@ -145,6 +145,7 @@ struct option longopts[] =
   {"outname",     required_argument,NULL,183},  //!<Added by Ken
   {"splitfreqs", no_argument,NULL,184},  //!<Added by Ken, split frequencies by partition?
   {"force_resolve", no_argument,NULL,185},  //!<Added by Ken, split frequencies by partition?
+  {"rates",     required_argument,NULL,186},  //!<Added by Ken
     {0,0,0,0}
 };
 
@@ -156,6 +157,7 @@ void finishOptions(option * io)
 				"Use GY for quick topologies.\nUse HLP for B cell specific features (SHM motifs, CDR/FWR omegas).\n");
 	}
     int i,j,c;
+    char *mtemp1;
     checkModelCombinations(io);
     createOutFiles(io);
     setupGeneticCode(io);
@@ -234,7 +236,44 @@ void finishOptions(option * io)
    	        io->mod->omega_part_opt[c]=0;
    	        io->mod->omega_part[c]=atof(mtemp1);
    	      }
-   	 }
+   	}
+
+//set up rate parameters
+         if(io->mod->ratestringopt){
+			char* minfo1 = strdup(io->mod->ratestring);
+			char* minfo2 = strdup(io->mod->ratestring);
+			io->mod->nrates=0;//determine number of h parameters
+			while ((mtemp1 = strsep(&minfo1, ",")) != NULL){io->mod->nrates++;}
+			printf("\nnrates %d\n",io->mod->nrates);
+			if(io->mod->nrates != io->mod->nomega_part){
+				Warn_And_Exit("\nMust specify a rate for each omega parameter if --rates used");
+			}
+			if(io->mod->nrates > 1 && io->mod->nrates != 2){
+				printf("\nOnly two rate partitions allowed, all 'e' partitions estimated together");
+				io->mod->nrates = 2;
+			}
+			io->mod->part_rates = (phydbl*)mCalloc(io->mod->nrates,sizeof(phydbl));
+			io->mod->part_index = (int*)mCalloc(io->mod->nomega_part,sizeof(int ));
+			for(c=0;c<io->mod->nomega_part;c++){
+				   mtemp1 = strsep(&minfo2, ",");
+				   if (strcmp(mtemp1,"e")==0 || strcmp(mtemp1,"ce")==0){
+					   io->mod->part_index[c] = 1;
+				  }else{
+					   io->mod->part_index[c] = 0;
+				  }
+			}
+		 }else{
+			   io->mod->nrates = 1;
+			   io->mod->part_rates = (phydbl*)mCalloc(io->mod->nrates,sizeof(phydbl));
+			   io->mod->part_index = (int*)mCalloc(io->mod->nomega_part,sizeof(int ));
+			   for(c=0;c<io->mod->nomega_part;c++){
+				   io->mod->part_index[c] = 0;
+			   }
+		 }
+         for(c=0; c<io->mod->nrates; c++){
+				io->mod->part_rates[c] = 1.0;
+         }
+
    	if(io->mod->whichrealmodel==HLP17 && io->mod->s_opt->opt_state_freq==YES){
    		io->repwidefreqs=1;
    	}
@@ -3017,6 +3056,12 @@ int mainOptionSwitch(int opt, char * optarg, option * io)
         // --force_resolve, Continue even if polytomy resolution fails?
         case 185: {
           io->mod->force_resolve=1;
+          break;
+         }
+
+        case 186: {
+          strcpy(io->mod->ratestring,optarg);
+          io->mod->ratestringopt=1;
           break;
          }
             //////////////////////////////////////////////////////////////////////////////////////

@@ -406,6 +406,9 @@ phydbl Lk_rep(option *io){
 				mod->omega_part[j]=io->mod->omega_part[j];
 			}
 		}
+		For(j, io->mod->nrates){
+			mod->part_rates[j] = io->mod->part_rates[j];
+		}
 		if((io->mod->optFreq<2 || io->mod->optIter==0) && io->repwidefreqs){ //copy frequencies if specified
 			For(j,mod->num_base_freq){
 				mod->base_freq[j]=io->mod->base_freq[j];
@@ -939,6 +942,7 @@ phydbl logAdd(phydbl a, phydbl b){
 }
 
 
+/*
 char* printThreeNum(phydbl G1p){
 	char* s1=malloc(4*sizeof(char));
 	int per=roundf(G1p*100);
@@ -947,7 +951,7 @@ char* printThreeNum(phydbl G1p){
 	else sprintf(s1,"  %d",per);
 	return s1;
 }
-
+*/
 
 // from https://cboard.cprogramming.com/c-programming/1293-qsort-doesnt-work-floats.html
 int floatcomp(const void* elem1, const void* elem2)
@@ -2587,7 +2591,9 @@ void Update_PMat_At_Given_Edge(t_edge *b_fcus, t_tree *tree){
     	  if(tree->mod->testcondition){len=BL_MIN;}
     	  int modeli;
     	  for(modeli=0;modeli<tree->mod->nomega_part;modeli++){
-    		  PMat_CODON_part(len,tree->mod,0,tree->mod->qmat_part[modeli],b_fcus->bPmat_part[modeli],modeli);
+    		  phydbl factor = tree->mod->part_rates[tree->mod->part_index[modeli]];
+    		  //printf("\n%lf", factor);
+    		  PMat_CODON_part(len*factor,tree->mod,0,tree->mod->qmat_part[modeli],b_fcus->bPmat_part[modeli],modeli);
     	  }
       }
     }
@@ -2922,6 +2928,11 @@ phydbl LK_BFGS_from_CODEML(option* io, phydbl *x, int n){
     		  }
     		  //printf("opting o %lf\n",io->mod->omega_part[omegai]);
     	  }
+    	  if(io->mod->ratestringopt){
+		 	if(io->mod->nrates == 2){
+		 		io->mod->part_rates[1] = x[numParams++];
+		 	}
+		 }
       }else if(io->mod->omegaSiteVar==DMODELK){
 		For(i,io->mod->n_w_catg) io->mod->omegas[i] = x[numParams++];
 		For(i,io->mod->n_w_catg-1) io->mod->prob_omegas_uns[i] = x[numParams++];

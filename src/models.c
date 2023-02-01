@@ -1347,7 +1347,8 @@ void Setup_Repertoire_Models(option* io){
 
 	//set up data structures to store parameters
 	int nparams=0;
-	int nmodparams=2+io->mod->nomega_part+io->mod->nhotness+12;
+	int nmodparams=2+io->mod->nomega_part+io->mod->nhotness+12+io->mod->nrates;
+	//int nmodparams=2+io->mod->nomega_part+io->mod->nhotness+12;
 	nparams += nmodparams*(io->ntrees+1);
 	For(j,io->ntrees)nparams += 2*io->tree_s[j]->n_otu-3;
 	if(io->mod->optDebug)printf("\nNeed to store %d parameters",nparams);

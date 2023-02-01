@@ -217,6 +217,7 @@ int storeParams(option* io, int reseto, phydbl* ar){
 	For(i,io->mod->nomega_part)ar[c++]=io->mod->omega_part[i];
 	For(i,12)ar[c++]=io->mod->uns_base_freq[i];
 	if(io->mod->whichrealmodel<=HLP17)For(i,io->mod->nhotness)ar[c++]=io->mod->hotness[i];
+	For(i,io->mod->nrates)ar[c++]=io->mod->part_rates[i];
 	//store subtree model parameters and branch lengths
 	For(j,io->ntrees){
 		model* mod=io->mod_s[j];
@@ -226,6 +227,7 @@ int storeParams(option* io, int reseto, phydbl* ar){
 		For(i,io->mod->nomega_part)ar[c++]=mod->omega_part[i];
 		For(i,12)ar[c++]=mod->uns_base_freq[i];
 		if(io->mod->whichrealmodel<=HLP17)For(i,io->mod->nhotness)ar[c++]=mod->hotness[i];
+		For(i,mod->nrates)ar[c++]=mod->part_rates[i];
 		For(k,2*tree->n_otu-3){
 			  ar[c++]=tree->t_edges[k]->l;
 		 }
@@ -254,6 +256,7 @@ int resetSubstParams(option* io){
 	io->mod->kappa=1.0;
 	For(i,io->mod->nomega_part)io->mod->omega_part[i]=0.4;
 	if(io->mod->whichrealmodel<=HLP17)For(i,io->mod->nhotness)io->mod->hotness[i]=0.0;
+	For(i,io->mod->nrates)io->mod->part_rates[i] = 1.0;
 
 	//resotre original branch lengths
 	For(i,io->ntrees){
@@ -326,6 +329,7 @@ int restoreParams(option* io, int reseto, phydbl* ar){
 	For(i,io->mod->nomega_part)io->mod->omega_part[i]=ar[c++];
 	For(i,12)io->mod->uns_base_freq[i]=ar[c++];
 	if(io->mod->whichrealmodel<=HLP17)For(i,io->mod->nhotness)io->mod->hotness[i]=ar[c++];
+	For(i,io->mod->nrates)io->mod->part_rates[i]=ar[c++];
 	//restore subtree model parameters and branch lengths
 	For(j,io->ntrees){
 		model* mod=io->mod_s[j];
@@ -335,6 +339,7 @@ int restoreParams(option* io, int reseto, phydbl* ar){
 		For(i,io->mod->nomega_part)mod->omega_part[i]=ar[c++];
 		For(i,12)mod->uns_base_freq[i]=ar[c++];
 		if(io->mod->whichrealmodel<=HLP17)For(i,io->mod->nhotness)mod->hotness[i]=ar[c++];
+		For(i,mod->nrates)mod->part_rates[i]=ar[c++];
 		For(k,2*tree->n_otu-3){
 			  tree->t_edges[k]->l=ar[c++];
 		 }
@@ -808,6 +813,13 @@ void Optimiz_All_Free_Param(option* io, int verbose, int recurse){
 		    		x2minbound[numParams-1][1]   = TREEBOUNDHIGH;
 		    	}
 		  	}
+		 	if(io->mod->ratestringopt){
+		 		if(io->mod->nrates == 2){
+		 			x2min[numParams++]           = io->mod->part_rates[1];
+		 			x2minbound[numParams-1][0]   = TREEBOUNDLOW*100; //changed by Ken 9/2/2017 due to underflow issues with highly polymorphic lineages
+		 			x2minbound[numParams-1][1]   = TREEBOUNDHIGH;
+		 		}
+		 	}
 		}else if(io->mod->omegaSiteVar==DMODELK){
 	  		For(i,io->mod->n_w_catg){
 	  		  x2min[numParams++]         = io->mod->omegas[i];
@@ -1288,6 +1300,12 @@ void Optimiz_All_Free_Param(option* io, int verbose, int recurse){
 		  					Print_Lk_rep(io,"[dn/ds ratio        ]");
 			  				PhyML_Printf("[%.2f ]",io->mod->omega_part[omegai]);
 		  				}
+		  			}
+		  			if(io->mod->ratestringopt){
+						for(omegai=0;omegai<io->mod->nomega_part;omegai++){
+							Print_Lk_rep(io,"[partition rate     ]");
+							PhyML_Printf("[%.2f ]",io->mod->part_rates[io->mod->part_index[omegai]]);
+						}
 		  			}
 	  			}else{
 	    			Print_Lk_rep(io,"[Emp. dn/ds ratio   ]");

@@ -831,6 +831,12 @@ typedef struct __Model {
  double		*hotness;
  int		*hoptindex;
 
+ phydbl		*part_rates;
+ int        *part_index;
+ int        nrates;
+ char		*ratestring;
+ int		ratestringopt;
+
  int		*hoptci;
  phydbl *hoptuci;
  phydbl *hoptlci;

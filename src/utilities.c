@@ -1872,7 +1872,7 @@ int Assign_State_With_Ambiguity(char *c, int datatype, int stepsize)
     if(Is_Ambigu(c,GENERIC,stepsize)) state[0] = T_MAX_ALPHABET-1;
     else
     {
-      char format[6];
+      char format[20]; //increased from 6 2/1/23
       sprintf(format,"%%%dd",stepsize);
       if(!sscanf(c,format,state))
 	    {
@@ -2376,6 +2376,22 @@ model *Copy_Partial_Model(model *ori, int num){
   }
   cpy->omega_old    = ori->omega_old;
 
+  //rate options
+
+  cpy->ratestringopt = ori->ratestringopt;
+  cpy->nrates = ori->nrates;
+  cpy->part_rates = (phydbl*)mCalloc(ori->nrates,sizeof(phydbl));
+  cpy->part_index = (int*)mCalloc(ori->nomega_part,sizeof(int));
+  //if(ori->whichrealmodel<=HLP17){
+	  For(i,ori->nomega_part){
+		  cpy->part_index[i]    = ori->part_index[i];
+	  }
+	  For(i,ori->nrates){
+		  cpy->part_rates[i]    = ori->part_rates[i];
+	  }
+  //}
+  cpy->omega_old    = ori->omega_old;
+
   //copy options to model, allocate model memory storage
   copyIOtoMod(ori->io,cpy);
   Make_Model_Complete(cpy);
@@ -2786,12 +2802,14 @@ void Set_Defaults_Model(model *mod)
  //New stuff added by Ken
   mod->motifstringopt=0;
   mod->hotnessstringopt=0;
+  mod->ratestringopt=0;
   mod->partfilespec=0;
   mod->rootfound=0;
   mod->partfile="NONE";
   mod->ambigprint=0;
   mod->nomega_part=1;
   mod->nparts=1;
+  mod->nrates=1;
   mod->ambigprint=0;
   mod->startnode=0;
   mod->slowSPR=0;
@@ -2816,6 +2834,7 @@ void Set_Defaults_Model(model *mod)
   mod->freqsTo=1;
   mod->rootname = mCalloc(T_MAX_OPTION,sizeof(char));
   mod->hotnessstring = mCalloc(T_MAX_OPTION,sizeof(char));
+  mod->ratestring = mCalloc(T_MAX_OPTION,sizeof(char));
   mod->aamodel = mCalloc(T_MAX_OPTION,sizeof(char));
   mod->partfile = mCalloc(T_MAX_FILE,sizeof(char));
   mod->motifstring = mCalloc(T_MAX_FILE,sizeof(char));
@@ -3814,7 +3833,7 @@ int Are_Compatible(char *statea, char *stateb, int stepsize, int datatype, char 
     else
     {
       int a1,b1;
-      char format[6];      
+      char format[20]; //increased from 6 2/12/23
       
       sprintf(format,"%%%dd",stepsize);      
       
