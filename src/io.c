@@ -1365,25 +1365,31 @@ void Print_Tab_Out(option *io){
 	else if(io->mod->nomega_part==2){
 		Print_Param_Header("OMEGA_FWR",io->mod->omega_part_ci[0],f);
 		Print_Param_Header("OMEGA_CDR",io->mod->omega_part_ci[1],f);
-		Print_Param_Header("RATE_FWR",0,f);
-		Print_Param_Header("RATE_CDR",0,f);
+		if(io->mod->ratestringopt){
+			Print_Param_Header("RATE_FWR",0,f);
+			Print_Param_Header("RATE_CDR",0,f);
+		}
 	}else if(io->mod->nomega_part==3){
     Print_Param_Header("OMEGA_1",io->mod->omega_part_ci[0],f);
     Print_Param_Header("OMEGA_2",io->mod->omega_part_ci[1],f);
     Print_Param_Header("OMEGA_3",io->mod->omega_part_ci[2],f);
-    Print_Param_Header("RATE_1",0,f);
-	Print_Param_Header("RATE_2",0,f);
-	Print_Param_Header("RATE_3",0,f);
+    if(io->mod->ratestringopt){
+    	Print_Param_Header("RATE_1",0,f);
+    	Print_Param_Header("RATE_2",0,f);
+    	Print_Param_Header("RATE_3",0,f);
+    }
   }
   else if(io->mod->nomega_part==4){
     Print_Param_Header("OMEGA_1",io->mod->omega_part_ci[0],f);
     Print_Param_Header("OMEGA_2",io->mod->omega_part_ci[1],f);
     Print_Param_Header("OMEGA_3",io->mod->omega_part_ci[2],f);
     Print_Param_Header("OMEGA_4",io->mod->omega_part_ci[3],f);
-    Print_Param_Header("RATE_1",0,f);
-	Print_Param_Header("RATE_2",0,f);
-	Print_Param_Header("RATE_3",0,f);
-	Print_Param_Header("RATE_4",0,f);
+    if(io->mod->ratestringopt){
+    	Print_Param_Header("RATE_1",0,f);
+    	Print_Param_Header("RATE_2",0,f);
+    	Print_Param_Header("RATE_3",0,f);
+    	Print_Param_Header("RATE_4",0,f);
+    }
   }
 	For(i,io->mod->nmotifs){
 		Print_Param_Header(io->mod->motifs[i],io->mod->hoptci[io->mod->motif_hotness[i]],f);
