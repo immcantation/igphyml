@@ -765,6 +765,28 @@ void checkModelCombinations(option * io){
 
 /* Create output files */
 void createOutFiles(option * io){
+	if(io->mod->ASR){
+    	int nfragments = 0;
+    	int i = 0;
+    	char* filetemp1 = strdup(io->out_stats_file);
+    	char* filetemp2 = strdup(io->out_stats_file);
+    	char* fragment;// = strsep(&filetemp, ".");
+    	io->out_seqs_file = mCalloc(T_MAX_FILE,sizeof(char));
+  	   	while ((fragment = strsep(&filetemp1, ".")) != NULL){
+  	   		nfragments++;
+  	   	}
+  	   	For(i, nfragments - 1){
+  	   		fragment = strsep(&filetemp2, ".");
+  	   		if(i > 0)strcat(io->out_seqs_file,".");
+  	   		strcat(io->out_seqs_file,fragment);
+  	   	}
+    	if(io->append_run_ID){
+    		 strcat(io->out_seqs_file, "_");
+    		 strcat(io->out_seqs_file, io->run_id_string);
+    	}
+    	strcat(io->out_seqs_file,"_asr.fasta");
+    	io->fp_out_seqs = Openfile(io->out_seqs_file, io->writemode);
+    }
     if(io->append_run_ID){
     	strcat(io->out_stats_file, "_igphyml_stats");
         strcat(io->out_stats_file, "_");
@@ -780,20 +802,6 @@ void createOutFiles(option * io){
     	strcpy(io->out_stats_file,io->outname);
     }
     io->fp_out_stats = Openfile(io->out_stats_file, io->writemode);
-    if(io->mod->ASR){
-    	char* filetemp = strdup(io->out_stats_file);
-    	char* fragment = strsep(&filetemp, ".");
-    	io->out_seqs_file = mCalloc(T_MAX_FILE,sizeof(char));
-    	strcpy(io->out_seqs_file,fragment);
-    	if(io->append_run_ID){
-    		 strcat(io->out_seqs_file, "_");
-    		 strcat(io->out_seqs_file, io->run_id_string);
-    	}
-    	strcat(io->out_seqs_file,"_asr.fasta");
-    	io->fp_out_seqs = Openfile(io->out_seqs_file, io->writemode);
-    	//free(filetemp);
-    	//free(fragment);
-    }
 }
 
 
