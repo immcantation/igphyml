@@ -1360,7 +1360,9 @@ void Print_Tab_Out(option *io){
 	Print_Param_Header("KAPPA",io->mod->kappaci,f);
 	if(io->mod->nomega_part==1){
 		Print_Param_Header("OMEGA",io->mod->omega_part_ci[0],f);
-		Print_Param_Header("RATE",io->mod->part_rates[io->mod->part_index[0]],f);
+		if(io->mod->ratestringopt){
+			Print_Param_Header("RATE",io->mod->part_rates[io->mod->part_index[0]],f);
+		}
 	}
 	else if(io->mod->nomega_part==2){
 		Print_Param_Header("OMEGA_FWR",io->mod->omega_part_ci[0],f);
