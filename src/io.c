@@ -1325,8 +1325,10 @@ void Print_Params_Tab(model* mod, FILE* f){
 			fprintf(f,"\t%.4f",mod->omega_part[i]);
 		}
 	}
-	For(i,mod->nomega_part){
-		fprintf(f,"\t%.4f",mod->part_rates[mod->part_index[i]]);
+	if(mod->ratestringopt){
+		For(i,mod->nomega_part){
+			fprintf(f,"\t%.4f",mod->part_rates[mod->part_index[i]]);
+		}
 	}
 	For(i,mod->nmotifs){
 		if(mod->io->mod->hoptci[mod->io->mod->motif_hotness[i]] == 2){
