@@ -256,12 +256,16 @@ void finishOptions(option * io)
 			io->mod->part_index = (int*)mCalloc(io->mod->nomega_part,sizeof(int ));
 			for(c=0;c<io->mod->nomega_part;c++){
 				   mtemp1 = strsep(&minfo2, ",");
-				   if (strcmp(mtemp1,"e")==0 || strcmp(mtemp1,"ce")==0){
+				   int temp1 = atoi(mtemp1);
+				   //printf("\n%s\t%d\n", mtemp1, temp1);
+				   io->mod->part_index[c] = temp1;
+				   /*if (strcmp(mtemp1,"e")==0 || strcmp(mtemp1,"ce")==0){
 					   io->mod->part_index[c] = 1;
 				  }else{
 					   io->mod->part_index[c] = 0;
-				  }
+				  }*/
 			}
+			//exit(1);
 		 }else{
 			   io->mod->nrates = 1;
 			   io->mod->part_rates = (phydbl*)mCalloc(io->mod->nrates,sizeof(phydbl));

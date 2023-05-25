@@ -814,10 +814,14 @@ void Optimiz_All_Free_Param(option* io, int verbose, int recurse){
 		    	}
 		  	}
 		 	if(io->mod->ratestringopt){
-		 		if(io->mod->nrates == 2){
-		 			x2min[numParams++]           = io->mod->part_rates[1];
-		 			x2minbound[numParams-1][0]   = TREEBOUNDLOW*100; //changed by Ken 9/2/2017 due to underflow issues with highly polymorphic lineages
-		 			x2minbound[numParams-1][1]   = TREEBOUNDHIGH;
+		 		if(io->mod->nrates > 1){
+		 			int parti;
+		 			For(parti, io->mod->nrates){
+		 				//printf("\n%d\t%lf", parti, io->mod->part_rates[parti]);
+						x2min[numParams++]           = io->mod->part_rates[parti];
+						x2minbound[numParams-1][0]   = TREEBOUNDLOW*100; //changed by Ken 9/2/2017 due to underflow issues with highly polymorphic lineages
+						x2minbound[numParams-1][1]   = TREEBOUNDHIGH;
+		 			}
 		 		}
 		 	}
 		}else if(io->mod->omegaSiteVar==DMODELK){

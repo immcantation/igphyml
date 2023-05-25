@@ -2930,7 +2930,10 @@ phydbl LK_BFGS_from_CODEML(option* io, phydbl *x, int n){
     	  }
     	  if(io->mod->ratestringopt){
 		 	if(io->mod->nrates == 2){
-		 		io->mod->part_rates[1] = x[numParams++];
+		 		int parti;
+		 		For(parti, io->mod->nrates){
+		 			io->mod->part_rates[parti] = x[numParams++];
+		 		}
 		 	}
 		 }
       }else if(io->mod->omegaSiteVar==DMODELK){
