@@ -4,7 +4,7 @@
 # Modifications done by Marcelo S Zanetti.
 
 AC_PREREQ(2.61)
-AC_INIT([IgPHYML],[1.1.5 09022],[kenneth.hoehn@gmail.com])
+AC_INIT([IgPHYML],[2.0.0 092223],[kenneth.hoehn@gmail.com])
 AC_CONFIG_SRCDIR([src/simu.c]) #configure source directory
 AC_CONFIG_HEADER([config.h]) #create header file
 
