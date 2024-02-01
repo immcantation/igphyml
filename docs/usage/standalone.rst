@@ -1,5 +1,12 @@
 .. _igphyml-standalone:
 
+
+.. note::
+   We now recommend using IgPhyML through `Dowser <http://dowser.readthedocs.io>`__.
+   Dowser is our newer R package for phylogenetic analysis with B cells and supports
+   building/visualizing/analyzing trees using IgPhyML and multiple other methods.
+
+
 Standalone operation
 =============================================================================== 
 
