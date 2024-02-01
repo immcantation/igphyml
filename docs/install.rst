@@ -73,8 +73,7 @@ Requirements
 
 + GNU autoconf
 + GNU automake
-+ (optional) `Change-O >0.4.6 <https://changeo.readthedocs.io>`__
-+ (optional) `Alakazam >0.3.0 <https://alakazam.readthedocs.io>`__
++ (optional) `Dowser >1.0.0 <https://dowser.readthedocs.io>`__
 + (optional) OpenMP-enabled C compiler (e.g. gcc or LLVM)
 + (optional) BLAS and LAPACK optimization libraries
 
