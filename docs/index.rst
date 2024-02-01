@@ -33,6 +33,7 @@
     :caption: Related Projects
 
     Immcantation Portal <http://immcantation.readthedocs.io>
+    Dowser <http://dowser.readthedocs.io>
     Change-O <http://changeo.readthedocs.io>
     Alakazam <http://alakazam.readthedocs.io>
     pRESTO <http://presto.readthedocs.io>

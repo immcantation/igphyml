@@ -3,6 +3,14 @@
 Using BuildTrees
 ===============================================================================
 
+.. note::
+   We now recommend using IgPhyML through `Dowser <http://dowser.readthedocs.io>`__.
+   Dowser is our newer R package for phylogenetic analysis with B cells and supports
+   building/visualizing/analyzing trees using IgPhyML and multiple other methods.
+
+   We've kept this page for reference for legacy users.
+
+
 IgPhyML can be run indirectly through the Change-O program 
 `BuildTrees <https://changeo.readthedocs.io/en/stable/tools/BuildTrees.html>`__
 by specifying the ``--igphyml`` option.
@@ -18,7 +26,7 @@ To view all options for `BuildTrees <https://changeo.readthedocs.io/en/stable/to
 .. _BuildTrees-processing:
 
 Controlling input
-===============================================================================
+-------------------------------------------------------------------------------
 
 The process begins with an AIRR formatted data file, in
 which each sequence has been clustered into a clonal group,
@@ -105,7 +113,7 @@ do this, use ``--ncdr3``::
 .. _building-lineage-trees:
 
 Building lineage trees
-===============================================================================
+-------------------------------------------------------------------------------
 
 If you're simply interested in getting some tree topologies, the fastest
 option is to just use the GY94 and not estimate any parameters
@@ -185,7 +193,8 @@ These results can be visualized in the same manner using Alakazam.
 .. _igphyml-parameters:
 
 Evolutionary hypothesis testing
-===============================================================================
+-------------------------------------------------------------------------------
+
 
 The HLP19 model
 -------------------------------------------------------------------------------
@@ -379,7 +388,7 @@ any firm conclusion.
 
 
 Optimizing performance
-===============================================================================
+-------------------------------------------------------------------------------
 
 IgPhyML is a computationally intensive program. There are some ways to
 make calculations more practical, detailed below.

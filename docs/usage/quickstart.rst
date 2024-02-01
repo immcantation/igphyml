@@ -35,6 +35,8 @@ Open an R session (can type ``R`` into teriminal) in the Docker container::
     igphyml_exec <- "/usr/local/share/igphyml/src/igphyml"
     trees <- getTrees(clones, build="igphyml", exec=igphyml_exec)
 
+To visualize trees and print out parameter estimates, enter these commands::
+
     # generate plot objects
     plots <- plotTrees(trees)
 
@@ -70,7 +72,7 @@ Open an R session (can type ``R`` into teriminal) in the Docker container::
 
 
 .. figure:: ../_static/t1.png
-   :scale: 25 %
+   :scale: 100 %
    :align: center
    :alt: map to buried treasure
 
