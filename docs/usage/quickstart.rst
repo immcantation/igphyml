@@ -3,17 +3,10 @@
 Quick start
 ===============================================================================
 
-IgPhyML is easiest to use when run indirectly through the Change-O program 
-`BuildTrees <https://changeo.readthedocs.io/en/stable/tools/BuildTrees.html>`__
-by specifying the ``--igphyml`` option.
-Most of these instructions require Change-O 0.4.6 or higher, Alakazam 0.3.0 or higher,
-and IgPhyML to be installed, with the executable in your ``PATH`` variable. 
-If these aren't possible, see :ref:`IgPhyML standalone operation <igphyml-standalone>`
-
-To view all options for `BuildTrees <https://changeo.readthedocs.io/en/stable/tools/BuildTrees.html>`__
-, run the command::
-
- BuildTrees.py --help
+IgPhyML is easiest to use when run indirectly through the R package 
+`Dowser <https://dowser.readthedocs.io>`__.
+Most of these instructions require Dowser 1.0.0 or higher,
+and IgPhyML to be available in the Docker container or compiled locally.
 
 The following commands should work as a first pass on many reasonably sized
 datasets, but if you really want to understand what’s going on or make
@@ -23,57 +16,58 @@ website.
 Build trees and estimate model parameters
 -------------------------------------------------------------------------------
  
-Move to the ``examples`` subfolder and run::
+Open an R session (can type ``R`` into teriminal) in the Docker container::
 
-    BuildTrees.py -d example.tsv --outname ex --log ex.log --collapse \
-        --sample 3000 --igphyml --clean all --nproc 1
+    #!/usr/bin/R
+    library(dowser)
+    library(airr)
+    library(tidyr)
+    library(dplyr)
+
+    # read in data after clonal clustering and germline reconstruction
+    data <- read_rearrangement("/usr/local/share/igphyml/examples/example.tsv")
+
+    # format clones for tree building (only 1 clone has >1 unique sequence)
+    clones <- formatClones(data)
+
+    # build tree using IgPhyML
+    # executable location will be different different if locally compiled
+    igphyml_exec <- "/usr/local/share/igphyml/src/igphyml"
+    trees <- getTrees(clones, build="igphyml", exec=igphyml_exec)
+
+    # generate plot objects
+    plots <- plotTrees(trees)
+
+    # plot tree in console (might not work in Docker)
+    plots[[1]]
+
+    # plot trees as a  pdf 
+    treesToPDF(plots, file="igphyml_example_trees.pdf")
+
+    # save trees for later
+    saveRDS(trees, "trees.rds")
+
+    # look at parameters
+    print(gather(bind_rows(trees$parameters)))
+
+    # A tibble: 13 × 2
+    #   key         value    
+    #   <chr>       <chr>    
+    # 1 clone       1        
+    # 2 nseq        2        
+    # 3 nsite       106      
+    # 4 tree_length 0.2865   
+    # 5 lhood       -147.7453
+    # 6 kappa_mle   1.9527   
+    # 7 omega_mle   0.7074   
+    # 8 wrc_2_mle   4.3296   
+    # 9 gyw_0_mle   2.6478   
+    #10 wa_1_mle    5.5308   
+    #11 tw_0_mle    0.7451   
+    #12 syc_2_mle   -0.99    
+    #13 grs_0_mle   0.2133  
  
-This command processes an AIRR-formatted dataset of BCR sequences that have been
-`clonally clustered <https://changeo.readthedocs.io/en/stable/examples/cloning.html>`__
-with `germlines reconstructed <https://changeo.readthedocs.io/en/stable/examples/germlines.html>`__.
-It then quickly builds trees using the GY94 model and, using these
-fixed topologies, estimates HLP19 model parameters. This can be sped up by
-increasing the ``--nproc`` option. Subsampling using the ``--sample`` option in isn't 
-strictly necessary, but IgPhyML will run slowly when applied to large datasets. 
-Here, the ``--collapse`` flag is used to collapse identical sequences. This is 
-highly recommended because identical sequences slow down calculations without 
-affecting likelihood values in IgPhyML.
 
-Visualize results
--------------------------------------------------------------------------------
-
-The output file of the above command can be read using the 
-`readIgphyml <https://alakazam.readthedocs.io/en/stable/topics/readIgphyml>`__ 
-function of 
-`Alakazam <https://alakazam.readthedocs.io>`__.
-After opening an ``R`` session, enter the following commands. Note that 
-when using the Docker container, you'll need to run ``dev.off()`` after 
-plotting the tree to create a pdf plot in the ``examples`` directory::
-
- library(alakazam)
- library(igraph)
- 
- db = readIgphyml("ex_igphyml-pass.tab")
-
- #plot largest lineage tree
- plot(db$trees[[1]],layout=layout_as_tree)
-
- #show HLP10 parameters
- print(t(db$param[1,]))
- CLONE         "REPERTOIRE"
- NSEQ          "4"         
- NSITE         "107"       
- TREE_LENGTH   "0.286"     
- LHOOD         "-290.7928" 
- KAPPA_MLE     "2.266"     
- OMEGA_FWR_MLE "0.5284"    
- OMEGA_CDR_MLE "2.3324"    
- WRC_2_MLE     "4.8019"    
- GYW_0_MLE     "3.4464"    
- WA_1_MLE      "5.972"     
- TW_0_MLE      "0.8131"    
- SYC_2_MLE     "-0.99"     
- GRS_0_MLE     "0.2583"
 
 .. figure:: ../_static/t1.png
    :scale: 25 %
@@ -81,3 +75,28 @@ plotting the tree to create a pdf plot in the ``examples`` directory::
    :alt: map to buried treasure
 
    Lineage tree of example clone.
+
+These commands process an AIRR-formatted dataset of BCR sequences that have been
+`clonally clustered <https://scoper.readthedocs.io/en/stable/vignettes/Scoper-Vignette/>`__
+with `germlines reconstructed <https://dowser.readthedocs.io/en/latest/vignettes/Germlines-Vignette/>`__.
+It then quickly builds trees using the GY94 model and, using these
+fixed topologies, estimates HLP19 model parameters. If analyzing multiple trees, this can be sped up by
+setting the ``nproc`` option for ``formatClones`` and ``getTrees``. Note that IgPhyML will run slowly when applied to large datasets,
+so it may be worth down-sampling your data if you have clones larger than 100 unique sequences, 
+and removing clones with < 5 sequences if you have a many clones.
+
+In addition to IgPhyML, Dowser offers many options for 
+`building trees <https://dowser.readthedocs.io/en/latest/vignettes/Building-Trees-Vignette/>`__ and
+`visualizing trees <https://dowser.readthedocs.io/en/latest/vignettes/Plotting-Trees-Vignette/>`__ which 
+may be more computationally efficient for larger datasets but don't estimate the same potentially 
+parameters as IgPhyML, such as omega (aka dN/dS or R/S).
+
+To see more advanced options for IgPhyML tree building in Dowser, check out the documentation
+for `buildIghyml <https://dowser.readthedocs.io/en/latest/topics/buildIgphyml/>`__. You can pass any
+option of this function to getTrees, e.g. 
+``getTrees(clones, partition="cf", build="igphyml", exec=igphyml_exec)`` to estimate separate omegas for
+CDRs and FWRs. 
+
+
+
+

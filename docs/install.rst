@@ -11,7 +11,7 @@ Docker Image (recommended for non-Linux systems)
 
 The simplest way to use IgPhyML is via the 
 `Immcantation Docker image <https://immcantation.readthedocs.io/en/stable/docker/intro.html>`__. 
-``4.3.0`` is used for these instructions, but you should use the latest version on the Immcantation site.
+``4.5.0`` is used for these instructions, but you should use the latest version on the Immcantation site.
 
 Briefly, all the example commands on rest of this site can be run by first installing Docker and
 downloading the Immcantation Docker image. Note for some operating systems it may be necessary to have 
@@ -20,7 +20,7 @@ running before entering these commands.
 In a terminal, enter::
 
  # pull Immcantation Docker image
- docker pull immcantation/suite:4.3.0
+ docker pull immcantation/suite:4.5.0
 
  # clone IgPhyML repository to get example files
  git clone https://bitbucket.org/kleinstein/igphyml
@@ -31,26 +31,26 @@ You may also need to install ``git`` to complete the last command. Then, move to
  cd igphyml/examples
 
  # load Docker, Linux/ Mac OS X:
- docker run -it --workdir /data -v $(pwd):/data:z immcantation/suite:4.3.0 bash
+ docker run -it --workdir /data -v $(pwd):/data:z immcantation/suite:4.5.0 bash
 
  # or load Docker, Windows:
- docker run -it --workdir /data -v %cd%:/data:z immcantation/suite:4.3.0 bash
+ docker run -it --workdir /data -v %cd%:/data:z immcantation/suite:4.5.0 bash
 
 Once inside the container, check everything is properly configured::
 
  # should give example.fasta  example.tab  part.example.txt
  ls
 
- # should be IgPhyML 1.1.3 052020
+ # should be IgPhyML 2.0.0 092223
  igphyml --version
 
 More generally, use this command to load the Docker image on the current directory of a Linux/Max OS X system::
 
- docker run -it --workdir /data -v $(pwd):/data:z immcantation/suite:4.3.0 bash
+ docker run -it --workdir /data -v $(pwd):/data:z immcantation/suite:4.5.0 bash
 
 or for a Windows Command Prompt::
 
- docker run -it --workdir /data -v %cd%:/data:z immcantation/suite:4.3.0 bash
+ docker run -it --workdir /data -v %cd%:/data:z immcantation/suite:4.5.0 bash
 
 For further information on using the Immcantation Docker image, see 
 `Immcantation Docker image <https://immcantation.readthedocs.io/en/stable/docker/intro.html>`__.
