@@ -1,5 +1,2 @@
 sphinx~=6.2.1
 sphinx-rtd-theme==1.2.0
-sphinxcontrib-autoprogram>=0.1.8
-sphinxcontrib-bibtex==2.5.0
-setuptools==65.5.1
