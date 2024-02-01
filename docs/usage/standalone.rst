@@ -3,10 +3,7 @@
 Standalone operation
 =============================================================================== 
 
-While IgPhyML is easiest to use when run indirectly through the Change-O program 
-`BuildTrees <https://changeo.readthedocs.io/en/stable/tools/BuildTrees.html>`__, 
-this is not always possible or desirable. This 
-section details how IgPhyML may be run directly as a standalone program. As before,
+This section details how IgPhyML may be run directly as a standalone program. As before,
 this section requires IgPhyML to be installed, with the executable in your ``PATH`` variable.
 This is already done in the :ref:`Docker image <docker-image>`.
 
