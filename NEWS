@@ -1,0 +1,53 @@
+Release Notes
+===============================================================================
+Version 2.0.0: Sept. 22, 2023
++ Added support for combined light chain tree building, and scaled branch models
++ Compatible in Dowser 2.0.0
+
+Version 1.1.4:  April 13, 2022
+-------------------------------------------------------------------------------
++ Added new parsimony reconstruction methods and maximum ambiguity polytomy resolution for Dowser compatability.
+
+Version 1.1.3:  May 20, 2020
+-------------------------------------------------------------------------------
+
++ Small bug fixes in preparation for Immcantation 4.0.0 release
+
+Version 1.1.2:  May 13, 2020
+-------------------------------------------------------------------------------
+
++ Added basic intermediate sequence reconstruction function using `--ASR` or `--ASRc 0.9`
+
+Version 1.1.1:  Jan. 27, 2020
+-------------------------------------------------------------------------------
+
++ Added more general maximum parsimony reconstruction methods.
+
+Version 1.1.0:  Sept. 16, 2019
+-------------------------------------------------------------------------------
+
++ Added parsimony reconstruction methods for cell subsets. Information for Austin, Buckner et al. (2019) hardcoded. More general methods and documentation to follow.
+
+
+Version 1.0.7:  Feb. 19, 2019
+-------------------------------------------------------------------------------
+
++ Added HLP19 substitution model, specified by HLP or HLP19.
+
++ Constant B matrix approximation (--cbmat; default for HLP) dramatically improves runtime.
+
++ Default for --motifs is now FCH (free coldspots and hotspots).
+
++ FWR/CDR omega optimization is default behavior if partition files included.
+
++ Output file cleaned up, as well as confidence interval prediction output.
+
+
+Version 1.0.6
+-------------------------------------------------------------------------------
+
++ Repertoire-wide HLP17 parameter optimization
+
++ Parallelization by tree using --threads
+
++ Integration to Change-O through BuildTrees.py
