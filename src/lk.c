@@ -1363,74 +1363,80 @@ phydbl ASR_Core_root(t_edge *b, t_tree *tree, t_node *anc, t_node *d)
 	                  site_lk_cat += probc[l];
 	                }
 	            }
-	        }else{
+	        }else{ //actually called at root
 	          For(l,ns){
 	              probc[l] = .0;
 	              For(k,ns){
-	                  probc[l] += b->bPmat_part[tree->mod->partIndex[site]][catg*dim3+l*dim2+k]*p_lk[site*dim1+catg*dim2+k]*b->upp[site][l];//Modified by Ken 17/8/2016
+	                  probc[l] += b->bPmat_part[tree->mod->partIndex[site]][catg*dim3+l*dim2+k]*p_lk[site*dim1+catg*dim2+k];//*b->upp[site][l];//Modified by Ken 17/8/2016
 	               }
-	               site_lk_cat+=probc[l];
+                 //printf("\n%d\t%d\t%lf",site,l,b->upp[site][l],log(b->upp[site][l]));
+	               site_lk_cat+=probc[l]*b->upp[site][l];
+                 if(tree->io->mod->ASR == 1){
+                   probc[l] *= b->upp[site][l];
+                 }
 	          }
 	        }
 	      tree->site_lk_cat[catg] = site_lk_cat;
 	    }
 
 
+      phydbl site_lk_cat_og = tree->site_lk_cat[0];
+      if(tree->io->mod->ASR == 1){
+  	  //find ML codon
+  	  int maxc=-1;
+    	  phydbl max=-DBL_MAX;
+    	  phydbl threshold = tree->io->mod->ASRcut;
+    	  phydbl cutoff = 0;
+    	  phydbl cumsum = 0.0;
+  	  For(k,ns){
+        //printf("\n%d\t%d\t%lf\t%lf",site,k,log(probc[k]),log(tree->site_lk_cat[0]));
+  		  probc[k] /= tree->site_lk_cat[0];
+  		  if(probc[k]>max){
+  			  max=probc[k];
+  			  maxc=k;
+  		  }
+  	  }
 
-	  //find ML codon
-	  int maxc=-1;
-  	  phydbl max=-DBL_MAX;
-  	  phydbl threshold = tree->io->mod->ASRcut;
-  	  phydbl cutoff = 0;
-  	  phydbl cumsum = 0.0;
-	  For(k,ns){
-		  probc[k] /= tree->site_lk_cat[0];
-		  if(probc[k]>max){
-			  max=probc[k];
-			  maxc=k;
-		  }
-	  }
+  	  tree->mod->mlASR[tree->mod->nedges][site]=maxc;
+  	  /*For(i,61){
+  		  tree->mod->probASR[i][site]=probc[i];
+  	  }*/
 
-	  tree->mod->mlASR[tree->mod->nedges][site]=maxc;
-	  /*For(i,61){
-		  tree->mod->probASR[i][site]=probc[i];
-	  }*/
+  	  //make copy of probc array
+  	  phydbl probc_copy[61];
+  	  For(k,ns){
+  		  probc_copy[k] = probc[k];
+  	  }
+  	  qsort(probc_copy, 61, sizeof(phydbl), floatcomp);
+  	  For(k,ns){
+  	  	  cumsum += probc_copy[k];
+  	  	  if(cumsum >= threshold){
+  	  		  cutoff = probc_copy[k];
+  	  		  break;
+  	  	  }
+  	  }
 
-	  //make copy of probc array
-	  phydbl probc_copy[61];
-	  For(k,ns){
-		  probc_copy[k] = probc[k];
-	  }
-	  qsort(probc_copy, 61, sizeof(phydbl), floatcomp);
-	  For(k,ns){
-	  	  cumsum += probc_copy[k];
-	  	  if(cumsum >= threshold){
-	  		  cutoff = probc_copy[k];
-	  		  break;
-	  	  }
-	  }
+  	  int ncodons=0;
+  	  For(k,61){
+  		  if(probc[k] >= cutoff)ncodons++;
+  	  }
 
-	  int ncodons=0;
-	  For(k,61){
-		  if(probc[k] >= cutoff)ncodons++;
+  	  //get set of codons within the significance threshold
+  	  char** codonset=malloc(ncodons*sizeof(char*));
+  	  int c=0;
+  	  For(k,61){
+  		  if(probc[k] >= cutoff){
+  			  codonset[c]=mCalloc(4,sizeof(char));
+  		  	  char* s1=mCalloc(4,sizeof(char));
+  		  	  Sprint_codon(s1,tree->io->senseCodons[k]);
+  		  	  strcpy(codonset[c],s1);
+  		  	  c++;
+  		  }
+  	  }
+  	  For(k,3){
+  		For(k,3)tree->mod->mlCodon[tree->mod->nedges][site*3+k]=ambigAssign(codonset,ncodons,k);
+  	  }
 	  }
-
-	  //get set of codons within the significance threshold
-	  char** codonset=malloc(ncodons*sizeof(char*));
-	  int c=0;
-	  For(k,61){
-		  if(probc[k] >= cutoff){
-			  codonset[c]=mCalloc(4,sizeof(char));
-		  	  char* s1=mCalloc(4,sizeof(char));
-		  	  Sprint_codon(s1,tree->io->senseCodons[k]);
-		  	  strcpy(codonset[c],s1);
-		  	  c++;
-		  }
-	  }
-	  For(k,3){
-		For(k,3)tree->mod->mlCodon[tree->mod->nedges][site*3+k]=ambigAssign(codonset,ncodons,k);
-	  }
-	  free(probc);
 
 	  max_sum_scale =  (phydbl)BIG;
 	  For(catg,tree->mod->n_catg){
@@ -1553,6 +1559,22 @@ phydbl ASR_Core_root(t_edge *b, t_tree *tree, t_node *anc, t_node *d)
 	      PhyML_Printf("\n. %d %d %d\n\n",b->num,d->num,anc->num);
 	      Warn_And_Exit("\n");
 	    }
+
+    //printf("\n%d\t%lf\t%lf",site,tree->data->wght[site],log_site_lk);
+    phydbl ratio = log_site_lk-log(site_lk_cat_og);
+
+    if(tree->io->mod->ASR == 2){
+      For(k,ns){
+        char* s1=mCalloc(4,sizeof(char));
+        Sprint_codon(s1,tree->io->senseCodons[k]);
+        fprintf(tree->io->fp_out_seqs, "%d\t%s\t%lf\t%lf\t%lf\t%lf\t%lf%d\n",site,s1,log(probc[k]),
+          log(probc[k])+ratio,log(site_lk_cat_og),log_site_lk,b->upp[site][k],
+          tree->data->wght[site]);
+        free(s1);
+      }
+    }
+    free(probc);  
+
 	  tree->cur_site_lk[site] = log_site_lk;
 	  /* Multiply log likelihood by the number of times this site pattern is found in the data */
 	  tree->c_lnL_sorted[site] = tree->data->wght[site]*log_site_lk;

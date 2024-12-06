@@ -1440,7 +1440,6 @@ void Print_Tab_Out(option *io){
 		free(cloneid);
 	}
 	fprintf(f,"\n");
-
 	if(io->mod->ASR == 1){
 		FILE* fastaout = io->fp_out_seqs;
 		For(i,io->ntrees){
@@ -1618,8 +1617,7 @@ void Print_IgPhyML_Out(option* io){
 		 fprintf(f,"%d\t%s\n",i,Write_Tree(io->tree_s[i]));
 	 }*/
 
-
-	if(io->mod->ASR){
+	if(io->mod->ASR == 1){
 	fprintf(f,"oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo\n");
 	fprintf(f,"                     Ancestral Sequence Reconstruction\n");
 	fprintf(f,"Marginal ML codon predictions for internal nodes. Open specified tree files using\n");
@@ -1691,18 +1689,18 @@ void Print_IgPhyML_Out(option* io){
 		 t_tree* tree=io->tree_s[i];
 		 char fout[T_MAX_FILE];
 		 strcpy(fout,io->datafs[i]);
-		 if(io->mod->ASR)strcat(fout,"_igphyml_asr");
+		 if(io->mod->ASR==1)strcat(fout,"_igphyml_asr");
 		 else strcat(fout,"_igphyml_tree");
 		 if(io->append_run_ID){
 			 strcat(fout, "_");
 			 strcat(fout, io->run_id_string);
 		 }
-		 if(io->mod->ASR)strcat(fout,".nex");
+		 if(io->mod->ASR==1)strcat(fout,".nex");
 		 else strcat(fout,".txt");
 		 //potentially output new repertoire file
 		 if(io->outrepspec)fprintf(orep,"%s\t%s\t%s\t%s\n",io->datafs[i],fout,io->rootids[i],io->partfs[i]);
 		 FILE* treeout = Openfile(fout, 1 );
-		 if(io->mod->ASR){
+		 if(io->mod->ASR==1){
 			 fprintf(treeout,"#NEXUS\nBegin taxa;\n");
 			 fprintf(treeout,"\tDimensions ntax=%d;\n",tree->mod->n_otu);
 			 fprintf(treeout,"\tTaxlabels\n");
@@ -1717,7 +1715,7 @@ void Print_IgPhyML_Out(option* io){
 		 	 fprintf(treeout,"Begin trees;Tree TREE1 = [&R] ");
 		 }
 		 Print_Tree(treeout,io->tree_s[i]);
-		 if(io->mod->ASR){
+		 if(io->mod->ASR==1){
 			 fprintf(treeout,"End;");
 			 /*fprintf(treeout,"begin figtree;\nset nodeLabels.colorAttribute=\"User selection\";\nset "
 					 "nodeLabels.displayAttribute=\"Num\";\nset nodeLabels.fontName=\"sansserif\";"

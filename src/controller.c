@@ -122,6 +122,7 @@ struct option longopts[] =
 	{"optDebug",		  no_argument,NULL,160},  //!<Added by Ken
 	{"ASR",		  no_argument,NULL,161},  //!<Added by Ken
 	{"ASRc",		  required_argument,NULL,162},  //!<Added by Ken
+	{"ASRp",		  no_argument,NULL,187},  //!<Added by Ken
 	{"minseq",		  required_argument,NULL,163},  //!<Added by Ken
 	{"GR",		  required_argument,NULL,164},  //!<Added by Ken
 	{"rootpi",		  no_argument,NULL,165},  //!<Added by Ken
@@ -808,7 +809,7 @@ void checkModelCombinations(option * io){
 
 /* Create output files */
 void createOutFiles(option * io){
-	if(io->mod->ASR){
+	if(io->mod->ASR > 0){
     	int nfragments = 0;
     	int i = 0;
     	char* filetemp1 = strdup(io->out_stats_file);
@@ -827,7 +828,8 @@ void createOutFiles(option * io){
     		 strcat(io->out_seqs_file, "_");
     		 strcat(io->out_seqs_file, io->run_id_string);
     	}
-    	strcat(io->out_seqs_file,"_asr.fasta");
+    	if(io->mod->ASR==1)strcat(io->out_seqs_file,"_asr.fasta");
+    	if(io->mod->ASR==2)strcat(io->out_seqs_file,"_rootprobs.txt");
     	io->fp_out_seqs = Openfile(io->out_seqs_file, io->writemode);
     }
     if(io->append_run_ID){
@@ -2892,6 +2894,13 @@ int mainOptionSwitch(int opt, char * optarg, option * io)
            	}
             break;
           }
+
+          //////////////////////////////////////////////////////////////////////////////////////
+            // --ASRp
+        case 187: {
+           	io->mod->ASR=2;
+             break;
+         }
 
             //////////////////////////////////////////////////////////////////////////////////////
             // --minseq <int>
