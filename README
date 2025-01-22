@@ -1,3 +1,14 @@
+**IMPORTANT!**
+IgPhyML has moved to https://github.com/immcantation/igphyml
+
+To update Git configuration settings use:
+
+```
+   git config user.email "your-gh-user@email.com"
+   git config user.name "your-gh-user-name"
+   git remote set-url origin git@github.com:immcantation/igphyml.git
+```
+
 IgPhyML - B cell phylogenetic inference package
 ================================================================================
 
@@ -13,6 +24,6 @@ models that correct for the context-sensitive nature of SHM, and combines
 information from multiple lineages to give more precisely estimated repertoire-wide
 model parameter estimates.
 
-IgPhyML is integrated into the Immcantation framework, meaning users can easily 
+IgPhyML is integrated into the Immcantation framework, meaning users can easily
 build and visualize B cell lineage trees and test hypotheses about mutation and 
 selection in B cell repertoires.
