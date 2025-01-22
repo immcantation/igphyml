@@ -5,8 +5,8 @@ If you have questions you can email the
 `Immcantation Group <mailto:immcantation@googlegroups.com>`__.
 
 If you've discovered a bug or have a feature request, you can create an issue
-on Bitbucket using the
-`Issue Tracker <http://bitbucket.org/kleinstein/igphyml/issues>`__.
+on GitHub using the
+`Issue Tracker <http://github.com/immcantation/igphyml/issues>`__.
 
 Citation
 --------------------------------------------------------------------------------

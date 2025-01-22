@@ -23,7 +23,7 @@ In a terminal, enter::
  docker pull immcantation/suite:4.5.0
 
  # clone IgPhyML repository to get example files
- git clone https://bitbucket.org/kleinstein/igphyml
+ git clone https://github.com/immcantation/igphyml
 
 You may also need to install ``git`` to complete the last command. Then, move to the examples directory and load it into the Docker image depending on your operating system::
  
@@ -60,7 +60,7 @@ Compiling from source (recommended for Linux)
 If using Linux, or if the Docker image is not possible or preferable, the 
 source code of the current development version can be downloaded using git and compiled::
 
-    git clone https://bitbucket.org/kleinstein/igphyml
+    git clone https://github.com/immcantation/igphyml
     cd igphyml
     ./make_phyml_omp 
 
