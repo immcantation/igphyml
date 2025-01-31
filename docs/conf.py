@@ -31,19 +31,6 @@ version = ''
 # The full version, including alpha/beta/rc tags
 release = '1.0.7'
 
-# Prolog
-rst_prolog = """
-.. important::
-    *Are you an Immcantation user and/or interested in adaptive immune receptor repertoire analysis?*
-    
-    Register now for the upcoming Immcantation Users Group Meeting!
-    It will be held virtually on **January 30th, 2025, from 10 to 1:30pm (ET)**.
-    All talks will be from user-submitted abstracts.
-
-    Full information here: https://immcantation.github.io/users-meeting/
-"""
-
-
 # -- General configuration ---------------------------------------------------
 
 # If your documentation needs a minimal Sphinx version, state it here.
