@@ -127,25 +127,40 @@ Xcode as well. Next, install ``autoconf``, ``automake``, and ``llvm``::
     brew install automake
     brew install llvm
 
-Specify the ``llvm`` version of ``clang`` in ``Makefile.am`` and
+Specify the ``llvm`` version of ``clang`` in both ``Makefile.am`` and
 ``src/Makefile.am`` by adding the line ``CC=<path to llvm clang>``
 to the beginning of both files. You will also need to add
 ``MACOMP=<path to omp.h>`` and ``MACLLVM=<path to llvm lib>`` to
-``src/Makefile.am``. For instance, if you’ve install ``llvm 3.9.1``
-via homebrew, you will likely need to add the line
-``CC=/usr/local/Cellar/llvm/3.9.1/bin/clang``
-to ``Makefile.am`` and the lines::
+``src/Makefile.am``. 
 
-    CC=/usr/local/Cellar/llvm/3.9.1/bin/clang
-    MACOMP=/usr/local/Cellar/llvm/3.9.1/lib/clang/3.9.1/include/omp.h
-    MACLLVM=/usr/local/Cellar/llvm/3.9.1/lib
+**Edit Makefile.am**
+If you’ve installed ``llvm 19.1.4`` add this line to ``Makefile.am``::
 
-to ``src/Makefile.am``.
-Your specific path may look different, but you can check locations
+    CC=/usr/local/Cellar/llvm/19.1.4/bin/clang
+
+**Then edit src/Makefile.am**
+If you’ve installed ``llvm 19.1.4`` add these the lines to ``src/Makefile.am``::
+
+    CC=/usr/local/Cellar/llvm/19.1.4/bin/clang
+    MACOMP=/usr/local/Cellar/llvm/19.1.4/lib/clang/19/include/omp.h
+    MACLLVM=/usr/local/Cellar/llvm/19.1.4/lib
+
+A version of these are already shown as comments in these files.
+Your specific paths may look different, but you can check locations
 of these files and folders by looking around in
 ``/usr/local/Cellar/llvm/``. The directory structure should be
-similar. Run ``./make_blas_phyml_omp``, or other versions, as desired, and add
+similar. 
+
+Once you've edited both files, run::
+
+    ./make_phyml_omp
+
+or other compilation options as desired and add
 the ``src`` folder to your ``PATH`` variable.
+
+You can check if compilation was successful by running::
+
+    ./src/igphyml -version
 
 On some versions of OS X it may be necessary to install XCode command
 line tools using::
