@@ -133,12 +133,12 @@ to the beginning of both files. You will also need to add
 ``MACOMP=<path to omp.h>`` and ``MACLLVM=<path to llvm lib>`` to
 ``src/Makefile.am``. 
 
-**Edit Makefile.am**
+**Edit Makefile.am**:
 If you’ve installed ``llvm 19.1.4`` add this line to ``Makefile.am``::
 
     CC=/usr/local/Cellar/llvm/19.1.4/bin/clang
 
-**Then edit src/Makefile.am**
+**Then edit src/Makefile.am**:
 If you’ve installed ``llvm 19.1.4`` add these the lines to ``src/Makefile.am``::
 
     CC=/usr/local/Cellar/llvm/19.1.4/bin/clang
