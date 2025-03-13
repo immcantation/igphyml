@@ -134,12 +134,12 @@ to the beginning of both files. You will also need to add
 ``src/Makefile.am``. 
 
 **Edit Makefile.am**:
-If you’ve installed ``llvm 19.1.4`` add this line to ``Makefile.am``::
+For example, if you’ve installed ``llvm 19.1.4`` add this line to ``Makefile.am``::
 
     CC=/usr/local/Cellar/llvm/19.1.4/bin/clang
 
 **Then edit src/Makefile.am**:
-If you’ve installed ``llvm 19.1.4`` add these the lines to ``src/Makefile.am``::
+For example, if you’ve installed ``llvm 19.1.4`` add these the lines to ``src/Makefile.am``::
 
     CC=/usr/local/Cellar/llvm/19.1.4/bin/clang
     MACOMP=/usr/local/Cellar/llvm/19.1.4/lib/clang/19/include/omp.h
