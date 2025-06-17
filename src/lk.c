@@ -970,6 +970,20 @@ void ASR_Wrapper(option* io){
 	For(j,io->ntrees){
 		t_tree* tree=io->tree_s[j];
 		model* mod = io->mod_s[j];
+
+    if(io->mod->ASR == 2){
+      mod->rootprob_file = mCalloc(T_MAX_FILE, sizeof(char));
+      strcpy(mod->rootprob_file,io->datafs[j]);
+      strcat(mod->rootprob_file,"_igphyml_rootprobs");
+     if(io->append_run_ID){
+      strcat(mod->rootprob_file,"_");
+      strcat(mod->rootprob_file,io->run_id_string);
+      strcat(mod->rootprob_file,".txt");
+     }else strcat(mod->rootprob_file,".txt");
+
+      mod->fp_rootprob = Openfile(mod->rootprob_file, io->writemode);
+    }
+
 		Get_UPP(tree->noeud[tree->mod->startnode],tree->noeud[tree->mod->startnode]->v[0],tree);
 		mod->mlASR=mCalloc(mod->nedges+1,sizeof(int*));
 		//mod->probASR=mCalloc(61,sizeof(phydbl*));
@@ -977,12 +991,13 @@ void ASR_Wrapper(option* io){
   	  	/*For(i,61){
     	  	  mod->probASR[i]=mCalloc(mod->init_len/3,sizeof(phydbl));
   	  	}*/
-  	  	For(i,mod->nedges+1){
-  	  	  mod->mlASR[i]=mCalloc(mod->init_len/3,sizeof(int));
-  		  mod->mlCodon[i]=mCalloc(mod->init_len+1,sizeof(char));
-  	  	  if(i<mod->nedges)ASR_At_Given_Edge(tree->t_edges[i],tree,0);
-  	  	  else ASR_At_Given_Edge(tree->noeud[tree->mod->startnode]->b[0],tree,1);
-  	  	}
+  	For(i,mod->nedges+1){
+  	  mod->mlASR[i]=mCalloc(mod->init_len/3,sizeof(int));
+	  mod->mlCodon[i]=mCalloc(mod->init_len+1,sizeof(char));
+  	  if(i<mod->nedges)ASR_At_Given_Edge(tree->t_edges[i],tree,0);
+  	  else ASR_At_Given_Edge(tree->noeud[tree->mod->startnode]->b[0],tree,1);
+  	}
+    fclose(mod->fp_rootprob);
 	}
 }
 
@@ -1563,11 +1578,12 @@ phydbl ASR_Core_root(t_edge *b, t_tree *tree, t_node *anc, t_node *d)
     //printf("\n%d\t%lf\t%lf",site,tree->data->wght[site],log_site_lk);
     phydbl ratio = log_site_lk-log(site_lk_cat_og);
 
+    // change to open a file for each clone individually
     if(tree->io->mod->ASR == 2){
       For(k,ns){
         char* s1=mCalloc(4,sizeof(char));
         Sprint_codon(s1,tree->io->senseCodons[k]);
-        fprintf(tree->io->fp_out_seqs, "%d\t%s\t%lf\t%lf\t%lf\t%lf\t%lf%d\n",site,s1,log(probc[k]),
+        fprintf(tree->mod->fp_rootprob, "%d\t%s\t%lf\t%lf\t%lf\t%lf\t%lf%d\n",site,s1,log(probc[k]),
           log(probc[k])+ratio,log(site_lk_cat_og),log_site_lk,b->upp[site][k],
           tree->data->wght[site]);
         free(s1);

@@ -731,6 +731,9 @@ typedef struct __Model {
   char                *in_align_file; /*!< alignment file name. */ //MOVED FROM OPTION
   FILE                  *fp_in_align; /*!< pointer to the alignment file. */ //MOVED FROM OPTION
 
+  char                *rootprob_file; // Root probabilities file if ASR==2
+  FILE                  *fp_rootprob; // Root probabilities file if ASR==2
+
   
   int                   ns; /*!< number of states (4 for DNA, 20 for AA, #senseCodons for Codons).*/                             
   char          *modelname;
@@ -917,6 +920,7 @@ typedef struct __Model {
  int        			polytomyresolve;
  int                    force_resolve;
  phydbl        			maxtrunkl;
+
 }model;
 
 /*********************************************************/

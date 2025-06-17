@@ -828,9 +828,11 @@ void createOutFiles(option * io){
     		 strcat(io->out_seqs_file, "_");
     		 strcat(io->out_seqs_file, io->run_id_string);
     	}
-    	if(io->mod->ASR==1)strcat(io->out_seqs_file,"_asr.fasta");
-    	if(io->mod->ASR==2)strcat(io->out_seqs_file,"_rootprobs.txt");
-    	io->fp_out_seqs = Openfile(io->out_seqs_file, io->writemode);
+    	if(io->mod->ASR==1){
+    		strcat(io->out_seqs_file,"_asr.fasta");
+    		io->fp_out_seqs = Openfile(io->out_seqs_file, io->writemode);
+    	}
+    	//if(io->mod->ASR==2)strcat(io->out_seqs_file,"_rootprobs.txt");
     }
     if(io->append_run_ID){
     	strcat(io->out_stats_file, "_igphyml_stats");
