@@ -6,7 +6,7 @@ If you need help or have any questions, please contact the `Immcantation Group <
 If you have discovered a bug or have a feature request, you can open an issue using the
 `issue tracker <http://github.com/immcantation/igphyml/issues>`__.
 
-To receive alerts about Immcantation releases, news, events, and tutorials, join the [Immcantation News](https://groups.google.com/g/immcantation-news) Google Group. [Membership settings](https://groups.google.com/g/immcantation-news/membership) can be adjusted to change the frequency of email updates.
+To receive alerts about Immcantation releases, news, events, and tutorials, join the `Immcantation News <https://groups.google.com/g/immcantation-news>`__ Google Group. `Membership settings <https://groups.google.com/g/immcantation-news/membership>`__ can be adjusted to change the frequency of email updates.
 
 Citation
 --------------------------------------------------------------------------------
