@@ -1,12 +1,12 @@
 Contact
 --------------------------------------------------------------------------------
 
-If you have questions you can email the
-`Immcantation Group <mailto:immcantation@googlegroups.com>`__.
+If you need help or have any questions, please contact the `Immcantation Group <mailto:immcantation@googlegroups.com>`__.
 
-If you've discovered a bug or have a feature request, you can create an issue
-on GitHub using the
-`Issue Tracker <http://github.com/immcantation/igphyml/issues>`__.
+If you have discovered a bug or have a feature request, you can open an issue using the
+`issue tracker <http://github.com/immcantation/igphyml/issues>`__.
+
+To receive alerts about Immcantation releases, news, events, and tutorials, join the [Immcantation News](https://groups.google.com/g/immcantation-news) Google Group. [Membership settings](https://groups.google.com/g/immcantation-news/membership) can be adjusted to change the frequency of email updates.
 
 Citation
 --------------------------------------------------------------------------------
@@ -17,10 +17,9 @@ To cite IgPhyML in publications please use:
 Repertoire-wide phylogenetic models of B cell molecular evolution reveal evolutionary signatures of aging and vaccination.
 *Proceedings of the National Academy of Sciences, 116(45), 22664-22672.* `doi: https://doi.org/10.1073/pnas.1906020116 <https://www.pnas.org/content/116/45/22664>`__
 
-**Hoehn, KB, Lunter, G, & Pybus, OG.** 
+**Hoehn, KB, Lunter, G, & Pybus, OG.**
 A phylogenetic codon substitution model for antibody lineages.
 *Genetics, 206(1), 417-427.* `doi: http://dx.doi.org/10.1534/genetics.116.196303 <https://www.genetics.org/content/206/1/417>`__
-
 
 References
 ...............................................................................
@@ -47,5 +46,4 @@ License
 --------------------------------------------------------------------------------
 
 This work is licensed under the
-`GNU General Public License, verion 2 (GNU GLP v2.0) <https://www.gnu.org/licenses/old-licenses/gpl-2.0.en.html>`__.
-
+`GNU General Public License, version 2 (GNU GLP v2.0) <https://www.gnu.org/licenses/old-licenses/gpl-2.0.en.html>`__.
