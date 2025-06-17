@@ -27,3 +27,11 @@ model parameter estimates.
 IgPhyML is integrated into the Immcantation framework, meaning users can easily
 build and visualize B cell lineage trees and test hypotheses about mutation and 
 selection in B cell repertoires.
+
+Contact
+-------------------------------------------------------------------------------
+
+For help and questions, please contact the [Immcantation Group](mailto:immcantation@googlegroups.com)
+or use the [issue tracker](https://github.com/immcantation/igphyml/issues).
+
+To receive alerts about Immcantation releases, news, events, and tutorials, join the [Immcantation News](https://groups.google.com/g/immcantation-news) Google Group. [Membership settings](https://groups.google.com/g/immcantation-news/membership) can be adjusted to change the frequency of email updates.
