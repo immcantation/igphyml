@@ -997,7 +997,7 @@ void ASR_Wrapper(option* io){
   	  if(i<mod->nedges)ASR_At_Given_Edge(tree->t_edges[i],tree,0);
   	  else ASR_At_Given_Edge(tree->noeud[tree->mod->startnode]->b[0],tree,1);
   	}
-    fclose(mod->fp_rootprob);
+    if(io->mod->ASR == 2)fclose(mod->fp_rootprob);
 	}
 }
 
