@@ -1562,7 +1562,7 @@ int Are_Compatible(char *statea,char *stateb,int stepsize,int datatype,char * al
 void Hide_Ambiguities(calign *data);
 void Print_Site_Lk(t_tree *tree, FILE *fp);
 option *Make_Input();
-t_tree *Make_Tree();
+t_tree *Make_Tree(int n_otu);
 void Make_All_Tree_Nodes(t_tree *tree);
 void Make_All_Tree_Edges(t_tree *tree);
 void Copy_Tax_Names_To_Tip_Labels(t_tree *tree, calign *data);
