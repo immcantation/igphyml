@@ -828,7 +828,7 @@ void createOutFiles(option * io){
     		 strcat(io->out_seqs_file, "_");
     		 strcat(io->out_seqs_file, io->run_id_string);
     	}
-    	if(io->mod->ASR==1){
+    	if(io->mod->ASR>=1){
     		strcat(io->out_seqs_file,"_asr.fasta");
     		io->fp_out_seqs = Openfile(io->out_seqs_file, io->writemode);
     	}
@@ -2888,7 +2888,9 @@ int mainOptionSwitch(int opt, char * optarg, option * io)
             //////////////////////////////////////////////////////////////////////////////////////
             // --ASRc <double>
         case 162: {
-           	io->mod->ASR=1;
+           	if(io->mod->ASR == 0){
+           		io->mod->ASR = 1;
+           	}
            	io->mod->ASRcut=atof(optarg);
            	if(io->mod->ASRcut > 1){
            		Warn_And_Exit("\n. ASRc must be between 0 and 1!");

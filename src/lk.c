@@ -1386,7 +1386,7 @@ phydbl ASR_Core_root(t_edge *b, t_tree *tree, t_node *anc, t_node *d)
 	               }
                  //printf("\n%d\t%d\t%lf",site,l,b->upp[site][l],log(b->upp[site][l]));
 	               site_lk_cat+=probc[l]*b->upp[site][l];
-                 if(tree->io->mod->ASR == 1){
+                 if(tree->io->mod->ASR >= 1){
                    probc[l] *= b->upp[site][l];
                  }
 	          }
@@ -1396,7 +1396,7 @@ phydbl ASR_Core_root(t_edge *b, t_tree *tree, t_node *anc, t_node *d)
 
 
       phydbl site_lk_cat_og = tree->site_lk_cat[0];
-      if(tree->io->mod->ASR == 1){
+      if(tree->io->mod->ASR >= 1){
   	  //find ML codon
   	  int maxc=-1;
     	  phydbl max=-DBL_MAX;
