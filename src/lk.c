@@ -1357,6 +1357,7 @@ phydbl ASR_Core_root(t_edge *b, t_tree *tree, t_node *anc, t_node *d)
 
 
 	  phydbl* probc = mCalloc(ns,sizeof(phydbl));
+    phydbl* probc_raw = mCalloc(ns,sizeof(phydbl)); // un-normalized
 	  For(catg,tree->mod->n_catg){
 	      site_lk_cat = .0;
 	      /* b is an external edge */
@@ -1384,6 +1385,7 @@ phydbl ASR_Core_root(t_edge *b, t_tree *tree, t_node *anc, t_node *d)
 	              For(k,ns){
 	                  probc[l] += b->bPmat_part[tree->mod->partIndex[site]][catg*dim3+l*dim2+k]*p_lk[site*dim1+catg*dim2+k];//*b->upp[site][l];//Modified by Ken 17/8/2016
 	               }
+                 probc_raw[l] = probc[l];
                  //printf("\n%d\t%d\t%lf",site,l,b->upp[site][l],log(b->upp[site][l]));
 	               site_lk_cat+=probc[l]*b->upp[site][l];
                  if(tree->io->mod->ASR >= 1){
@@ -1583,13 +1585,14 @@ phydbl ASR_Core_root(t_edge *b, t_tree *tree, t_node *anc, t_node *d)
       For(k,ns){
         char* s1=mCalloc(4,sizeof(char));
         Sprint_codon(s1,tree->io->senseCodons[k]);
-        fprintf(tree->mod->fp_rootprob, "%d\t%s\t%lf\t%lf\t%lf\t%lf\t%lf%d\n",site,s1,log(probc[k]),
-          log(probc[k])+ratio,log(site_lk_cat_og),log_site_lk,b->upp[site][k],
+        fprintf(tree->mod->fp_rootprob, "%d\t%s\t%lf\t%lf\t%lf\t%lf\t%lf%d\n",site,s1,log(probc_raw[k]),
+          log(probc_raw[k])+ratio,log(site_lk_cat_og),log_site_lk,b->upp[site][k],
           tree->data->wght[site]);
         free(s1);
       }
     }
     free(probc);  
+    free(probc_raw);  
 
 	  tree->cur_site_lk[site] = log_site_lk;
 	  /* Multiply log likelihood by the number of times this site pattern is found in the data */
