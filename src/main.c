@@ -189,6 +189,10 @@ int main(int argc, char **argv){
     	printf("\n. Can only print ambiguous characters with HLP models\n");
     }
 
+    if(io->mod->trunkl > -0.5 && mod->whichrealmodel <= HLP17){
+      tree->noeud[mod->startnode]->b[0]->l = mod->trunkl;
+    }
+
     //Store model and data in upper hierarchy
     io->mod_s[num_data_set]=mod;
     io->tree_s[num_data_set]=tree;

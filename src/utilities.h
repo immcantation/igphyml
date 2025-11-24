@@ -920,6 +920,7 @@ typedef struct __Model {
  int        			polytomyresolve;
  int                    force_resolve;
  phydbl        			maxtrunkl;
+ phydbl             trunkl;
 
 }model;
 

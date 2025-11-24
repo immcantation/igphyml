@@ -537,8 +537,16 @@ void Optimize_Br_Len_Serie(t_node *a, t_node *d, t_edge *b_fcus, t_tree *tree, c
 		  Lk(tree);
 		  lk_init = tree->c_lnL;
 	  }
+	  if(tree->mod->trunkl > -0.5){
+		  //printf("\n%d\t%d\t%lf",a->num,tree->mod->startnode,b_fcus->l);
+		  b_fcus->l = tree->mod->trunkl;
+		  l_infa = tree->mod->trunkl;
+		  l_max = tree->mod->trunkl;
+		  l_infb = tree->mod->trunkl;
+		  Lk(tree);
+		  lk_init = tree->c_lnL;
+	  }
   }
-  //printf("\np %d\t%d\t%lf",b_fcus->anc_node->num,tree->mod->startnode,b_fcus->l);
 
   if(tree->mod->optDebug)printf("\n%d\t%lf\t%lf",b_fcus->num,b_fcus->l,tree->c_lnL);
   Br_Len_Brent(l_infa,l_max,l_infb,
@@ -546,6 +554,13 @@ void Optimize_Br_Len_Serie(t_node *a, t_node *d, t_edge *b_fcus, t_tree *tree, c
 	       b_fcus,tree,
 	       tree->mod->s_opt->brent_it_max,
 	       tree->mod->s_opt->quickdirty);
+
+  if(a->num == tree->mod->startnode && tree->mod->trunkl > -0.5){
+  	printf("\n%d\t%d\t%lf",a->num,tree->mod->startnode,b_fcus->l);
+  }
+
+  //printf("\np %d\t%d\t%lf",a->num,tree->mod->startnode,b_fcus->l);
+
   //Added to catch potential issues with branch optimization
   if(tree->mod->optDebug)printf("\n%d\t%lf\t%lf",b_fcus->num,b_fcus->l,tree->c_lnL);
   if(tree->mod->whichrealmodel <= HLP17){

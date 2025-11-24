@@ -147,6 +147,7 @@ struct option longopts[] =
   {"splitfreqs", no_argument,NULL,184},  //!<Added by Ken, split frequencies by partition?
   {"force_resolve", no_argument,NULL,185},  //!<Added by Ken, split frequencies by partition?
   {"rates",     required_argument,NULL,186},  //!<Added by Ken
+  {"trunkl",		  required_argument,NULL,188},  //!<Added by Ken
     {0,0,0,0}
 };
 
@@ -3089,6 +3090,16 @@ int mainOptionSwitch(int opt, char * optarg, option * io)
           io->mod->ratestringopt=1;
           break;
          }
+        //////////////////////////////////////////////////////////////////////////////////////
+        // --trunkl
+        case 188:{
+        	io->mod->trunkl=atof(optarg);
+        	if(io->mod->trunkl < SMALL){
+        		io->mod->trunkl = SMALL;
+        	}
+        	printf("trunkl %lf\n",io->mod->trunkl);
+            break;
+        }
             //////////////////////////////////////////////////////////////////////////////////////
             // --multiple
             //

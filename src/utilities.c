@@ -2298,6 +2298,7 @@ model *Copy_Partial_Model(model *ori, int num){
   cpy->mdpos 		 = ori->mdpos;
   cpy->permute_tips 		 = ori->permute_tips;
   cpy->maxtrunkl 		 = ori->maxtrunkl;
+  cpy->trunkl     = ori->trunkl;
 
   //optimization parameters
   cpy->s_opt = Make_Optimiz();
@@ -2329,6 +2330,7 @@ model *Copy_Partial_Model(model *ori, int num){
   cpy->polytomyresolve = ori->polytomyresolve;
   cpy->force_resolve = ori->force_resolve;
   cpy->maxtrunkl = ori->maxtrunkl;
+  cpy->trunkl = ori->trunkl;
   cpy->freq_model   = ori->freq_model;
 
   cpy->in_tree_file = (char *)mCalloc(T_MAX_FILE,sizeof(char));
@@ -2850,6 +2852,7 @@ void Set_Defaults_Model(model *mod)
   mod->polytomyresolve = 2;
   mod->force_resolve = 0;
   mod->maxtrunkl = BL_MAX;
+  mod->trunkl = -1.0;
 }
 /*********************************************************/
 
